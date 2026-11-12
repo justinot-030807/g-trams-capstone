@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import MtopCertificateModal from '../../components/admin/MtopCertificateModal';
 import AdminApplicationSummaryModal from '../../components/admin/AdminApplicationSummaryModal';
+import OfficialApplicationFormModal from '../../components/common/OfficialApplicationFormModal';
 import { useSocket } from '../../context/SocketContext';
 import { evaluateDocumentValidity } from '../../utils/dateValidity';
 import { formatZoneLabel } from '../../utils/constants';
@@ -87,6 +88,7 @@ const FranchiseReviewPage = () => {
 
   // Modals
   const [isPrintOpen, setIsPrintOpen] = useState(false);
+  const [isAppFormOpen, setIsAppFormOpen] = useState(false);
   const [isDossierOpen, setIsDossierOpen] = useState(false);
 
   // Accordion Toggle States
@@ -763,6 +765,16 @@ const FranchiseReviewPage = () => {
 
         {/* Right: Actions */}
         <div className="flex items-center gap-2">
+          {/* Official MTOP Application Form Print */}
+          <button
+            onClick={() => setIsAppFormOpen(true)}
+            className="px-3 py-1.5 bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors border border-amber-500/30 cursor-pointer"
+            title="Print Official MTOP Application Form (Ord. 48 s. 1999)"
+          >
+            <FileText size={14} className="text-[#D4AF37]" />
+            <span className="hidden md:inline">Application Form (PDF)</span>
+          </button>
+
           {/* MTOP Print */}
           {(currentApp.status === 'For Signing' || currentApp.status === 'Ready for Pickup' || currentApp.status === 'Active') && (
             <button
@@ -2433,6 +2445,16 @@ const FranchiseReviewPage = () => {
           isOpen={isPrintOpen}
           onClose={() => setIsPrintOpen(false)}
           unit={currentApp}
+        />
+      )}
+
+      {/* Official MTOP Application Form Print Modal */}
+      {isAppFormOpen && currentApp && (
+        <OfficialApplicationFormModal
+          isOpen={isAppFormOpen}
+          onClose={() => setIsAppFormOpen(false)}
+          formData={currentApp}
+          isRenewal={currentApp.applicationType === 'Renewal'}
         />
       )}
 

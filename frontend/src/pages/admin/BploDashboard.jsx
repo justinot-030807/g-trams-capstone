@@ -280,12 +280,12 @@ const BploDashboard = () => {
     <MainLayout>
       {/* 1. PAGE HEADER (with Pipeline Status Pills) */}
       <PageHeader
-        title={t('admin.bploDashboardTitle', 'BPLO Operations Dashboard')}
+        title={t('admin.bploDashboardTitle', 'SB Franchising Operations Dashboard')}
         subtitle={headerSubtitle}
         pipelineLinks={pipelineLinks}
         badge={
           <span className="px-2.5 py-0.5 text-xs font-semibold rounded-full bg-[#15803D]/10 text-[#15803D] dark:bg-[#15803D]/20 dark:text-[#4ADE80] border border-[#15803D]/20">
-            {t('admin.bploBadge', 'Franchise Office')}
+            {t('admin.bploBadge', 'SB Franchising Division (LLSA I)')}
           </span>
         }
       />

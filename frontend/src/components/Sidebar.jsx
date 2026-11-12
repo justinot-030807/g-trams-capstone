@@ -348,7 +348,7 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   const getRoleLabel = () => {
     if (role === 'system_admin' || role === 'system admin' || role === 'admin' || role === 'administrator') return t('nav.roleSystemAdmin', 'SYSTEM ADMIN');
-    if (role === 'bplo_staff' || role === 'bplo staff') return t('nav.roleBploStaff', 'BPLO STAFF');
+    if (role === 'bplo_staff' || role === 'bplo staff') return t('nav.roleBploStaff', 'SB FRANCHISING STAFF (LLSA I)');
     if (role === 'cashier') return t('nav.roleCashier', 'MUNICIPAL CASHIER');
     if (role === 'toda_president' || role === 'toda president') return t('nav.roleTodaPresident', 'TODA PRESIDENT');
     return t('nav.roleOperator', 'OPERATOR');

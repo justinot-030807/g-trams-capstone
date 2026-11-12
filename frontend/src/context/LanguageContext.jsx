@@ -22,6 +22,7 @@ const translations = {
     'nav.roleOperator': 'OPERATOR',
     'nav.roleTodaPresident': 'TODA PRESIDENT',
     'nav.roleAdmin': 'ADMINISTRATOR',
+    'nav.roleBploStaff': 'SB FRANCHISING STAFF (LLSA I)',
     'nav.roleCashier': 'MUNICIPAL CASHIER',
 
     // Operator Dashboard
@@ -235,6 +236,7 @@ const translations = {
     'nav.roleOperator': 'OPERATOR',
     'nav.roleTodaPresident': 'PANGULO NG TODA',
     'nav.roleAdmin': 'ADMINISTRATOR',
+    'nav.roleBploStaff': 'SB FRANCHISING STAFF (LLSA I)',
     'nav.roleCashier': 'KASHER NG MUNISIPYO',
 
     // Operator Dashboard

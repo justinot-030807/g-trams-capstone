@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { 
   X, FileText, User, Receipt, ShieldCheck, FileCheck, 
   CheckCircle2, XCircle, ExternalLink, Loader2, AlertTriangle, Check,
-  ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Eye
+  ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Eye, Printer
 } from 'lucide-react';
 import { evaluateDocumentValidity } from '../../utils/dateValidity';
 import { formatZoneLabel } from '../../utils/constants';
 import TricycleIcon from '../common/TricycleIcon';
+import OfficialApplicationFormModal from '../common/OfficialApplicationFormModal';
 
 const AdminApplicationSummaryModal = ({
   isOpen,
@@ -23,6 +24,7 @@ const AdminApplicationSummaryModal = ({
 }) => {
   const [previewDoc, setPreviewDoc] = useState(null); // { label, url }
   const [isAiNoticeOpen, setIsAiNoticeOpen] = useState(false);
+  const [showOfficialForm, setShowOfficialForm] = useState(false);
 
   if (!isOpen || !franchise) return null;
 
@@ -473,8 +475,18 @@ const AdminApplicationSummaryModal = ({
             )}
           </div>
 
-          {/* Decision Buttons (Approve / Reject) */}
-          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+          {/* Decision Buttons (Approve / Reject) & Official Form Print */}
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
+            <button
+              type="button"
+              onClick={() => setShowOfficialForm(true)}
+              className="px-3.5 py-2 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/30 font-semibold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer"
+              title="Print official MTOP application form pursuant to Ord. 48 s. 1999"
+            >
+              <Printer size={14} className="text-[#D4AF37]" />
+              <span>Official Form (PDF)</span>
+            </button>
+
             {franchise.paymentStatus !== 'Paid' && !['Ready for Pickup', 'Active', 'For Signing', 'Released'].includes(franchise.status) && onReject && (
               <button
                 type="button"
@@ -559,6 +571,16 @@ const AdminApplicationSummaryModal = ({
             </div>
           </div>
         </div>
+      )}
+
+      {/* Official MTOP Application Form Print Modal */}
+      {showOfficialForm && (
+        <OfficialApplicationFormModal
+          isOpen={showOfficialForm}
+          onClose={() => setShowOfficialForm(false)}
+          formData={franchise}
+          isRenewal={franchise.applicationType === 'Renewal'}
+        />
       )}
     </div>
   );

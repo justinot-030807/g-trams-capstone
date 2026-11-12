@@ -1,5063 +1,5106 @@
-import localforage from 'localforage';
-import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
-import { 
-  GASAN_BARANGAYS, TODA_LIST, CANCEL_REASONS, 
-  getZoneForBarangay, normalizeZone, normalizeBarangayName, formatZoneLabel, getTodasForBarangay 
-} from '../../utils/constants';
-import MainLayout from '../../components/MainLayout';
-import { 
-  UploadCloud, Check, CheckCircle, FileCheck, Info, RefreshCw, PlusCircle, 
-  ArrowLeft, AlertCircle, Loader2, X, CalendarDays, ZoomIn, 
-  ChevronRight, ChevronLeft, ShieldCheck, FileText, RotateCcw,
-  Save, XCircle, CheckCircle2, Clock, User, Eye, Receipt,
-  Compass, MapPin, ExternalLink, AlertTriangle, Zap,
-  HelpCircle, ChevronDown, ChevronUp, Lock
-} from 'lucide-react';
-import { GarageGridSkeleton, ApplyFranchiseSkeleton } from '../../components/skeleton';
-import DocumentUploadCard from '../../components/operator/DocumentUploadCard';
-import FeedbackModal from '../../components/common/FeedbackModal';
-import TricycleIcon from '../../components/common/TricycleIcon';
-import TodaZoneGuideModal, { TODA_DIRECTORY, GASAN_ZONES } from '../../components/operator/TodaZoneGuideModal';
-import CancelApplicationModal from '../../components/operator/CancelApplicationModal';
-import DocumentPreviewModal from '../../components/operator/DocumentPreviewModal';
-import ApplicationSummaryModal from '../../components/operator/ApplicationSummaryModal';
-import SimpleDatePicker from '../../components/common/SimpleDatePicker';
-import { useLanguage } from '../../context/LanguageContext';
-import { isNameMatch } from '../../utils/nameMatcher';
-
-import { compressImage } from '../../utils/imageCompressor';
-
-const DRAFT_STORAGE_KEY = 'gtrams_apply_draft';
-
-const STANDARD_DOC_IDS = ['crDocument', 'orDocument', 'orCrDocument', 'license', 'todaEndorsement', 'brgyClearance'];
-
-const normalizeDateStr = (raw) => {
-  if (!raw || typeof raw !== 'string') return '';
-  const trimmed = raw.trim();
-  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
-  const parts = trimmed.split(/[/.-]/);
-  if (parts.length === 3) {
-    if (parts[0].length === 4) {
-      return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
-    }
-    if (parts[2].length === 4) {
-      const p1 = parseInt(parts[0], 10);
-      const p2 = parseInt(parts[1], 10);
-      const year = parts[2];
-      if (p1 > 12) {
-        return `${year}-${String(p2).padStart(2, '0')}-${String(p1).padStart(2, '0')}`;
-      }
-      return `${year}-${String(p1).padStart(2, '0')}-${String(p2).padStart(2, '0')}`;
-    }
-  }
-  const d = new Date(trimmed);
-  if (!isNaN(d.getTime())) {
-    return d.toISOString().substring(0, 10);
-  }
-  return trimmed;
-};
-
-const DEFAULT_REQUIREMENTS = [
-  { id: 'crDocument', label: 'Certificate of Registration (CR)', fieldUrl: 'crUrl' },
-  { id: 'orDocument', label: 'Official Receipt (OR)', fieldUrl: 'orUrl' },
-  { id: 'license', label: "Driver's License (Front)", fieldUrl: 'licenseUrl' },
-  { id: 'todaEndorsement', label: 'TODA Endorsement Certificate', fieldUrl: 'todaEndorsementUrl' },
-  { id: 'brgyClearance', label: 'Barangay Clearance', fieldUrl: 'brgyClearanceUrl' }
-];
-
-const POPULAR_MAKES = [
-  'Honda TMX 125',
-  'Kawasaki Barako II',
-  'Bajaj CT 150',
-  'Yamaha YTX 125'
-];
-
-const InfoTooltip = ({ text }) => {
-  const [open, setOpen] = useState(false);
-  return (
-    <span className="relative inline-block ml-1 align-middle">
-      <button
-        type="button"
-        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpen(!open); }}
-        onMouseEnter={() => setOpen(true)}
-        onMouseLeave={() => setOpen(false)}
-        className="text-[#6B6761] dark:text-[#A8A29E] hover:text-[#9E2A2B] dark:hover:text-[#D4AF37] transition-colors cursor-pointer inline-flex items-center"
-        aria-label="Information"
-        title={text}
-      >
-        <Info size={13} className="shrink-0" />
-      </button>
-      {open && (
-        <span className="absolute z-50 left-1/2 -translate-x-1/2 bottom-full mb-1.5 w-52 sm:w-60 p-2 bg-[#1C1917] text-[#F6F5F3] text-[11px] rounded-md shadow-xl border border-[#3E3A36] text-center leading-normal animate-fadeIn pointer-events-none">
-          {text}
-        </span>
-      )}
-    </span>
-  );
-};
-
-const ApplyFranchise = () => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [searchParams] = useSearchParams();
-  const { language } = useLanguage() || { language: 'en' };
-
-  const modeParam = searchParams.get('mode');
-  const stepParam = parseInt(searchParams.get('step') || '1', 10);
-  const focusParam = searchParams.get('focus');
-  const initialStep = (stepParam >= 1 && stepParam <= 5) ? stepParam : 1;
-
-  const [myFranchises, setMyFranchises] = useState(() => {
-    try {
-      const cached = localStorage.getItem('gtrams_cached_franchises');
-      return cached ? JSON.parse(cached) : [];
-    } catch {
-      return [];
-    }
-  });
-  const [isLoading, setIsLoading] = useState(true);
-  const [formMode, setFormMode] = useState(() => {
-    if (modeParam === 'reapply') return 'Re-apply';
-    if (modeParam === 'renewal') return 'Renewal';
-    return 'New';
-  }); 
-  const [selectedId, setSelectedId] = useState(null); 
-  const [reapplyTarget, setReapplyTarget] = useState(null);
-  const [focusField, setFocusField] = useState(focusParam || '');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [uploadPhase, setUploadPhase] = useState('');
-  
-  const [currentStep, setCurrentStep] = useState(initialStep);
-  const [slideDirection, setSlideDirection] = useState('forward');
-  const [hasDraftRestored, setHasDraftRestored] = useState(false);
-  const [isSubmitConfirmOpen, setIsSubmitConfirmOpen] = useState(false);
-  const [showAdvancedSpecs, setShowAdvancedSpecs] = useState(false);
-  const [isAgreedToTerms, setIsAgreedToTerms] = useState(false);
-
-  // Cancellation modal state
-  const [cancelModal, setCancelModal] = useState({
-    isOpen: false,
-    unit: null,
-    reason: CANCEL_REASONS[0],
-    customReason: '',
-    isSubmitting: false
-  });
-
-  // Centered Feedback Modal state
-  const [feedbackModal, setFeedbackModal] = useState({
-    isOpen: false,
-    type: 'success',
-    title: '',
-    message: '',
-    confirmText: 'OK',
-    onConfirm: null
-  });
-
-  // Draft Resume Modal state
-  const [draftResumeModal, setDraftResumeModal] = useState({
-    isOpen: false,
-    draftData: null,
-    savedTime: '',
-    step: 1
-  });
-
-  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
-  const [formErrors, setFormErrors] = useState({});
-  const [fullPreview, setFullPreview] = useState(null);
-  const [showTodaGuide, setShowTodaGuide] = useState(false);
-  const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
-
-  // AI Scanning state per document
-  const [aiScanning, setAiScanning] = useState({
-    license: false,
-    licenseBack: false,
-    crDocument: false,
-    orDocument: false,
-    orCrDocument: false,
-    todaEndorsement: false,
-    brgyClearance: false,
-    cedulaDoc: false
-  });
-
-  const [aiSuccess, setAiSuccess] = useState({
-    license: false,
-    licenseBack: false,
-    crDocument: false,
-    orDocument: false,
-    orCrDocument: false,
-    todaEndorsement: false,
-    brgyClearance: false,
-    cedulaDoc: false
-  });
-
-  // Manual input alert state when AI scanning fails or cannot auto-fill
-  const [manualScanAlerts, setManualScanAlerts] = useState({
-    license: null,
-    licenseBack: null,
-    crDocument: null,
-    orDocument: null,
-    orCrDocument: null,
-    todaEndorsement: null,
-    brgyClearance: null,
-    cedulaDoc: null
-  });
-
-  // Raw AI Scanned data tracker & discrepancy confirmation modal
-  const [aiScannedData, setAiScannedData] = useState({});
-  const [discrepancyModal, setDiscrepancyModal] = useState({
-    isOpen: false,
-    discrepancies: []
-  });
-
-  // Real-time uniqueness checker state
-  const [duplicateStatus, setDuplicateStatus] = useState({
-    plateNo: { checking: false, duplicate: false, message: '' },
-    motorNo: { checking: false, duplicate: false, message: '' },
-    chassisNo: { checking: false, duplicate: false, message: '' }
-  });
-
-  // Dynamic settings: max units
-  const [maxAllowedUnits, setMaxAllowedUnits] = useState(() => {
-    return Number(localStorage.getItem('max_units_per_operator')) || 2;
-  });
-
-  let loggedInUserName = localStorage.getItem('name') || '';
-  let loggedInAddress = ''; 
-  let loggedInToda = 'NON-TODA'; 
-
-  const userObj = localStorage.getItem('user');
-  if (userObj) {
-    try {
-      const parsedUser = JSON.parse(userObj);
-      if (!loggedInUserName) loggedInUserName = parsedUser.name || '';
-      if (parsedUser.address) loggedInAddress = parsedUser.address; 
-      if (parsedUser.todaAssociation) loggedInToda = parsedUser.todaAssociation; 
-    } catch (e) { console.error(e); }
-  }
-  
-  const [formData, setFormData] = useState({
-    fullName: loggedInUserName, 
-    address: loggedInAddress, 
-    zone: loggedInAddress ? getZoneForBarangay(loggedInAddress) : '', 
-    made: '', make: '', motorNo: '', chassisNo: '', plateNo: '', 
-    todaName: loggedInToda,
-    dateApplied: new Date().toISOString().split('T')[0], 
-    cedulaDate: '', 
-    cedulaAddress: '', 
-    cedulaSerialNo: '',
-    cedulaAmount: '',
-    cedulaYear: '',
-    cedulaPlaceIssued: '',
-    cedulaFullName: '',
-    cedulaCitizenship: '',
-    cedulaCivilStatus: '',
-    cedulaProfession: '',
-    cedulaDob: '',
-    cedulaPlaceOfBirth: '',
-    cedulaSex: '',
-    cedulaHeight: '',
-    cedulaWeight: '',
-    cedulaTin: '',
-    orCrNo: '',
-    orNo: '',
-    orCrExpiryDate: '',
-    crNo: '',
-    orDate: '',
-    crDate: '',
-    color: '',
-    series: '',
-    yearModel: '',
-    fileNo: '',
-    vehicleType: '',
-    vehicleCategory: '',
-    classification: '',
-    bodyType: '',
-    displacement: '',
-    grossWeight: '',
-    fuelType: '',
-    passengerCapacity: '',
-    registeredOwner: '',
-    ownerAddress: '',
-    numberOfUnits: 1,
-    isOperatorDriver: true,
-    driverName: '',
-    driverContact: '',
-    driverLicenseNo: '',
-    driverLicenseSerialNo: '',
-    driverLicenseExpiryDate: '',
-    driverDob: '',
-    driverDlCodes: '',
-    driverConditions: 'None',
-    driverAddress: '',
-    driverNationality: 'Filipino',
-    driverSex: '',
-    todaCertNo: '',
-    todaCertDate: '',
-    todaSignatory: '',
-    brgyClearanceNo: '',
-    brgyClearanceDate: '',
-    brgyIssuer: '',
-    orCrUrl: '',
-    crUrl: '',
-    orUrl: '',
-    licenseUrl: '',
-    licenseBackUrl: '',
-    todaEndorsementUrl: '',
-    brgyClearanceUrl: '',
-    cedulaUrl: ''
-  });
-  
-  const [uploadedDocs, setUploadedDocs] = useState({});
-  const [filePreviews, setFilePreviews] = useState({});
-
-  // Sync step and formMode from searchParams
-  useEffect(() => {
-    const s = parseInt(searchParams.get('step') || '1', 10);
-    const validS = (s >= 1 && s <= 5) ? s : 1;
-    if (validS !== currentStep) {
-      setSlideDirection(validS < currentStep ? 'backward' : 'forward');
-      setCurrentStep(validS);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-    const m = searchParams.get('mode');
-    if (m === 'reapply' && formMode !== 'Re-apply') {
-      setFormMode('Re-apply');
-    } else if (m === 'renewal' && formMode !== 'Renewal') {
-      setFormMode('Renewal');
-    } else if (m === 'new' && formMode !== 'New') {
-      setFormMode('New');
-    }
-  }, [searchParams]);
-
-  // Focus flagged field if present
-  useEffect(() => {
-    if (focusField) {
-      const timer = setTimeout(() => {
-        const el = document.getElementById(`field-${focusField}`) || document.querySelector(`[name="${focusField}"]`);
-        if (el) {
-          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          const targetInput = el.tagName === 'INPUT' || el.tagName === 'SELECT' ? el : el.querySelector('input, select');
-          targetInput?.focus?.();
-        }
-      }, 400);
-      return () => clearTimeout(timer);
-    }
-  }, [focusField, currentStep]);
-
-  const isFieldFocused = (field) => focusField === field;
-
-  // Smooth scroll and focus helper for error fields and AI auto-filled fields
-  const scrollToField = (fieldName) => {
-    setTimeout(() => {
-      const target = 
-        document.getElementById(`field-${fieldName}`) ||
-        document.getElementById(`card-${fieldName}`) ||
-        document.getElementById(fieldName) ||
-        document.querySelector(`[name="${fieldName}"]`) ||
-        document.querySelector(`[data-field="${fieldName}"]`);
-
-      if (target) {
-        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        target.classList.add('ring-2', 'ring-emerald-500', 'transition-all', 'duration-500');
-        setTimeout(() => {
-          target.classList.remove('ring-2', 'ring-emerald-500');
-        }, 2500);
-
-        const inputToFocus = 
-          ['INPUT', 'SELECT', 'TEXTAREA'].includes(target.tagName) 
-            ? target 
-            : target.querySelector('input, select, textarea, button');
-        inputToFocus?.focus?.();
-      }
-    }, 150);
-  };
-
-  // Center modal popup for validation errors with auto-scroll and red highlight
-  const showValidationModal = (fieldName, title, message) => {
-    if (fieldName) {
-      setFormErrors(prev => ({ ...prev, [fieldName]: message }));
-    }
-
-    setFeedbackModal({
-      isOpen: true,
-      type: 'error',
-      title,
-      message,
-      confirmText: 'Review & Correct',
-      onConfirm: () => {
-        setFeedbackModal(prev => ({ ...prev, isOpen: false }));
-        if (fieldName) {
-          scrollToField(fieldName);
-        }
-      }
-    });
-
-    if (fieldName) {
-      scrollToField(fieldName);
-    }
-  };
-
-  // Auto-sync route/zone with TODA association if zone is not yet chosen
-  useEffect(() => {
-    if (!formData.zone && formData.todaName) {
-      const match = TODA_DIRECTORY.find(t => t.id === formData.todaName || t.name.startsWith(formData.todaName));
-      if (match && match.zone) {
-        if (match.zone.includes('Central')) setFormData(prev => ({ ...prev, zone: 'Central' }));
-        else if (match.zone.includes('North')) setFormData(prev => ({ ...prev, zone: 'North' }));
-        else if (match.zone.includes('South')) setFormData(prev => ({ ...prev, zone: 'South' }));
-      }
-    }
-  }, [formData.todaName]);
-
-  // Live TODA Roster Membership Status Check
-  const [todaMembershipStatus, setTodaMembershipStatus] = useState(null);
-  const [isCheckingTodaMembership, setIsCheckingTodaMembership] = useState(false);
-
-  useEffect(() => {
-    const currentToda = formData.todaName || loggedInToda;
-    if (!currentToda || currentToda === 'NON-TODA' || !formData.fullName) {
-      setTodaMembershipStatus(null);
-      return;
-    }
-
-    const timer = setTimeout(async () => {
-      setIsCheckingTodaMembership(true);
-      try {
-        const query = new URLSearchParams({
-          todaName: currentToda,
-          name: formData.fullName || '',
-          barangay: formData.address || ''
-        });
-        const baseUrl = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
-        const res = await fetch(`${baseUrl}/api/v1/franchises/check-toda-member?${query.toString()}`);
-        if (res.ok) {
-          const data = await res.json();
-          setTodaMembershipStatus(data);
-        }
-      } catch (err) {
-        console.error('Error checking TODA membership in application:', err);
-      } finally {
-        setIsCheckingTodaMembership(false);
-      }
-    }, 450);
-
-    return () => clearTimeout(timer);
-  }, [formData.todaName, formData.fullName, formData.address, loggedInToda]);
-
-  const getCurrentUserId = () => {
-    try {
-      const u = JSON.parse(localStorage.getItem('user') || '{}');
-      if (u._id) return String(u._id);
-      if (u.id) return String(u.id);
-      if (u.contact) return String(u.contact);
-    } catch {}
-    const uid = localStorage.getItem('userId');
-    if (uid) return String(uid);
-    const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        if (payload.id) return String(payload.id);
-      } catch {}
-    }
-    return 'operator_user';
-  };
-
-  const getDraftKey = () => {
-    const uid = getCurrentUserId();
-    if (formMode === 'Renewal' && selectedId) {
-      return `gtrams_renewal_draft_${uid}_${selectedId}`;
-    }
-    return `gtrams_apply_draft_${uid}`;
-  };
-
-  // Accurate 5-Step Progress Calculation
-  const calculateProgress = () => {
-    let completed = 0;
-    const total = 15;
-
-    // Step 1 items (4)
-    if (formData.fullName?.trim()) completed++;
-    if (formData.address?.trim()) completed++;
-    if (uploadedDocs.license || filePreviews.license || formData.licenseUrl) completed++;
-    if (formData.driverLicenseNo?.trim()) completed++;
-
-    // Step 2 items (6)
-    if (uploadedDocs.crDocument || filePreviews.crDocument || formData.crUrl || uploadedDocs.orDocument || filePreviews.orDocument || formData.orUrl || uploadedDocs.orCrDocument || filePreviews.orCrDocument || formData.orCrUrl) completed++;
-    if (formData.make?.trim()) completed++;
-    if (formData.made?.trim()) completed++;
-    if (formData.zone?.trim()) completed++;
-    if (formData.plateNo?.trim()) completed++;
-    if (formData.motorNo?.trim() && formData.chassisNo?.trim()) completed++;
-
-    // Step 3 items (2)
-    if (uploadedDocs.todaEndorsement || filePreviews.todaEndorsement || formData.todaEndorsementUrl) completed++;
-    if (uploadedDocs.brgyClearance || filePreviews.brgyClearance || formData.brgyClearanceUrl) completed++;
-
-    // Step 4 items (2)
-    if (uploadedDocs.cedulaDoc || uploadedDocs.cedula || filePreviews.cedulaDoc || filePreviews.cedula || formData.cedulaUrl) completed++;
-    if (formData.cedulaSerialNo?.trim() && formData.cedulaDate) completed++;
-
-    // Step 5 item (1)
-    if (isAgreedToTerms) completed++;
-
-    const pct = Math.round((completed / total) * 100);
-    return { percentage: Math.min(pct, 100), completed, total };
-  };
-
-  const handleSaveProgress = (isManual = true) => {
-    if (!formMode || formMode === 'Re-apply') return;
-    const key = getDraftKey();
-    const now = new Date();
-    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-
-    // Don't auto-save if form is completely pristine/empty
-    if (!isManual) {
-      const hasContent = (
-        currentStep > 1 ||
-        Boolean(formData.plateNo?.trim()) ||
-        Boolean(formData.motorNo?.trim()) ||
-        Boolean(formData.chassisNo?.trim()) ||
-        Boolean(formData.make?.trim()) ||
-        Boolean(formData.driverLicenseNo?.trim()) ||
-        Boolean(formData.cedulaSerialNo?.trim()) ||
-        Boolean(formData.orCrUrl) ||
-        Boolean(formData.licenseUrl) ||
-        Object.keys(uploadedDocs).length > 0
-      );
-      if (!hasContent) return;
-    }
-
-    try {
-      localforage.setItem(key, {
-        formData,
-        aiScannedData,
-        currentStep,
-        savedAt: now.toISOString(),
-        timeFormatted: timeStr,
-        formMode,
-        selectedId,
-        userId: getCurrentUserId()
-      }).catch(err => console.error('Draft save error:', err));
-
-      if (uploadedDocs && Object.keys(uploadedDocs).length > 0) {
-        localforage.setItem(`${key}_files`, uploadedDocs).catch(err => console.error('Draft files save error:', err));
-      }
- 
-      if (isManual) {
-        setHasDraftRestored(true);
-        setFeedbackModal({
-          isOpen: true,
-          type: 'success',
-          title: 'Draft Saved',
-          message: `Application draft saved at ${timeStr}. You can safely return and finish anytime.`,
-          confirmText: 'OK',
-          onConfirm: () => setFeedbackModal(prev => ({ ...prev, isOpen: false }))
-        });
-      }
-    } catch (e) {
-      console.error('Error saving draft:', e);
-    }
-  };
-
-  // Background auto-save while typing
-  useEffect(() => {
-    if (formMode === 'New' || formMode === 'Renewal') {
-      const timer = setTimeout(() => {
-        handleSaveProgress(false);
-      }, 1500);
-      return () => clearTimeout(timer);
-    }
-  }, [formData, aiScannedData, currentStep, formMode, selectedId]);
-
-  // Keep references for immediate auto-save on navigation / back / unload
-  const formDataRef = useRef(formData);
-  const currentStepRef = useRef(currentStep);
-  const formModeRef = useRef(formMode);
-  const aiScannedDataRef = useRef(aiScannedData);
-
-  useEffect(() => { formDataRef.current = formData; }, [formData]);
-  useEffect(() => { currentStepRef.current = currentStep; }, [currentStep]);
-  useEffect(() => { formModeRef.current = formMode; }, [formMode]);
-  useEffect(() => { aiScannedDataRef.current = aiScannedData; }, [aiScannedData]);
-
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      if (formModeRef.current === 'New' || formModeRef.current === 'Renewal') {
-        const key = getDraftKey();
-        const dataToSave = formDataRef.current;
-        const stepToSave = currentStepRef.current;
-        const aiToSave = aiScannedDataRef.current;
-        const hasContent = (
-          stepToSave > 1 ||
-          Boolean(dataToSave.plateNo?.trim()) ||
-          Boolean(dataToSave.motorNo?.trim()) ||
-          Boolean(dataToSave.chassisNo?.trim()) ||
-          Boolean(dataToSave.make?.trim()) ||
-          Boolean(dataToSave.driverLicenseNo?.trim()) ||
-          Boolean(dataToSave.cedulaSerialNo?.trim()) ||
-          Boolean(dataToSave.orCrUrl) ||
-          Boolean(dataToSave.licenseUrl)
-        );
-        if (hasContent) {
-          const now = new Date();
-          localforage.setItem(key, {
-            formData: dataToSave,
-            aiScannedData: aiToSave,
-            currentStep: stepToSave,
-            savedAt: now.toISOString(),
-            timeFormatted: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            formMode: formModeRef.current,
-            userId: getCurrentUserId()
-          }).catch(() => {});
-        }
-      }
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-      handleBeforeUnload();
-    };
-  }, []);
-
-  // Cleanup object URLs on unmount
-  useEffect(() => {
-    return () => {
-      Object.values(filePreviews).forEach(url => {
-        if (url && typeof url === 'string' && url.startsWith('blob:')) {
-          URL.revokeObjectURL(url);
-        }
-      });
-    };
-  }, []);
-
-  const showToast = (message, type = 'success') => {
-    setToast({ show: true, message, type });
-    setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 4000);
-  };
-
-  const fetchMyFranchises = async () => {
-    setIsLoading(true);
-    try {
-      const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/franchises/my-franchises', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
-      if (response.ok) {
-        const data = await response.json();
-        const list = Array.isArray(data) ? data : [];
-        setMyFranchises(list);
-        try {
-          localStorage.setItem('gtrams_cached_franchises', JSON.stringify(list));
-        } catch {}
-      }
-    } catch (error) {
-      console.error('Error fetching units:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const initFreshForm = () => {
-    navigate('/apply-franchise?mode=new&step=1');
-    setCurrentStep(1);
-    setHasDraftRestored(false);
-    setUploadedDocs({});
-    setFilePreviews({});
-    setAiScannedData({});
-
-    setFormData({ 
-      fullName: loggedInUserName, 
-      address: loggedInAddress, 
-      zone: loggedInAddress ? getZoneForBarangay(loggedInAddress) : '', 
-      made: '', make: '', motorNo: '', chassisNo: '', plateNo: '', 
-      todaName: loggedInToda, 
-      dateApplied: new Date().toISOString().split('T')[0], 
-      cedulaDate: '', 
-      cedulaAddress: '', 
-      cedulaSerialNo: '',
-      cedulaAmount: '',
-      orCrNo: '',
-      orCrExpiryDate: '',
-      crNo: '',
-      orDate: '',
-      numberOfUnits: 1,
-      isOperatorDriver: true,
-      driverName: '',
-      driverContact: '',
-      driverLicenseNo: '',
-      driverLicenseSerialNo: '',
-      driverLicenseExpiryDate: '',
-      driverDob: '',
-      driverDlCodes: '',
-      todaCertNo: '',
-      todaCertDate: '',
-      todaSignatory: '',
-      brgyClearanceNo: '',
-      brgyClearanceDate: '',
-      brgyIssuer: '',
-      color: '',
-      series: '',
-      yearModel: '',
-      fileNo: '',
-      vehicleType: 'Tricycle',
-      vehicleCategory: 'L4',
-      classification: 'For Hire / PUV',
-      bodyType: 'Semi-Cabin',
-      displacement: '',
-      grossWeight: '',
-      fuelType: 'Gasoline',
-      passengerCapacity: '4',
-      registeredOwner: '',
-      ownerAddress: '',
-      cedulaYear: '',
-      cedulaPlaceIssued: '',
-      cedulaFullName: '',
-      cedulaCitizenship: 'Filipino',
-      cedulaCivilStatus: '',
-      cedulaProfession: '',
-      cedulaDob: '',
-      cedulaPlaceOfBirth: '',
-      cedulaSex: '',
-      cedulaHeight: '',
-      cedulaWeight: '',
-      cedulaTin: '',
-      cedulaDetails: null,
-      orCrUrl: '',
-      crUrl: '',
-      orUrl: '',
-      licenseUrl: '',
-      licenseBackUrl: '',
-      todaEndorsementUrl: '',
-      brgyClearanceUrl: '',
-      cedulaUrl: ''
-    });
-  };
-
-  const handleStartNewApplication = async () => {
-    setFormMode('New');
-    setSelectedId(null);
-    setFilePreviews({});
-    
-    // Purge any legacy global un-scoped draft key to prevent cross-account leak
-    localforage.removeItem('gtrams_apply_draft').catch(() => {});
-    localStorage.removeItem('gtrams_apply_draft');
-
-    try {
-      const userDraftKey = getDraftKey();
-      const savedDraft = await localforage.getItem(userDraftKey);
-      
-      const hasMeaningfulDraft = savedDraft && savedDraft.formData && (
-        savedDraft.currentStep > 1 ||
-        Boolean(savedDraft.formData.plateNo?.trim()) ||
-        Boolean(savedDraft.formData.motorNo?.trim()) ||
-        Boolean(savedDraft.formData.chassisNo?.trim()) ||
-        Boolean(savedDraft.formData.make?.trim()) ||
-        Boolean(savedDraft.formData.driverLicenseNo?.trim()) ||
-        Boolean(savedDraft.formData.cedulaSerialNo?.trim()) ||
-        Boolean(savedDraft.formData.orCrUrl) ||
-        Boolean(savedDraft.formData.licenseUrl)
-      );
-
-      if (hasMeaningfulDraft) {
-        setDraftResumeModal({
-          isOpen: true,
-          draftData: savedDraft,
-          savedTime: savedDraft.timeFormatted || (savedDraft.savedAt ? new Date(savedDraft.savedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'recently'),
-          step: savedDraft.currentStep || 1
-        });
-        return;
-      }
-    } catch (e) {
-      console.error('Error checking draft in IndexedDB', e);
-    }
-
-    initFreshForm();
-  };
-
-  const handleConfirmResumeDraft = async () => {
-    if (!draftResumeModal.draftData) return;
-    const { formData: savedForm, currentStep: savedStep, aiScannedData: savedAiData } = draftResumeModal.draftData;
-
-    setFormData({
-      ...savedForm,
-      fullName: loggedInUserName || savedForm.fullName,
-      address: loggedInAddress || savedForm.address,
-      zone: savedForm.zone ? normalizeZone(savedForm.zone) : (loggedInAddress ? getZoneForBarangay(loggedInAddress) : ''),
-      todaName: loggedInToda || savedForm.todaName
-    });
-
-    if (savedAiData && typeof savedAiData === 'object') {
-      setAiScannedData(savedAiData);
-    }
-
-    const key = getDraftKey();
-    const previews = {};
-
-    try {
-      const savedFiles = await localforage.getItem(`${key}_files`);
-      if (savedFiles && typeof savedFiles === 'object') {
-        setUploadedDocs(savedFiles);
-        Object.keys(savedFiles).forEach(k => {
-          const fileObj = savedFiles[k];
-          if (fileObj instanceof Blob || fileObj instanceof File) {
-            previews[k] = URL.createObjectURL(fileObj);
-          }
-        });
-      }
-    } catch (filesErr) {
-      console.warn('Could not restore draft file blobs:', filesErr);
-    }
-
-    if (!previews.crDocument && savedForm.crUrl) previews.crDocument = savedForm.crUrl;
-    if (!previews.orDocument && savedForm.orUrl) previews.orDocument = savedForm.orUrl;
-    if (!previews.crDocument && savedForm.orCrUrl) previews.crDocument = savedForm.orCrUrl;
-    if (!previews.license && savedForm.licenseUrl) previews.license = savedForm.licenseUrl;
-    if (!previews.licenseBack && savedForm.licenseBackUrl) previews.licenseBack = savedForm.licenseBackUrl;
-    if (!previews.todaEndorsement && savedForm.todaEndorsementUrl) previews.todaEndorsement = savedForm.todaEndorsementUrl;
-    if (!previews.brgyClearance && savedForm.brgyClearanceUrl) previews.brgyClearance = savedForm.brgyClearanceUrl;
-    if (!previews.cedulaDoc && savedForm.cedulaUrl) previews.cedulaDoc = savedForm.cedulaUrl;
-    setFilePreviews(previews);
-
-    const urlStep = parseInt(searchParams.get('step') || '0', 10);
-    const targetStep = (urlStep >= 1 && urlStep <= 5) ? urlStep : (savedStep || 1);
-    navigate(`/apply-franchise?mode=new&step=${targetStep}`);
-    setCurrentStep(targetStep);
-    setHasDraftRestored(true);
-    setDraftResumeModal({ isOpen: false, draftData: null, savedTime: '', step: 1 });
-    showToast('Your saved draft and attached documents have been restored.', 'success');
-  };
-
-  const handleDiscardDraft = async () => {
-    const userDraftKey = getDraftKey();
-    try {
-      await localforage.removeItem(userDraftKey);
-      await localforage.removeItem('gtrams_apply_draft');
-      await localforage.removeItem(`${userDraftKey}_files`);
-      localStorage.removeItem('gtrams_apply_draft');
-    } catch (err) {
-      console.error('Error clearing draft:', err);
-    }
-    setDraftResumeModal({ isOpen: false, draftData: null, savedTime: '', step: 1 });
-    setIsAgreedToTerms(false);
-    initFreshForm();
-    showToast('Draft cleared. Starting a fresh application.', 'info');
-  };
-
-  const handleClearDraft = async () => {
-    const key = getDraftKey();
-    try {
-      await localforage.removeItem(key);
-      await localforage.removeItem('gtrams_apply_draft');
-      localStorage.removeItem('gtrams_apply_draft');
-      setHasDraftRestored(false);
-      setAiScannedData({});
-      setIsAgreedToTerms(false);
-      initFreshForm();
-      showToast('Draft has been reset.', 'info');
-    } catch (err) {
-      console.error('Error resetting draft:', err);
-    }
-  };
-
-  const handleBackToDashboard = () => {
-    if (formMode === 'New' || formMode === 'Renewal') {
-      try {
-        handleSaveProgress(false);
-      } catch {
-        // ignore
-      }
-    }
-    navigate('/operator-dashboard');
-  };
-
-  const handleTopBack = () => {
-    if (currentStep > 1) {
-      prevStep();
-    } else {
-      handleBackToDashboard();
-    }
-  };
-
-  const handleReapplyClick = (franchise) => {
-    setFormMode('Re-apply');
-    setSelectedId(franchise._id);
-    setReapplyTarget(franchise);
-    navigate(`/apply-franchise?mode=reapply&step=1${franchise.rejectedField ? `&focus=${franchise.rejectedField}` : ''}`);
-    
-    const s = parseInt(searchParams.get('step') || '1', 10);
-    const validStep = (s >= 1 && s <= 5) ? s : 1;
-    setCurrentStep(validStep);
-
-    if (focusParam) {
-      setFocusField(focusParam);
-    } else if (franchise.rejectedField) {
-      setFocusField(franchise.rejectedField);
-    }
-    
-    setFormData({
-      fullName: franchise.fullName || '',
-      address: franchise.address || '',
-      zone: franchise.zone ? normalizeZone(franchise.zone) : (franchise.address ? getZoneForBarangay(franchise.address) : ''),
-      made: franchise.made || '',
-      make: franchise.make || '',
-      motorNo: franchise.motorNo || '',
-      chassisNo: franchise.chassisNo || '',
-      plateNo: franchise.plateNo || '',
-      todaName: franchise.todaName || loggedInToda,
-      dateApplied: franchise.dateApplied ? String(franchise.dateApplied).substring(0, 10) : '',
-      cedulaDate: franchise.cedulaDate ? String(franchise.cedulaDate).substring(0, 10) : '',
-      cedulaAddress: franchise.cedulaAddress || '',
-      cedulaSerialNo: franchise.cedulaSerialNo || '',
-      cedulaAmount: franchise.cedulaAmount || '',
-      orCrNo: franchise.orCrNo || '',
-      orCrExpiryDate: franchise.orCrExpiryDate ? String(franchise.orCrExpiryDate).substring(0, 10) : '',
-      isOperatorDriver: franchise.isOperatorDriver !== undefined ? Boolean(franchise.isOperatorDriver) : true,
-      driverName: franchise.driverName || '',
-      driverContact: franchise.driverContact || '',
-      driverLicenseNo: franchise.driverLicenseNo || '',
-      driverLicenseSerialNo: franchise.driverLicenseSerialNo || '',
-      driverLicenseExpiryDate: franchise.driverLicenseExpiryDate ? String(franchise.driverLicenseExpiryDate).substring(0, 10) : '',
-      driverDob: franchise.driverDob ? String(franchise.driverDob).substring(0, 10) : '',
-      driverDlCodes: franchise.driverDlCodes || '',
-      driverConditions: franchise.driverConditions || 'None',
-      driverAddress: franchise.driverAddress || '',
-      todaCertNo: franchise.todaCertNo || '',
-      todaCertDate: franchise.todaCertDate ? String(franchise.todaCertDate).substring(0, 10) : '',
-      todaSignatory: franchise.todaSignatory || '',
-      brgyClearanceNo: franchise.brgyClearanceNo || '',
-      brgyClearanceDate: franchise.brgyClearanceDate ? String(franchise.brgyClearanceDate).substring(0, 10) : '',
-      brgyIssuer: franchise.brgyIssuer || '',
-      orCrUrl: franchise.orCrUrl || '',
-      licenseUrl: franchise.licenseUrl || '',
-      todaEndorsementUrl: franchise.todaEndorsementUrl || '',
-      brgyClearanceUrl: franchise.brgyClearanceUrl || '',
-      cedulaUrl: franchise.cedulaUrl || ''
-    });
-
-    if (franchise.aiScannedData && typeof franchise.aiScannedData === 'object') {
-      setAiScannedData(franchise.aiScannedData);
-    } else {
-      setAiScannedData({});
-    }
-
-    const previews = {};
-    if (franchise.crUrl) previews.crDocument = franchise.crUrl;
-    if (franchise.orUrl) previews.orDocument = franchise.orUrl;
-    if (franchise.orCrUrl && !franchise.crUrl) previews.crDocument = franchise.orCrUrl;
-    if (franchise.licenseUrl) previews.license = franchise.licenseUrl;
-    if (franchise.licenseBackUrl) previews.licenseBack = franchise.licenseBackUrl;
-    if (franchise.todaEndorsementUrl) previews.todaEndorsement = franchise.todaEndorsementUrl;
-    if (franchise.brgyClearanceUrl) previews.brgyClearance = franchise.brgyClearanceUrl;
-    if (franchise.cedulaUrl) previews.cedulaDoc = franchise.cedulaUrl;
-    setFilePreviews(previews);
-    setUploadedDocs({});
-  };
-
-  const handleConfirmCancel = async () => {
-    if (!cancelModal.unit) return;
-    setCancelModal(prev => ({ ...prev, isSubmitting: true }));
-    const finalReason = (cancelModal.reason === 'Other reason (Please specify below)')
-      ? (cancelModal.customReason?.trim() || 'Cancelled by operator') 
-      : cancelModal.reason;
-
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${cancelModal.unit._id}/cancel`, {
-        method: 'PUT',
-        headers: { 
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ cancelReason: finalReason })
-      });
-
-      if (res.ok) {
-        setCancelModal({ isOpen: false, unit: null, reason: CANCEL_REASONS[0], customReason: '', isSubmitting: false });
-        fetchMyFranchises();
-      } else {
-        const d = await res.json();
-        setFeedbackModal({
-          isOpen: true,
-          type: 'error',
-          title: 'Cancellation Failed',
-          message: d.message || "Unable to cancel application.",
-          confirmText: 'OK',
-          onConfirm: () => setFeedbackModal(prev => ({ ...prev, isOpen: false }))
-        });
-        setCancelModal(prev => ({ ...prev, isSubmitting: false }));
-      }
-    } catch {
-      setFeedbackModal({
-        isOpen: true,
-        type: 'error',
-        title: 'Error',
-        message: 'A network error occurred while processing cancellation.',
-        confirmText: 'OK',
-        onConfirm: () => setFeedbackModal(prev => ({ ...prev, isOpen: false }))
-      });
-      setCancelModal(prev => ({ ...prev, isSubmitting: false }));
-    }
-  };
-
-  useEffect(() => {
-    fetchMyFranchises();
-
-    const fetchSettings = async () => {
-      try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/settings`);
-        if (res.ok) {
-          const json = await res.json();
-          if (json?.data?.maxUnitsPerOperator !== undefined && json?.data?.maxUnitsPerOperator !== null) {
-            const numUnits = Number(json.data.maxUnitsPerOperator) || 2;
-            setMaxAllowedUnits(numUnits);
-            localStorage.setItem('max_units_per_operator', numUnits);
-          }
-        }
-      } catch (e) {
-        console.error('Error fetching settings:', e);
-      }
-    };
-    fetchSettings();
-
-    const reapplyData = localStorage.getItem('reapply_target');
-    if (reapplyData) {
-      try {
-        const parsed = JSON.parse(reapplyData);
-        handleReapplyClick(parsed);
-        localStorage.removeItem('reapply_target');
-      } catch (e) { console.error(e); }
-    } else if (modeParam === 'new') {
-      handleStartNewApplication();
-    }
-  }, []);
-
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    if (formErrors[name]) {
-      setFormErrors(prev => {
-        const copy = { ...prev };
-        delete copy[name];
-        return copy;
-      });
-    }
-    let sanitized = value;
-    if (name === 'made') {
-      sanitized = value.replace(/\D/g, '').slice(0, 4);
-    } else if (name === 'cedulaSerialNo') {
-      sanitized = value.replace(/[^a-zA-Z0-9-]/g, '').slice(0, 20).toUpperCase();
-    } else if (['motorNo', 'chassisNo', 'plateNo', 'orCrNo', 'driverLicenseNo', 'todaCertNo', 'brgyClearanceNo'].includes(name)) {
-      sanitized = value.toUpperCase();
-    }
-
-    if (name === 'address') {
-      const autoZone = getZoneForBarangay(sanitized);
-      setFormData(prev => ({
-        ...prev,
-        address: sanitized,
-        zone: autoZone || prev.zone
-      }));
-      return;
-    }
-
-    if (name === 'zone') {
-      setFormData(prev => ({
-        ...prev,
-        zone: normalizeZone(sanitized)
-      }));
-      return;
-    }
-
-    setFormData(prev => ({ ...prev, [name]: sanitized }));
-  };
-
-  // AI OCR Scanner Engine for Operator Form
-  const triggerAiScan = async (reqId, fileArg = null) => {
-    let docType = '';
-    const lower = (reqId || '').toLowerCase();
-    if (lower === 'licenseback' || lower.includes('licenseback') || lower.includes('back')) docType = 'licenseBack';
-    else if (lower === 'license' || lower.includes('license')) docType = 'license';
-    else if (lower === 'orcrdocument' || lower.includes('orcr') || lower.includes('crfile') || lower.includes('orfile') || lower === 'cr' || lower === 'or' || lower.includes('crdocument') || lower.includes('ordocument')) docType = 'orCr';
-    else if (lower === 'todaendorsement' || lower.includes('toda')) docType = 'todaEndorsement';
-    else if (lower === 'brgyclearance' || lower.includes('brgy')) docType = 'brgyClearance';
-    else if (lower === 'ceduladoc' || lower.includes('cedula') || lower === 'cedula') docType = 'cedula';
-
-    if (!docType) return;
-
-    setAiScanning(prev => ({ ...prev, [reqId]: true }));
-    setAiSuccess(prev => ({ ...prev, [reqId]: false }));
-    setManualScanAlerts(prev => ({ ...prev, [reqId]: null, [docType]: null }));
-
-    try {
-      const scanFormData = new FormData();
-      scanFormData.append('docType', docType);
-
-      let fileToScan = fileArg || uploadedDocs[reqId] || uploadedDocs[docType];
-      const preview = filePreviews[reqId] || filePreviews[docType] || formData[`${docType === 'orCr' ? 'orCr' : docType}Url`];
-
-      if (!fileToScan && preview && typeof preview === 'string') {
-        if (preview.startsWith('blob:')) {
-          try {
-            const resp = await fetch(preview);
-            fileToScan = await resp.blob();
-          } catch (e) {
-            console.warn('Could not fetch blob for re-scan:', e);
-          }
-        } else if (preview.startsWith('http')) {
-          scanFormData.append('fileUrl', preview);
-        }
-      }
-
-      if (fileToScan) {
-        let processedFile = fileToScan;
-        try {
-          if (fileToScan.type?.startsWith('image/') || (fileToScan.name && /\.(jpe?g|png|webp)$/i.test(fileToScan.name))) {
-            processedFile = await compressImage(fileToScan, { maxWidth: 1600, maxHeight: 1600, quality: 0.82 });
-          }
-        } catch (compErr) {
-          console.warn('Client-side compression skipped:', compErr);
-        }
-        scanFormData.append('file', processedFile, 'document.jpg');
-        // Pre-read base64 client-side to eliminate extra remote Cloudinary re-fetch
-        try {
-          const base64Data = await new Promise((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result);
-            reader.onerror = () => resolve(null);
-            reader.readAsDataURL(processedFile);
-          });
-          if (base64Data) {
-            scanFormData.append('base64', base64Data);
-          }
-        } catch (err) {
-          console.warn('Local base64 conversion skipped:', err);
-        }
-      }
-
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/scan-document`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: scanFormData
-      });
-
-      if (res.ok) {
-        const json = await res.json();
-        if (json.success && json.data) {
-          const d = json.data;
-
-          if (json.fileUrl) {
-            const urlKeyMap = {
-              orCr: 'orCrUrl',
-              crFile: 'crUrl',
-              orFile: 'orUrl',
-              crDocument: 'crUrl',
-              orDocument: 'orUrl',
-              license: 'licenseUrl',
-              licenseBack: 'licenseBackUrl',
-              todaEndorsement: 'todaEndorsementUrl',
-              brgyClearance: 'brgyClearanceUrl',
-              cedula: 'cedulaUrl'
-            };
-            const targetField = urlKeyMap[reqId] || urlKeyMap[docType] || 'orCrUrl';
-            setFormData(prev => ({ 
-              ...prev, 
-              [targetField]: json.fileUrl,
-              orCrUrl: prev.orCrUrl || json.fileUrl 
-            }));
-          }
-
-          if (docType === 'licenseBack') {
-            const hasData = d.serialNo || d.conditions || d.dlCodes;
-            if (hasData) {
-              setAiScannedData(prev => ({
-                ...prev,
-                licenseBack: {
-                  serialNo: d.serialNo ? String(d.serialNo).toUpperCase() : '',
-                  conditions: d.conditions || '',
-                  dlCodes: d.dlCodes || '',
-                  scannedAt: new Date().toISOString()
-                }
-              }));
-
-              setFormData(prev => ({
-                ...prev,
-                driverLicenseSerialNo: d.serialNo ? String(d.serialNo).toUpperCase() : prev.driverLicenseSerialNo,
-                driverConditions: d.conditions || prev.driverConditions,
-                driverDlCodes: d.dlCodes || prev.driverDlCodes
-              }));
-              setAiSuccess(prev => ({ ...prev, [reqId]: true }));
-              showToast("AI Scan: Driver's License Back Serial Number detected.", 'success');
-              scrollToField('driverLicenseSerialNo');
-            } else {
-              showToast("Document attached. Back serial number was unclear — please enter manually if visible.", 'info');
-            }
-          } else if (docType === 'license') {
-            const hasData = d.licenseNo || d.driverName || d.expiryDate || d.dateOfBirth || d.dlCodes || d.address;
-            if (hasData) {
-              const normExpiry = d.expiryDate ? normalizeDateStr(d.expiryDate) : '';
-              const normDob = d.dateOfBirth ? normalizeDateStr(d.dateOfBirth) : '';
-              const today = new Date().toISOString().split('T')[0];
-              const isExpired = normExpiry && normExpiry < today;
-
-              setAiScannedData(prev => ({
-                ...prev,
-                license: {
-                  licenseNo: d.licenseNo ? String(d.licenseNo).toUpperCase() : (prev.license?.licenseNo || ''),
-                  expiryDate: normExpiry || (prev.license?.expiryDate || ''),
-                  dateOfBirth: normDob || (prev.license?.dateOfBirth || ''),
-                  dlCodes: d.dlCodes || (prev.license?.dlCodes || ''),
-                  driverName: d.driverName || (prev.license?.driverName || ''),
-                  address: d.address || (prev.license?.address || ''),
-                  isExpired: Boolean(isExpired),
-                  scannedAt: new Date().toISOString()
-                }
-              }));
-
-              setFormData(prev => ({
-                ...prev,
-                fullName: (!prev.fullName && d.driverName) ? d.driverName : prev.fullName,
-                driverLicenseNo: d.licenseNo ? String(d.licenseNo).toUpperCase() : prev.driverLicenseNo,
-                driverLicenseExpiryDate: normExpiry || prev.driverLicenseExpiryDate,
-                driverDob: normDob || prev.driverDob,
-                driverDlCodes: d.dlCodes || prev.driverDlCodes,
-                driverConditions: d.conditions || prev.driverConditions || 'None',
-                driverAddress: d.address || prev.driverAddress || '',
-                driverNationality: d.nationality || prev.driverNationality || 'Filipino',
-                driverSex: d.sex || prev.driverSex || '',
-                driverName: (!prev.isOperatorDriver && d.driverName) ? d.driverName : (prev.driverName || d.driverName)
-              }));
-              setAiSuccess(prev => ({ ...prev, [reqId]: true }));
-
-              // Validate name match between license and applicant / designated driver
-              const targetName = formData.isOperatorDriver ? formData.fullName : formData.driverName;
-              if (d.driverName && targetName) {
-                const cleanScanned = String(d.driverName).toUpperCase().replace(/[^A-Z]/g, '');
-                const cleanTarget = String(targetName).toUpperCase().replace(/[^A-Z]/g, '');
-                if (cleanScanned && cleanTarget && !cleanScanned.includes(cleanTarget) && !cleanTarget.includes(cleanScanned)) {
-                  showToast(`Notice: Name on driver's license (${d.driverName}) differs from ${formData.isOperatorDriver ? 'applicant' : 'driver'} (${targetName}).`, 'warning');
-                }
-              }
-
-              if (isExpired) {
-                showValidationModal(
-                  'driverLicenseExpiryDate',
-                  "Driver's License Expired",
-                  `The scanned Driver's License has expired (validity ended on ${normExpiry}). An active, unexpired license is required by the Sangguniang Bayan Franchising Office. Please verify or update the license.`
-                );
-              } else {
-                showToast("AI Scan: Driver's License details detected.", 'success');
-              }
-              scrollToField('driverLicenseNo');
-            } else {
-              showToast("Document attached. Text was unclear for auto-fill — please type details manually.", 'info');
-            }
-          } else if (docType === 'orCr') {
-            const hasData = d.plateNo || d.motorNo || d.engineNo || d.chassisNo || d.make || d.year || d.yearModel || d.orCrNo || d.crNo || d.orNo || d.ownerName;
-            if (hasData) {
-              const normExpiry = d.expiryDate ? normalizeDateStr(d.expiryDate) : '';
-              const normOrDate = d.orDate ? normalizeDateStr(d.orDate) : '';
-              const normCrDate = d.crDate ? normalizeDateStr(d.crDate) : '';
-              const today = new Date().toISOString().split('T')[0];
-              const isExpired = normExpiry && normExpiry < today;
-
-              const finalPlate = d.plateNo ? String(d.plateNo).toUpperCase() : '';
-              const finalMotor = (d.motorNo || d.engineNo) ? String(d.motorNo || d.engineNo).toUpperCase() : '';
-              const finalChassis = d.chassisNo ? String(d.chassisNo).toUpperCase() : '';
-              const finalMake = d.make ? String(d.make).toUpperCase() : '';
-              const finalSeries = d.series ? String(d.series).toUpperCase() : '';
-              const finalYear = d.yearModel || d.year ? String(d.yearModel || d.year) : '';
-              const finalCrNo = d.crNo ? String(d.crNo).toUpperCase() : '';
-              const finalOrNo = (d.orNo || d.orCrNo) ? String(d.orNo || d.orCrNo).toUpperCase() : '';
-              const finalColor = d.color ? String(d.color).toUpperCase() : '';
-              const finalOwner = d.ownerName ? String(d.ownerName).toUpperCase() : '';
-              const finalOwnerAddress = d.ownerAddress || '';
-
-              setAiScannedData(prev => ({
-                ...prev,
-                orCr: {
-                  plateNo: finalPlate,
-                  motorNo: finalMotor,
-                  chassisNo: finalChassis,
-                  make: finalMake,
-                  series: finalSeries,
-                  year: finalYear,
-                  orCrNo: finalOrNo,
-                  crNo: finalCrNo,
-                  crDate: normCrDate,
-                  orDate: normOrDate,
-                  color: finalColor,
-                  fileNo: d.fileNo || '',
-                  ownerName: finalOwner,
-                  ownerAddress: finalOwnerAddress,
-                  displacement: d.pistonDisplacement || d.displacement || '',
-                  pistonDisplacement: d.pistonDisplacement || d.displacement || '',
-                  grossWeight: d.grossWeight || '',
-                  fuelType: d.fuelType || 'GASOLINE',
-                  bodyType: d.bodyType || 'MOTORCYCLE WITH SIDECAR',
-                  vehicleType: d.vehicleType || 'TRICYCLE / MOTORCYCLE',
-                  passengerCapacity: d.passengerCapacity || '4',
-                  expiryDate: normExpiry || '',
-                  isExpired: Boolean(isExpired),
-                  scannedAt: new Date().toISOString()
-                }
-              }));
-
-              setFormData(prev => ({
-                ...prev,
-                plateNo: finalPlate || prev.plateNo,
-                motorNo: finalMotor || prev.motorNo,
-                chassisNo: finalChassis || prev.chassisNo,
-                make: finalMake || prev.make,
-                made: finalYear || prev.made,
-                series: finalSeries || prev.series,
-                yearModel: finalYear || prev.yearModel,
-                orCrNo: finalOrNo || prev.orCrNo,
-                orNo: finalOrNo || prev.orNo,
-                crNo: finalCrNo || prev.crNo,
-                crDate: normCrDate || prev.crDate,
-                orDate: normOrDate || prev.orDate,
-                color: finalColor || prev.color,
-                fileNo: d.fileNo || prev.fileNo,
-                vehicleType: d.vehicleType || prev.vehicleType,
-                vehicleCategory: d.vehicleCategory || prev.vehicleCategory,
-                classification: d.classification || prev.classification,
-                bodyType: d.bodyType || prev.bodyType,
-                displacement: d.pistonDisplacement || d.displacement || prev.displacement,
-                grossWeight: d.grossWeight || prev.grossWeight,
-                fuelType: d.fuelType || prev.fuelType,
-                passengerCapacity: d.passengerCapacity || prev.passengerCapacity,
-                registeredOwner: finalOwner || prev.registeredOwner,
-                ownerAddress: finalOwnerAddress || prev.ownerAddress,
-                orCrExpiryDate: normExpiry || prev.orCrExpiryDate
-              }));
-              setAiSuccess(prev => ({ ...prev, [reqId]: true }));
-
-              // Check if CR owner name matches applicant name
-              if (finalOwner && formData.fullName) {
-                const cleanOwner = finalOwner.replace(/[^A-Z]/g, '');
-                const cleanApplicant = formData.fullName.toUpperCase().replace(/[^A-Z]/g, '');
-                if (cleanOwner && cleanApplicant && !cleanOwner.includes(cleanApplicant) && !cleanApplicant.includes(cleanOwner)) {
-                  showToast(`Notice: Registered owner on CR (${finalOwner}) does not match applicant name (${formData.fullName}).`, 'warning');
-                }
-              }
-
-              if (isExpired) {
-                showValidationModal(
-                  'orCrExpiryDate',
-                  "LTO Registration Expired",
-                  `The scanned vehicle registration has expired (validity ended on ${normExpiry}). Please renew with the LTO before applying for a franchise.`
-                );
-              } else {
-                showToast("AI Scan: Complete vehicle details from LTO CR/OR extracted successfully.", 'success');
-              }
-              scrollToField('plateNo');
-            } else {
-              showToast("Document attached. Vehicle serials were unclear — please enter Plate, Motor, and Chassis manually.", 'info');
-            }
-          } else if (docType === 'todaEndorsement') {
-            const hasData = d.certNo || d.signatory || d.todaName || d.dateIssued;
-            if (hasData) {
-              setAiScannedData(prev => ({
-                ...prev,
-                todaEndorsement: {
-                  certNo: d.certNo ? String(d.certNo).toUpperCase() : '',
-                  signatory: d.signatory || '',
-                  todaName: d.todaName || '',
-                  dateIssued: d.dateIssued ? normalizeDateStr(d.dateIssued) : '',
-                  scannedAt: new Date().toISOString()
-                }
-              }));
-              setFormData(prev => ({
-                ...prev,
-                todaCertNo: d.certNo ? String(d.certNo).toUpperCase() : prev.todaCertNo,
-                todaSignatory: d.signatory || prev.todaSignatory,
-                todaCertDate: d.dateIssued ? normalizeDateStr(d.dateIssued) : prev.todaCertDate
-              }));
-              setAiSuccess(prev => ({ ...prev, [reqId]: true }));
-              showToast("AI Scan: TODA Certificate details detected.", 'success');
-              scrollToField('todaCertNo');
-            } else {
-              showToast("Document attached. Please verify TODA Certificate No manually.", 'info');
-            }
-          } else if (docType === 'brgyClearance') {
-            const hasData = d.barangay || d.clearanceNo || d.issuer || d.dateIssued;
-            if (hasData) {
-              setAiScannedData(prev => ({
-                ...prev,
-                brgyClearance: {
-                  clearanceNo: d.clearanceNo ? String(d.clearanceNo).toUpperCase() : '',
-                  barangay: d.barangay || '',
-                  issuer: d.issuer || '',
-                  dateIssued: d.dateIssued ? normalizeDateStr(d.dateIssued) : '',
-                  scannedAt: new Date().toISOString()
-                }
-              }));
-              setFormData(prev => {
-                const detectedBrgy = d.barangay ? normalizeBarangayName(d.barangay) : prev.address;
-                const autoZone = detectedBrgy ? getZoneForBarangay(detectedBrgy) : prev.zone;
-                return {
-                  ...prev,
-                  address: detectedBrgy || prev.address,
-                  zone: autoZone || prev.zone,
-                  brgyClearanceNo: d.clearanceNo ? String(d.clearanceNo).toUpperCase() : prev.brgyClearanceNo,
-                  brgyClearanceDate: d.dateIssued ? normalizeDateStr(d.dateIssued) : prev.brgyClearanceDate,
-                  brgyIssuer: d.issuer || prev.brgyIssuer
-                };
-              });
-              setAiSuccess(prev => ({ ...prev, [reqId]: true }));
-              showToast("AI Scan: Barangay Clearance details detected.", 'success');
-              scrollToField('brgyClearanceNo');
-            } else {
-              showToast("Document attached. Please verify Barangay Clearance details manually.", 'info');
-            }
-          } else if (docType === 'cedula') {
-            const hasData = d.serialNo || d.ctcNo || d.dateIssued || d.placeIssued || d.placeOfIssue || d.fullName || d.taxpayerName || d.address;
-            if (hasData) {
-              const fullSerial = String(d.serialNo || d.ctcNo || '').trim().toUpperCase();
-              const dateStr = d.dateIssued ? normalizeDateStr(d.dateIssued) : '';
-              const placeStr = d.placeIssued || d.placeOfIssue || d.address || 'Gasan, Marinduque';
-              const fullNameStr = d.fullName || d.taxpayerName || '';
-              const rawAmount = d.totalAmountPaid !== undefined && d.totalAmountPaid !== null ? String(d.totalAmountPaid).replace(/[^0-9.]/g, '') : '';
-              const amountNum = rawAmount ? parseFloat(rawAmount) : 55.00;
-
-              setAiScannedData(prev => ({
-                ...prev,
-                cedula: {
-                  serialNo: fullSerial,
-                  ctcNo: d.ctcNo ? String(d.ctcNo) : fullSerial,
-                  year: d.year || '2026',
-                  dateIssued: dateStr,
-                  placeIssued: placeStr,
-                  fullName: fullNameStr,
-                  lastName: d.lastName || '',
-                  firstName: d.firstName || '',
-                  middleName: d.middleName || '',
-                  address: d.address || '',
-                  tin: d.tin || '',
-                  sex: d.sex || '',
-                  citizenship: d.citizenship || 'Filipino',
-                  icrNo: d.icrNo || '',
-                  placeOfBirth: d.placeOfBirth || '',
-                  dateOfBirth: d.dateOfBirth ? normalizeDateStr(d.dateOfBirth) : '',
-                  civilStatus: d.civilStatus || '',
-                  profession: d.profession || '',
-                  height: d.height || '',
-                  weight: d.weight || '',
-                  basicCommunityTax: d.basicCommunityTax || '',
-                  additionalTax: d.additionalTax || '',
-                  interest: d.interest || '',
-                  totalAmountPaid: d.totalAmountPaid || '55.00',
-                  treasurer: d.treasurer || '',
-                  scannedAt: new Date().toISOString()
-                }
-              }));
-              setFormData(prev => ({
-                ...prev,
-                cedulaSerialNo: fullSerial || prev.cedulaSerialNo,
-                cedulaDate: dateStr || prev.cedulaDate,
-                cedulaAddress: placeStr || prev.cedulaAddress,
-                cedulaAmount: (amountNum !== '' && !isNaN(amountNum)) ? amountNum : prev.cedulaAmount,
-                cedulaYear: d.year || prev.cedulaYear || '2026',
-                cedulaPlaceIssued: placeStr || prev.cedulaPlaceIssued || 'Gasan, Marinduque',
-                cedulaFullName: fullNameStr || prev.cedulaFullName || '',
-                cedulaCitizenship: d.citizenship || prev.cedulaCitizenship || 'Filipino',
-                cedulaCivilStatus: d.civilStatus || prev.cedulaCivilStatus || '',
-                cedulaProfession: d.profession || prev.cedulaProfession || '',
-                cedulaDob: d.dateOfBirth ? normalizeDateStr(d.dateOfBirth) : prev.cedulaDob || '',
-                cedulaPlaceOfBirth: d.placeOfBirth || prev.cedulaPlaceOfBirth || '',
-                cedulaSex: d.sex || prev.cedulaSex || '',
-                cedulaHeight: d.height || prev.cedulaHeight || '',
-                cedulaWeight: d.weight || prev.cedulaWeight || '',
-                cedulaTin: d.tin || prev.cedulaTin || '',
-                cedulaDetails: d
-              }));
-              setAiSuccess(prev => ({ ...prev, [reqId]: true }));
-              showToast("AI Scan: Complete Cedula (CTC) details detected.", 'success');
-              scrollToField('cedulaSerialNo');
-            } else {
-              showToast("Document attached. Please enter Cedula Serial Number manually.", 'info');
-            }
-          }
-        } else {
-          // Document remains attached! User is explicitly prompted to enter details manually
-          const manualMsg = json.message || 'Naka-attach na ang dokumento. Hindi ito awtomatikong na-scan — paki-type nang manual ang mga detalye sa mga kahon sa ibaba.';
-          setManualScanAlerts(prev => ({ ...prev, [reqId]: manualMsg, [docType]: manualMsg }));
-          showToast(manualMsg, 'warning');
-        }
-      } else {
-        const manualMsg = 'Naka-attach na ang dokumento. Hindi ito awtomatikong na-scan — paki-type nang manual ang mga detalye sa mga kahon sa ibaba.';
-        setManualScanAlerts(prev => ({ ...prev, [reqId]: manualMsg, [docType]: manualMsg }));
-        showToast(manualMsg, 'warning');
-      }
-    } catch (err) {
-      console.warn('AI Scan network notice:', err);
-      const manualMsg = 'Naka-attach na ang dokumento. Hindi ito awtomatikong na-scan — paki-type nang manual ang mga detalye sa mga kahon sa ibaba.';
-      setManualScanAlerts(prev => ({ ...prev, [reqId]: manualMsg, [docType]: manualMsg }));
-      showToast(manualMsg, 'warning');
-    } finally {
-      setAiScanning(prev => ({ ...prev, [reqId]: false }));
-    }
-  };
-
-  // Immediate AI Scanner State Reset for individual document slots
-  const resetScanState = (reqId) => {
-    if (!reqId) return;
-    const lower = reqId.toLowerCase();
-
-    // 1. Reset scan status flags
-    setAiSuccess(prev => ({ ...prev, [reqId]: false }));
-    setAiScanning(prev => ({ ...prev, [reqId]: false }));
-    setManualScanAlerts(prev => ({ ...prev, [reqId]: null }));
-
-    // 2. Clear tracked raw OCR data
-    setAiScannedData(prev => {
-      const copy = { ...prev };
-      if (lower.includes('licenseback') || lower.includes('back')) {
-        delete copy.licenseBack;
-      } else if (lower.includes('license')) {
-        delete copy.license;
-      } else if (lower.includes('cr') || lower.includes('or') || lower.includes('orcr')) {
-        delete copy.orCr;
-      } else if (lower.includes('cedula')) {
-        delete copy.cedula;
-      } else if (lower.includes('toda')) {
-        delete copy.todaEndorsement;
-      } else if (lower.includes('brgy')) {
-        delete copy.brgyClearance;
-      }
-      return copy;
-    });
-
-    // 3. Clear auto-populated form fields corresponding to this document type
-    setFormData(prev => {
-      const copy = { ...prev };
-      if (lower.includes('cr') || lower.includes('or') || lower.includes('orcr')) {
-        copy.plateNo = '';
-        copy.motorNo = '';
-        copy.chassisNo = '';
-        copy.make = '';
-        copy.made = '';
-        copy.series = '';
-        copy.yearModel = '';
-        copy.orCrNo = '';
-        copy.orNo = '';
-        copy.crNo = '';
-        copy.crDate = '';
-        copy.orDate = '';
-        copy.color = '';
-        copy.fileNo = '';
-        copy.vehicleType = '';
-        copy.vehicleCategory = '';
-        copy.classification = '';
-        copy.bodyType = '';
-        copy.displacement = '';
-        copy.grossWeight = '';
-        copy.fuelType = '';
-        copy.passengerCapacity = '';
-        copy.registeredOwner = '';
-        copy.ownerAddress = '';
-        copy.orCrExpiryDate = '';
-      } else if (lower.includes('licenseback') || lower.includes('back')) {
-        copy.driverLicenseSerialNo = '';
-      } else if (lower.includes('license')) {
-        copy.driverLicenseNo = '';
-        copy.driverLicenseExpiryDate = '';
-        copy.driverDob = '';
-        copy.driverDlCodes = '';
-        copy.driverConditions = 'None';
-        copy.driverAddress = '';
-        copy.driverNationality = 'Filipino';
-        copy.driverSex = '';
-        if (!prev.isOperatorDriver) {
-          copy.driverName = '';
-        }
-      } else if (lower.includes('cedula')) {
-        copy.cedulaSerialNo = '';
-        copy.cedulaDate = '';
-        copy.cedulaAddress = '';
-        copy.cedulaAmount = '';
-        copy.cedulaYear = '';
-        copy.cedulaPlaceIssued = '';
-        copy.cedulaFullName = '';
-        copy.cedulaCitizenship = '';
-        copy.cedulaCivilStatus = '';
-        copy.cedulaProfession = '';
-        copy.cedulaDob = '';
-        copy.cedulaPlaceOfBirth = '';
-        copy.cedulaSex = '';
-        copy.cedulaHeight = '';
-        copy.cedulaWeight = '';
-        copy.cedulaTin = '';
-        copy.cedulaDetails = null;
-      } else if (lower.includes('toda')) {
-        copy.todaCertNo = '';
-        copy.todaSignatory = '';
-        copy.todaCertDate = '';
-      } else if (lower.includes('brgy')) {
-        copy.brgyClearanceNo = '';
-        copy.brgyClearanceDate = '';
-        copy.brgyIssuer = '';
-      }
-      return copy;
-    });
-
-    // 4. Clear field-level validation errors
-    setFormErrors(prev => {
-      const copy = { ...prev };
-      delete copy[reqId];
-      return copy;
-    });
-  };
-
-  const handleRescan = (reqId) => {
-    showToast('Re-scanning document with AI...', 'info');
-    triggerAiScan(reqId);
-  };
-
-  const handleFileChange = (reqId, file) => {
-    if (file) {
-      // Immediately wipe previous OCR results & auto-filled fields when new file is selected
-      resetScanState(reqId);
-
-      if (formErrors[reqId]) {
-        setFormErrors(prev => {
-          const copy = { ...prev };
-          delete copy[reqId];
-          return copy;
-        });
-      }
-      if (file.size > 10 * 1024 * 1024) {
-        showValidationModal(reqId, 'File Exceeds Size Limit', 'Document file is too large. Maximum allowed size is 10MB.');
-        return;
-      }
-      setFilePreviews(prev => {
-        if (prev[reqId] && typeof prev[reqId] === 'string' && prev[reqId].startsWith('blob:')) {
-          URL.revokeObjectURL(prev[reqId]);
-        }
-        return { ...prev, [reqId]: URL.createObjectURL(file) };
-      });
-      setUploadedDocs(prev => ({ ...prev, [reqId]: file }));
-
-      // Trigger automatic smart AI scanning
-      triggerAiScan(reqId, file);
-    }
-  };
-
-  const handleRemoveFile = (reqId, e) => {
-    if (e?.preventDefault) e.preventDefault();
-    if (e?.stopPropagation) e.stopPropagation();
-    
-    // Wipe scan states and values
-    resetScanState(reqId);
-
-    setUploadedDocs(prev => {
-      const copy = { ...prev };
-      delete copy[reqId];
-      return copy;
-    });
-    
-    setFilePreviews(prev => {
-      if (prev[reqId] && typeof prev[reqId] === 'string' && prev[reqId].startsWith('blob:')) {
-        URL.revokeObjectURL(prev[reqId]);
-      }
-      const copy = { ...prev };
-      delete copy[reqId];
-      return copy;
-    });
-
-    setFormErrors(prev => {
-      const copy = { ...prev };
-      delete copy[reqId];
-      return copy;
-    });
-  };
-
-  // Real-time debounced duplicate checker (Step 2)
-  useEffect(() => {
-    if (currentStep !== 2) return;
-    if (formMode !== 'New' && formMode !== 'Re-apply') return;
-
-    const fieldsToCheck = [
-      { name: 'plateNo', value: formData.plateNo, label: 'Plate Number' },
-      { name: 'motorNo', value: formData.motorNo, label: 'Motor Number' },
-      { name: 'chassisNo', value: formData.chassisNo, label: 'Chassis Number' }
-    ];
-
-    const timers = fieldsToCheck.map(({ name, value, label }) => {
-      const trimmed = (value || '').trim();
-      if (!trimmed || trimmed.length < 3) {
-        setDuplicateStatus(prev => ({
-          ...prev,
-          [name]: { checking: false, duplicate: false, message: '' }
-        }));
-        return null;
-      }
-
-      return setTimeout(async () => {
-        setDuplicateStatus(prev => ({
-          ...prev,
-          [name]: { ...prev[name], checking: true }
-        }));
-        try {
-          const res = await fetch(
-            `${import.meta.env.VITE_API_URL}/api/v1/franchises/check-unique?field=${name}&value=${encodeURIComponent(trimmed)}${selectedId ? `&excludeId=${selectedId}` : ''}`,
-            { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }
-          );
-          if (res.ok) {
-            const data = await res.json();
-            const isUnique = data.unique !== undefined ? Boolean(data.unique) : Boolean(data.isUnique);
-            const isDuplicate = !isUnique;
-            setDuplicateStatus(prev => ({
-              ...prev,
-              [name]: {
-                checking: false,
-                duplicate: isDuplicate,
-                message: isUnique 
-                  ? `${label} is available.` 
-                  : (data.message || `This ${label.toLowerCase()} is already registered to another unit.`)
-              }
-            }));
-          } else {
-            setDuplicateStatus(prev => ({
-              ...prev,
-              [name]: { checking: false, duplicate: false, message: '' }
-            }));
-          }
-        } catch {
-          setDuplicateStatus(prev => ({
-            ...prev,
-            [name]: { checking: false, duplicate: false, message: '' }
-          }));
-        }
-      }, 500);
-    });
-
-    return () => {
-      timers.forEach(t => t && clearTimeout(t));
-    };
-  }, [formData.plateNo, formData.motorNo, formData.chassisNo, currentStep, formMode, selectedId]);
-
-  // Validation before proceeding to next step
-  const validateCurrentStep = () => {
-    const today = new Date().toISOString().split('T')[0];
-
-    if (currentStep === 1) {
-      if (!formData.fullName?.trim()) {
-        showValidationModal('fullName', 'Operator Full Name Required', 'Please enter the complete name of the tricycle operator.');
-        return false;
-      }
-      if (!formData.address?.trim()) {
-        showValidationModal('address', 'Barangay Address Required', 'Please select your official Barangay of residence in Gasan.');
-        return false;
-      }
-      if (!formData.isOperatorDriver) {
-        if (!formData.driverName?.trim()) {
-          showValidationModal('driverName', "Driver's Name Required", 'Please enter the full name of the hired or designated driver.');
-          return false;
-        }
-        if (!formData.driverContact?.trim()) {
-          showValidationModal('driverContact', "Driver's Contact Number Required", 'Please enter an active contact number for the designated driver.');
-          return false;
-        }
-      }
-      
-      const hasLicense = uploadedDocs.license || filePreviews.license || formData.licenseUrl;
-      if (!hasLicense) {
-        showValidationModal('license', "Driver's License Upload Required", "Please upload a clear photo or copy of the driver's license (Front).");
-        return false;
-      }
-      if (!formData.driverLicenseNo?.trim()) {
-        showValidationModal('driverLicenseNo', "Driver's License Number Required", "Please enter or scan the official Driver's License Number.");
-        return false;
-      }
-      if (!formData.driverLicenseExpiryDate) {
-        showValidationModal('driverLicenseExpiryDate', "License Expiry Date Required", "Please select or verify the Driver's License expiration date.");
-        return false;
-      }
-      if (formData.driverLicenseExpiryDate < today) {
-        showValidationModal('driverLicenseExpiryDate', "Driver's License Expired", `The Driver's License expired on ${formData.driverLicenseExpiryDate}. An active, unexpired license is required.`);
-        return false;
-      }
-      return true;
-    }
-
-    if (currentStep === 2) {
-      const hasCr = uploadedDocs.crDocument || uploadedDocs.crFile || filePreviews.crDocument || formData.crUrl || uploadedDocs.orCrDocument || filePreviews.orCrDocument || formData.orCrUrl;
-      const hasOr = uploadedDocs.orDocument || uploadedDocs.orFile || filePreviews.orDocument || formData.orUrl || uploadedDocs.orCrDocument || filePreviews.orCrDocument || formData.orCrUrl;
-      if (!hasCr) {
-        showValidationModal('crDocument', 'LTO Certificate of Registration (CR) Required', 'Please upload your LTO Certificate of Registration (CR) to verify vehicle ownership and specifications.');
-        return false;
-      }
-      if (!hasOr) {
-        showValidationModal('orDocument', 'LTO Official Receipt (OR) Required', 'Please upload your latest LTO Official Receipt (OR) to verify registration validity.');
-        return false;
-      }
-      if (!formData.make?.trim()) {
-        showValidationModal('make', 'Vehicle Make Required', 'Please enter or select the vehicle make and model (e.g. Honda TMX 125).');
-        return false;
-      }
-      if (!formData.made?.trim()) {
-        showValidationModal('made', 'Model Year Required', 'Please enter the 4-digit model year of the vehicle.');
-        return false;
-      }
-      if (!formData.zone?.trim()) {
-        showValidationModal('zone', 'Municipal Route / Zone Required', 'Please select the authorized Route Zone for this franchise.');
-        return false;
-      }
-      if (!formData.plateNo?.trim()) {
-        showValidationModal('plateNo', 'Plate Number Required', 'Please enter the official Plate Number or MV File Number.');
-        return false;
-      }
-      if (!formData.motorNo?.trim()) {
-        showValidationModal('motorNo', 'Engine / Motor Number Required', 'Please enter the Engine / Motor Number from your OR/CR.');
-        return false;
-      }
-      if (!formData.chassisNo?.trim()) {
-        showValidationModal('chassisNo', 'Chassis Serial Number Required', 'Please enter the Chassis Serial Number / VIN.');
-        return false;
-      }
-      if (!formData.orCrExpiryDate) {
-        showValidationModal('orCrExpiryDate', 'LTO Registration Expiry Date Required', 'Please enter or verify the registration expiration date from your LTO OR.');
-        return false;
-      }
-      if (formData.orCrExpiryDate < today) {
-        showValidationModal('orCrExpiryDate', 'LTO Registration Expired', `The LTO OR/CR expired on ${formData.orCrExpiryDate}. Please renew vehicle registration with LTO.`);
-        return false;
-      }
-      if (duplicateStatus.plateNo.duplicate) {
-        showValidationModal('plateNo', 'Duplicate Plate Number', duplicateStatus.plateNo.message || 'This plate number is already registered to another unit.');
-        return false;
-      }
-      if (duplicateStatus.motorNo.duplicate) {
-        showValidationModal('motorNo', 'Duplicate Motor Number', duplicateStatus.motorNo.message || 'This motor number is already registered to another unit.');
-        return false;
-      }
-      if (duplicateStatus.chassisNo.duplicate) {
-        showValidationModal('chassisNo', 'Duplicate Chassis Number', duplicateStatus.chassisNo.message || 'This chassis number is already registered to another unit.');
-        return false;
-      }
-      return true;
-    }
-
-    if (currentStep === 3) {
-      const hasToda = uploadedDocs.todaEndorsement || filePreviews.todaEndorsement || formData.todaEndorsementUrl;
-      const hasBrgy = uploadedDocs.brgyClearance || filePreviews.brgyClearance || formData.brgyClearanceUrl;
-      const currentToda = formData.todaName || loggedInToda;
-      const isNotVerifiedInRoster = todaMembershipStatus && todaMembershipStatus.todaStatus !== 'verified_member' && currentToda && currentToda !== 'NON-TODA';
-
-      if (!hasToda) {
-        if (isNotVerifiedInRoster) {
-          showValidationModal(
-            'todaEndorsement',
-            'TODA Endorsement Certificate Strictly Required',
-            `Operator "${formData.fullName}" is not verified in the approved digital masterlist of ${currentToda}. Because your name is not listed in the online roster, uploading an official physical TODA Endorsement Certificate signed by the TODA President is strictly required.`
-          );
-          return false;
-        } else {
-          showValidationModal('todaEndorsement', 'TODA Endorsement Required', 'Please upload the TODA Endorsement Certificate issued by your association.');
-          return false;
-        }
-      }
-      if (!formData.todaCertNo?.trim()) {
-        showValidationModal('todaCertNo', 'TODA Certificate Number Required', 'Please enter or scan the TODA Endorsement Certificate / Control Number.');
-        return false;
-      }
-      if (!formData.todaCertDate) {
-        showValidationModal('todaCertDate', 'TODA Date Issued Required', 'Please enter or verify the issuance date of the TODA Certificate.');
-        return false;
-      }
-
-      if (!hasBrgy) {
-        showValidationModal('brgyClearance', 'Barangay Clearance Required', 'Please upload the Barangay Clearance document.');
-        return false;
-      }
-      if (!formData.brgyClearanceNo?.trim()) {
-        showValidationModal('brgyClearanceNo', 'Barangay Clearance Number Required', 'Please enter or scan the Barangay Clearance Control Number.');
-        return false;
-      }
-      if (!formData.brgyClearanceDate) {
-        showValidationModal('brgyClearanceDate', 'Barangay Clearance Date Required', 'Please enter or verify the date the Barangay Clearance was issued.');
-        return false;
-      }
-      if (!formData.brgyIssuer?.trim()) {
-        showValidationModal('brgyIssuer', 'Punong Barangay / Issuing Official Required', 'Please enter or verify the issuing official / Punong Barangay name.');
-        return false;
-      }
-      return true;
-    }
-
-    if (currentStep === 4) {
-      const currentYear = new Date().getFullYear();
-      if (!formData.cedulaSerialNo?.trim()) {
-        showValidationModal('cedulaSerialNo', 'Cedula Serial Number Required', 'Please enter or scan the Community Tax Certificate (Cedula) Serial Number.');
-        return false;
-      }
-      if (!formData.cedulaDate) {
-        showValidationModal('cedulaDate', 'Cedula Date Issued Required', 'Please enter or verify the Cedula Date Issued.');
-        return false;
-      }
-      const cedulaYear = new Date(formData.cedulaDate).getFullYear();
-      if (cedulaYear < currentYear) {
-        showValidationModal('cedulaDate', 'Cedula Expired', `Cedula for year ${cedulaYear} is expired. A valid Cedula for ${currentYear} is required.`);
-        return false;
-      }
-
-      if (formMode === 'New') {
-        const hasCedula = uploadedDocs.cedulaDoc || uploadedDocs.cedula || filePreviews.cedulaDoc || filePreviews.cedula || formData.cedulaUrl;
-        if (!hasCedula) {
-          showValidationModal('cedulaDoc', 'Cedula Document Required', 'Community Tax Certificate (Cedula) document upload is required.');
-          return false;
-        }
-      }
-      return true;
-    }
-
-    if (currentStep === 5) {
-      if (!isAgreedToTerms) {
-        showValidationModal(
-          'confirm-authenticity-checkbox',
-          'Confirmation Required',
-          'Please check the Affidavit of Authenticity box to certify that all submitted information and documents are true and correct.'
-        );
-        return false;
-      }
-      return true;
-    }
-
-    return true;
-  };
-
-  const nextStep = () => {
-    if (!validateCurrentStep()) return;
-    if (currentStep < 5) {
-      setSlideDirection('forward');
-      const nextS = currentStep + 1;
-      setCurrentStep(nextS);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      const currentMode = (formMode || 'New').toLowerCase();
-      navigate(`?mode=${currentMode}&step=${nextS}`);
-    }
-  };
-
-  const prevStep = () => {
-    if (currentStep > 1) {
-      setSlideDirection('backward');
-      const prevS = currentStep - 1;
-      setCurrentStep(prevS);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      const currentMode = (formMode || 'New').toLowerCase();
-      navigate(`?mode=${currentMode}&step=${prevS}`);
-    }
-  };
-
-  // AI OCR Discrepancy Analysis (Detects if applicant edited scanned data or expired dates)
-  const getAiDiscrepancies = (currForm = formData, currAi = aiScannedData) => {
-    const discrepancies = [];
-    const today = new Date().toISOString().split('T')[0];
-    const form = currForm || {};
-    const ai = currAi || {};
-
-    // 1. License Expiry Discrepancy
-    if (ai?.license?.expiryDate) {
-      const aiExp = ai.license.expiryDate;
-      const userExp = form.driverLicenseExpiryDate || '';
-      const wasScannedExpired = aiExp < today;
-      const isEnteredValid = userExp >= today;
-
-      if (wasScannedExpired && isEnteredValid) {
-        discrepancies.push({
-          field: 'driverLicenseExpiryDate',
-          docType: 'license',
-          step: 1,
-          label: "Driver's License Expiry Date",
-          scannedValue: aiExp,
-          enteredValue: userExp,
-          severity: 'critical',
-          reason: `Scanned Driver's License indicates expired date (${aiExp}), but entered date was modified to an unexpired date (${userExp}).`
-        });
-      } else if (userExp && userExp !== aiExp) {
-        discrepancies.push({
-          field: 'driverLicenseExpiryDate',
-          docType: 'license',
-          step: 1,
-          label: "Driver's License Expiry Date",
-          scannedValue: aiExp,
-          enteredValue: userExp,
-          severity: 'warning',
-          reason: `Scanned expiry date (${aiExp}) differs from entered date (${userExp}).`
-        });
-      }
-    }
-
-    // 2. OR/CR Expiry Discrepancy
-    if (ai?.orCr?.expiryDate) {
-      const aiExp = ai.orCr.expiryDate;
-      const userExp = form.orCrExpiryDate || '';
-      const wasScannedExpired = aiExp < today;
-      const isEnteredValid = userExp >= today;
-
-      if (wasScannedExpired && isEnteredValid) {
-        discrepancies.push({
-          field: 'orCrExpiryDate',
-          docType: 'orCr',
-          step: 2,
-          label: "LTO OR/CR Registration Expiry Date",
-          scannedValue: aiExp,
-          enteredValue: userExp,
-          severity: 'critical',
-          reason: `Scanned LTO OR/CR indicates expired registration date (${aiExp}), but entered date was modified to an unexpired date (${userExp}).`
-        });
-      } else if (userExp && userExp !== aiExp) {
-        discrepancies.push({
-          field: 'orCrExpiryDate',
-          docType: 'orCr',
-          step: 2,
-          label: "LTO OR/CR Registration Expiry Date",
-          scannedValue: aiExp,
-          enteredValue: userExp,
-          severity: 'warning',
-          reason: `Scanned registration expiry date (${aiExp}) differs from entered date (${userExp}).`
-        });
-      }
-    }
-
-    // 3. Plate No Discrepancy
-    if (ai?.orCr?.plateNo && form.plateNo) {
-      const cleanAi = String(ai.orCr.plateNo || '').replace(/[^A-Z0-9]/g, '');
-      const cleanUser = String(form.plateNo || '').replace(/[^A-Z0-9]/g, '');
-      if (cleanAi && cleanUser && cleanAi !== cleanUser) {
-        discrepancies.push({
-          field: 'plateNo',
-          docType: 'orCr',
-          step: 2,
-          label: "Vehicle Plate / MV File Number",
-          scannedValue: ai.orCr.plateNo,
-          enteredValue: form.plateNo,
-          severity: 'warning',
-          reason: `Scanned plate/MV number (${ai.orCr.plateNo}) differs from entered value (${form.plateNo}).`
-        });
-      }
-    }
-
-    // 4. Chassis No Discrepancy
-    if (ai?.orCr?.chassisNo && form.chassisNo) {
-      const cleanAi = String(ai.orCr.chassisNo || '').replace(/[^A-Z0-9]/g, '');
-      const cleanUser = String(form.chassisNo || '').replace(/[^A-Z0-9]/g, '');
-      if (cleanAi && cleanUser && cleanAi !== cleanUser) {
-        discrepancies.push({
-          field: 'chassisNo',
-          docType: 'orCr',
-          step: 2,
-          label: "Chassis Serial Number",
-          scannedValue: ai.orCr.chassisNo,
-          enteredValue: form.chassisNo,
-          severity: 'warning',
-          reason: `Scanned chassis serial number (${ai.orCr.chassisNo}) differs from entered value (${form.chassisNo}).`
-        });
-      }
-    }
-
-    // 5. Motor No Discrepancy
-    if (ai?.orCr?.motorNo && form.motorNo) {
-      const cleanAi = String(ai.orCr.motorNo || '').replace(/[^A-Z0-9]/g, '');
-      const cleanUser = String(form.motorNo || '').replace(/[^A-Z0-9]/g, '');
-      if (cleanAi && cleanUser && cleanAi !== cleanUser) {
-        discrepancies.push({
-          field: 'motorNo',
-          docType: 'orCr',
-          step: 2,
-          label: "Motor / Engine Number",
-          scannedValue: ai.orCr.motorNo,
-          enteredValue: form.motorNo,
-          severity: 'warning',
-          reason: `Scanned motor number (${ai.orCr.motorNo}) differs from entered value (${form.motorNo}).`
-        });
-      }
-    }
-
-    // 6. Driver License No Discrepancy
-    if (ai?.license?.licenseNo && form.driverLicenseNo) {
-      const cleanAi = String(ai.license.licenseNo || '').replace(/[^A-Z0-9]/g, '');
-      const cleanUser = String(form.driverLicenseNo || '').replace(/[^A-Z0-9]/g, '');
-      if (cleanAi && cleanUser && cleanAi !== cleanUser) {
-        discrepancies.push({
-          field: 'driverLicenseNo',
-          docType: 'license',
-          step: 1,
-          label: "Driver's License Number",
-          scannedValue: ai.license.licenseNo,
-          enteredValue: form.driverLicenseNo,
-          severity: 'warning',
-          reason: `Scanned driver license number (${ai.license.licenseNo}) differs from entered value (${form.driverLicenseNo}).`
-        });
-      }
-    }
-
-    // 7. CR Registered Owner vs Applicant Name
-    const scannedOwner = ai?.orCr?.ownerName || ai?.cr?.ownerName || '';
-    if (scannedOwner && form.fullName) {
-      if (!isNameMatch(scannedOwner, form.fullName)) {
-        discrepancies.push({
-          field: 'registeredOwner',
-          docType: 'cr',
-          step: 2,
-          label: "CR Registered Owner",
-          scannedValue: scannedOwner,
-          enteredValue: form.fullName,
-          severity: 'warning',
-          reason: `Vehicle registration is in the name of ${scannedOwner}. Ensure a notarized Deed of Sale or Lease/Authorization is attached.`
-        });
-      }
-    }
-
-    // 8. TODA Jurisdiction vs Barangay Address
-    if (form.todaName && form.todaName !== 'NON-TODA' && form.address) {
-      const validTodas = getTodasForBarangay(form.address);
-      if (validTodas.length > 0 && !validTodas.includes(form.todaName)) {
-        discrepancies.push({
-          field: 'jurisdiction',
-          docType: 'toda',
-          step: 1,
-          label: "TODA Operational Jurisdiction",
-          scannedValue: form.todaName,
-          enteredValue: form.address,
-          severity: 'warning',
-          reason: `Barangay "${form.address}" is outside the official operational routes of ${form.todaName}. (Authorized: ${validTodas.join(', ')})`
-        });
-      }
-    }
-
-    return discrepancies;
-  };
-
-  // Pre-submit validation and Confirmation Prompt (Prevents accidental misclicks)
-  const handlePreSubmit = (e) => {
-    if (e?.preventDefault) e.preventDefault();
-    if (isSubmitting) return;
-
-    if (!isAgreedToTerms) {
-      showValidationModal(
-        'confirm-authenticity-checkbox',
-        'Confirmation Required',
-        'Please check the Affidavit of Authenticity box before submitting the application.'
-      );
-      return;
-    }
-
-    // 1. Comprehensive Step 1 Check (Operator and Driver info)
-    if (!formData.fullName?.trim() || !formData.address?.trim() || !formData.driverLicenseNo?.trim()) {
-      showValidationModal(
-        'fullName',
-        'Kulang ang Impormasyon sa Hakbang 1',
-        'Hindi pa kumpleto ang impormasyon ng aplikante o lisensya sa Hakbang 1. Pakipunan ang mga patlang bago mag-submit.'
-      );
-      setSlideDirection('backward');
-      setCurrentStep(1);
-      return;
-    }
-
-    // 2. Comprehensive Step 2 Check (Vehicle Specifications - prevents dashed blanks)
-    if (!formData.plateNo?.trim() || !formData.motorNo?.trim() || !formData.chassisNo?.trim() || !formData.make?.trim() || !formData.made?.trim()) {
-      showValidationModal(
-        'plateNo',
-        'Kulang ang Impormasyon ng Sasakyan sa Hakbang 2',
-        'Naka-dash pa ang mga detalye ng iyong sasakyan sa Hakbang 2. Paki-type nang manual ang Plate Number, Engine/Motor Number, Chassis Number, Make, at Year Model bago mag-submit.'
-      );
-      setSlideDirection('backward');
-      setCurrentStep(2);
-      return;
-    }
-
-    if (!formData.orCrExpiryDate) {
-      showValidationModal(
-        'orCrExpiryDate',
-        'LTO Registration Expiry Date Required',
-        'Pakilagay ang registration expiration date mula sa iyong LTO OR/CR sa Hakbang 2 bago mag-submit.'
-      );
-      setSlideDirection('backward');
-      setCurrentStep(2);
-      return;
-    }
-
-    // Cedula validation
-    const currentYear = new Date().getFullYear();
-    if (!formData.cedulaSerialNo?.trim()) {
-      showValidationModal('cedulaSerialNo', 'Cedula Serial Number Required', 'Please enter the Community Tax Certificate (Cedula) Serial Number.');
-      return;
-    }
-    if (!formData.cedulaDate) {
-      showValidationModal('cedulaDate', 'Cedula Date Issued Required', 'Please enter the Cedula Date Issued.');
-      return;
-    }
-    const cedulaYear = new Date(formData.cedulaDate).getFullYear();
-    if (cedulaYear < currentYear) {
-      showValidationModal('cedulaDate', 'Cedula Expired', `Cedula for year ${cedulaYear} is expired. A valid Cedula for ${currentYear} is required.`);
-      return;
-    }
-
-    if (formMode === 'New') {
-      const hasCedula = uploadedDocs.cedulaDoc || uploadedDocs.cedula || filePreviews.cedulaDoc || filePreviews.cedula || formData.cedulaUrl;
-      if (!hasCedula) {
-        showValidationModal('cedulaDoc', 'Cedula Document Required', 'Community Tax Certificate (Cedula) upload is required.');
-        return;
-      }
-
-      // Strict TODA Gatekeeper: Block submission if applicant is not in approved roster and has no TODA certificate
-      const currentToda = formData.todaName || loggedInToda;
-      const hasTodaCert = uploadedDocs.todaEndorsement || filePreviews.todaEndorsement || formData.todaEndorsementUrl;
-      if (currentToda && currentToda !== 'NON-TODA') {
-        if (todaMembershipStatus && todaMembershipStatus.todaStatus !== 'verified_member' && !hasTodaCert) {
-          showValidationModal(
-            'todaEndorsement',
-            'Application Blocked: Missing TODA Certificate',
-            `Cannot submit application: Operator "${formData.fullName}" is not in the official masterlist of ${currentToda} and has not uploaded a TODA Endorsement Certificate. Please upload a valid certificate in Step 3.`
-          );
-          return;
-        }
-      }
-    }
-
-    // Check critical AI discrepancies
-    const discrepancies = getAiDiscrepancies(formData, aiScannedData);
-    const criticalDiscrepancies = discrepancies.filter(d => d.severity === 'critical');
-    if (criticalDiscrepancies.length > 0) {
-      setDiscrepancyModal({
-        isOpen: true,
-        discrepancies: criticalDiscrepancies
-      });
-      return;
-    }
-
-    // Open confirmation modal
-    setIsSubmitConfirmOpen(true);
-  };
-
-  // Submit Handler
-  const handleSubmit = async (e, bypassDiscrepancyCheck = false) => {
-    if (e?.preventDefault) e.preventDefault();
-    if (isSubmitting) return;
-
-    const today = new Date().toISOString().split('T')[0];
-
-    // Cedula validation
-    const currentYear = new Date().getFullYear();
-    if (!formData.cedulaSerialNo?.trim()) {
-      showValidationModal('cedulaSerialNo', 'Cedula Serial Number Required', 'Please enter the Community Tax Certificate (Cedula) Serial Number.');
-      return;
-    }
-    if (!formData.cedulaDate) {
-      showValidationModal('cedulaDate', 'Cedula Date Issued Required', 'Please enter the Cedula Date Issued.');
-      return;
-    }
-    const cedulaYear = new Date(formData.cedulaDate).getFullYear();
-    if (cedulaYear < currentYear) {
-      showValidationModal('cedulaDate', 'Cedula Expired', `Cedula for year ${cedulaYear} is expired. A valid Cedula for ${currentYear} is required.`);
-      return;
-    }
-
-    if (formMode === 'New') {
-      const hasCedula = uploadedDocs.cedulaDoc || uploadedDocs.cedula || filePreviews.cedulaDoc || filePreviews.cedula || formData.cedulaUrl;
-      if (!hasCedula) {
-        showValidationModal('cedulaDoc', 'Cedula Document Required', 'Community Tax Certificate (Cedula) upload is required.');
-        return;
-      }
-    }
-
-    const discrepancies = getAiDiscrepancies(formData, aiScannedData);
-    const criticalDiscrepancies = discrepancies.filter(d => d.severity === 'critical');
-
-    if (!bypassDiscrepancyCheck && criticalDiscrepancies.length > 0) {
-      setDiscrepancyModal({
-        isOpen: true,
-        discrepancies: criticalDiscrepancies
-      });
-      return;
-    }
-
-    setIsSubmitting(true);
-    setUploadPhase('Preparing application submission...');
-
-    try {
-      const submitData = new FormData();
-      submitData.append('applicationType', formMode === 'Renewal' ? 'Renewal' : 'New');
-      if (formMode === 'Re-apply') submitData.append('status', 'Pending');
-
-      Object.keys(formData).forEach(key => {
-        if (formData[key] !== undefined && formData[key] !== null) {
-          if (typeof formData[key] === 'object' && !(formData[key] instanceof File) && !(formData[key] instanceof Blob)) {
-            submitData.append(key, JSON.stringify(formData[key]));
-          } else {
-            submitData.append(key, formData[key]);
-          }
-        }
-      });
-
-      if (!formData.dateApplied) {
-        submitData.append('dateApplied', new Date().toISOString().substring(0, 10));
-      }
-
-      // Attach raw AI OCR scan data and discrepancy audit log
-      submitData.append('aiScannedData', JSON.stringify(aiScannedData || {}));
-      submitData.append('aiDiscrepancies', JSON.stringify(discrepancies || []));
-
-      setUploadPhase('Uploading documents and attachments...');
-
-      // Append documents
-      if (uploadedDocs.crDocument) {
-        submitData.append('crDocument', uploadedDocs.crDocument);
-        submitData.append('crFile', uploadedDocs.crDocument);
-      }
-      if (uploadedDocs.orDocument) {
-        submitData.append('orDocument', uploadedDocs.orDocument);
-        submitData.append('orFile', uploadedDocs.orDocument);
-      }
-      if (uploadedDocs.orCrDocument) submitData.append('orCrDocument', uploadedDocs.orCrDocument);
-      else if (uploadedDocs.crDocument) submitData.append('orCrDocument', uploadedDocs.crDocument);
-      if (uploadedDocs.crFile && !uploadedDocs.crDocument) submitData.append('crFile', uploadedDocs.crFile);
-      if (uploadedDocs.orFile && !uploadedDocs.orDocument) submitData.append('orFile', uploadedDocs.orFile);
-      if (uploadedDocs.license) submitData.append('license', uploadedDocs.license);
-      if (uploadedDocs.licenseBack) submitData.append('licenseBack', uploadedDocs.licenseBack);
-      if (uploadedDocs.todaEndorsement) submitData.append('todaEndorsement', uploadedDocs.todaEndorsement);
-      if (uploadedDocs.brgyClearance) submitData.append('brgyClearance', uploadedDocs.brgyClearance);
-      if (uploadedDocs.cedulaDoc) submitData.append('cedulaDoc', uploadedDocs.cedulaDoc);
-      else if (uploadedDocs.cedula) submitData.append('cedulaDoc', uploadedDocs.cedula);
-
-      const url = formMode === 'Re-apply' 
-        ? `${import.meta.env.VITE_API_URL}/api/v1/franchises/${selectedId}` 
-        : `${import.meta.env.VITE_API_URL}/api/v1/franchises`;
-
-      const response = await fetch(url, {
-        method: formMode === 'Re-apply' ? 'PUT' : 'POST',
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
-        body: submitData
-      });
-
-      if (response.status === 401) {
-        setFeedbackModal({
-          isOpen: true,
-          type: 'error',
-          title: 'Session Expired',
-          message: 'Your login session has expired or the token is unauthorized. Please log in again to continue submitting your application.',
-          confirmText: 'Log In Again',
-          onConfirm: () => {
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            localStorage.removeItem('role');
-            setFeedbackModal(prev => ({ ...prev, isOpen: false }));
-            navigate('/login');
-          }
-        });
-        return;
-      }
-
-      const data = await response.json();
-
-      if (response.ok) {
-        try {
-          const key = getDraftKey();
-          await localforage.removeItem(`${key}_files`);
-        } catch {}
-        try {
-          const key = getDraftKey();
-          await localforage.removeItem(key);
-          await localforage.removeItem('gtrams_apply_draft');
-          const uid = getCurrentUserId();
-          await localforage.removeItem(`gtrams_apply_draft_${uid}`);
-        } catch {}
-
-        localStorage.removeItem('gtrams_apply_draft');
-        localStorage.removeItem(DRAFT_STORAGE_KEY);
-        localStorage.removeItem('reapply_target');
-        setHasDraftRestored(false);
-
-        setFeedbackModal({
-          isOpen: true,
-          type: 'success',
-          title: formMode === 'Re-apply' ? 'Revision Submitted!' : 'Application Submitted!',
-          message: 'Your franchise application has been successfully submitted to the Sangguniang Bayan Office for evaluation.',
-          confirmText: 'Go to Dashboard',
-          onConfirm: () => {
-            setFeedbackModal(prev => ({ ...prev, isOpen: false }));
-            navigate('/operator-dashboard');
-          }
-        });
-      } else {
-        setFeedbackModal({
-          isOpen: true,
-          type: 'error',
-          title: 'Submission Failed',
-          message: data.message || 'Server error while submitting application. Please try again.',
-          confirmText: 'OK',
-          onConfirm: () => setFeedbackModal(prev => ({ ...prev, isOpen: false }))
-        });
-      }
-    } catch (err) {
-      console.error('Submit error:', err);
-      showToast('Network error while connecting to server.', 'error');
-    } finally {
-      setIsSubmitting(false);
-      setUploadPhase('');
-    }
-  };
-
-  const inputClasses = "w-full px-4 py-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#EAE7E1] placeholder-[#6B6761] dark:placeholder-[#A8A29E] text-base min-h-[48px] focus:outline-none focus:ring-2 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] focus:border-transparent transition-all shadow-xs font-medium";
-  const disabledClasses = "w-full pl-3.5 pr-36 py-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] text-base min-h-[48px] cursor-not-allowed font-semibold select-none";
-
-  const getInputClasses = (fieldName) => {
-    if (formErrors[fieldName]) {
-      return "w-full px-4 py-3 rounded-lg border-2 border-red-500 ring-2 ring-red-500/20 bg-red-50/10 dark:bg-red-950/20 text-[#1F1D1B] dark:text-[#EAE7E1] placeholder-[#6B6761] dark:placeholder-[#A8A29E] text-base min-h-[48px] focus:outline-none focus:ring-2 focus:ring-red-500 transition-all shadow-xs font-medium";
-    }
-    return inputClasses;
-  };
-
-  const steps = [
-    { num: 1, title: 'Operator', fullTitle: 'Operator & Driver' },
-    { num: 2, title: 'Vehicle', fullTitle: 'Vehicle & LTO OR/CR' },
-    { num: 3, title: 'Clearances', fullTitle: 'Barangay & TODA Clearances' },
-    { num: 4, title: 'Cedula', fullTitle: 'Community Tax Certificate (CTC)' },
-    { num: 5, title: 'Review', fullTitle: 'Review & Confirmation' }
-  ];
-
-  const isRenewing = formMode === 'Renewal' || modeParam === 'renewal';
-  const isReapplying = formMode === 'Re-apply' || modeParam === 'reapply';
-  const activeOrPendingUnits = myFranchises.filter(f => !['Cancelled', 'Revoked'].includes(f.status));
-  const isCapacityFull = activeOrPendingUnits.length >= maxAllowedUnits;
-  const availableSlots = Math.max(0, maxAllowedUnits - activeOrPendingUnits.length);
-
-  // Loading state guard when cached list is not yet populated
-  if (isLoading && myFranchises.length === 0) {
-    return (
-      <MainLayout hideNav={true}>
-        <ApplyFranchiseSkeleton isRenewal={isRenewing} />
-      </MainLayout>
-    );
-  }
-
-  // Automatic Full Capacity Blocking:
-  // If the operator already reached max quota (2/2 units) and is not renewing or reapplying,
-  // do NOT render the form at all — display the official LGU Maximum Unit Capacity Reached notice.
-  if (isCapacityFull && !isRenewing && !isReapplying) {
-    return (
-      <MainLayout hideNav={true}>
-        <div className="w-full max-w-full overflow-x-hidden min-h-screen bg-[#F6F5F3] dark:bg-[#14110F] flex flex-col transition-colors">
-          {/* Top Hero Banner */}
-          <div className="w-full bg-[#9E2A2B] text-white pt-4 pb-6 px-4 sm:px-6 relative overflow-hidden border-b border-[#7A1B22] shadow-xs">
-            <div className="absolute -right-6 -bottom-8 pointer-events-none select-none">
-              <img 
-                src="/gasan-logo.png" 
-                alt="Seal of Gasan" 
-                className="w-52 h-52 sm:w-60 sm:h-60 object-contain opacity-20 drop-shadow-md" 
-              />
-            </div>
-            <div className="max-w-2xl mx-auto relative z-10 flex items-center justify-between">
-              <button
-                type="button"
-                onClick={handleBackToDashboard}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 text-white text-sm font-bold transition-all border border-white/20 shadow-xs cursor-pointer min-h-[44px]"
-              >
-                <ArrowLeft size={18} />
-                <span>Back to Dashboard</span>
-              </button>
-              <span className="text-xs font-bold px-2.5 py-1 rounded bg-[#D4AF37] text-[#1F1D1B] uppercase tracking-wider">
-                Capacity: {activeOrPendingUnits.length} / {maxAllowedUnits} Units Full
-              </span>
-            </div>
-          </div>
-
-          {/* Centered Notice Container */}
-          <div className="flex-1 flex items-center justify-center p-4 sm:p-6">
-            <div className="max-w-lg w-full bg-white dark:bg-[#1C1917] rounded-xl p-6 sm:p-8 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm text-center">
-              
-              <div className="w-16 h-16 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-4 border border-amber-200 dark:border-amber-900/60 shadow-xs">
-                <AlertCircle size={32} />
-              </div>
-
-              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100/70 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 text-xs font-bold mb-3 border border-amber-300/60 dark:border-amber-800/60">
-                <span>Maximum Fleet Limit Reached</span>
-              </div>
-
-              <h2 className="text-xl sm:text-2xl font-bold text-[#1F1D1B] dark:text-[#EAE7E1] mb-2 tracking-tight">
-                Unit Quota Reached ({activeOrPendingUnits.length} / {maxAllowedUnits})
-              </h2>
-
-              <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] mb-6 leading-relaxed">
-                Under Section 4 of the Gasan Municipal Tricycle Franchising Ordinance, an individual operator is strictly limited to a maximum of <strong>{maxAllowedUnits} motorized tricycle units</strong>. You have already registered all allowed units.
-              </p>
-
-              {/* Registered Units Card List */}
-              <div className="bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg p-3.5 sm:p-4 mb-6 border border-[#E4E1DC] dark:border-[#2E2A27] text-left">
-                <div className="flex items-center justify-between mb-2.5">
-                  <span className="text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                    Your Registered Units
-                  </span>
-                  <span className="text-[11px] font-semibold text-[#6B6761] dark:text-[#A8A29E]">
-                    {activeOrPendingUnits.length} of {maxAllowedUnits} slots filled
-                  </span>
-                </div>
-                <div className="space-y-2">
-                  {activeOrPendingUnits.map((u, i) => (
-                    <div 
-                      key={u._id || i}
-                      className="flex items-center justify-between p-2.5 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27]"
-                    >
-                      <div className="min-w-0 pr-2">
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-mono font-bold text-[#9E2A2B] dark:text-[#D4AF37]">
-                            {u.plateNo || 'NO PLATE'}
-                          </span>
-                          <span className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
-                            • {u.make || 'Tricycle'}
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] truncate mt-0.5">
-                          TODA: {u.todaName || 'Non-TODA'} | Zone: {u.zone || 'N/A'}
-                        </p>
-                      </div>
-                      <span className={`text-[11px] font-bold px-2 py-0.5 rounded shrink-0 ${
-                        u.status === 'Active' 
-                          ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/60'
-                          : 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/60'
-                      }`}>
-                        {u.status}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row gap-2.5">
-                <button
-                  type="button"
-                  onClick={handleBackToDashboard}
-                  className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-sm shadow-xs cursor-pointer active:scale-95 min-h-[46px] transition-all"
-                >
-                  <ArrowLeft size={16} />
-                  <span>Return to Dashboard</span>
-                </button>
-              </div>
-
-            </div>
-          </div>
-        </div>
-      </MainLayout>
-    );
-  }
-
-  return (
-    <MainLayout hideNav={true}>
-      {/* Toast Notification */}
-      {toast.show && (
-        <div className="fixed bottom-6 right-6 z-[9999] pointer-events-none animate-in fade-in slide-in-from-bottom-3 duration-200">
-          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-lg rounded-lg px-4 py-3 flex items-center gap-3 max-w-sm">
-            <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border ${
-              toast.type === 'error'
-                ? 'bg-red-50 dark:bg-red-950/50 border-red-200 dark:border-red-900/60 text-red-600 dark:text-red-400'
-                : toast.type === 'info'
-                ? 'bg-blue-50 dark:bg-blue-950/50 border-blue-200 dark:border-blue-900/60 text-blue-600 dark:text-blue-400'
-                : 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-900/60 text-emerald-600 dark:text-emerald-400'
-            }`}>
-              {toast.type === 'error' ? <AlertCircle size={15} /> : <CheckCircle2 size={15} />}
-            </div>
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] leading-snug">
-                {toast.message}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Full-Screen Immersive Form Layout */}
-      <div className="w-full max-w-full overflow-x-hidden min-h-screen bg-[#F6F5F3] dark:bg-[#14110F] flex flex-col transition-colors">
-        
-        {/* Top Hero Banner */}
-        <div className="w-full bg-[#9E2A2B] text-white pt-4 pb-6 px-4 sm:px-6 relative overflow-hidden border-b border-[#7A1B22] shadow-xs">
-          {/* Official Gasan Seal Watermark */}
-          <div className="absolute -right-6 -bottom-8 pointer-events-none select-none">
-            <img 
-              src="/gasan-logo.png" 
-              alt="Seal of Gasan" 
-              className="w-52 h-52 sm:w-60 sm:h-60 object-contain opacity-20 drop-shadow-md" 
-            />
-          </div>
-
-          <div className="max-w-2xl mx-auto relative z-10">
-            {/* Top Navigation Row */}
-            <div className="flex items-center justify-between mb-2">
-              <button
-                type="button"
-                onClick={handleTopBack}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 text-white text-sm font-bold transition-all border border-white/20 shadow-xs cursor-pointer min-h-[44px]"
-                title="Back"
-              >
-                <ArrowLeft size={18} />
-                <span>Back</span>
-              </button>
-
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => handleSaveProgress(true)}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 text-white text-xs sm:text-sm font-semibold transition-all border border-white/20 cursor-pointer min-h-[44px]"
-                  title="Save draft"
-                >
-                  <Save size={15} />
-                  <span>Save Draft</span>
-                </button>
-              </div>
-            </div>
-
-            {/* Form Title in Banner */}
-            <div className="text-center pt-1 pb-3 flex flex-col items-center">
-              <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-white uppercase">
-                {formMode === 'Renewal' ? 'RENEW APPLICATION' : 'NEW APPLICATION'}
-              </h1>
-              <p className="text-xs sm:text-sm text-white/90 font-medium mt-0.5">
-                Municipality of Gasan • Sangguniang Bayan Franchising Office
-              </p>
-            </div>
-
-            {/* Stepper Navigation - Equal 5-column grid, 100% balanced and aligned */}
-            <div className="grid grid-cols-5 w-full px-1 sm:px-3 pt-1 select-none">
-              {steps.map((step, idx) => {
-                const isCompleted = currentStep > step.num;
-                const isCurrent = currentStep === step.num;
-
-                return (
-                  <div
-                    key={step.num}
-                    onClick={() => {
-                      if (step.num < currentStep) {
-                        setSlideDirection('backward');
-                        setCurrentStep(step.num);
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                        const currentMode = (formMode || 'New').toLowerCase();
-                        navigate(`?mode=${currentMode}&step=${step.num}`);
-                      }
-                    }}
-                    className={`relative flex flex-col items-center text-center select-none ${
-                      step.num < currentStep ? 'cursor-pointer group' : ''
-                    }`}
-                  >
-                    {/* Seamless Connector Line */}
-                    {idx < steps.length - 1 && (
-                      <div 
-                        className={`absolute top-3.5 sm:top-4 left-1/2 w-full h-[2px] z-0 transition-colors duration-300 ${
-                          currentStep > step.num ? 'bg-[#D4AF37]' : 'bg-white/20'
-                        }`}
-                      />
-                    )}
-
-                    {/* Step Circle */}
-                    <div 
-                      className={`relative z-10 w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all duration-200 ${
-                        isCompleted 
-                          ? 'bg-[#D4AF37] text-[#14110F] font-bold shadow-xs' 
-                          : isCurrent 
-                          ? 'bg-white text-[#9E2A2B] font-bold ring-2 ring-white/40 scale-105 shadow-xs' 
-                          : 'bg-white/15 text-white/70 border border-white/20'
-                      }`}
-                    >
-                      {isCompleted ? (
-                        <Check size={16} className="stroke-[3]" />
-                      ) : (
-                        <span className="text-xs sm:text-sm font-bold">{step.num}</span>
-                      )}
-                    </div>
-                    
-                    <span className={`text-[10px] sm:text-xs font-semibold mt-1.5 text-center tracking-tight transition-colors px-0.5 truncate w-full ${
-                      isCurrent ? 'text-white font-bold' : isCompleted ? 'text-[#D4AF37]' : 'text-white/70'
-                    }`}>
-                      {step.title}
-                    </span>
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Gold Progress Bar */}
-            <div className="w-full bg-black/25 h-1.5 rounded-full overflow-hidden mt-3">
-              <div 
-                className="bg-[#D4AF37] h-full rounded-full transition-all duration-500 ease-out"
-                style={{ width: `${calculateProgress().percentage}%` }}
-              />
-            </div>
-            <div className="flex justify-between items-center text-xs text-white/90 mt-1.5 font-medium px-1">
-              <span>Step {currentStep} of 5: <strong className="font-bold text-white">{steps[currentStep - 1]?.fullTitle || steps[currentStep - 1]?.title}</strong></span>
-              <span className="font-bold text-[#D4AF37]">{calculateProgress().percentage}%</span>
-            </div>
-          </div>
-        </div>
-
-        {/* Form Container */}
-        <div className="w-full max-w-2xl mx-auto px-4 sm:px-6 pt-5 pb-16 flex-1 flex flex-col relative z-10">
-          <form onSubmit={currentStep === 5 ? handlePreSubmit : (e) => { e.preventDefault(); nextStep(); }} className="space-y-5 w-full">
-            
-            {/* STEP 1: OPERATOR & DRIVER INFO */}
-            {currentStep === 1 && (
-              <div className={`space-y-4 ${slideDirection === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}`}>
-                
-                {/* Header */}
-                <div className="flex items-center gap-2.5 pb-2.5 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
-                  <div className="w-8 h-8 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
-                    <User size={18} />
-                  </div>
-                  <div>
-                    <h2 className="text-base sm:text-lg font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                      Operator & Driver Information
-                    </h2>
-                    <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] font-medium">
-                      Enter personal identity and driver credentials
-                    </p>
-                  </div>
-                </div>
-
-                {/* Operator Details Card */}
-                <div className="p-3.5 sm:p-4 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-3.5 shadow-xs">
-                  <div className="pb-1 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
-                    <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E]">
-                      Operator Identity
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    <div id="field-fullName">
-                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                        Operator Full Name
-                      </label>
-                      <input 
-                        type="text" 
-                        name="fullName" 
-                        value={formData.fullName} 
-                        onChange={handleInputChange} 
-                        className={getInputClasses('fullName')} 
-                        required 
-                        autoComplete="off"
-                      />
-                      {formErrors.fullName && (
-                        <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
-                          <AlertCircle size={13} className="shrink-0" />
-                          <span>{formErrors.fullName}</span>
-                        </p>
-                      )}
-                    </div>
-
-                    <div id="field-address">
-                      <div className="flex items-center justify-between mb-1.5 flex-wrap gap-1">
-                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center">
-                          <span>Barangay Residency / Address</span>
-                          <InfoTooltip text="Tricycle Route Zone is automatically determined by your official Barangay residency." />
-                        </label>
-                      </div>
-                      <select 
-                        name="address" 
-                        value={formData.address} 
-                        onChange={handleInputChange} 
-                        className={`${getInputClasses('address')} cursor-pointer`} 
-                        required
-                      >
-                        <option value="" disabled>-- Select Official Barangay --</option>
-                        {GASAN_BARANGAYS.map((b) => (
-                          <option key={b} value={b}>{b} — {getZoneForBarangay(b)}</option>
-                        ))}
-                      </select>
-                      {formErrors.address && (
-                        <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
-                          <AlertCircle size={13} className="shrink-0" />
-                          <span>{formErrors.address}</span>
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Affiliated TODA and Assigned Route Zone (Read-only inputs) */}
-                  {(() => {
-                    const currentToda = formData.todaName || loggedInToda || 'NON-TODA';
-                    const isNonToda = currentToda === 'NON-TODA';
-                    const validTodas = formData.address ? getTodasForBarangay(formData.address) : [];
-                    const isJurisdictionMatch = (!formData.address || isNonToda || validTodas.length === 0) 
-                      ? true 
-                      : validTodas.includes(currentToda);
-                    const assignedZone = formData.address 
-                      ? `${getZoneForBarangay(formData.address)} (${formData.address})` 
-                      : 'Pending Barangay selection';
-
-                    return (
-                      <div className="space-y-3 pt-0.5">
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                          {/* Affiliated TODA (Read-only Input) */}
-                          <div id="field-toda">
-                            <div className="flex items-center justify-between mb-1.5 flex-wrap gap-1">
-                              <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center gap-1.5">
-                                <span>Affiliated TODA</span>
-                                <span className="text-[11px] font-medium text-[#6B6761] dark:text-[#A8A29E] bg-[#F0EDE6] dark:bg-[#252220] px-2 py-0.5 rounded flex items-center gap-1">
-                                  <Lock size={10} className="shrink-0" />
-                                  <span>Read-only</span>
-                                </span>
-                              </label>
-                            </div>
-                            <div className="relative">
-                              <input
-                                type="text"
-                                readOnly
-                                disabled
-                                value={currentToda}
-                                className={disabledClasses}
-                              />
-                              <div className="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none">
-                                {isCheckingTodaMembership ? (
-                                  <span className="text-[11px] text-slate-500 flex items-center gap-1 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1C1917]">
-                                    <Loader2 size={11} className="animate-spin shrink-0 text-[#9E2A2B] dark:text-[#D4AF37]" />
-                                    <span>Checking...</span>
-                                  </span>
-                                ) : todaMembershipStatus && !isNonToda ? (
-                                  <span className={`text-[11px] font-semibold flex items-center gap-1 px-2 py-0.5 rounded border ${
-                                    todaMembershipStatus.todaStatus === 'verified_member'
-                                      ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60'
-                                      : todaMembershipStatus.todaStatus === 'not_in_roster'
-                                      ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800/60'
-                                      : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
-                                  }`}
-                                  title={todaMembershipStatus.message || ''}
-                                  >
-                                    {todaMembershipStatus.todaStatus === 'verified_member' ? (
-                                      <CheckCircle2 size={12} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
-                                    ) : todaMembershipStatus.todaStatus === 'not_in_roster' ? (
-                                      <AlertTriangle size={12} className="shrink-0 text-amber-600 dark:text-amber-400" />
-                                    ) : (
-                                      <Info size={12} className="shrink-0 text-slate-500" />
-                                    )}
-                                    <span>
-                                      {todaMembershipStatus.todaStatus === 'verified_member'
-                                        ? 'Verified in Roster'
-                                        : todaMembershipStatus.todaStatus === 'not_in_roster'
-                                        ? 'Not in Roster'
-                                        : 'No Roster File'}
-                                    </span>
-                                  </span>
-                                ) : (
-                                  <span className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1 bg-[#EAE7E1] dark:bg-[#252220] px-2 py-0.5 rounded">
-                                    <Lock size={11} /> Locked
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* Assigned Route Zone (Read-only Input) */}
-                          <div id="field-zone">
-                            <div className="flex items-center justify-between mb-1.5 flex-wrap gap-1">
-                              <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center gap-1.5">
-                                <span>Assigned Route Zone</span>
-                                <span className="text-[11px] font-medium text-[#6B6761] dark:text-[#A8A29E] bg-[#F0EDE6] dark:bg-[#252220] px-2 py-0.5 rounded flex items-center gap-1">
-                                  <Compass size={10} className="shrink-0" />
-                                  <span>Auto-assigned</span>
-                                </span>
-                              </label>
-                            </div>
-                            <div className="relative">
-                              <input
-                                type="text"
-                                readOnly
-                                disabled
-                                value={assignedZone}
-                                className={disabledClasses}
-                              />
-                              <div className="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none">
-                                {formData.address && !isNonToda && (
-                                  <span className={`text-[11px] font-semibold flex items-center gap-1 px-2 py-0.5 rounded border ${
-                                    isJurisdictionMatch
-                                      ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60'
-                                      : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800/60'
-                                  }`}>
-                                    {isJurisdictionMatch ? <CheckCircle2 size={12} className="shrink-0" /> : <AlertTriangle size={12} className="shrink-0" />}
-                                    <span>{isJurisdictionMatch ? 'Route Authorized' : 'Route Mismatch'}</span>
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Banner warning if not in roster */}
-                        {todaMembershipStatus?.todaStatus === 'not_in_roster' && !isNonToda && (
-                          <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-xs text-amber-900 dark:text-amber-200 space-y-1 animate-fadeIn">
-                            <div className="flex items-center gap-1.5 font-bold">
-                              <AlertCircle size={14} className="shrink-0 text-amber-600 dark:text-amber-400" />
-                              <span>Notice: Official TODA Certificate Required</span>
-                            </div>
-                            <p className="text-[11px] sm:text-xs leading-relaxed text-amber-800 dark:text-amber-300">
-                              Your name is not currently listed in the official approved roster for <strong>{currentToda}</strong>. 
-                              You must upload an official <strong>TODA Endorsement Certificate signed by your TODA President</strong> in Step 3 to proceed with approval.
-                            </p>
-                          </div>
-                        )}
-
-                        {/* Banner warning if jurisdiction mismatch */}
-                        {!isJurisdictionMatch && validTodas.length > 0 && !isNonToda && (
-                          <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-800 dark:text-rose-300 space-y-1.5 animate-fadeIn">
-                            <div className="flex items-center gap-1.5 font-bold">
-                              <AlertCircle size={14} className="shrink-0 text-rose-600 dark:text-rose-400" />
-                              <span>Route Notice: TODA Jurisdiction Mismatch</span>
-                            </div>
-                            <p className="text-[11px] sm:text-xs leading-relaxed">
-                              Your affiliated TODA (<strong>{currentToda}</strong>) does not officially operate in <strong>{formData.address}</strong>. 
-                              Authorized TODAs for your barangay:
-                            </p>
-                            <div className="flex flex-wrap gap-1.5 pt-0.5">
-                              {validTodas.map(t => (
-                                <button
-                                  key={t}
-                                  type="button"
-                                  onClick={() => setFormData(prev => ({ ...prev, todaName: t }))}
-                                  className={`text-[11px] font-bold px-2.5 py-1 rounded-md border transition-colors cursor-pointer ${
-                                    formData.todaName === t
-                                      ? 'bg-[#9E2A2B] text-white border-[#9E2A2B]'
-                                      : 'bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#EAE7E1] border-rose-200 dark:border-rose-800/60 hover:bg-rose-100 dark:hover:bg-[#252220]'
-                                  }`}
-                                >
-                                  Select {t}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })()}
-
-                  {/* Municipal Unit Allocation - Clean & Uncluttered */}
-                  {activeOrPendingUnits.length === 0 ? (
-                    <div className="flex items-center justify-between pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27] text-xs">
-                      <span className="font-medium text-[#6B6761] dark:text-[#A8A29E]">Franchise Allocation:</span>
-                      <span className="font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/60 text-[11px]">
-                        Unit 1 of 2 (2 Slots Allowed)
-                      </span>
-                    </div>
-                  ) : activeOrPendingUnits.length === 1 ? (
-                    <div className="pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
-                      <div className="p-3 bg-amber-50/70 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">Applying for Unit 2 of 2</span>
-                            <span className="text-[11px] text-amber-800 dark:text-amber-400 font-semibold">(Final Slot)</span>
-                          </div>
-                          <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-0.5">
-                            Unit 1 ({activeOrPendingUnits[0]?.plateNo || 'First Unit'}) is already registered.
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const u1 = activeOrPendingUnits[0];
-                            if (u1) {
-                              setFormData(prev => ({
-                                ...prev,
-                                fullName: u1.fullName || prev.fullName,
-                                address: u1.address || prev.address,
-                                zone: u1.zone || prev.zone,
-                                todaName: u1.todaName || prev.todaName,
-                                cedulaDate: (u1.cedulaDate && !isNaN(new Date(u1.cedulaDate).getTime())) ? new Date(u1.cedulaDate).toISOString().substring(0, 10) : prev.cedulaDate,
-                                cedulaSerialNo: u1.cedulaSerialNo || prev.cedulaSerialNo,
-                                cedulaAddress: u1.cedulaAddress || prev.cedulaAddress,
-                                cedulaAmount: u1.cedulaAmount || prev.cedulaAmount,
-                                todaCertNo: u1.todaCertNo || prev.todaCertNo,
-                                todaSignatory: u1.todaSignatory || prev.todaSignatory
-                              }));
-                              showToast('Fast-Track: Profile and clearances copied from Unit 1!', 'success');
-                            }
-                          }}
-                          className="px-3 py-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 shrink-0"
-                          title="Fast-Track: Automatically reuses your verified operator residency, zone, and TODA credentials from Unit 1"
-                        >
-                          <Zap size={13} className="text-amber-300" />
-                          <span>Fast-Track: Copy from Unit 1</span>
-                        </button>
-                      </div>
-                    </div>
-                  ) : null}
-
-                  {/* Driver Designation Choice */}
-                  <div className="pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
-                    <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-2">
-                      Driver Designation
-                    </label>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                      <button
-                        type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, isOperatorDriver: true }))}
-                        className={`p-3.5 rounded-lg border text-left flex items-start gap-3 transition-all cursor-pointer ${
-                          formData.isOperatorDriver 
-                            ? 'bg-amber-50/70 dark:bg-amber-950/30 border-[#9E2A2B] dark:border-[#D4AF37] ring-1 ring-[#9E2A2B] dark:ring-[#D4AF37]' 
-                            : 'bg-[#F6F5F3] dark:bg-[#14110F] border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-neutral-100'
-                        }`}
-                      >
-                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
-                          formData.isOperatorDriver ? 'border-[#9E2A2B] dark:border-[#D4AF37] bg-[#9E2A2B] dark:bg-[#D4AF37]' : 'border-[#6B6761]'
-                        }`}>
-                          {formData.isOperatorDriver && <div className="w-2 h-2 rounded-full bg-white" />}
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] leading-tight">
-                            Operator-Driver
-                          </p>
-                          <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1">
-                            I am the owner-operator and I will personally drive the tricycle unit
-                          </p>
-                        </div>
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, isOperatorDriver: false }))}
-                        className={`p-3.5 rounded-lg border text-left flex items-start gap-3 transition-all cursor-pointer ${
-                          !formData.isOperatorDriver 
-                            ? 'bg-amber-50/70 dark:bg-amber-950/30 border-[#9E2A2B] dark:border-[#D4AF37] ring-1 ring-[#9E2A2B] dark:ring-[#D4AF37]' 
-                            : 'bg-[#F6F5F3] dark:bg-[#14110F] border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-neutral-100'
-                        }`}
-                      >
-                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
-                          !formData.isOperatorDriver ? 'border-[#9E2A2B] dark:border-[#D4AF37] bg-[#9E2A2B] dark:bg-[#D4AF37]' : 'border-[#6B6761]'
-                        }`}>
-                          {!formData.isOperatorDriver && <div className="w-2 h-2 rounded-full bg-white" />}
-                        </div>
-                        <div>
-                          <p className="text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] leading-tight">
-                            Operator Only (Hired / Designated Driver)
-                          </p>
-                          <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1">
-                            A designated hired driver will operate the tricycle unit
-                          </p>
-                        </div>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* If Hired Driver: Inputs */}
-                  {!formData.isOperatorDriver && (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
-                      <div id="field-driverName">
-                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                          Driver's Full Name
-                        </label>
-                        <input 
-                          type="text" 
-                          name="driverName" 
-                          value={formData.driverName} 
-                          onChange={handleInputChange} 
-                          className={getInputClasses('driverName')} 
-                          required 
-                          autoComplete="off"
-                        />
-                        {formErrors.driverName && (
-                          <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
-                            <AlertCircle size={13} className="shrink-0" />
-                            <span>{formErrors.driverName}</span>
-                          </p>
-                        )}
-                      </div>
-                      <div id="field-driverContact">
-                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                          Driver Contact No.
-                        </label>
-                        <input 
-                          type="tel" 
-                          name="driverContact" 
-                          value={formData.driverContact} 
-                          onChange={handleInputChange} 
-                          className={getInputClasses('driverContact')} 
-                          required 
-                          autoComplete="off"
-                        />
-                        {formErrors.driverContact && (
-                          <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
-                            <AlertCircle size={13} className="shrink-0" />
-                            <span>{formErrors.driverContact}</span>
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
-                {/* Driver's License Documents (Front & Back) */}
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between flex-wrap gap-2">
-                    <div>
-                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                        Driver's License Documents (Front &amp; Back)
-                      </label>
-                      <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
-                        Front: Identity &amp; Credentials &bull; Back: Card Serial Number
-                      </p>
-                    </div>
-                    <span className="text-xs sm:text-sm font-semibold text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1">
-                      <CheckCircle2 size={14} className="text-emerald-600" /> Auto-fill details
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {/* Front License Card */}
-                    <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center gap-1">
-                          <span>Driver's License (Front)</span>
-                        </span>
-                        <span className="text-[11px] font-medium text-[#6B6761] dark:text-[#A8A29E]">Identity &amp; Codes</span>
-                      </div>
-                      <DocumentUploadCard
-                        id="license"
-                        label="Driver's License (Front)"
-                        file={uploadedDocs.license}
-                        previewUrl={filePreviews.license || formData.licenseUrl}
-                        onFileSelect={handleFileChange}
-                        onFileRemove={handleRemoveFile}
-                        onPreviewZoom={setFullPreview}
-                        onRescan={handleRescan}
-                        required={true}
-                        isScanning={aiScanning.license}
-                        scanSuccess={aiSuccess.license}
-                        error={formErrors.license}
-                        hideHeaderLabel={true}
-                      />
-                    </div>
-
-                    {/* Back License Card */}
-                    <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center gap-1">
-                          <span>Driver's License (Back)</span>
-                        </span>
-                        <span className="text-[11px] font-medium text-[#6B6761] dark:text-[#A8A29E]">Card Serial Number</span>
-                      </div>
-                      <DocumentUploadCard
-                        id="licenseBack"
-                        label="Driver's License (Back)"
-                        file={uploadedDocs.licenseBack}
-                        previewUrl={filePreviews.licenseBack || formData.licenseBackUrl}
-                        onFileSelect={handleFileChange}
-                        onFileRemove={handleRemoveFile}
-                        onPreviewZoom={setFullPreview}
-                        onRescan={handleRescan}
-                        required={false}
-                        isScanning={aiScanning.licenseBack}
-                        scanSuccess={aiSuccess.licenseBack}
-                        error={formErrors.licenseBack}
-                        hideHeaderLabel={true}
-                      />
-                    </div>
-                  </div>
-
-                  {/* Manual Input Alert for License */}
-                  {(manualScanAlerts.license || manualScanAlerts.licenseBack) && (
-                    <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 rounded-xl flex items-start gap-2.5 text-xs sm:text-sm text-amber-900 dark:text-amber-200 shadow-xs">
-                      <AlertTriangle size={18} className="shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
-                      <div>
-                        <strong className="block font-bold text-amber-950 dark:text-amber-200">Kailangan I-manual ang Lisensya:</strong>
-                        <span className="text-amber-800 dark:text-amber-300">{manualScanAlerts.license || manualScanAlerts.licenseBack}</span>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Auto-filled License Details Grid */}
-                  <div className="p-3.5 bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-3">
-                    <div className="flex items-center justify-between flex-wrap gap-2">
-                      <span className="text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                        License Credentials {(aiSuccess.license || aiSuccess.licenseBack) && <span className="text-emerald-600 font-semibold">(Verified from Document)</span>}
-                      </span>
-
-                      {/* Name Match Indicator */}
-                      {(() => {
-                        const scannedName = aiScannedData.license?.driverName;
-                        const targetName = formData.isOperatorDriver ? formData.fullName : formData.driverName;
-                        if (!scannedName || !targetName) return null;
-                        const cleanS = scannedName.toUpperCase().replace(/[^A-Z]/g, '');
-                        const cleanT = targetName.toUpperCase().replace(/[^A-Z]/g, '');
-                        const isMatch = cleanS && cleanT && (cleanS.includes(cleanT) || cleanT.includes(cleanS));
-                        return (
-                          <span className={`text-[11px] font-bold px-2 py-0.5 rounded flex items-center gap-1 ${
-                            isMatch 
-                              ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300' 
-                              : 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300'
-                          }`}>
-                            {isMatch ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
-                            <span>{isMatch ? "Name: Matches Driver's License" : `Difference: ${scannedName}`}</span>
-                          </span>
-                        );
-                      })()}
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                      <div id="field-driverLicenseNo">
-                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                          Driver's License Number
-                        </label>
-                        <input 
-                          type="text" 
-                          name="driverLicenseNo" 
-                          value={formData.driverLicenseNo} 
-                          onChange={handleInputChange} 
-                          className={getInputClasses('driverLicenseNo')} 
-                          required 
-                          autoComplete="off"
-                        />
-                        {formErrors.driverLicenseNo && (
-                          <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
-                            <AlertCircle size={13} className="shrink-0" />
-                            <span>{formErrors.driverLicenseNo}</span>
-                          </p>
-                        )}
-                      </div>
-
-                      <div id="field-driverLicenseSerialNo">
-                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5 flex items-center">
-                          <span>License Back Serial Number</span>
-                          <InfoTooltip text="Serial number printed on the back of the official LTO Driver's License card." />
-                        </label>
-                        <input 
-                          type="text" 
-                          name="driverLicenseSerialNo" 
-                          value={formData.driverLicenseSerialNo || ''} 
-                          onChange={handleInputChange} 
-                          className={getInputClasses('driverLicenseSerialNo')} 
-                          autoComplete="off"
-                        />
-                      </div>
-
-                      <div id="field-driverLicenseExpiryDate">
-                        <SimpleDatePicker
-                          name="driverLicenseExpiryDate"
-                          value={formData.driverLicenseExpiryDate}
-                          onChange={handleInputChange}
-                          label="License Expiry Date"
-                          mode="expiry"
-                          helperText="Driver's license expiration date."
-                          error={formErrors.driverLicenseExpiryDate}
-                        />
-                      </div>
-
-                      <div id="field-driverDob">
-                        <SimpleDatePicker
-                          name="driverDob"
-                          value={formData.driverDob}
-                          onChange={handleInputChange}
-                          label="Date of Birth"
-                          helperText="LTO license renewal date coincides with birthdate."
-                          error={formErrors.driverDob}
-                        />
-                      </div>
-
-                      <div id="field-driverDlCodes">
-                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5 flex items-center">
-                          <span>Authorized DL Codes</span>
-                          <InfoTooltip text="LTO Code A or A1 is required to legally operate a commercial passenger tricycle." />
-                        </label>
-                        <input 
-                          type="text" 
-                          name="driverDlCodes" 
-                          value={formData.driverDlCodes} 
-                          onChange={handleInputChange} 
-                          className={getInputClasses('driverDlCodes')} 
-                          autoComplete="off"
-                        />
-                        {formErrors.driverDlCodes && (
-                          <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
-                            <AlertCircle size={13} className="shrink-0" />
-                            <span>{formErrors.driverDlCodes}</span>
-                          </p>
-                        )}
-                      </div>
-
-                      <div id="field-driverAddress">
-                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                          Driver's Residential Address
-                        </label>
-                        <input 
-                          type="text" 
-                          name="driverAddress" 
-                          value={formData.driverAddress || ''} 
-                          onChange={handleInputChange} 
-                          className={getInputClasses('driverAddress')} 
-                          autoComplete="off"
-                        />
-                      </div>
-
-                      <div id="field-driverConditions" className="sm:col-span-2">
-                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                          Driving Conditions
-                        </label>
-                        <input 
-                          type="text" 
-                          name="driverConditions" 
-                          value={formData.driverConditions} 
-                          onChange={handleInputChange} 
-                          className={getInputClasses('driverConditions')} 
-                          autoComplete="off"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Step 1 Actions */}
-                <div className="pt-3 flex flex-col-reverse sm:flex-row justify-between items-center gap-3">
-                  <button 
-                    type="button" 
-                    onClick={handleBackToDashboard}
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-lg font-bold text-sm sm:text-base text-[#1F1D1B] dark:text-[#EAE7E1] bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#F6F5F3] dark:hover:bg-[#252220] min-h-[44px] cursor-pointer"
-                  >
-                    <ArrowLeft size={18} />
-                    <span>Back to Dashboard</span>
-                  </button>
-
-                  <button 
-                    type="button" 
-                    onClick={nextStep}
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-sm sm:text-base text-white bg-[#9E2A2B] hover:bg-[#7A1B22] shadow-xs cursor-pointer min-h-[44px] active:scale-95 transition-all"
-                  >
-                    <span>Next: Vehicle Details</span>
-                    <ChevronRight size={18} />
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* STEP 2: VEHICLE DETAILS & LTO OR/CR */}
-            {currentStep === 2 && (
-              <div className={`space-y-4 ${slideDirection === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}`}>
-                
-                {/* Header */}
-                <div className="flex items-center gap-2.5 pb-2.5 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
-                  <div className="w-8 h-8 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
-                    <TricycleIcon size={20} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                  </div>
-                  <div>
-                    <h2 className="text-base sm:text-lg font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                      Vehicle Details & LTO OR/CR
-                    </h2>
-                    <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] font-medium">
-                      Upload LTO document for instant automated vehicle pre-fill
-                    </p>
-                  </div>
-                </div>
-
-                {/* Separate Document Upload for LTO CR & LTO OR */}
-                <div className="space-y-2">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                    <div>
-                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center">
-                        <span>LTO Documents (Certificate of Registration &amp; Official Receipt)</span>
-                        <InfoTooltip text="Upload Certificate of Registration (CR) for vehicle specifications and Official Receipt (OR) for active annual registration." />
-                      </label>
-                      <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
-                        Upload official LTO CR and latest annual LTO OR.
-                      </p>
-                    </div>
-                    <span className="text-xs sm:text-sm font-semibold text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1 shrink-0">
-                      <CheckCircle2 size={14} className="text-emerald-600" /> Auto-extracts Vehicle Specs
-                    </span>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {/* 1. LTO Certificate of Registration (CR) */}
-                    <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center gap-1">
-                          <span>Certificate of Registration (CR)</span>
-                        </span>
-                        <span className="text-[11px] font-medium text-[#6B6761] dark:text-[#A8A29E]">Vehicle Specs &amp; Owner</span>
-                      </div>
-                      <DocumentUploadCard
-                        id="crDocument"
-                        label="LTO CR Document"
-                        file={uploadedDocs.crDocument || uploadedDocs.crFile}
-                        previewUrl={filePreviews.crDocument || formData.crUrl || filePreviews.crFile || filePreviews.orCrDocument || formData.orCrUrl}
-                        onFileSelect={handleFileChange}
-                        onFileRemove={handleRemoveFile}
-                        onPreviewZoom={setFullPreview}
-                        onRescan={handleRescan}
-                        required={formMode === 'New'}
-                        isScanning={aiScanning.crDocument}
-                        scanSuccess={aiSuccess.crDocument}
-                        error={formErrors.crDocument}
-                        hideHeaderLabel={true}
-                      />
-                    </div>
-
-                    {/* 2. LTO Official Receipt (OR) */}
-                    <div>
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center gap-1">
-                          <span>Official Receipt (OR)</span>
-                        </span>
-                        <span className="text-[11px] font-medium text-[#6B6761] dark:text-[#A8A29E]">Proof of Annual Payment</span>
-                      </div>
-                      <DocumentUploadCard
-                        id="orDocument"
-                        label="LTO OR Document"
-                        file={uploadedDocs.orDocument || uploadedDocs.orFile}
-                        previewUrl={filePreviews.orDocument || formData.orUrl || filePreviews.orFile}
-                        onFileSelect={handleFileChange}
-                        onFileRemove={handleRemoveFile}
-                        onPreviewZoom={setFullPreview}
-                        onRescan={handleRescan}
-                        required={formMode === 'New'}
-                        isScanning={aiScanning.orDocument}
-                        scanSuccess={aiSuccess.orDocument}
-                        error={formErrors.orDocument}
-                        hideHeaderLabel={true}
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Document Detection Banner */}
-                {(aiSuccess.crDocument || aiSuccess.orDocument || aiSuccess.orCrDocument) && (
-                  <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-lg flex items-center gap-2.5 text-sm font-semibold text-emerald-800 dark:text-emerald-300">
-                    <CheckCircle2 size={16} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
-                    <span>LTO document details detected: Plate, Motor, and Chassis numbers were auto-filled. Please verify accuracy.</span>
-                  </div>
-                )}
-
-                {/* Manual Input Alert for LTO Documents */}
-                {(manualScanAlerts.crDocument || manualScanAlerts.orDocument || manualScanAlerts.orCrDocument || manualScanAlerts.orCr) && (
-                  <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 rounded-xl flex items-start gap-3 text-xs sm:text-sm text-amber-900 dark:text-amber-200 shadow-xs">
-                    <AlertTriangle size={18} className="shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
-                    <div>
-                      <strong className="block font-bold text-amber-950 dark:text-amber-200">Paalala: Kailangan I-manual ang mga Detalye ng Sasakyan</strong>
-                      <span className="text-amber-800 dark:text-amber-300">
-                        {manualScanAlerts.crDocument || manualScanAlerts.orDocument || manualScanAlerts.orCrDocument || manualScanAlerts.orCr || 'Naka-attach na ang iyong dokumento ngunit hindi ito awtomatikong na-scan. Mangyaring i-type nang manual ang Plate Number, Engine Number, Chassis Number, Make, at Year Model sa ibaba bago magpatuloy.'}
-                      </span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Vehicle Details Form Fields */}
-                <div className="p-3.5 sm:p-4 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-3.5 shadow-xs">
-                  <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E] block pb-1 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
-                    Tricycle Specifications
-                  </span>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-                    
-                    {/* Make / Brand */}
-                    <div id="field-make">
-                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                        Make / Brand
-                      </label>
-                      <input 
-                        type="text" 
-                        name="make" 
-                        value={formData.make} 
-                        onChange={handleInputChange} 
-                        className={getInputClasses('make')} 
-                        required 
-                        autoComplete="off"
-                      />
-                      {formErrors.make && (
-                        <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
-                          <AlertCircle size={13} className="shrink-0" />
-                          <span>{formErrors.make}</span>
-                        </p>
-                      )}
-
-                      {/* Quick Select Brand Chips */}
-                      {formMode === 'New' && (
-                        <div className="mt-2.5 flex flex-wrap gap-2">
-                          {POPULAR_MAKES.map((brand) => (
-                            <button
-                              key={brand}
-                              type="button"
-                              onClick={() => setFormData(prev => ({ ...prev, make: brand }))}
-                              className={`px-3 py-1.5 text-xs sm:text-sm font-bold rounded-lg border transition-all cursor-pointer min-h-[36px] ${
-                                formData.make === brand
-                                  ? 'bg-[#9E2A2B] text-white border-[#7A1B22]'
-                                  : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-neutral-100'
-                              }`}
-                            >
-                              {brand}
-                            </button>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Model Year */}
-                    <div id="field-made">
-                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                        Model Year
-                      </label>
-                      <input 
-                        type="text" 
-                        inputMode="numeric"
-                        maxLength={4}
-                        name="made" 
-                        value={formData.made} 
-                        onChange={handleInputChange} 
-                        className={getInputClasses('made')} 
-                        required 
-                        autoComplete="off"
-                      />
-                      {formErrors.made && (
-                        <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
-                          <AlertCircle size={13} className="shrink-0" />
-                          <span>{formErrors.made}</span>
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Designated Route Zone (Auto-assigned from Barangay) */}
-                    <div id="field-zone" className="sm:col-span-2">
-                      <div className="p-3 bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shadow-xs">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <Compass size={15} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                            <span className="text-xs font-bold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E]">
-                              Designated Route Zone
-                            </span>
-                            <span className="text-xs font-bold px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300">
-                              Auto-assigned
-                            </span>
-                          </div>
-                          <p className="text-sm sm:text-base font-bold text-[#1F1D1B] dark:text-[#F6F5F3] mt-0.5">
-                            {formatZoneLabel(formData.zone || getZoneForBarangay(formData.address) || 'Central')}
-                          </p>
-                          <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
-                            Zoned based on Barangay residency ({formData.address || 'Gasan'}).
-                          </p>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setShowTodaGuide(true)}
-                          className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline inline-flex items-center gap-1 cursor-pointer self-start sm:self-center"
-                        >
-                          <Compass size={14} />
-                          <span>View Route Guide</span>
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Plate Number */}
-                    <div id="field-plateNo">
-                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                        Plate Number
-                      </label>
-                      <input 
-                        type="text" 
-                        name="plateNo" 
-                        maxLength={8}
-                        value={formData.plateNo} 
-                        onChange={handleInputChange} 
-                        className={`${getInputClasses('plateNo')} ${duplicateStatus.plateNo.duplicate ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} 
-                        required 
-                        autoComplete="off"
-                      />
-                      {formErrors.plateNo && (
-                        <p className="text-xs font-bold text-red-600 flex items-center gap-1 mt-1.5 animate-fadeIn">
-                          <AlertCircle size={13} /> <span>{formErrors.plateNo}</span>
-                        </p>
-                      )}
-                      {duplicateStatus.plateNo.checking && (
-                        <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1 mt-1.5">
-                          <Loader2 size={13} className="animate-spin" /> Checking plate number...
-                        </p>
-                      )}
-                      {!duplicateStatus.plateNo.checking && duplicateStatus.plateNo.duplicate && !formErrors.plateNo && (
-                        <p className="text-xs font-bold text-red-600 flex items-center gap-1 mt-1.5">
-                          <AlertCircle size={13} /> {duplicateStatus.plateNo.message}
-                        </p>
-                      )}
-                      {!duplicateStatus.plateNo.checking && !duplicateStatus.plateNo.duplicate && duplicateStatus.plateNo.message && (
-                        <p className="text-xs font-bold text-emerald-600 flex items-center gap-1 mt-1.5">
-                          <CheckCircle2 size={13} /> {duplicateStatus.plateNo.message}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Engine / Motor Number */}
-                    <div id="field-motorNo">
-                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                        Engine / Motor No.
-                      </label>
-                      <input 
-                        type="text" 
-                        name="motorNo" 
-                        maxLength={25}
-                        value={formData.motorNo} 
-                        onChange={handleInputChange} 
-                        className={`${getInputClasses('motorNo')} ${duplicateStatus.motorNo.duplicate ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} 
-                        required 
-                        autoComplete="off"
-                      />
-                      {formErrors.motorNo && (
-                        <p className="text-xs font-bold text-red-600 flex items-center gap-1 mt-1.5 animate-fadeIn">
-                          <AlertCircle size={13} /> <span>{formErrors.motorNo}</span>
-                        </p>
-                      )}
-                      {duplicateStatus.motorNo.checking && (
-                        <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1 mt-1.5">
-                          <Loader2 size={13} className="animate-spin" /> Checking motor number...
-                        </p>
-                      )}
-                      {!duplicateStatus.motorNo.checking && duplicateStatus.motorNo.duplicate && !formErrors.motorNo && (
-                        <p className="text-xs font-bold text-red-600 flex items-center gap-1 mt-1.5">
-                          <AlertCircle size={13} /> {duplicateStatus.motorNo.message}
-                        </p>
-                      )}
-                      {!duplicateStatus.motorNo.checking && !duplicateStatus.motorNo.duplicate && duplicateStatus.motorNo.message && (
-                        <p className="text-xs font-bold text-emerald-600 flex items-center gap-1 mt-1.5">
-                          <CheckCircle2 size={13} /> {duplicateStatus.motorNo.message}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Chassis Serial Number */}
-                    <div id="field-chassisNo">
-                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                        Chassis Serial No. (VIN)
-                      </label>
-                      <input 
-                        type="text" 
-                        name="chassisNo" 
-                        maxLength={25}
-                        value={formData.chassisNo} 
-                        onChange={handleInputChange} 
-                        className={`${getInputClasses('chassisNo')} ${duplicateStatus.chassisNo.duplicate ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} 
-                        required 
-                        autoComplete="off"
-                      />
-                      {formErrors.chassisNo && (
-                        <p className="text-xs font-bold text-red-600 flex items-center gap-1 mt-1.5 animate-fadeIn">
-                          <AlertCircle size={13} /> <span>{formErrors.chassisNo}</span>
-                        </p>
-                      )}
-                      {duplicateStatus.chassisNo.checking && (
-                        <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1 mt-1.5">
-                          <Loader2 size={13} className="animate-spin" /> Checking chassis number...
-                        </p>
-                      )}
-                      {!duplicateStatus.chassisNo.checking && duplicateStatus.chassisNo.duplicate && !formErrors.chassisNo && (
-                        <p className="text-xs font-bold text-red-600 flex items-center gap-1 mt-1.5">
-                          <AlertCircle size={13} /> {duplicateStatus.chassisNo.message}
-                        </p>
-                      )}
-                      {!duplicateStatus.chassisNo.checking && !duplicateStatus.chassisNo.duplicate && duplicateStatus.chassisNo.message && (
-                        <p className="text-xs font-bold text-emerald-600 flex items-center gap-1 mt-1.5">
-                          <CheckCircle2 size={13} /> {duplicateStatus.chassisNo.message}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Color */}
-                    <div id="field-color">
-                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                        Tricycle Color
-                      </label>
-                      <input
-                        type="text"
-                        name="color"
-                        value={formData.color}
-                        onChange={handleInputChange}
-                        className={inputClasses}
-                        autoComplete="off"
-                      />
-                    </div>
-
-                    {/* Fuel Type */}
-                    <div id="field-fuelType">
-                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                        Fuel Type
-                      </label>
-                      <input
-                        type="text"
-                        name="fuelType"
-                        value={formData.fuelType}
-                        onChange={handleInputChange}
-                        className={inputClasses}
-                        autoComplete="off"
-                      />
-                    </div>
-
-                    {/* LTO Registration Expiry Date */}
-                    <div id="field-orCrExpiryDate">
-                      <SimpleDatePicker
-                        name="orCrExpiryDate"
-                        value={formData.orCrExpiryDate}
-                        onChange={handleInputChange}
-                        label="LTO Expiration Date"
-                        mode="expiry"
-                        helperText="Valid registration end date on LTO OR."
-                        error={formErrors.orCrExpiryDate}
-                      />
-                    </div>
-
-                    {/* Collapsible Secondary Technical LTO Details (Accordion) */}
-                    <div className="sm:col-span-2 pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
-                      <button
-                        type="button"
-                        id="additional-lto-specs-toggle"
-                        aria-expanded={showAdvancedSpecs}
-                        aria-controls="additional-lto-specs-panel"
-                        onClick={(e) => {
-                          e.preventDefault();
-                          e.stopPropagation();
-                          setShowAdvancedSpecs(prev => !prev);
-                        }}
-                        className={`w-full flex items-center justify-between p-3.5 transition-all text-left cursor-pointer border border-[#E4E1DC] dark:border-[#2E2A27] focus:outline-hidden focus:ring-2 focus:ring-[#9E2A2B]/30 dark:focus:ring-[#D4AF37]/30 ${
-                          showAdvancedSpecs 
-                            ? 'rounded-t-lg bg-[#EAE7E1] dark:bg-[#1C1917] border-b-0 shadow-xs' 
-                            : 'rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#252220]'
-                        }`}
-                      >
-                        <div className="flex items-center gap-2.5">
-                          <div className={`p-1.5 rounded-md ${showAdvancedSpecs ? 'bg-[#9E2A2B] text-white dark:bg-[#D4AF37] dark:text-[#1F1D1B]' : 'bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37]'}`}>
-                            <FileText size={16} />
-                          </div>
-                          <div>
-                            <span className="text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                              Additional LTO Specifications &amp; Numbers
-                            </span>
-                            <span className="text-[11px] font-medium text-[#6B6761] dark:text-[#A8A29E] block sm:inline sm:ml-2">
-                              (Auto-filled &bull; Optional review)
-                            </span>
-                          </div>
-                        </div>
-                        <div className="flex items-center gap-2 text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37]">
-                          <span>{showAdvancedSpecs ? 'Hide Details' : 'Show Details'}</span>
-                          <ChevronDown 
-                            size={16} 
-                            className={`transition-transform duration-200 transform ${showAdvancedSpecs ? 'rotate-180 text-[#9E2A2B] dark:text-[#D4AF37]' : 'rotate-0'}`} 
-                          />
-                        </div>
-                      </button>
-
-                      {showAdvancedSpecs && (
-                        <div 
-                          id="additional-lto-specs-panel"
-                          role="region"
-                          aria-labelledby="additional-lto-specs-toggle"
-                          className="p-4 bg-white dark:bg-[#181513] rounded-b-lg border border-[#E4E1DC] dark:border-[#2E2A27] border-t-0 space-y-3 shadow-xs animate-fadeIn"
-                        >
-                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
-                            <div id="field-series">
-                              <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
-                                Model Series
-                              </label>
-                              <input
-                                type="text"
-                                name="series"
-                                value={formData.series}
-                                onChange={handleInputChange}
-                                className={inputClasses}
-                                autoComplete="off"
-                              />
-                            </div>
-
-                            <div id="field-displacement">
-                              <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
-                                Displacement (cc)
-                              </label>
-                              <input
-                                type="text"
-                                name="displacement"
-                                value={formData.displacement}
-                                onChange={handleInputChange}
-                                className={inputClasses}
-                                autoComplete="off"
-                              />
-                            </div>
-
-                            <div id="field-grossWeight">
-                              <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
-                                Gross Weight (kg)
-                              </label>
-                              <input
-                                type="text"
-                                name="grossWeight"
-                                value={formData.grossWeight}
-                                onChange={handleInputChange}
-                                className={inputClasses}
-                                autoComplete="off"
-                              />
-                            </div>
-
-                            <div id="field-bodyType">
-                              <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
-                                Body Type
-                              </label>
-                              <input
-                                type="text"
-                                name="bodyType"
-                                value={formData.bodyType}
-                                onChange={handleInputChange}
-                                className={inputClasses}
-                                autoComplete="off"
-                              />
-                            </div>
-
-                            <div id="field-crNo">
-                              <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
-                                CR Number
-                              </label>
-                              <input
-                                type="text"
-                                name="crNo"
-                                value={formData.crNo}
-                                onChange={handleInputChange}
-                                className={inputClasses}
-                                autoComplete="off"
-                              />
-                            </div>
-
-                            <div id="field-crDate">
-                              <SimpleDatePicker
-                                name="crDate"
-                                value={formData.crDate}
-                                onChange={handleInputChange}
-                                label="CR Registration Date"
-                                helperText="Date of vehicle registration."
-                                error={formErrors.crDate}
-                              />
-                            </div>
-
-                            <div id="field-orCrNo">
-                              <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
-                                OR Number
-                              </label>
-                              <input
-                                type="text"
-                                name="orCrNo"
-                                value={formData.orCrNo}
-                                onChange={handleInputChange}
-                                className={inputClasses}
-                                autoComplete="off"
-                              />
-                            </div>
-
-                            <div id="field-orDate">
-                              <SimpleDatePicker
-                                name="orDate"
-                                value={formData.orDate}
-                                onChange={handleInputChange}
-                                label="OR Payment Date"
-                                helperText="Date of annual LTO renewal."
-                                error={formErrors.orDate}
-                              />
-                            </div>
-
-                            <div id="field-fileNo">
-                              <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
-                                MV File Number
-                              </label>
-                              <input
-                                type="text"
-                                name="fileNo"
-                                value={formData.fileNo}
-                                onChange={handleInputChange}
-                                className={inputClasses}
-                                autoComplete="off"
-                              />
-                            </div>
-
-                            <div id="field-registeredOwner" className="sm:col-span-3">
-                              <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1 flex items-center justify-between">
-                                <span>Registered Owner Name (from CR)</span>
-                                <span className="text-[11px] font-normal text-[#6B6761] dark:text-[#A8A29E]">Only required if different from applicant</span>
-                              </label>
-                              <input
-                                type="text"
-                                name="registeredOwner"
-                                value={formData.registeredOwner}
-                                onChange={handleInputChange}
-                                className={inputClasses}
-                                autoComplete="off"
-                              />
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-
-                  </div>
-                </div>
-
-                {/* Step 2 Actions */}
-                <div className="pt-3 flex justify-between items-center gap-3">
-                  <button 
-                    type="button" 
-                    onClick={prevStep}
-                    className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-lg font-bold text-sm sm:text-base text-[#1F1D1B] dark:text-[#EAE7E1] bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#F6F5F3] dark:hover:bg-[#252220] min-h-[44px] cursor-pointer"
-                  >
-                    <ChevronLeft size={18} />
-                    <span>Back</span>
-                  </button>
-
-                  <button 
-                    type="button" 
-                    onClick={nextStep}
-                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg font-bold text-sm sm:text-base text-white bg-[#9E2A2B] hover:bg-[#7A1B22] shadow-xs cursor-pointer min-h-[44px] active:scale-95 transition-all"
-                  >
-                    <span>Next: Clearances</span>
-                    <ChevronRight size={18} />
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* STEP 3: CLEARANCES (TODA & BARANGAY) */}
-            {currentStep === 3 && (
-              <div className={`space-y-4 ${slideDirection === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}`}>
-                
-                {/* Header */}
-                <div className="flex items-center gap-2.5 pb-2.5 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
-                  <div className="w-8 h-8 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
-                    <ShieldCheck size={18} />
-                  </div>
-                  <div>
-                    <h2 className="text-base sm:text-lg font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                      Barangay & TODA Clearances
-                    </h2>
-                    <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] font-medium">
-                      Attach membership endorsement and residency clearances
-                    </p>
-                  </div>
-                </div>
-
-                {/* TODA Endorsement Card */}
-                <div className="p-3.5 sm:p-4 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-3 shadow-xs">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                      TODA Endorsement Certificate
-                    </label>
-                    <span className="text-xs sm:text-sm font-semibold text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1">
-                      <FileCheck size={14} className="text-emerald-600" /> Auto-fill
-                    </span>
-                  </div>
-
-                  {/* Mandatory Alert if not verified in digital roster */}
-                  {todaMembershipStatus?.todaStatus === 'not_in_roster' && (
-                    <div className="p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2 animate-fadeIn">
-                      <AlertTriangle size={15} className="shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
-                      <div>
-                        <span className="font-bold">MANDATORY REQUIREMENT: </span>
-                        <span>Because your name is not listed in the digital masterlist for <strong>{formData.todaName || loggedInToda}</strong>, you must upload an official TODA Certificate signed by the TODA President to submit your application.</span>
-                      </div>
-                    </div>
-                  )}
-
-                  <DocumentUploadCard
-                    id="todaEndorsement"
-                    label="TODA Endorsement Certificate"
-                    file={uploadedDocs.todaEndorsement}
-                    previewUrl={filePreviews.todaEndorsement || formData.todaEndorsementUrl}
-                    onFileSelect={handleFileChange}
-                    onFileRemove={handleRemoveFile}
-                    onPreviewZoom={setFullPreview}
-                    onRescan={handleRescan}
-                    required={formMode === 'New'}
-                    isScanning={aiScanning.todaEndorsement}
-                    scanSuccess={aiSuccess.todaEndorsement}
-                    error={formErrors.todaEndorsement}
-                    hideHeaderLabel={true}
-                  />
-
-                  {manualScanAlerts.todaEndorsement && (
-                    <div className="mt-2 p-2.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 rounded-lg flex items-start gap-2 text-xs text-amber-900 dark:text-amber-200">
-                      <AlertTriangle size={15} className="shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
-                      <span>{manualScanAlerts.todaEndorsement}</span>
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
-                    <div id="field-todaCertNo">
-                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                        Certificate / Control No.
-                      </label>
-                      <input 
-                        type="text" 
-                        name="todaCertNo" 
-                        value={formData.todaCertNo} 
-                        onChange={handleInputChange} 
-                        className={inputClasses} 
-                        autoComplete="off"
-                      />
-                    </div>
-                    <div id="field-todaCertDate">
-                      <SimpleDatePicker
-                        name="todaCertDate"
-                        value={formData.todaCertDate}
-                        onChange={handleInputChange}
-                        label="Date Issued"
-                        mode="issuance"
-                        helperText="Date TODA certificate was issued."
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Barangay Clearance Card */}
-                <div className="p-3.5 sm:p-4 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-3 shadow-xs">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                      Barangay Clearance
-                    </label>
-                    <span className="text-xs sm:text-sm font-semibold text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1">
-                      <FileCheck size={14} className="text-emerald-600" /> Auto-fill
-                    </span>
-                  </div>
-
-                  <DocumentUploadCard
-                    id="brgyClearance"
-                    label="Barangay Clearance"
-                    file={uploadedDocs.brgyClearance}
-                    previewUrl={filePreviews.brgyClearance || formData.brgyClearanceUrl}
-                    onFileSelect={handleFileChange}
-                    onFileRemove={handleRemoveFile}
-                    onPreviewZoom={setFullPreview}
-                    onRescan={handleRescan}
-                    required={formMode === 'New'}
-                    isScanning={aiScanning.brgyClearance}
-                    scanSuccess={aiSuccess.brgyClearance}
-                    error={formErrors.brgyClearance}
-                    hideHeaderLabel={true}
-                  />
-
-                  {manualScanAlerts.brgyClearance && (
-                    <div className="mt-2 p-2.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 rounded-lg flex items-start gap-2 text-xs text-amber-900 dark:text-amber-200">
-                      <AlertTriangle size={15} className="shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
-                      <span>{manualScanAlerts.brgyClearance}</span>
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
-                    <div id="field-brgyClearanceNo">
-                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                        Barangay Clearance No.
-                      </label>
-                      <input 
-                        type="text" 
-                        name="brgyClearanceNo" 
-                        value={formData.brgyClearanceNo} 
-                        onChange={handleInputChange} 
-                        className={inputClasses} 
-                        autoComplete="off"
-                      />
-                    </div>
-                    <div id="field-brgyClearanceDate">
-                      <SimpleDatePicker
-                        name="brgyClearanceDate"
-                        value={formData.brgyClearanceDate}
-                        onChange={handleInputChange}
-                        label="Date Issued"
-                        mode="issuance"
-                        helperText="Date Barangay clearance was issued."
-                      />
-                    </div>
-                    <div id="field-brgyIssuer">
-                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                        Issuing Official / Punong Barangay
-                      </label>
-                      <input 
-                        type="text" 
-                        name="brgyIssuer" 
-                        value={formData.brgyIssuer} 
-                        onChange={handleInputChange} 
-                        className={inputClasses} 
-                        autoComplete="off"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Step 3 Actions */}
-                <div className="pt-3 flex justify-between items-center gap-3">
-                  <button 
-                    type="button" 
-                    onClick={prevStep}
-                    className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-lg font-bold text-sm sm:text-base text-[#1F1D1B] dark:text-[#EAE7E1] bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#F6F5F3] dark:hover:bg-[#252220] min-h-[44px] cursor-pointer"
-                  >
-                    <ChevronLeft size={18} />
-                    <span>Back</span>
-                  </button>
-
-                  <button 
-                    type="button" 
-                    onClick={nextStep}
-                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg font-bold text-sm sm:text-base text-white bg-[#9E2A2B] hover:bg-[#7A1B22] shadow-xs cursor-pointer min-h-[44px] active:scale-95 transition-all"
-                  >
-                    <span>Next: Cedula (CTC)</span>
-                    <ChevronRight size={18} />
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* STEP 4: COMMUNITY TAX CERTIFICATE (CEDULA / CTC) */}
-            {currentStep === 4 && (
-              <div className={`space-y-4 ${slideDirection === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}`}>
-                
-                {/* Header */}
-                <div className="flex items-center gap-2.5 pb-2.5 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
-                  <div className="w-8 h-8 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
-                    <Receipt size={18} />
-                  </div>
-                  <div>
-                    <h2 className="text-base sm:text-lg font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                      Community Tax Certificate (Cedula / CTC)
-                    </h2>
-                    <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] font-medium">
-                      Upload current-year Community Tax Certificate (Cedula) and complete details
-                    </p>
-                  </div>
-                </div>
-
-                {/* Cedula Upload & Input Container */}
-                <div className="p-3.5 sm:p-4 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-4 shadow-xs">
-                  <div className="flex items-center justify-between">
-                    <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                      Community Tax Certificate (Cedula / CTC)
-                    </label>
-                    <span className="text-xs sm:text-sm font-semibold text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1">
-                      <FileCheck size={14} className="text-emerald-600" /> Auto-fill
-                    </span>
-                  </div>
-
-                  <DocumentUploadCard
-                    id="cedulaDoc"
-                    label="Cedula (CTC) Document"
-                    file={uploadedDocs.cedulaDoc || uploadedDocs.cedula}
-                    previewUrl={filePreviews.cedulaDoc || filePreviews.cedula || formData.cedulaUrl}
-                    onFileSelect={handleFileChange}
-                    onFileRemove={handleRemoveFile}
-                    onPreviewZoom={setFullPreview}
-                    onRescan={handleRescan}
-                    required={formMode === 'New'}
-                    isScanning={aiScanning.cedulaDoc}
-                    scanSuccess={aiSuccess.cedulaDoc}
-                    error={formErrors.cedulaDoc}
-                    hideHeaderLabel={true}
-                  />
-
-                  {manualScanAlerts.cedulaDoc && (
-                    <div className="mt-2 p-2.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 rounded-lg flex items-start gap-2 text-xs text-amber-900 dark:text-amber-200">
-                      <AlertTriangle size={15} className="shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
-                      <span>{manualScanAlerts.cedulaDoc}</span>
-                    </div>
-                  )}
-
-                  {/* Section A: CTC Official Number & Details */}
-                  <div className="pt-2 border-t border-[#E4E1DC]/80 dark:border-[#2E2A27]">
-                    <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E] mb-3">
-                      Official Cedula (CTC) Information
-                    </h3>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div id="field-cedulaSerialNo">
-                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                          Cedula Serial Number
-                        </label>
-                        <input 
-                          type="text" 
-                          name="cedulaSerialNo" 
-                          value={formData.cedulaSerialNo} 
-                          onChange={handleInputChange} 
-                          className={getInputClasses('cedulaSerialNo')} 
-                          required 
-                          autoComplete="off"
-                        />
-                        {formErrors.cedulaSerialNo && (
-                          <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
-                            <AlertCircle size={13} className="shrink-0" />
-                            <span>{formErrors.cedulaSerialNo}</span>
-                          </p>
-                        )}
-                      </div>
-
-                      <div id="field-cedulaDate">
-                        <SimpleDatePicker
-                          name="cedulaDate"
-                          value={formData.cedulaDate}
-                          onChange={handleInputChange}
-                          label="Date Issued"
-                          required
-                          mode="issuance"
-                          helperText="Date when the CTC was issued."
-                          error={formErrors.cedulaDate}
-                        />
-                      </div>
-
-                      <div id="field-cedulaAddress">
-                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                          Place / Municipality Issued
-                        </label>
-                        <input 
-                          type="text" 
-                          name="cedulaAddress" 
-                          value={formData.cedulaAddress} 
-                          onChange={handleInputChange} 
-                          className={getInputClasses('cedulaAddress')} 
-                          autoComplete="off"
-                        />
-                      </div>
-
-                      <div id="field-cedulaYear">
-                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                          Tax Year
-                        </label>
-                        <input 
-                          type="text" 
-                          name="cedulaYear" 
-                          value={formData.cedulaYear || ''} 
-                          onChange={handleInputChange} 
-                          className={inputClasses} 
-                          autoComplete="off"
-                        />
-                      </div>
-
-                      <div id="field-cedulaAmount" className="sm:col-span-2">
-                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                          Cedula Amount Paid (₱)
-                        </label>
-                        <input 
-                          type="number" 
-                          name="cedulaAmount" 
-                          value={formData.cedulaAmount || ''} 
-                          onChange={handleInputChange} 
-                          className={getInputClasses('cedulaAmount')} 
-                          step="0.01"
-                          min="0"
-                          autoComplete="off"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Section B: Taxpayer Identity & Biometrics (Editable Inputs replacing the static green card) */}
-                  <div className="pt-2 border-t border-[#E4E1DC]/80 dark:border-[#2E2A27]">
-                    <div className="flex items-center justify-between mb-3">
-                      <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E]">
-                        Taxpayer Identity &amp; Biometrics (Mula sa Cedula)
-                      </h3>
-                      <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
-                        <Zap size={11} /> Auto-filled &amp; Editable
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                      <div id="field-cedulaFullName">
-                        <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
-                          Taxpayer Full Name
-                        </label>
-                        <input 
-                          type="text" 
-                          name="cedulaFullName" 
-                          value={formData.cedulaFullName || ''} 
-                          onChange={handleInputChange} 
-                          className={inputClasses} 
-                          autoComplete="off"
-                        />
-                      </div>
-
-                      <div id="field-cedulaCivilStatus">
-                        <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
-                          Civil Status
-                        </label>
-                        <input 
-                          type="text" 
-                          name="cedulaCivilStatus" 
-                          value={formData.cedulaCivilStatus || ''} 
-                          onChange={handleInputChange} 
-                          className={inputClasses} 
-                          autoComplete="off"
-                        />
-                      </div>
-
-                      <div id="field-cedulaCitizenship">
-                        <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
-                          Citizenship
-                        </label>
-                        <input 
-                          type="text" 
-                          name="cedulaCitizenship" 
-                          value={formData.cedulaCitizenship || ''} 
-                          onChange={handleInputChange} 
-                          className={inputClasses} 
-                          autoComplete="off"
-                        />
-                      </div>
-
-                      <div id="field-cedulaProfession">
-                        <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
-                          Profession / Occupation
-                        </label>
-                        <input 
-                          type="text" 
-                          name="cedulaProfession" 
-                          value={formData.cedulaProfession || ''} 
-                          onChange={handleInputChange} 
-                          className={inputClasses} 
-                          autoComplete="off"
-                        />
-                      </div>
-
-                      <div id="field-cedulaDob">
-                        <SimpleDatePicker
-                          name="cedulaDob"
-                          value={formData.cedulaDob}
-                          onChange={handleInputChange}
-                          label="Date of Birth"
-                          helperText="Petsa ng kapanganakan sa Cedula."
-                        />
-                      </div>
-
-                      <div id="field-cedulaPlaceOfBirth">
-                        <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
-                          Place of Birth
-                        </label>
-                        <input 
-                          type="text" 
-                          name="cedulaPlaceOfBirth" 
-                          value={formData.cedulaPlaceOfBirth || ''} 
-                          onChange={handleInputChange} 
-                          className={inputClasses} 
-                          autoComplete="off"
-                        />
-                      </div>
-
-                      <div id="field-cedulaSex">
-                        <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
-                          Sex / Kasarian
-                        </label>
-                        <input 
-                          type="text" 
-                          name="cedulaSex" 
-                          value={formData.cedulaSex || ''} 
-                          onChange={handleInputChange} 
-                          className={inputClasses} 
-                          autoComplete="off"
-                        />
-                      </div>
-
-                      <div id="field-cedulaTin">
-                        <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
-                          Tax Identification Number (TIN)
-                        </label>
-                        <input 
-                          type="text" 
-                          name="cedulaTin" 
-                          value={formData.cedulaTin || ''} 
-                          onChange={handleInputChange} 
-                          className={inputClasses} 
-                          autoComplete="off"
-                        />
-                      </div>
-
-                      <div id="field-cedulaHeight">
-                        <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
-                          Height (ft)
-                        </label>
-                        <input 
-                          type="text" 
-                          name="cedulaHeight" 
-                          value={formData.cedulaHeight || ''} 
-                          onChange={handleInputChange} 
-                          className={inputClasses} 
-                          autoComplete="off"
-                        />
-                      </div>
-
-                      <div id="field-cedulaWeight">
-                        <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
-                          Weight (kg)
-                        </label>
-                        <input 
-                          type="text" 
-                          name="cedulaWeight" 
-                          value={formData.cedulaWeight || ''} 
-                          onChange={handleInputChange} 
-                          className={inputClasses} 
-                          autoComplete="off"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                </div>
-
-                {/* Step 4 Actions */}
-                <div className="pt-3 flex flex-col-reverse sm:flex-row justify-between items-center gap-3">
-                  <button 
-                    type="button" 
-                    onClick={prevStep}
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-lg font-bold text-sm sm:text-base text-[#1F1D1B] dark:text-[#EAE7E1] bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#F6F5F3] dark:hover:bg-[#252220] min-h-[44px] cursor-pointer"
-                  >
-                    <ChevronLeft size={18} />
-                    <span>Back to Clearances</span>
-                  </button>
-
-                  <button 
-                    type="button" 
-                    onClick={nextStep}
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-sm sm:text-base text-white bg-[#9E2A2B] hover:bg-[#7A1B22] shadow-xs cursor-pointer min-h-[44px] active:scale-95 transition-all"
-                  >
-                    <span>Next: Review &amp; Confirmation</span>
-                    <ChevronRight size={18} />
-                  </button>
-                </div>
-
-                {/* Secondary draft actions */}
-                <div className="flex items-center justify-center gap-4 pt-1">
-                  <button
-                    type="button"
-                    onClick={() => handleSaveProgress(true)}
-                    className="text-xs sm:text-sm font-semibold text-[#6B6761] dark:text-[#A8A29E] hover:underline inline-flex items-center gap-1.5 cursor-pointer"
-                  >
-                    <Save size={14} />
-                    <span>Save Draft</span>
-                  </button>
-                  {hasDraftRestored && (
-                    <button
-                      type="button"
-                      onClick={handleClearDraft}
-                      className="text-xs sm:text-sm font-semibold text-red-600 dark:text-red-400 hover:underline inline-flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <RotateCcw size={14} />
-                      <span>Reset Draft</span>
-                    </button>
-                  )}
-                </div>
-
-              </div>
-            )}
-
-            {/* STEP 5: APPLICATION REVIEW & CONFIRMATION */}
-            {currentStep === 5 && (
-              <div className={`space-y-4 ${slideDirection === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}`}>
-                
-                {/* Header */}
-                <div className="flex items-center gap-2.5 pb-2.5 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
-                  <div className="w-8 h-8 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
-                    <ShieldCheck size={18} />
-                  </div>
-                  <div>
-                    <h2 className="text-base sm:text-lg font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                      Review &amp; Confirmation
-                    </h2>
-                    <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] font-medium">
-                      Carefully review your complete application before submitting
-                    </p>
-                  </div>
-                </div>
-
-                {/* Section 1: Operator & Driver Information */}
-                <div className="p-4 bg-white dark:bg-[#1C1917] rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs space-y-3">
-                  <div className="flex items-center justify-between pb-2 border-b border-[#E4E1DC]/80 dark:border-[#2E2A27]">
-                    <div className="flex items-center gap-2">
-                      <User size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                      <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1F1D1B] dark:text-[#EAE7E1]">
-                        1. Operator &amp; Driver Details
-                      </h3>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => { setSlideDirection('backward'); setCurrentStep(1); }}
-                      className="text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer"
-                    >
-                      Edit Step 1
-                    </button>
-                  </div>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs [&>div]:min-w-0 [&_span]:break-words">
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Operator Name</span>
-                      <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.fullName || '—'}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Barangay Residence</span>
-                      <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.address || '—'}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Driver Type</span>
-                      <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.isOperatorDriver ? 'Operator is Driver' : `Designated: ${formData.driverName || '—'}`}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Driver's License No.</span>
-                      <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.driverLicenseNo || '—'}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">License Expiry Date</span>
-                      <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.driverLicenseExpiryDate || '—'}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">License Serial (Back)</span>
-                      <span className="font-mono text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.driverLicenseSerialNo || '—'}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Section 2: Vehicle & Registration */}
-                <div className="p-4 bg-white dark:bg-[#1C1917] rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs space-y-3">
-                  <div className="flex items-center justify-between pb-2 border-b border-[#E4E1DC]/80 dark:border-[#2E2A27]">
-                    <div className="flex items-center gap-2">
-                      <TricycleIcon size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                      <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1F1D1B] dark:text-[#EAE7E1]">
-                        2. Vehicle &amp; LTO Registration
-                      </h3>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => { setSlideDirection('backward'); setCurrentStep(2); }}
-                      className="text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer"
-                    >
-                      Edit Step 2
-                    </button>
-                  </div>
-
-                  {(!formData.plateNo || !formData.motorNo || !formData.chassisNo || !formData.make || !formData.made) && (
-                    <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-300 dark:border-red-800 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                      <div className="flex items-center gap-2 text-xs sm:text-sm text-red-700 dark:text-red-300 font-semibold">
-                        <AlertCircle size={18} className="text-red-600 shrink-0" />
-                        <span>Kulang ang impormasyon ng sasakyan (naka-dash pa ang mga detalye). Kailangang i-type sa Hakbang 2 bago mag-submit.</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => { setSlideDirection('backward'); setCurrentStep(2); }}
-                        className="px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold shrink-0 cursor-pointer transition-colors shadow-xs"
-                      >
-                        Pumunta sa Hakbang 2 (I-manual)
-                      </button>
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs [&>div]:min-w-0 [&_span]:break-words">
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Make &amp; Model</span>
-                      <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.make || '—'} ({formData.made || '—'})</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Plate / MV File No.</span>
-                      <span className="font-mono font-bold text-[#9E2A2B] dark:text-[#D4AF37]">{formData.plateNo || '—'}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Authorized Zone</span>
-                      <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{formatZoneLabel(formData.zone)}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Engine / Motor No.</span>
-                      <span className="font-mono text-[#1F1D1B] dark:text-[#EAE7E1] break-all">{formData.motorNo || '—'}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Chassis Serial / VIN</span>
-                      <span className="font-mono text-[#1F1D1B] dark:text-[#EAE7E1] break-all">{formData.chassisNo || '—'}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">LTO OR/CR Expiry</span>
-                      <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.orCrExpiryDate || '—'}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Displacement / Weight</span>
-                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.displacement ? `${formData.displacement}` : '—'} &bull; {formData.grossWeight ? `${formData.grossWeight}` : '—'}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Fuel &amp; Body Type</span>
-                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.fuelType || 'GAS'} &bull; {formData.bodyType || 'TRICYCLE'}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">CR Registered Owner</span>
-                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1] truncate block">{formData.registeredOwner || formData.fullName || '—'}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Section 3: Barangay & TODA Clearances */}
-                <div className="p-4 bg-white dark:bg-[#1C1917] rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs space-y-3">
-                  <div className="flex items-center justify-between pb-2 border-b border-[#E4E1DC]/80 dark:border-[#2E2A27]">
-                    <div className="flex items-center gap-2">
-                      <FileCheck size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                      <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1F1D1B] dark:text-[#EAE7E1]">
-                        3. TODA &amp; Barangay Clearances
-                      </h3>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => { setSlideDirection('backward'); setCurrentStep(3); }}
-                      className="text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer"
-                    >
-                      Edit Step 3
-                    </button>
-                  </div>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs [&>div]:min-w-0 [&_span]:break-words">
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">TODA Association</span>
-                      <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.todaName || 'NON-TODA'}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">TODA Certificate No.</span>
-                      <span className="font-mono font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.todaCertNo || '—'}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">TODA Date Issued</span>
-                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.todaCertDate || '—'}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Barangay Clearance No.</span>
-                      <span className="font-mono font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.brgyClearanceNo || '—'}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Barangay Date Issued</span>
-                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.brgyClearanceDate || '—'}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Issuing Official (Brgy)</span>
-                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.brgyIssuer || '—'}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Section 4: Community Tax Certificate (Cedula) */}
-                <div className="p-4 bg-white dark:bg-[#1C1917] rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs space-y-3">
-                  <div className="flex items-center justify-between pb-2 border-b border-[#E4E1DC]/80 dark:border-[#2E2A27]">
-                    <div className="flex items-center gap-2">
-                      <Receipt size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                      <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1F1D1B] dark:text-[#EAE7E1]">
-                        4. Community Tax Certificate (Cedula / CTC)
-                      </h3>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => { setSlideDirection('backward'); setCurrentStep(4); }}
-                      className="text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer"
-                    >
-                      Edit Step 4
-                    </button>
-                  </div>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs [&>div]:min-w-0 [&_span]:break-words">
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">CTC Serial Number</span>
-                      <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.cedulaSerialNo || '—'}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">CTC Date Issued</span>
-                      <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.cedulaDate || '—'}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Place Issued</span>
-                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.cedulaAddress || '—'}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Tax Year &bull; Total Paid</span>
-                      <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.cedulaYear || '2026'} &bull; ₱{Number(formData.cedulaAmount || 55).toFixed(2)}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Taxpayer Name</span>
-                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1] truncate block">{formData.cedulaFullName || formData.fullName || '—'}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Civil Status &bull; TIN</span>
-                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1] break-all">{formData.cedulaCivilStatus || '—'} &bull; {formData.cedulaTin || '—'}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Section 5: Verification Notices & Detected Defect Checks */}
-                {(() => {
-                  const detected = getAiDiscrepancies(formData, aiScannedData);
-                  const isNotVerifiedInRoster = todaMembershipStatus && todaMembershipStatus.todaStatus !== 'verified_member' && formData.todaName && formData.todaName !== 'NON-TODA';
-
-                  return (
-                    <div className="space-y-2">
-                      {detected.length > 0 || isNotVerifiedInRoster ? (
-                        <div className="p-4 rounded-xl border border-amber-300 dark:border-amber-800 bg-amber-50/80 dark:bg-amber-950/30 space-y-2.5">
-                          <div className="flex items-center gap-2 text-amber-900 dark:text-amber-200 font-bold text-xs sm:text-sm">
-                            <AlertTriangle size={18} className="text-amber-600 dark:text-amber-400 shrink-0" />
-                            <span>Verification &amp; Defect Check Notices</span>
-                          </div>
-                          <ul className="space-y-1.5 pl-6 text-xs text-amber-900/90 dark:text-amber-200/90 list-disc">
-                            {isNotVerifiedInRoster && (
-                              <li>
-                                <strong>TODA Masterlist:</strong> Applicant is not listed in the approved online roster of {formData.todaName || 'your TODA'}, but a physical TODA Endorsement Certificate is attached.
-                              </li>
-                            )}
-                            {detected.map((disc, idx) => (
-                              <li key={idx}>
-                                <strong>{disc.label}:</strong> {disc.reason}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ) : (
-                        <div className="p-3.5 rounded-xl border border-emerald-300 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/20 flex items-center gap-2.5 text-xs text-emerald-900 dark:text-emerald-200">
-                          <CheckCircle2 size={18} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
-                          <span>No defects or discrepancies detected between scanned documents and entered data. Everything matches.</span>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })()}
-
-                {/* Section 6: LGU Treasury Fee Notice */}
-                <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl flex items-center gap-2.5 text-xs sm:text-sm text-amber-900 dark:text-amber-200">
-                  <Receipt size={18} className="shrink-0 text-amber-700 dark:text-amber-400" />
-                  <div className="leading-snug">
-                    <strong className="font-bold">Franchise Filing Fee:</strong> The standard franchise filing fee (<strong className="font-bold underline">₱500.00</strong>) is payable directly at the Municipal Treasury Cashier once your application is endorsed and approved by the Franchising Office.
-                  </div>
-                </div>
-
-                {/* Section 7: Confirmation Checkbox (Affidavit of Authenticity) */}
-                <div className="p-4 rounded-xl border-2 border-[#D4AF37]/40 bg-white dark:bg-[#1C1917] shadow-xs">
-                  <label className="flex items-start gap-3 cursor-pointer select-none">
-                    <input
-                      type="checkbox"
-                      id="confirm-authenticity-checkbox"
-                      checked={isAgreedToTerms}
-                      onChange={(e) => setIsAgreedToTerms(e.target.checked)}
-                      className="mt-1 w-5 h-5 rounded text-[#9E2A2B] dark:text-[#D4AF37] focus:ring-[#9E2A2B] border-[#E4E1DC] dark:border-[#2E2A27] cursor-pointer shrink-0"
-                    />
-                    <div className="text-xs sm:text-sm text-[#1F1D1B] dark:text-[#EAE7E1] leading-relaxed">
-                      <strong className="font-bold text-sm block mb-0.5 text-[#9E2A2B] dark:text-[#D4AF37]">
-                        Affidavit of Authenticity &amp; Truthfulness:
-                      </strong>
-                      I hereby certify that all information and documents provided in this application are true, accurate, and complete to the best of my knowledge. I understand that any false statement or fraudulent document will result in the immediate denial of this application or revocation of the franchise in accordance with municipal ordinances of Gasan.
-                    </div>
-                  </label>
-                </div>
-
-                {/* Step 5 Submission Actions */}
-                <div className="pt-3 border-t border-[#E4E1DC] dark:border-[#2E2A27] space-y-3">
-                  <div className="flex flex-col-reverse sm:flex-row justify-between items-center gap-3">
-                    <button 
-                      type="button" 
-                      onClick={prevStep}
-                      className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-lg font-bold text-sm sm:text-base text-[#1F1D1B] dark:text-[#EAE7E1] bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#F6F5F3] dark:hover:bg-[#252220] min-h-[44px] cursor-pointer"
-                    >
-                      <ChevronLeft size={18} />
-                      <span>Back to Cedula</span>
-                    </button>
-
-                    <button 
-                      type="submit" 
-                      onClick={handlePreSubmit}
-                      disabled={isSubmitting || !isAgreedToTerms}
-                      className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-2.5 rounded-lg font-bold text-sm sm:text-base text-white transition-all shadow-xs active:scale-95 min-h-[44px] ${
-                        isSubmitting || !isAgreedToTerms
-                          ? 'bg-[#6B7280] opacity-60 cursor-not-allowed' 
-                          : 'bg-[#9E2A2B] hover:bg-[#7A1B22] cursor-pointer'
-                      }`}
-                    >
-                      {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle size={18} />}
-                      <span>{isSubmitting ? (uploadPhase || 'Submitting...') : 'Submit Application'}</span>
-                    </button>
-                  </div>
-
-                  {!isAgreedToTerms && (
-                    <p className="text-center text-xs text-[#9E2A2B] dark:text-[#D4AF37] font-semibold">
-                      * Please check the Affidavit of Authenticity box above before submitting your application.
-                    </p>
-                  )}
-
-                  {/* Secondary draft actions */}
-                  <div className="flex items-center justify-center gap-4 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => handleSaveProgress(true)}
-                      className="text-xs sm:text-sm font-semibold text-[#6B6761] dark:text-[#A8A29E] hover:underline inline-flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <Save size={14} />
-                      <span>Save Draft</span>
-                    </button>
-                    {hasDraftRestored && (
-                      <button
-                        type="button"
-                        onClick={handleClearDraft}
-                        className="text-xs sm:text-sm font-semibold text-red-600 dark:text-red-400 hover:underline inline-flex items-center gap-1.5 cursor-pointer"
-                      >
-                        <RotateCcw size={14} />
-                        <span>Reset Draft</span>
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-              </div>
-            )}
-
-          </form>
-        </div>
-
-      </div>
-
-      {/* Modals */}
-      {showTodaGuide && (
-        <TodaZoneGuideModal 
-          isOpen={showTodaGuide} 
-          onClose={() => setShowTodaGuide(false)} 
-        />
-      )}
-
-      {fullPreview && (
-        <DocumentPreviewModal 
-          fullPreview={fullPreview}
-          fileUrl={fullPreview} 
-          isOpen={!!fullPreview} 
-          setFullPreview={setFullPreview}
-          onClose={() => setFullPreview(null)} 
-        />
-      )}
-
-      {isSummaryModalOpen && (
-        <ApplicationSummaryModal
-          isOpen={isSummaryModalOpen}
-          isSummaryModalOpen={isSummaryModalOpen}
-          onClose={() => setIsSummaryModalOpen(false)}
-          setIsSummaryModalOpen={setIsSummaryModalOpen}
-          formData={formData}
-          application={{
-            ...formData,
-            status: 'Draft',
-            applicationType: formMode === 'Renewal' ? 'Renewal' : 'New',
-            createdAt: formData.dateApplied
-          }}
-          requirementsList={DEFAULT_REQUIREMENTS}
-          uploadedDocs={uploadedDocs}
-          filePreviews={filePreviews}
-          loggedInToda={formData.todaName}
-        />
-      )}
-
-      {feedbackModal.isOpen && (
-        <FeedbackModal
-          isOpen={feedbackModal.isOpen}
-          type={feedbackModal.type}
-          title={feedbackModal.title}
-          message={feedbackModal.message}
-          confirmText={feedbackModal.confirmText}
-          onConfirm={feedbackModal.onConfirm}
-        />
-      )}
-
-      {cancelModal.isOpen && (
-        <CancelApplicationModal
-          isOpen={cancelModal.isOpen}
-          onClose={() => setCancelModal({ isOpen: false, unit: null, reason: CANCEL_REASONS[0], customReason: '', isSubmitting: false })}
-          unit={cancelModal.unit}
-          reason={cancelModal.reason}
-          setReason={(r) => setCancelModal(prev => ({ ...prev, reason: r }))}
-          customReason={cancelModal.customReason}
-          setCustomReason={(c) => setCancelModal(prev => ({ ...prev, customReason: c }))}
-          onConfirm={handleConfirmCancel}
-          isSubmitting={cancelModal.isSubmitting}
-        />
-      )}
-
-      {/* Submit Application Confirmation Modal */}
-      {isSubmitConfirmOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 animate-in fade-in duration-200">
-          <div className="relative w-full max-w-md bg-white dark:bg-[#1C1917] rounded-xl p-6 sm:p-7 shadow-xl border border-[#E4E1DC] dark:border-[#2E2A27]">
-            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
-              <CheckCircle2 className="w-6 h-6 stroke-[2.5]" />
-            </div>
-
-            <h3 className="text-lg sm:text-xl font-bold text-[#1F1D1B] dark:text-[#EAE7E1] text-center mb-2">
-              Are you sure you want to submit?
-            </h3>
-
-            <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] text-center mb-6 leading-relaxed">
-              Please confirm that you want to submit this franchise application. Once submitted, your documents will be forwarded to the Franchising Office for official review.
-            </p>
-
-            {/* Modal Actions */}
-            <div className="flex flex-col-reverse sm:flex-row gap-2.5">
-              <button
-                type="button"
-                onClick={() => setIsSubmitConfirmOpen(false)}
-                className="w-full py-2.5 px-4 rounded-lg bg-[#F6F5F3] hover:bg-[#E4E1DC] dark:bg-[#2E2A27] dark:hover:bg-[#3D3834] text-[#1F1D1B] dark:text-[#EAE7E1] font-bold text-xs sm:text-sm transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer min-h-[44px]"
-              >
-                <span>Cancel</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={(e) => {
-                  setIsSubmitConfirmOpen(false);
-                  handleSubmit(e, true);
-                }}
-                disabled={isSubmitting}
-                className="w-full py-2.5 px-4 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-xs sm:text-sm shadow-xs transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer min-h-[44px]"
-              >
-                {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
-                <span>Yes, Submit</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* AI OCR Discrepancy Confirmation Modal */}
-      {discrepancyModal.isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 animate-in fade-in duration-200">
-          <div className="relative w-full max-w-lg bg-white dark:bg-[#1C1917] rounded-xl p-6 sm:p-7 shadow-xl border border-[#E4E1DC] dark:border-[#2E2A27]">
-            <div className="w-12 h-12 mx-auto mb-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 flex items-center justify-center text-amber-700 dark:text-amber-400">
-              <AlertTriangle className="w-6 h-6 stroke-[2.5]" />
-            </div>
-
-            <h3 className="text-lg font-bold text-[#1F1D1B] dark:text-[#EAE7E1] text-center mb-1">
-              Document Verification Notice
-            </h3>
-
-            <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] text-center mb-4 leading-relaxed">
-              The system detected differences between your uploaded document image and the validity date entered in your application.
-            </p>
-
-            {/* Discrepancy comparison cards */}
-            <div className="space-y-2 mb-4 max-h-60 overflow-y-auto pr-1">
-              {discrepancyModal.discrepancies.map((disc, idx) => (
-                <div key={idx} className="bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3 text-xs space-y-1.5">
-                  <div className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                    {disc.label}
-                  </div>
-                  <div className="grid grid-cols-2 gap-2 text-[11px]">
-                    <div className="bg-white dark:bg-[#1C1917] p-2 rounded border border-red-200 dark:border-red-900/50">
-                      <span className="text-[10px] text-red-600 dark:text-red-400 font-semibold block">Detected from Image:</span>
-                      <span className="font-mono font-bold text-red-700 dark:text-red-300">
-                        {disc.scannedValue || 'None'} (Expired)
-                      </span>
-                    </div>
-                    <div className="bg-white dark:bg-[#1C1917] p-2 rounded border border-slate-200 dark:border-slate-800">
-                      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block">Entered in Application:</span>
-                      <span className="font-mono font-bold text-slate-900 dark:text-slate-100">
-                        {disc.enteredValue || 'None'}
-                      </span>
-                    </div>
-                  </div>
-                  {disc.reason && (
-                    <p className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] leading-normal pt-0.5">
-                      {disc.reason}
-                    </p>
-                  )}
-                </div>
-              ))}
-            </div>
-
-            {/* Municipal Warning Box */}
-            <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 text-amber-900 dark:text-amber-300 text-xs mb-5 leading-relaxed">
-              <span className="font-bold block mb-0.5">Official Sangguniang Bayan Reminder:</span>
-              Municipal evaluators personally examine all uploaded document images. Submitting expired or non-matching attachments will result in the immediate rejection of your application.
-            </div>
-
-            {/* Actions */}
-            <div className="flex flex-col sm:flex-row gap-2.5">
-              <button
-                type="button"
-                onClick={() => {
-                  const firstDisc = discrepancyModal.discrepancies[0];
-                  setDiscrepancyModal({ isOpen: false, discrepancies: [] });
-                  if (firstDisc?.step) {
-                    setCurrentStep(firstDisc.step);
-                    navigate(`?mode=${(formMode || 'New').toLowerCase()}&step=${firstDisc.step}`);
-                  }
-                  if (firstDisc?.field) {
-                    setTimeout(() => scrollToField(firstDisc.field), 150);
-                  }
-                }}
-                className="w-full py-2.5 px-4 rounded-lg bg-[#F6F5F3] hover:bg-[#E4E1DC] dark:bg-[#2E2A27] dark:hover:bg-[#3D3834] text-[#1F1D1B] dark:text-[#EAE7E1] font-bold text-xs sm:text-sm transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer min-h-[44px]"
-              >
-                <span>Review &amp; Edit Details</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setDiscrepancyModal({ isOpen: false, discrepancies: [] });
-                  handleSubmit(null, true);
-                }}
-                className="w-full py-2.5 px-4 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-xs sm:text-sm shadow-xs transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer min-h-[44px]"
-              >
-                <span>Proceed &amp; Submit Anyway</span>
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Draft Resume Confirmation Modal */}
-      {draftResumeModal.isOpen && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 animate-in fade-in duration-200">
-          <div className="relative w-full max-w-md bg-white dark:bg-[#1C1917] rounded-lg p-6 sm:p-7 shadow-xl border border-[#E4E1DC] dark:border-[#2E2A27] text-center">
-            
-            {/* Modal Icon */}
-            <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 flex items-center justify-center text-amber-700 dark:text-amber-400">
-              <Clock className="w-6 h-6" />
-            </div>
-
-            {/* Modal Title */}
-            <h3 className="text-lg sm:text-xl font-bold text-[#1F1D1B] dark:text-[#EAE7E1] mb-2">
-              Resume In-Progress Application?
-            </h3>
-
-            {/* Modal Description */}
-            <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] mb-5 leading-relaxed">
-              You have an in-progress draft saved at <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{draftResumeModal.savedTime}</span> (Step {draftResumeModal.step} of 5). Would you like to pick up where you left off?
-            </p>
-
-            {/* Draft Details Preview */}
-            {draftResumeModal.draftData?.formData && (
-              <div className="bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4 mb-6 text-left text-xs sm:text-sm space-y-2">
-                <div className="flex justify-between items-center text-[#6B6761] dark:text-[#A8A29E]">
-                  <span>Progress:</span>
-                  <span className="font-bold text-[#9E2A2B] dark:text-[#D4AF37]">
-                    Step {draftResumeModal.step} of 5
-                  </span>
-                </div>
-                {draftResumeModal.draftData.formData.plateNo && (
-                  <div className="flex justify-between items-center text-[#6B6761] dark:text-[#A8A29E]">
-                    <span>Plate No:</span>
-                    <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                      {draftResumeModal.draftData.formData.plateNo}
-                    </span>
-                  </div>
-                )}
-                {draftResumeModal.draftData.formData.make && (
-                  <div className="flex justify-between items-center text-[#6B6761] dark:text-[#A8A29E]">
-                    <span>Model:</span>
-                    <span className="font-medium text-[#1F1D1B] dark:text-[#EAE7E1]">
-                      {draftResumeModal.draftData.formData.make}
-                    </span>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* Actions */}
-            <div className="flex flex-col sm:flex-row gap-3">
-              <button
-                type="button"
-                onClick={handleConfirmResumeDraft}
-                className="w-full py-2.5 px-4 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-sm shadow-xs transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer min-h-[44px]"
-              >
-                <RotateCcw className="w-4 h-4" />
-                <span>Continue Draft</span>
-              </button>
-              <button
-                type="button"
-                onClick={handleDiscardDraft}
-                className="w-full py-2.5 px-4 rounded-lg bg-[#F6F5F3] hover:bg-[#E4E1DC] dark:bg-[#2E2A27] dark:hover:bg-[#3D3834] text-[#1F1D1B] dark:text-[#EAE7E1] font-bold text-sm transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer min-h-[44px]"
-              >
-                <PlusCircle className="w-4 h-4" />
-                <span>Start Fresh</span>
-              </button>
-            </div>
-
-          </div>
-        </div>
-      )}
-
-    </MainLayout>
-  );
-};
-
-export default ApplyFranchise;
+import localforage from 'localforage';
+import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
+import { 
+  GASAN_BARANGAYS, TODA_LIST, CANCEL_REASONS, 
+  getZoneForBarangay, normalizeZone, normalizeBarangayName, formatZoneLabel, getTodasForBarangay 
+} from '../../utils/constants';
+import MainLayout from '../../components/MainLayout';
+import { 
+  UploadCloud, Check, CheckCircle, FileCheck, Info, RefreshCw, PlusCircle, 
+  ArrowLeft, AlertCircle, Loader2, X, CalendarDays, ZoomIn, 
+  ChevronRight, ChevronLeft, ShieldCheck, FileText, RotateCcw,
+  Save, XCircle, CheckCircle2, Clock, User, Eye, Receipt,
+  Compass, MapPin, ExternalLink, AlertTriangle, Zap,
+  HelpCircle, ChevronDown, ChevronUp, Lock
+} from 'lucide-react';
+import { GarageGridSkeleton, ApplyFranchiseSkeleton } from '../../components/skeleton';
+import DocumentUploadCard from '../../components/operator/DocumentUploadCard';
+import FeedbackModal from '../../components/common/FeedbackModal';
+import TricycleIcon from '../../components/common/TricycleIcon';
+import TodaZoneGuideModal, { TODA_DIRECTORY, GASAN_ZONES } from '../../components/operator/TodaZoneGuideModal';
+import CancelApplicationModal from '../../components/operator/CancelApplicationModal';
+import DocumentPreviewModal from '../../components/operator/DocumentPreviewModal';
+import ApplicationSummaryModal from '../../components/operator/ApplicationSummaryModal';
+import OfficialApplicationFormModal from '../../components/common/OfficialApplicationFormModal';
+import SimpleDatePicker from '../../components/common/SimpleDatePicker';
+import { useLanguage } from '../../context/LanguageContext';
+import { isNameMatch } from '../../utils/nameMatcher';
+
+import { compressImage } from '../../utils/imageCompressor';
+
+const DRAFT_STORAGE_KEY = 'gtrams_apply_draft';
+
+const STANDARD_DOC_IDS = ['crDocument', 'orDocument', 'orCrDocument', 'license', 'todaEndorsement', 'brgyClearance'];
+
+const normalizeDateStr = (raw) => {
+  if (!raw || typeof raw !== 'string') return '';
+  const trimmed = raw.trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+  const parts = trimmed.split(/[/.-]/);
+  if (parts.length === 3) {
+    if (parts[0].length === 4) {
+      return `${parts[0]}-${parts[1].padStart(2, '0')}-${parts[2].padStart(2, '0')}`;
+    }
+    if (parts[2].length === 4) {
+      const p1 = parseInt(parts[0], 10);
+      const p2 = parseInt(parts[1], 10);
+      const year = parts[2];
+      if (p1 > 12) {
+        return `${year}-${String(p2).padStart(2, '0')}-${String(p1).padStart(2, '0')}`;
+      }
+      return `${year}-${String(p1).padStart(2, '0')}-${String(p2).padStart(2, '0')}`;
+    }
+  }
+  const d = new Date(trimmed);
+  if (!isNaN(d.getTime())) {
+    return d.toISOString().substring(0, 10);
+  }
+  return trimmed;
+};
+
+const DEFAULT_REQUIREMENTS = [
+  { id: 'crDocument', label: 'Certificate of Registration (CR)', fieldUrl: 'crUrl' },
+  { id: 'orDocument', label: 'Official Receipt (OR)', fieldUrl: 'orUrl' },
+  { id: 'license', label: "Driver's License (Front)", fieldUrl: 'licenseUrl' },
+  { id: 'todaEndorsement', label: 'TODA Endorsement Certificate', fieldUrl: 'todaEndorsementUrl' },
+  { id: 'brgyClearance', label: 'Barangay Clearance', fieldUrl: 'brgyClearanceUrl' }
+];
+
+const POPULAR_MAKES = [
+  'Honda TMX 125',
+  'Kawasaki Barako II',
+  'Bajaj CT 150',
+  'Yamaha YTX 125'
+];
+
+const InfoTooltip = ({ text }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <span className="relative inline-block ml-1 align-middle">
+      <button
+        type="button"
+        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setOpen(!open); }}
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+        className="text-[#6B6761] dark:text-[#A8A29E] hover:text-[#9E2A2B] dark:hover:text-[#D4AF37] transition-colors cursor-pointer inline-flex items-center"
+        aria-label="Information"
+        title={text}
+      >
+        <Info size={13} className="shrink-0" />
+      </button>
+      {open && (
+        <span className="absolute z-50 left-1/2 -translate-x-1/2 bottom-full mb-1.5 w-52 sm:w-60 p-2 bg-[#1C1917] text-[#F6F5F3] text-[11px] rounded-md shadow-xl border border-[#3E3A36] text-center leading-normal animate-fadeIn pointer-events-none">
+          {text}
+        </span>
+      )}
+    </span>
+  );
+};
+
+const ApplyFranchise = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
+  const { language } = useLanguage() || { language: 'en' };
+
+  const modeParam = searchParams.get('mode');
+  const stepParam = parseInt(searchParams.get('step') || '1', 10);
+  const focusParam = searchParams.get('focus');
+  const initialStep = (stepParam >= 1 && stepParam <= 5) ? stepParam : 1;
+
+  const [myFranchises, setMyFranchises] = useState(() => {
+    try {
+      const cached = localStorage.getItem('gtrams_cached_franchises');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [isLoading, setIsLoading] = useState(true);
+  const [formMode, setFormMode] = useState(() => {
+    if (modeParam === 'reapply') return 'Re-apply';
+    if (modeParam === 'renewal') return 'Renewal';
+    return 'New';
+  }); 
+  const [selectedId, setSelectedId] = useState(null); 
+  const [reapplyTarget, setReapplyTarget] = useState(null);
+  const [focusField, setFocusField] = useState(focusParam || '');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [uploadPhase, setUploadPhase] = useState('');
+  
+  const [currentStep, setCurrentStep] = useState(initialStep);
+  const [slideDirection, setSlideDirection] = useState('forward');
+  const [hasDraftRestored, setHasDraftRestored] = useState(false);
+  const [isSubmitConfirmOpen, setIsSubmitConfirmOpen] = useState(false);
+  const [showAdvancedSpecs, setShowAdvancedSpecs] = useState(false);
+  const [isAgreedToTerms, setIsAgreedToTerms] = useState(false);
+
+  // Cancellation modal state
+  const [cancelModal, setCancelModal] = useState({
+    isOpen: false,
+    unit: null,
+    reason: CANCEL_REASONS[0],
+    customReason: '',
+    isSubmitting: false
+  });
+
+  // Centered Feedback Modal state
+  const [feedbackModal, setFeedbackModal] = useState({
+    isOpen: false,
+    type: 'success',
+    title: '',
+    message: '',
+    confirmText: 'OK',
+    onConfirm: null
+  });
+
+  // Draft Resume Modal state
+  const [draftResumeModal, setDraftResumeModal] = useState({
+    isOpen: false,
+    draftData: null,
+    savedTime: '',
+    step: 1
+  });
+
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const [formErrors, setFormErrors] = useState({});
+  const [fullPreview, setFullPreview] = useState(null);
+  const [showTodaGuide, setShowTodaGuide] = useState(false);
+  const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
+  const [isOfficialFormOpen, setIsOfficialFormOpen] = useState(false);
+
+  // AI Scanning state per document
+  const [aiScanning, setAiScanning] = useState({
+    license: false,
+    licenseBack: false,
+    crDocument: false,
+    orDocument: false,
+    orCrDocument: false,
+    todaEndorsement: false,
+    brgyClearance: false,
+    cedulaDoc: false
+  });
+
+  const [aiSuccess, setAiSuccess] = useState({
+    license: false,
+    licenseBack: false,
+    crDocument: false,
+    orDocument: false,
+    orCrDocument: false,
+    todaEndorsement: false,
+    brgyClearance: false,
+    cedulaDoc: false
+  });
+
+  // Manual input alert state when AI scanning fails or cannot auto-fill
+  const [manualScanAlerts, setManualScanAlerts] = useState({
+    license: null,
+    licenseBack: null,
+    crDocument: null,
+    orDocument: null,
+    orCrDocument: null,
+    todaEndorsement: null,
+    brgyClearance: null,
+    cedulaDoc: null
+  });
+
+  // Raw AI Scanned data tracker & discrepancy confirmation modal
+  const [aiScannedData, setAiScannedData] = useState({});
+  const [discrepancyModal, setDiscrepancyModal] = useState({
+    isOpen: false,
+    discrepancies: []
+  });
+
+  // Real-time uniqueness checker state
+  const [duplicateStatus, setDuplicateStatus] = useState({
+    plateNo: { checking: false, duplicate: false, message: '' },
+    motorNo: { checking: false, duplicate: false, message: '' },
+    chassisNo: { checking: false, duplicate: false, message: '' }
+  });
+
+  // Dynamic settings: max units
+  const [maxAllowedUnits, setMaxAllowedUnits] = useState(() => {
+    return Number(localStorage.getItem('max_units_per_operator')) || 2;
+  });
+
+  let loggedInUserName = localStorage.getItem('name') || '';
+  let loggedInAddress = ''; 
+  let loggedInToda = 'NON-TODA'; 
+
+  const userObj = localStorage.getItem('user');
+  if (userObj) {
+    try {
+      const parsedUser = JSON.parse(userObj);
+      if (!loggedInUserName) loggedInUserName = parsedUser.name || '';
+      if (parsedUser.address) loggedInAddress = parsedUser.address; 
+      if (parsedUser.todaAssociation) loggedInToda = parsedUser.todaAssociation; 
+    } catch (e) { console.error(e); }
+  }
+  
+  const [formData, setFormData] = useState({
+    fullName: loggedInUserName, 
+    address: loggedInAddress, 
+    zone: loggedInAddress ? getZoneForBarangay(loggedInAddress) : '', 
+    made: '', make: '', motorNo: '', chassisNo: '', plateNo: '', 
+    todaName: loggedInToda,
+    dateApplied: new Date().toISOString().split('T')[0], 
+    cedulaDate: '', 
+    cedulaAddress: '', 
+    cedulaSerialNo: '',
+    cedulaAmount: '',
+    cedulaYear: '',
+    cedulaPlaceIssued: '',
+    cedulaFullName: '',
+    cedulaCitizenship: '',
+    cedulaCivilStatus: '',
+    cedulaProfession: '',
+    cedulaDob: '',
+    cedulaPlaceOfBirth: '',
+    cedulaSex: '',
+    cedulaHeight: '',
+    cedulaWeight: '',
+    cedulaTin: '',
+    orCrNo: '',
+    orNo: '',
+    orCrExpiryDate: '',
+    crNo: '',
+    orDate: '',
+    crDate: '',
+    color: '',
+    series: '',
+    yearModel: '',
+    fileNo: '',
+    vehicleType: '',
+    vehicleCategory: '',
+    classification: '',
+    bodyType: '',
+    displacement: '',
+    grossWeight: '',
+    fuelType: '',
+    passengerCapacity: '',
+    registeredOwner: '',
+    ownerAddress: '',
+    numberOfUnits: 1,
+    isOperatorDriver: true,
+    driverName: '',
+    driverContact: '',
+    driverLicenseNo: '',
+    driverLicenseSerialNo: '',
+    driverLicenseExpiryDate: '',
+    driverDob: '',
+    driverDlCodes: '',
+    driverConditions: 'None',
+    driverAddress: '',
+    driverNationality: 'Filipino',
+    driverSex: '',
+    todaCertNo: '',
+    todaCertDate: '',
+    todaSignatory: '',
+    brgyClearanceNo: '',
+    brgyClearanceDate: '',
+    brgyIssuer: '',
+    orCrUrl: '',
+    crUrl: '',
+    orUrl: '',
+    licenseUrl: '',
+    licenseBackUrl: '',
+    todaEndorsementUrl: '',
+    brgyClearanceUrl: '',
+    cedulaUrl: ''
+  });
+  
+  const [uploadedDocs, setUploadedDocs] = useState({});
+  const [filePreviews, setFilePreviews] = useState({});
+
+  // Sync step and formMode from searchParams
+  useEffect(() => {
+    const s = parseInt(searchParams.get('step') || '1', 10);
+    const validS = (s >= 1 && s <= 5) ? s : 1;
+    if (validS !== currentStep) {
+      setSlideDirection(validS < currentStep ? 'backward' : 'forward');
+      setCurrentStep(validS);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    const m = searchParams.get('mode');
+    if (m === 'reapply' && formMode !== 'Re-apply') {
+      setFormMode('Re-apply');
+    } else if (m === 'renewal' && formMode !== 'Renewal') {
+      setFormMode('Renewal');
+    } else if (m === 'new' && formMode !== 'New') {
+      setFormMode('New');
+    }
+  }, [searchParams]);
+
+  // Focus flagged field if present
+  useEffect(() => {
+    if (focusField) {
+      const timer = setTimeout(() => {
+        const el = document.getElementById(`field-${focusField}`) || document.querySelector(`[name="${focusField}"]`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          const targetInput = el.tagName === 'INPUT' || el.tagName === 'SELECT' ? el : el.querySelector('input, select');
+          targetInput?.focus?.();
+        }
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [focusField, currentStep]);
+
+  const isFieldFocused = (field) => focusField === field;
+
+  // Smooth scroll and focus helper for error fields and AI auto-filled fields
+  const scrollToField = (fieldName) => {
+    setTimeout(() => {
+      const target = 
+        document.getElementById(`field-${fieldName}`) ||
+        document.getElementById(`card-${fieldName}`) ||
+        document.getElementById(fieldName) ||
+        document.querySelector(`[name="${fieldName}"]`) ||
+        document.querySelector(`[data-field="${fieldName}"]`);
+
+      if (target) {
+        target.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        target.classList.add('ring-2', 'ring-emerald-500', 'transition-all', 'duration-500');
+        setTimeout(() => {
+          target.classList.remove('ring-2', 'ring-emerald-500');
+        }, 2500);
+
+        const inputToFocus = 
+          ['INPUT', 'SELECT', 'TEXTAREA'].includes(target.tagName) 
+            ? target 
+            : target.querySelector('input, select, textarea, button');
+        inputToFocus?.focus?.();
+      }
+    }, 150);
+  };
+
+  // Center modal popup for validation errors with auto-scroll and red highlight
+  const showValidationModal = (fieldName, title, message) => {
+    if (fieldName) {
+      setFormErrors(prev => ({ ...prev, [fieldName]: message }));
+    }
+
+    setFeedbackModal({
+      isOpen: true,
+      type: 'error',
+      title,
+      message,
+      confirmText: 'Review & Correct',
+      onConfirm: () => {
+        setFeedbackModal(prev => ({ ...prev, isOpen: false }));
+        if (fieldName) {
+          scrollToField(fieldName);
+        }
+      }
+    });
+
+    if (fieldName) {
+      scrollToField(fieldName);
+    }
+  };
+
+  // Auto-sync route/zone with TODA association if zone is not yet chosen
+  useEffect(() => {
+    if (!formData.zone && formData.todaName) {
+      const match = TODA_DIRECTORY.find(t => t.id === formData.todaName || t.name.startsWith(formData.todaName));
+      if (match && match.zone) {
+        if (match.zone.includes('Central')) setFormData(prev => ({ ...prev, zone: 'Central' }));
+        else if (match.zone.includes('North')) setFormData(prev => ({ ...prev, zone: 'North' }));
+        else if (match.zone.includes('South')) setFormData(prev => ({ ...prev, zone: 'South' }));
+      }
+    }
+  }, [formData.todaName]);
+
+  // Live TODA Roster Membership Status Check
+  const [todaMembershipStatus, setTodaMembershipStatus] = useState(null);
+  const [isCheckingTodaMembership, setIsCheckingTodaMembership] = useState(false);
+
+  useEffect(() => {
+    const currentToda = formData.todaName || loggedInToda;
+    if (!currentToda || currentToda === 'NON-TODA' || !formData.fullName) {
+      setTodaMembershipStatus(null);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsCheckingTodaMembership(true);
+      try {
+        const query = new URLSearchParams({
+          todaName: currentToda,
+          name: formData.fullName || '',
+          barangay: formData.address || ''
+        });
+        const baseUrl = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
+        const res = await fetch(`${baseUrl}/api/v1/franchises/check-toda-member?${query.toString()}`);
+        if (res.ok) {
+          const data = await res.json();
+          setTodaMembershipStatus(data);
+        }
+      } catch (err) {
+        console.error('Error checking TODA membership in application:', err);
+      } finally {
+        setIsCheckingTodaMembership(false);
+      }
+    }, 450);
+
+    return () => clearTimeout(timer);
+  }, [formData.todaName, formData.fullName, formData.address, loggedInToda]);
+
+  const getCurrentUserId = () => {
+    try {
+      const u = JSON.parse(localStorage.getItem('user') || '{}');
+      if (u._id) return String(u._id);
+      if (u.id) return String(u.id);
+      if (u.contact) return String(u.contact);
+    } catch {}
+    const uid = localStorage.getItem('userId');
+    if (uid) return String(uid);
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        if (payload.id) return String(payload.id);
+      } catch {}
+    }
+    return 'operator_user';
+  };
+
+  const getDraftKey = () => {
+    const uid = getCurrentUserId();
+    if (formMode === 'Renewal' && selectedId) {
+      return `gtrams_renewal_draft_${uid}_${selectedId}`;
+    }
+    return `gtrams_apply_draft_${uid}`;
+  };
+
+  // Accurate 5-Step Progress Calculation
+  const calculateProgress = () => {
+    let completed = 0;
+    const total = 15;
+
+    // Step 1 items (4)
+    if (formData.fullName?.trim()) completed++;
+    if (formData.address?.trim()) completed++;
+    if (uploadedDocs.license || filePreviews.license || formData.licenseUrl) completed++;
+    if (formData.driverLicenseNo?.trim()) completed++;
+
+    // Step 2 items (6)
+    if (uploadedDocs.crDocument || filePreviews.crDocument || formData.crUrl || uploadedDocs.orDocument || filePreviews.orDocument || formData.orUrl || uploadedDocs.orCrDocument || filePreviews.orCrDocument || formData.orCrUrl) completed++;
+    if (formData.make?.trim()) completed++;
+    if (formData.made?.trim()) completed++;
+    if (formData.zone?.trim()) completed++;
+    if (formData.plateNo?.trim()) completed++;
+    if (formData.motorNo?.trim() && formData.chassisNo?.trim()) completed++;
+
+    // Step 3 items (2)
+    if (uploadedDocs.todaEndorsement || filePreviews.todaEndorsement || formData.todaEndorsementUrl) completed++;
+    if (uploadedDocs.brgyClearance || filePreviews.brgyClearance || formData.brgyClearanceUrl) completed++;
+
+    // Step 4 items (2)
+    if (uploadedDocs.cedulaDoc || uploadedDocs.cedula || filePreviews.cedulaDoc || filePreviews.cedula || formData.cedulaUrl) completed++;
+    if (formData.cedulaSerialNo?.trim() && formData.cedulaDate) completed++;
+
+    // Step 5 item (1)
+    if (isAgreedToTerms) completed++;
+
+    const pct = Math.round((completed / total) * 100);
+    return { percentage: Math.min(pct, 100), completed, total };
+  };
+
+  const handleSaveProgress = (isManual = true) => {
+    if (!formMode || formMode === 'Re-apply') return;
+    const key = getDraftKey();
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    // Don't auto-save if form is completely pristine/empty
+    if (!isManual) {
+      const hasContent = (
+        currentStep > 1 ||
+        Boolean(formData.plateNo?.trim()) ||
+        Boolean(formData.motorNo?.trim()) ||
+        Boolean(formData.chassisNo?.trim()) ||
+        Boolean(formData.make?.trim()) ||
+        Boolean(formData.driverLicenseNo?.trim()) ||
+        Boolean(formData.cedulaSerialNo?.trim()) ||
+        Boolean(formData.orCrUrl) ||
+        Boolean(formData.licenseUrl) ||
+        Object.keys(uploadedDocs).length > 0
+      );
+      if (!hasContent) return;
+    }
+
+    try {
+      localforage.setItem(key, {
+        formData,
+        aiScannedData,
+        currentStep,
+        savedAt: now.toISOString(),
+        timeFormatted: timeStr,
+        formMode,
+        selectedId,
+        userId: getCurrentUserId()
+      }).catch(err => console.error('Draft save error:', err));
+
+      if (uploadedDocs && Object.keys(uploadedDocs).length > 0) {
+        localforage.setItem(`${key}_files`, uploadedDocs).catch(err => console.error('Draft files save error:', err));
+      }
+ 
+      if (isManual) {
+        setHasDraftRestored(true);
+        setFeedbackModal({
+          isOpen: true,
+          type: 'success',
+          title: 'Draft Saved',
+          message: `Application draft saved at ${timeStr}. You can safely return and finish anytime.`,
+          confirmText: 'OK',
+          onConfirm: () => setFeedbackModal(prev => ({ ...prev, isOpen: false }))
+        });
+      }
+    } catch (e) {
+      console.error('Error saving draft:', e);
+    }
+  };
+
+  // Background auto-save while typing
+  useEffect(() => {
+    if (formMode === 'New' || formMode === 'Renewal') {
+      const timer = setTimeout(() => {
+        handleSaveProgress(false);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [formData, aiScannedData, currentStep, formMode, selectedId]);
+
+  // Keep references for immediate auto-save on navigation / back / unload
+  const formDataRef = useRef(formData);
+  const currentStepRef = useRef(currentStep);
+  const formModeRef = useRef(formMode);
+  const aiScannedDataRef = useRef(aiScannedData);
+
+  useEffect(() => { formDataRef.current = formData; }, [formData]);
+  useEffect(() => { currentStepRef.current = currentStep; }, [currentStep]);
+  useEffect(() => { formModeRef.current = formMode; }, [formMode]);
+  useEffect(() => { aiScannedDataRef.current = aiScannedData; }, [aiScannedData]);
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (formModeRef.current === 'New' || formModeRef.current === 'Renewal') {
+        const key = getDraftKey();
+        const dataToSave = formDataRef.current;
+        const stepToSave = currentStepRef.current;
+        const aiToSave = aiScannedDataRef.current;
+        const hasContent = (
+          stepToSave > 1 ||
+          Boolean(dataToSave.plateNo?.trim()) ||
+          Boolean(dataToSave.motorNo?.trim()) ||
+          Boolean(dataToSave.chassisNo?.trim()) ||
+          Boolean(dataToSave.make?.trim()) ||
+          Boolean(dataToSave.driverLicenseNo?.trim()) ||
+          Boolean(dataToSave.cedulaSerialNo?.trim()) ||
+          Boolean(dataToSave.orCrUrl) ||
+          Boolean(dataToSave.licenseUrl)
+        );
+        if (hasContent) {
+          const now = new Date();
+          localforage.setItem(key, {
+            formData: dataToSave,
+            aiScannedData: aiToSave,
+            currentStep: stepToSave,
+            savedAt: now.toISOString(),
+            timeFormatted: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            formMode: formModeRef.current,
+            userId: getCurrentUserId()
+          }).catch(() => {});
+        }
+      }
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      handleBeforeUnload();
+    };
+  }, []);
+
+  // Cleanup object URLs on unmount
+  useEffect(() => {
+    return () => {
+      Object.values(filePreviews).forEach(url => {
+        if (url && typeof url === 'string' && url.startsWith('blob:')) {
+          URL.revokeObjectURL(url);
+        }
+      });
+    };
+  }, []);
+
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 4000);
+  };
+
+  const fetchMyFranchises = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/franchises/my-franchises', {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        const list = Array.isArray(data) ? data : [];
+        setMyFranchises(list);
+        try {
+          localStorage.setItem('gtrams_cached_franchises', JSON.stringify(list));
+        } catch {}
+      }
+    } catch (error) {
+      console.error('Error fetching units:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const initFreshForm = () => {
+    navigate('/apply-franchise?mode=new&step=1');
+    setCurrentStep(1);
+    setHasDraftRestored(false);
+    setUploadedDocs({});
+    setFilePreviews({});
+    setAiScannedData({});
+
+    setFormData({ 
+      fullName: loggedInUserName, 
+      address: loggedInAddress, 
+      zone: loggedInAddress ? getZoneForBarangay(loggedInAddress) : '', 
+      made: '', make: '', motorNo: '', chassisNo: '', plateNo: '', 
+      todaName: loggedInToda, 
+      dateApplied: new Date().toISOString().split('T')[0], 
+      cedulaDate: '', 
+      cedulaAddress: '', 
+      cedulaSerialNo: '',
+      cedulaAmount: '',
+      orCrNo: '',
+      orCrExpiryDate: '',
+      crNo: '',
+      orDate: '',
+      numberOfUnits: 1,
+      isOperatorDriver: true,
+      driverName: '',
+      driverContact: '',
+      driverLicenseNo: '',
+      driverLicenseSerialNo: '',
+      driverLicenseExpiryDate: '',
+      driverDob: '',
+      driverDlCodes: '',
+      todaCertNo: '',
+      todaCertDate: '',
+      todaSignatory: '',
+      brgyClearanceNo: '',
+      brgyClearanceDate: '',
+      brgyIssuer: '',
+      color: '',
+      series: '',
+      yearModel: '',
+      fileNo: '',
+      vehicleType: 'Tricycle',
+      vehicleCategory: 'L4',
+      classification: 'For Hire / PUV',
+      bodyType: 'Semi-Cabin',
+      displacement: '',
+      grossWeight: '',
+      fuelType: 'Gasoline',
+      passengerCapacity: '4',
+      registeredOwner: '',
+      ownerAddress: '',
+      cedulaYear: '',
+      cedulaPlaceIssued: '',
+      cedulaFullName: '',
+      cedulaCitizenship: 'Filipino',
+      cedulaCivilStatus: '',
+      cedulaProfession: '',
+      cedulaDob: '',
+      cedulaPlaceOfBirth: '',
+      cedulaSex: '',
+      cedulaHeight: '',
+      cedulaWeight: '',
+      cedulaTin: '',
+      cedulaDetails: null,
+      orCrUrl: '',
+      crUrl: '',
+      orUrl: '',
+      licenseUrl: '',
+      licenseBackUrl: '',
+      todaEndorsementUrl: '',
+      brgyClearanceUrl: '',
+      cedulaUrl: ''
+    });
+  };
+
+  const handleStartNewApplication = async () => {
+    setFormMode('New');
+    setSelectedId(null);
+    setFilePreviews({});
+    
+    // Purge any legacy global un-scoped draft key to prevent cross-account leak
+    localforage.removeItem('gtrams_apply_draft').catch(() => {});
+    localStorage.removeItem('gtrams_apply_draft');
+
+    try {
+      const userDraftKey = getDraftKey();
+      const savedDraft = await localforage.getItem(userDraftKey);
+      
+      const hasMeaningfulDraft = savedDraft && savedDraft.formData && (
+        savedDraft.currentStep > 1 ||
+        Boolean(savedDraft.formData.plateNo?.trim()) ||
+        Boolean(savedDraft.formData.motorNo?.trim()) ||
+        Boolean(savedDraft.formData.chassisNo?.trim()) ||
+        Boolean(savedDraft.formData.make?.trim()) ||
+        Boolean(savedDraft.formData.driverLicenseNo?.trim()) ||
+        Boolean(savedDraft.formData.cedulaSerialNo?.trim()) ||
+        Boolean(savedDraft.formData.orCrUrl) ||
+        Boolean(savedDraft.formData.licenseUrl)
+      );
+
+      if (hasMeaningfulDraft) {
+        setDraftResumeModal({
+          isOpen: true,
+          draftData: savedDraft,
+          savedTime: savedDraft.timeFormatted || (savedDraft.savedAt ? new Date(savedDraft.savedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'recently'),
+          step: savedDraft.currentStep || 1
+        });
+        return;
+      }
+    } catch (e) {
+      console.error('Error checking draft in IndexedDB', e);
+    }
+
+    initFreshForm();
+  };
+
+  const handleConfirmResumeDraft = async () => {
+    if (!draftResumeModal.draftData) return;
+    const { formData: savedForm, currentStep: savedStep, aiScannedData: savedAiData } = draftResumeModal.draftData;
+
+    setFormData({
+      ...savedForm,
+      fullName: loggedInUserName || savedForm.fullName,
+      address: loggedInAddress || savedForm.address,
+      zone: savedForm.zone ? normalizeZone(savedForm.zone) : (loggedInAddress ? getZoneForBarangay(loggedInAddress) : ''),
+      todaName: loggedInToda || savedForm.todaName
+    });
+
+    if (savedAiData && typeof savedAiData === 'object') {
+      setAiScannedData(savedAiData);
+    }
+
+    const key = getDraftKey();
+    const previews = {};
+
+    try {
+      const savedFiles = await localforage.getItem(`${key}_files`);
+      if (savedFiles && typeof savedFiles === 'object') {
+        setUploadedDocs(savedFiles);
+        Object.keys(savedFiles).forEach(k => {
+          const fileObj = savedFiles[k];
+          if (fileObj instanceof Blob || fileObj instanceof File) {
+            previews[k] = URL.createObjectURL(fileObj);
+          }
+        });
+      }
+    } catch (filesErr) {
+      console.warn('Could not restore draft file blobs:', filesErr);
+    }
+
+    if (!previews.crDocument && savedForm.crUrl) previews.crDocument = savedForm.crUrl;
+    if (!previews.orDocument && savedForm.orUrl) previews.orDocument = savedForm.orUrl;
+    if (!previews.crDocument && savedForm.orCrUrl) previews.crDocument = savedForm.orCrUrl;
+    if (!previews.license && savedForm.licenseUrl) previews.license = savedForm.licenseUrl;
+    if (!previews.licenseBack && savedForm.licenseBackUrl) previews.licenseBack = savedForm.licenseBackUrl;
+    if (!previews.todaEndorsement && savedForm.todaEndorsementUrl) previews.todaEndorsement = savedForm.todaEndorsementUrl;
+    if (!previews.brgyClearance && savedForm.brgyClearanceUrl) previews.brgyClearance = savedForm.brgyClearanceUrl;
+    if (!previews.cedulaDoc && savedForm.cedulaUrl) previews.cedulaDoc = savedForm.cedulaUrl;
+    setFilePreviews(previews);
+
+    const urlStep = parseInt(searchParams.get('step') || '0', 10);
+    const targetStep = (urlStep >= 1 && urlStep <= 5) ? urlStep : (savedStep || 1);
+    navigate(`/apply-franchise?mode=new&step=${targetStep}`);
+    setCurrentStep(targetStep);
+    setHasDraftRestored(true);
+    setDraftResumeModal({ isOpen: false, draftData: null, savedTime: '', step: 1 });
+    showToast('Your saved draft and attached documents have been restored.', 'success');
+  };
+
+  const handleDiscardDraft = async () => {
+    const userDraftKey = getDraftKey();
+    try {
+      await localforage.removeItem(userDraftKey);
+      await localforage.removeItem('gtrams_apply_draft');
+      await localforage.removeItem(`${userDraftKey}_files`);
+      localStorage.removeItem('gtrams_apply_draft');
+    } catch (err) {
+      console.error('Error clearing draft:', err);
+    }
+    setDraftResumeModal({ isOpen: false, draftData: null, savedTime: '', step: 1 });
+    setIsAgreedToTerms(false);
+    initFreshForm();
+    showToast('Draft cleared. Starting a fresh application.', 'info');
+  };
+
+  const handleClearDraft = async () => {
+    const key = getDraftKey();
+    try {
+      await localforage.removeItem(key);
+      await localforage.removeItem('gtrams_apply_draft');
+      localStorage.removeItem('gtrams_apply_draft');
+      setHasDraftRestored(false);
+      setAiScannedData({});
+      setIsAgreedToTerms(false);
+      initFreshForm();
+      showToast('Draft has been reset.', 'info');
+    } catch (err) {
+      console.error('Error resetting draft:', err);
+    }
+  };
+
+  const handleBackToDashboard = () => {
+    if (formMode === 'New' || formMode === 'Renewal') {
+      try {
+        handleSaveProgress(false);
+      } catch {
+        // ignore
+      }
+    }
+    navigate('/operator-dashboard');
+  };
+
+  const handleTopBack = () => {
+    if (currentStep > 1) {
+      prevStep();
+    } else {
+      handleBackToDashboard();
+    }
+  };
+
+  const handleReapplyClick = (franchise) => {
+    setFormMode('Re-apply');
+    setSelectedId(franchise._id);
+    setReapplyTarget(franchise);
+    navigate(`/apply-franchise?mode=reapply&step=1${franchise.rejectedField ? `&focus=${franchise.rejectedField}` : ''}`);
+    
+    const s = parseInt(searchParams.get('step') || '1', 10);
+    const validStep = (s >= 1 && s <= 5) ? s : 1;
+    setCurrentStep(validStep);
+
+    if (focusParam) {
+      setFocusField(focusParam);
+    } else if (franchise.rejectedField) {
+      setFocusField(franchise.rejectedField);
+    }
+    
+    setFormData({
+      fullName: franchise.fullName || '',
+      address: franchise.address || '',
+      zone: franchise.zone ? normalizeZone(franchise.zone) : (franchise.address ? getZoneForBarangay(franchise.address) : ''),
+      made: franchise.made || '',
+      make: franchise.make || '',
+      motorNo: franchise.motorNo || '',
+      chassisNo: franchise.chassisNo || '',
+      plateNo: franchise.plateNo || '',
+      todaName: franchise.todaName || loggedInToda,
+      dateApplied: franchise.dateApplied ? String(franchise.dateApplied).substring(0, 10) : '',
+      cedulaDate: franchise.cedulaDate ? String(franchise.cedulaDate).substring(0, 10) : '',
+      cedulaAddress: franchise.cedulaAddress || '',
+      cedulaSerialNo: franchise.cedulaSerialNo || '',
+      cedulaAmount: franchise.cedulaAmount || '',
+      orCrNo: franchise.orCrNo || '',
+      orCrExpiryDate: franchise.orCrExpiryDate ? String(franchise.orCrExpiryDate).substring(0, 10) : '',
+      isOperatorDriver: franchise.isOperatorDriver !== undefined ? Boolean(franchise.isOperatorDriver) : true,
+      driverName: franchise.driverName || '',
+      driverContact: franchise.driverContact || '',
+      driverLicenseNo: franchise.driverLicenseNo || '',
+      driverLicenseSerialNo: franchise.driverLicenseSerialNo || '',
+      driverLicenseExpiryDate: franchise.driverLicenseExpiryDate ? String(franchise.driverLicenseExpiryDate).substring(0, 10) : '',
+      driverDob: franchise.driverDob ? String(franchise.driverDob).substring(0, 10) : '',
+      driverDlCodes: franchise.driverDlCodes || '',
+      driverConditions: franchise.driverConditions || 'None',
+      driverAddress: franchise.driverAddress || '',
+      todaCertNo: franchise.todaCertNo || '',
+      todaCertDate: franchise.todaCertDate ? String(franchise.todaCertDate).substring(0, 10) : '',
+      todaSignatory: franchise.todaSignatory || '',
+      brgyClearanceNo: franchise.brgyClearanceNo || '',
+      brgyClearanceDate: franchise.brgyClearanceDate ? String(franchise.brgyClearanceDate).substring(0, 10) : '',
+      brgyIssuer: franchise.brgyIssuer || '',
+      orCrUrl: franchise.orCrUrl || '',
+      licenseUrl: franchise.licenseUrl || '',
+      todaEndorsementUrl: franchise.todaEndorsementUrl || '',
+      brgyClearanceUrl: franchise.brgyClearanceUrl || '',
+      cedulaUrl: franchise.cedulaUrl || ''
+    });
+
+    if (franchise.aiScannedData && typeof franchise.aiScannedData === 'object') {
+      setAiScannedData(franchise.aiScannedData);
+    } else {
+      setAiScannedData({});
+    }
+
+    const previews = {};
+    if (franchise.crUrl) previews.crDocument = franchise.crUrl;
+    if (franchise.orUrl) previews.orDocument = franchise.orUrl;
+    if (franchise.orCrUrl && !franchise.crUrl) previews.crDocument = franchise.orCrUrl;
+    if (franchise.licenseUrl) previews.license = franchise.licenseUrl;
+    if (franchise.licenseBackUrl) previews.licenseBack = franchise.licenseBackUrl;
+    if (franchise.todaEndorsementUrl) previews.todaEndorsement = franchise.todaEndorsementUrl;
+    if (franchise.brgyClearanceUrl) previews.brgyClearance = franchise.brgyClearanceUrl;
+    if (franchise.cedulaUrl) previews.cedulaDoc = franchise.cedulaUrl;
+    setFilePreviews(previews);
+    setUploadedDocs({});
+  };
+
+  const handleConfirmCancel = async () => {
+    if (!cancelModal.unit) return;
+    setCancelModal(prev => ({ ...prev, isSubmitting: true }));
+    const finalReason = (cancelModal.reason === 'Other reason (Please specify below)')
+      ? (cancelModal.customReason?.trim() || 'Cancelled by operator') 
+      : cancelModal.reason;
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${cancelModal.unit._id}/cancel`, {
+        method: 'PUT',
+        headers: { 
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ cancelReason: finalReason })
+      });
+
+      if (res.ok) {
+        setCancelModal({ isOpen: false, unit: null, reason: CANCEL_REASONS[0], customReason: '', isSubmitting: false });
+        fetchMyFranchises();
+      } else {
+        const d = await res.json();
+        setFeedbackModal({
+          isOpen: true,
+          type: 'error',
+          title: 'Cancellation Failed',
+          message: d.message || "Unable to cancel application.",
+          confirmText: 'OK',
+          onConfirm: () => setFeedbackModal(prev => ({ ...prev, isOpen: false }))
+        });
+        setCancelModal(prev => ({ ...prev, isSubmitting: false }));
+      }
+    } catch {
+      setFeedbackModal({
+        isOpen: true,
+        type: 'error',
+        title: 'Error',
+        message: 'A network error occurred while processing cancellation.',
+        confirmText: 'OK',
+        onConfirm: () => setFeedbackModal(prev => ({ ...prev, isOpen: false }))
+      });
+      setCancelModal(prev => ({ ...prev, isSubmitting: false }));
+    }
+  };
+
+  useEffect(() => {
+    fetchMyFranchises();
+
+    const fetchSettings = async () => {
+      try {
+        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/settings`);
+        if (res.ok) {
+          const json = await res.json();
+          if (json?.data?.maxUnitsPerOperator !== undefined && json?.data?.maxUnitsPerOperator !== null) {
+            const numUnits = Number(json.data.maxUnitsPerOperator) || 2;
+            setMaxAllowedUnits(numUnits);
+            localStorage.setItem('max_units_per_operator', numUnits);
+          }
+        }
+      } catch (e) {
+        console.error('Error fetching settings:', e);
+      }
+    };
+    fetchSettings();
+
+    const reapplyData = localStorage.getItem('reapply_target');
+    if (reapplyData) {
+      try {
+        const parsed = JSON.parse(reapplyData);
+        handleReapplyClick(parsed);
+        localStorage.removeItem('reapply_target');
+      } catch (e) { console.error(e); }
+    } else if (modeParam === 'new') {
+      handleStartNewApplication();
+    }
+  }, []);
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    if (formErrors[name]) {
+      setFormErrors(prev => {
+        const copy = { ...prev };
+        delete copy[name];
+        return copy;
+      });
+    }
+    let sanitized = value;
+    if (name === 'made') {
+      sanitized = value.replace(/\D/g, '').slice(0, 4);
+    } else if (['contactNumber', 'driverContact'].includes(name)) {
+      sanitized = value.replace(/\D/g, '').slice(0, 11);
+    } else if (['fullName', 'driverName'].includes(name)) {
+      sanitized = value.replace(/[^a-zA-Z\s\-\.\ñ\Ñ]/g, '');
+    } else if (['motorNo', 'chassisNo', 'plateNo', 'orCrNo', 'driverLicenseNo', 'todaCertNo', 'brgyClearanceNo', 'cedulaSerialNo', 'driverLicenseSerialNo'].includes(name)) {
+      sanitized = value.replace(/[^a-zA-Z0-9-]/g, '').slice(0, 30).toUpperCase();
+    }
+
+    if (name === 'address') {
+      const autoZone = getZoneForBarangay(sanitized);
+      setFormData(prev => ({
+        ...prev,
+        address: sanitized,
+        zone: autoZone || prev.zone
+      }));
+      return;
+    }
+
+    if (name === 'zone') {
+      setFormData(prev => ({
+        ...prev,
+        zone: normalizeZone(sanitized)
+      }));
+      return;
+    }
+
+    setFormData(prev => ({ ...prev, [name]: sanitized }));
+  };
+
+  // AI OCR Scanner Engine for Operator Form
+  const triggerAiScan = async (reqId, fileArg = null) => {
+    let docType = '';
+    const lower = (reqId || '').toLowerCase();
+    if (lower === 'licenseback' || lower.includes('licenseback') || lower.includes('back')) docType = 'licenseBack';
+    else if (lower === 'license' || lower.includes('license')) docType = 'license';
+    else if (lower === 'orcrdocument' || lower.includes('orcr') || lower.includes('crfile') || lower.includes('orfile') || lower === 'cr' || lower === 'or' || lower.includes('crdocument') || lower.includes('ordocument')) docType = 'orCr';
+    else if (lower === 'todaendorsement' || lower.includes('toda')) docType = 'todaEndorsement';
+    else if (lower === 'brgyclearance' || lower.includes('brgy')) docType = 'brgyClearance';
+    else if (lower === 'ceduladoc' || lower.includes('cedula') || lower === 'cedula') docType = 'cedula';
+
+    if (!docType) return;
+
+    setAiScanning(prev => ({ ...prev, [reqId]: true }));
+    setAiSuccess(prev => ({ ...prev, [reqId]: false }));
+    setManualScanAlerts(prev => ({ ...prev, [reqId]: null, [docType]: null }));
+
+    try {
+      const scanFormData = new FormData();
+      scanFormData.append('docType', docType);
+
+      let fileToScan = fileArg || uploadedDocs[reqId] || uploadedDocs[docType];
+      const preview = filePreviews[reqId] || filePreviews[docType] || formData[`${docType === 'orCr' ? 'orCr' : docType}Url`];
+
+      if (!fileToScan && preview && typeof preview === 'string') {
+        if (preview.startsWith('blob:')) {
+          try {
+            const resp = await fetch(preview);
+            fileToScan = await resp.blob();
+          } catch (e) {
+            console.warn('Could not fetch blob for re-scan:', e);
+          }
+        } else if (preview.startsWith('http')) {
+          scanFormData.append('fileUrl', preview);
+        }
+      }
+
+      if (fileToScan) {
+        let processedFile = fileToScan;
+        try {
+          if (fileToScan.type?.startsWith('image/') || (fileToScan.name && /\.(jpe?g|png|webp)$/i.test(fileToScan.name))) {
+            processedFile = await compressImage(fileToScan, { maxWidth: 1600, maxHeight: 1600, quality: 0.82 });
+          }
+        } catch (compErr) {
+          console.warn('Client-side compression skipped:', compErr);
+        }
+        scanFormData.append('file', processedFile, 'document.jpg');
+        // Pre-read base64 client-side to eliminate extra remote Cloudinary re-fetch
+        try {
+          const base64Data = await new Promise((resolve) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = () => resolve(null);
+            reader.readAsDataURL(processedFile);
+          });
+          if (base64Data) {
+            scanFormData.append('base64', base64Data);
+          }
+        } catch (err) {
+          console.warn('Local base64 conversion skipped:', err);
+        }
+      }
+
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/scan-document`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        },
+        body: scanFormData
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json.success && json.data) {
+          const d = json.data;
+
+          if (json.fileUrl) {
+            const urlKeyMap = {
+              orCr: 'orCrUrl',
+              crFile: 'crUrl',
+              orFile: 'orUrl',
+              crDocument: 'crUrl',
+              orDocument: 'orUrl',
+              license: 'licenseUrl',
+              licenseBack: 'licenseBackUrl',
+              todaEndorsement: 'todaEndorsementUrl',
+              brgyClearance: 'brgyClearanceUrl',
+              cedula: 'cedulaUrl'
+            };
+            const targetField = urlKeyMap[reqId] || urlKeyMap[docType] || 'orCrUrl';
+            setFormData(prev => ({ 
+              ...prev, 
+              [targetField]: json.fileUrl,
+              orCrUrl: prev.orCrUrl || json.fileUrl 
+            }));
+          }
+
+          if (docType === 'licenseBack') {
+            const hasData = d.serialNo || d.conditions || d.dlCodes;
+            if (hasData) {
+              setAiScannedData(prev => ({
+                ...prev,
+                licenseBack: {
+                  serialNo: d.serialNo ? String(d.serialNo).toUpperCase() : '',
+                  conditions: d.conditions || '',
+                  dlCodes: d.dlCodes || '',
+                  scannedAt: new Date().toISOString()
+                }
+              }));
+
+              setFormData(prev => ({
+                ...prev,
+                driverLicenseSerialNo: d.serialNo ? String(d.serialNo).toUpperCase() : prev.driverLicenseSerialNo,
+                driverConditions: d.conditions || prev.driverConditions,
+                driverDlCodes: d.dlCodes || prev.driverDlCodes
+              }));
+              setAiSuccess(prev => ({ ...prev, [reqId]: true }));
+              showToast("AI Scan: Driver's License Back Serial Number detected.", 'success');
+              scrollToField('driverLicenseSerialNo');
+            } else {
+              showToast("Document attached. Back serial number was unclear — please enter manually if visible.", 'info');
+            }
+          } else if (docType === 'license') {
+            const hasData = d.licenseNo || d.driverName || d.expiryDate || d.dateOfBirth || d.dlCodes || d.address;
+            if (hasData) {
+              const normExpiry = d.expiryDate ? normalizeDateStr(d.expiryDate) : '';
+              const normDob = d.dateOfBirth ? normalizeDateStr(d.dateOfBirth) : '';
+              const today = new Date().toISOString().split('T')[0];
+              const isExpired = normExpiry && normExpiry < today;
+
+              setAiScannedData(prev => ({
+                ...prev,
+                license: {
+                  licenseNo: d.licenseNo ? String(d.licenseNo).toUpperCase() : (prev.license?.licenseNo || ''),
+                  expiryDate: normExpiry || (prev.license?.expiryDate || ''),
+                  dateOfBirth: normDob || (prev.license?.dateOfBirth || ''),
+                  dlCodes: d.dlCodes || (prev.license?.dlCodes || ''),
+                  driverName: d.driverName || (prev.license?.driverName || ''),
+                  address: d.address || (prev.license?.address || ''),
+                  isExpired: Boolean(isExpired),
+                  scannedAt: new Date().toISOString()
+                }
+              }));
+
+              setFormData(prev => ({
+                ...prev,
+                fullName: (!prev.fullName && d.driverName) ? d.driverName : prev.fullName,
+                driverLicenseNo: d.licenseNo ? String(d.licenseNo).toUpperCase() : prev.driverLicenseNo,
+                driverLicenseExpiryDate: normExpiry || prev.driverLicenseExpiryDate,
+                driverDob: normDob || prev.driverDob,
+                driverDlCodes: d.dlCodes || prev.driverDlCodes,
+                driverConditions: d.conditions || prev.driverConditions || 'None',
+                driverAddress: d.address || prev.driverAddress || '',
+                driverNationality: d.nationality || prev.driverNationality || 'Filipino',
+                driverSex: d.sex || prev.driverSex || '',
+                driverName: (!prev.isOperatorDriver && d.driverName) ? d.driverName : (prev.driverName || d.driverName)
+              }));
+              setAiSuccess(prev => ({ ...prev, [reqId]: true }));
+
+              // Validate name match between license and applicant / designated driver
+              const targetName = formData.isOperatorDriver ? formData.fullName : formData.driverName;
+              if (d.driverName && targetName) {
+                const cleanScanned = String(d.driverName).toUpperCase().replace(/[^A-Z]/g, '');
+                const cleanTarget = String(targetName).toUpperCase().replace(/[^A-Z]/g, '');
+                if (cleanScanned && cleanTarget && !cleanScanned.includes(cleanTarget) && !cleanTarget.includes(cleanScanned)) {
+                  showToast(`Notice: Name on driver's license (${d.driverName}) differs from ${formData.isOperatorDriver ? 'applicant' : 'driver'} (${targetName}).`, 'warning');
+                }
+              }
+
+              if (isExpired) {
+                showValidationModal(
+                  'driverLicenseExpiryDate',
+                  "Driver's License Expired",
+                  `The scanned Driver's License has expired (validity ended on ${normExpiry}). An active, unexpired license is required by the Sangguniang Bayan Franchising Office. Please verify or update the license.`
+                );
+              } else {
+                showToast("AI Scan: Driver's License details detected.", 'success');
+              }
+              scrollToField('driverLicenseNo');
+            } else {
+              showToast("Document attached. Text was unclear for auto-fill — please type details manually.", 'info');
+            }
+          } else if (docType === 'orCr') {
+            const hasData = d.plateNo || d.motorNo || d.engineNo || d.chassisNo || d.make || d.year || d.yearModel || d.orCrNo || d.crNo || d.orNo || d.ownerName;
+            if (hasData) {
+              const normExpiry = d.expiryDate ? normalizeDateStr(d.expiryDate) : '';
+              const normOrDate = d.orDate ? normalizeDateStr(d.orDate) : '';
+              const normCrDate = d.crDate ? normalizeDateStr(d.crDate) : '';
+              const today = new Date().toISOString().split('T')[0];
+              const isExpired = normExpiry && normExpiry < today;
+
+              const finalPlate = d.plateNo ? String(d.plateNo).toUpperCase() : '';
+              const finalMotor = (d.motorNo || d.engineNo) ? String(d.motorNo || d.engineNo).toUpperCase() : '';
+              const finalChassis = d.chassisNo ? String(d.chassisNo).toUpperCase() : '';
+              const finalMake = d.make ? String(d.make).toUpperCase() : '';
+              const finalSeries = d.series ? String(d.series).toUpperCase() : '';
+              const finalYear = d.yearModel || d.year ? String(d.yearModel || d.year) : '';
+              const finalCrNo = d.crNo ? String(d.crNo).toUpperCase() : '';
+              const finalOrNo = (d.orNo || d.orCrNo) ? String(d.orNo || d.orCrNo).toUpperCase() : '';
+              const finalColor = d.color ? String(d.color).toUpperCase() : '';
+              const finalOwner = d.ownerName ? String(d.ownerName).toUpperCase() : '';
+              const finalOwnerAddress = d.ownerAddress || '';
+
+              setAiScannedData(prev => ({
+                ...prev,
+                orCr: {
+                  plateNo: finalPlate,
+                  motorNo: finalMotor,
+                  chassisNo: finalChassis,
+                  make: finalMake,
+                  series: finalSeries,
+                  year: finalYear,
+                  orCrNo: finalOrNo,
+                  crNo: finalCrNo,
+                  crDate: normCrDate,
+                  orDate: normOrDate,
+                  color: finalColor,
+                  fileNo: d.fileNo || '',
+                  ownerName: finalOwner,
+                  ownerAddress: finalOwnerAddress,
+                  displacement: d.pistonDisplacement || d.displacement || '',
+                  pistonDisplacement: d.pistonDisplacement || d.displacement || '',
+                  grossWeight: d.grossWeight || '',
+                  fuelType: d.fuelType || 'GASOLINE',
+                  bodyType: d.bodyType || 'MOTORCYCLE WITH SIDECAR',
+                  vehicleType: d.vehicleType || 'TRICYCLE / MOTORCYCLE',
+                  passengerCapacity: d.passengerCapacity || '4',
+                  expiryDate: normExpiry || '',
+                  isExpired: Boolean(isExpired),
+                  scannedAt: new Date().toISOString()
+                }
+              }));
+
+              setFormData(prev => ({
+                ...prev,
+                plateNo: finalPlate || prev.plateNo,
+                motorNo: finalMotor || prev.motorNo,
+                chassisNo: finalChassis || prev.chassisNo,
+                make: finalMake || prev.make,
+                made: finalYear || prev.made,
+                series: finalSeries || prev.series,
+                yearModel: finalYear || prev.yearModel,
+                orCrNo: finalOrNo || prev.orCrNo,
+                orNo: finalOrNo || prev.orNo,
+                crNo: finalCrNo || prev.crNo,
+                crDate: normCrDate || prev.crDate,
+                orDate: normOrDate || prev.orDate,
+                color: finalColor || prev.color,
+                fileNo: d.fileNo || prev.fileNo,
+                vehicleType: d.vehicleType || prev.vehicleType,
+                vehicleCategory: d.vehicleCategory || prev.vehicleCategory,
+                classification: d.classification || prev.classification,
+                bodyType: d.bodyType || prev.bodyType,
+                displacement: d.pistonDisplacement || d.displacement || prev.displacement,
+                grossWeight: d.grossWeight || prev.grossWeight,
+                fuelType: d.fuelType || prev.fuelType,
+                passengerCapacity: d.passengerCapacity || prev.passengerCapacity,
+                registeredOwner: finalOwner || prev.registeredOwner,
+                ownerAddress: finalOwnerAddress || prev.ownerAddress,
+                orCrExpiryDate: normExpiry || prev.orCrExpiryDate
+              }));
+              setAiSuccess(prev => ({ ...prev, [reqId]: true }));
+
+              // Check if CR owner name matches applicant name
+              if (finalOwner && formData.fullName) {
+                const cleanOwner = finalOwner.replace(/[^A-Z]/g, '');
+                const cleanApplicant = formData.fullName.toUpperCase().replace(/[^A-Z]/g, '');
+                if (cleanOwner && cleanApplicant && !cleanOwner.includes(cleanApplicant) && !cleanApplicant.includes(cleanOwner)) {
+                  showToast(`Notice: Registered owner on CR (${finalOwner}) does not match applicant name (${formData.fullName}).`, 'warning');
+                }
+              }
+
+              if (isExpired) {
+                showValidationModal(
+                  'orCrExpiryDate',
+                  "LTO Registration Expired",
+                  `The scanned vehicle registration has expired (validity ended on ${normExpiry}). Please renew with the LTO before applying for a franchise.`
+                );
+              } else {
+                showToast("AI Scan: Complete vehicle details from LTO CR/OR extracted successfully.", 'success');
+              }
+              scrollToField('plateNo');
+            } else {
+              showToast("Document attached. Vehicle serials were unclear — please enter Plate, Motor, and Chassis manually.", 'info');
+            }
+          } else if (docType === 'todaEndorsement') {
+            const hasData = d.certNo || d.signatory || d.todaName || d.dateIssued;
+            if (hasData) {
+              setAiScannedData(prev => ({
+                ...prev,
+                todaEndorsement: {
+                  certNo: d.certNo ? String(d.certNo).toUpperCase() : '',
+                  signatory: d.signatory || '',
+                  todaName: d.todaName || '',
+                  dateIssued: d.dateIssued ? normalizeDateStr(d.dateIssued) : '',
+                  scannedAt: new Date().toISOString()
+                }
+              }));
+              setFormData(prev => ({
+                ...prev,
+                todaCertNo: d.certNo ? String(d.certNo).toUpperCase() : prev.todaCertNo,
+                todaSignatory: d.signatory || prev.todaSignatory,
+                todaCertDate: d.dateIssued ? normalizeDateStr(d.dateIssued) : prev.todaCertDate
+              }));
+              setAiSuccess(prev => ({ ...prev, [reqId]: true }));
+              showToast("AI Scan: TODA Certificate details detected.", 'success');
+              scrollToField('todaCertNo');
+            } else {
+              showToast("Document attached. Please verify TODA Certificate No manually.", 'info');
+            }
+          } else if (docType === 'brgyClearance') {
+            const hasData = d.barangay || d.clearanceNo || d.issuer || d.dateIssued;
+            if (hasData) {
+              setAiScannedData(prev => ({
+                ...prev,
+                brgyClearance: {
+                  clearanceNo: d.clearanceNo ? String(d.clearanceNo).toUpperCase() : '',
+                  barangay: d.barangay || '',
+                  issuer: d.issuer || '',
+                  dateIssued: d.dateIssued ? normalizeDateStr(d.dateIssued) : '',
+                  scannedAt: new Date().toISOString()
+                }
+              }));
+              setFormData(prev => {
+                const detectedBrgy = d.barangay ? normalizeBarangayName(d.barangay) : prev.address;
+                const autoZone = detectedBrgy ? getZoneForBarangay(detectedBrgy) : prev.zone;
+                return {
+                  ...prev,
+                  address: detectedBrgy || prev.address,
+                  zone: autoZone || prev.zone,
+                  brgyClearanceNo: d.clearanceNo ? String(d.clearanceNo).toUpperCase() : prev.brgyClearanceNo,
+                  brgyClearanceDate: d.dateIssued ? normalizeDateStr(d.dateIssued) : prev.brgyClearanceDate,
+                  brgyIssuer: d.issuer || prev.brgyIssuer
+                };
+              });
+              setAiSuccess(prev => ({ ...prev, [reqId]: true }));
+              showToast("AI Scan: Barangay Clearance details detected.", 'success');
+              scrollToField('brgyClearanceNo');
+            } else {
+              showToast("Document attached. Please verify Barangay Clearance details manually.", 'info');
+            }
+          } else if (docType === 'cedula') {
+            const hasData = d.serialNo || d.ctcNo || d.dateIssued || d.placeIssued || d.placeOfIssue || d.fullName || d.taxpayerName || d.address;
+            if (hasData) {
+              const fullSerial = String(d.serialNo || d.ctcNo || '').trim().toUpperCase();
+              const dateStr = d.dateIssued ? normalizeDateStr(d.dateIssued) : '';
+              const placeStr = d.placeIssued || d.placeOfIssue || d.address || 'Gasan, Marinduque';
+              const fullNameStr = d.fullName || d.taxpayerName || '';
+              const rawAmount = d.totalAmountPaid !== undefined && d.totalAmountPaid !== null ? String(d.totalAmountPaid).replace(/[^0-9.]/g, '') : '';
+              const amountNum = rawAmount ? parseFloat(rawAmount) : 55.00;
+
+              setAiScannedData(prev => ({
+                ...prev,
+                cedula: {
+                  serialNo: fullSerial,
+                  ctcNo: d.ctcNo ? String(d.ctcNo) : fullSerial,
+                  year: d.year || '2026',
+                  dateIssued: dateStr,
+                  placeIssued: placeStr,
+                  fullName: fullNameStr,
+                  lastName: d.lastName || '',
+                  firstName: d.firstName || '',
+                  middleName: d.middleName || '',
+                  address: d.address || '',
+                  tin: d.tin || '',
+                  sex: d.sex || '',
+                  citizenship: d.citizenship || 'Filipino',
+                  icrNo: d.icrNo || '',
+                  placeOfBirth: d.placeOfBirth || '',
+                  dateOfBirth: d.dateOfBirth ? normalizeDateStr(d.dateOfBirth) : '',
+                  civilStatus: d.civilStatus || '',
+                  profession: d.profession || '',
+                  height: d.height || '',
+                  weight: d.weight || '',
+                  basicCommunityTax: d.basicCommunityTax || '',
+                  additionalTax: d.additionalTax || '',
+                  interest: d.interest || '',
+                  totalAmountPaid: d.totalAmountPaid || '55.00',
+                  treasurer: d.treasurer || '',
+                  scannedAt: new Date().toISOString()
+                }
+              }));
+              setFormData(prev => ({
+                ...prev,
+                cedulaSerialNo: fullSerial || prev.cedulaSerialNo,
+                cedulaDate: dateStr || prev.cedulaDate,
+                cedulaAddress: placeStr || prev.cedulaAddress,
+                cedulaAmount: (amountNum !== '' && !isNaN(amountNum)) ? amountNum : prev.cedulaAmount,
+                cedulaYear: d.year || prev.cedulaYear || '2026',
+                cedulaPlaceIssued: placeStr || prev.cedulaPlaceIssued || 'Gasan, Marinduque',
+                cedulaFullName: fullNameStr || prev.cedulaFullName || '',
+                cedulaCitizenship: d.citizenship || prev.cedulaCitizenship || 'Filipino',
+                cedulaCivilStatus: d.civilStatus || prev.cedulaCivilStatus || '',
+                cedulaProfession: d.profession || prev.cedulaProfession || '',
+                cedulaDob: d.dateOfBirth ? normalizeDateStr(d.dateOfBirth) : prev.cedulaDob || '',
+                cedulaPlaceOfBirth: d.placeOfBirth || prev.cedulaPlaceOfBirth || '',
+                cedulaSex: d.sex || prev.cedulaSex || '',
+                cedulaHeight: d.height || prev.cedulaHeight || '',
+                cedulaWeight: d.weight || prev.cedulaWeight || '',
+                cedulaTin: d.tin || prev.cedulaTin || '',
+                cedulaDetails: d
+              }));
+              setAiSuccess(prev => ({ ...prev, [reqId]: true }));
+              showToast("AI Scan: Complete Cedula (CTC) details detected.", 'success');
+              scrollToField('cedulaSerialNo');
+            } else {
+              showToast("Document attached. Please enter Cedula Serial Number manually.", 'info');
+            }
+          }
+        } else {
+          // Document remains attached! User is explicitly prompted to enter details manually
+          const manualMsg = json.message || 'Naka-attach na ang dokumento. Hindi ito awtomatikong na-scan — paki-type nang manual ang mga detalye sa mga kahon sa ibaba.';
+          setManualScanAlerts(prev => ({ ...prev, [reqId]: manualMsg, [docType]: manualMsg }));
+          showToast(manualMsg, 'warning');
+        }
+      } else {
+        const manualMsg = 'Naka-attach na ang dokumento. Hindi ito awtomatikong na-scan — paki-type nang manual ang mga detalye sa mga kahon sa ibaba.';
+        setManualScanAlerts(prev => ({ ...prev, [reqId]: manualMsg, [docType]: manualMsg }));
+        showToast(manualMsg, 'warning');
+      }
+    } catch (err) {
+      console.warn('AI Scan network notice:', err);
+      const manualMsg = 'Naka-attach na ang dokumento. Hindi ito awtomatikong na-scan — paki-type nang manual ang mga detalye sa mga kahon sa ibaba.';
+      setManualScanAlerts(prev => ({ ...prev, [reqId]: manualMsg, [docType]: manualMsg }));
+      showToast(manualMsg, 'warning');
+    } finally {
+      setAiScanning(prev => ({ ...prev, [reqId]: false }));
+    }
+  };
+
+  // Immediate AI Scanner State Reset for individual document slots
+  const resetScanState = (reqId) => {
+    if (!reqId) return;
+    const lower = reqId.toLowerCase();
+
+    // 1. Reset scan status flags
+    setAiSuccess(prev => ({ ...prev, [reqId]: false }));
+    setAiScanning(prev => ({ ...prev, [reqId]: false }));
+    setManualScanAlerts(prev => ({ ...prev, [reqId]: null }));
+
+    // 2. Clear tracked raw OCR data
+    setAiScannedData(prev => {
+      const copy = { ...prev };
+      if (lower.includes('licenseback') || lower.includes('back')) {
+        delete copy.licenseBack;
+      } else if (lower.includes('license')) {
+        delete copy.license;
+      } else if (lower.includes('cr') || lower.includes('or') || lower.includes('orcr')) {
+        delete copy.orCr;
+      } else if (lower.includes('cedula')) {
+        delete copy.cedula;
+      } else if (lower.includes('toda')) {
+        delete copy.todaEndorsement;
+      } else if (lower.includes('brgy')) {
+        delete copy.brgyClearance;
+      }
+      return copy;
+    });
+
+    // 3. Clear auto-populated form fields corresponding to this document type
+    setFormData(prev => {
+      const copy = { ...prev };
+      if (lower.includes('cr') || lower.includes('or') || lower.includes('orcr')) {
+        copy.plateNo = '';
+        copy.motorNo = '';
+        copy.chassisNo = '';
+        copy.make = '';
+        copy.made = '';
+        copy.series = '';
+        copy.yearModel = '';
+        copy.orCrNo = '';
+        copy.orNo = '';
+        copy.crNo = '';
+        copy.crDate = '';
+        copy.orDate = '';
+        copy.color = '';
+        copy.fileNo = '';
+        copy.vehicleType = '';
+        copy.vehicleCategory = '';
+        copy.classification = '';
+        copy.bodyType = '';
+        copy.displacement = '';
+        copy.grossWeight = '';
+        copy.fuelType = '';
+        copy.passengerCapacity = '';
+        copy.registeredOwner = '';
+        copy.ownerAddress = '';
+        copy.orCrExpiryDate = '';
+      } else if (lower.includes('licenseback') || lower.includes('back')) {
+        copy.driverLicenseSerialNo = '';
+      } else if (lower.includes('license')) {
+        copy.driverLicenseNo = '';
+        copy.driverLicenseExpiryDate = '';
+        copy.driverDob = '';
+        copy.driverDlCodes = '';
+        copy.driverConditions = 'None';
+        copy.driverAddress = '';
+        copy.driverNationality = 'Filipino';
+        copy.driverSex = '';
+        if (!prev.isOperatorDriver) {
+          copy.driverName = '';
+        }
+      } else if (lower.includes('cedula')) {
+        copy.cedulaSerialNo = '';
+        copy.cedulaDate = '';
+        copy.cedulaAddress = '';
+        copy.cedulaAmount = '';
+        copy.cedulaYear = '';
+        copy.cedulaPlaceIssued = '';
+        copy.cedulaFullName = '';
+        copy.cedulaCitizenship = '';
+        copy.cedulaCivilStatus = '';
+        copy.cedulaProfession = '';
+        copy.cedulaDob = '';
+        copy.cedulaPlaceOfBirth = '';
+        copy.cedulaSex = '';
+        copy.cedulaHeight = '';
+        copy.cedulaWeight = '';
+        copy.cedulaTin = '';
+        copy.cedulaDetails = null;
+      } else if (lower.includes('toda')) {
+        copy.todaCertNo = '';
+        copy.todaSignatory = '';
+        copy.todaCertDate = '';
+      } else if (lower.includes('brgy')) {
+        copy.brgyClearanceNo = '';
+        copy.brgyClearanceDate = '';
+        copy.brgyIssuer = '';
+      }
+      return copy;
+    });
+
+    // 4. Clear field-level validation errors
+    setFormErrors(prev => {
+      const copy = { ...prev };
+      delete copy[reqId];
+      return copy;
+    });
+  };
+
+  const handleRescan = (reqId) => {
+    showToast('Re-scanning document with AI...', 'info');
+    triggerAiScan(reqId);
+  };
+
+  const handleFileChange = (reqId, file) => {
+    if (file) {
+      // Immediately wipe previous OCR results & auto-filled fields when new file is selected
+      resetScanState(reqId);
+
+      if (formErrors[reqId]) {
+        setFormErrors(prev => {
+          const copy = { ...prev };
+          delete copy[reqId];
+          return copy;
+        });
+      }
+      if (file.size > 10 * 1024 * 1024) {
+        showValidationModal(reqId, 'File Exceeds Size Limit', 'Document file is too large. Maximum allowed size is 10MB.');
+        return;
+      }
+      setFilePreviews(prev => {
+        if (prev[reqId] && typeof prev[reqId] === 'string' && prev[reqId].startsWith('blob:')) {
+          URL.revokeObjectURL(prev[reqId]);
+        }
+        return { ...prev, [reqId]: URL.createObjectURL(file) };
+      });
+      setUploadedDocs(prev => ({ ...prev, [reqId]: file }));
+
+      // Trigger automatic smart AI scanning
+      triggerAiScan(reqId, file);
+    }
+  };
+
+  const handleRemoveFile = (reqId, e) => {
+    if (e?.preventDefault) e.preventDefault();
+    if (e?.stopPropagation) e.stopPropagation();
+    
+    // Wipe scan states and values
+    resetScanState(reqId);
+
+    setUploadedDocs(prev => {
+      const copy = { ...prev };
+      delete copy[reqId];
+      return copy;
+    });
+    
+    setFilePreviews(prev => {
+      if (prev[reqId] && typeof prev[reqId] === 'string' && prev[reqId].startsWith('blob:')) {
+        URL.revokeObjectURL(prev[reqId]);
+      }
+      const copy = { ...prev };
+      delete copy[reqId];
+      return copy;
+    });
+
+    setFormErrors(prev => {
+      const copy = { ...prev };
+      delete copy[reqId];
+      return copy;
+    });
+  };
+
+  // Real-time debounced duplicate checker (Step 2)
+  useEffect(() => {
+    if (currentStep !== 2) return;
+    if (formMode !== 'New' && formMode !== 'Re-apply') return;
+
+    const fieldsToCheck = [
+      { name: 'plateNo', value: formData.plateNo, label: 'Plate Number' },
+      { name: 'motorNo', value: formData.motorNo, label: 'Motor Number' },
+      { name: 'chassisNo', value: formData.chassisNo, label: 'Chassis Number' }
+    ];
+
+    const timers = fieldsToCheck.map(({ name, value, label }) => {
+      const trimmed = (value || '').trim();
+      if (!trimmed || trimmed.length < 3) {
+        setDuplicateStatus(prev => ({
+          ...prev,
+          [name]: { checking: false, duplicate: false, message: '' }
+        }));
+        return null;
+      }
+
+      return setTimeout(async () => {
+        setDuplicateStatus(prev => ({
+          ...prev,
+          [name]: { ...prev[name], checking: true }
+        }));
+        try {
+          const res = await fetch(
+            `${import.meta.env.VITE_API_URL}/api/v1/franchises/check-unique?field=${name}&value=${encodeURIComponent(trimmed)}${selectedId ? `&excludeId=${selectedId}` : ''}`,
+            { headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` } }
+          );
+          if (res.ok) {
+            const data = await res.json();
+            const isUnique = data.unique !== undefined ? Boolean(data.unique) : Boolean(data.isUnique);
+            const isDuplicate = !isUnique;
+            setDuplicateStatus(prev => ({
+              ...prev,
+              [name]: {
+                checking: false,
+                duplicate: isDuplicate,
+                message: isUnique 
+                  ? `${label} is available.` 
+                  : (data.message || `This ${label.toLowerCase()} is already registered to another unit.`)
+              }
+            }));
+          } else {
+            setDuplicateStatus(prev => ({
+              ...prev,
+              [name]: { checking: false, duplicate: false, message: '' }
+            }));
+          }
+        } catch {
+          setDuplicateStatus(prev => ({
+            ...prev,
+            [name]: { checking: false, duplicate: false, message: '' }
+          }));
+        }
+      }, 500);
+    });
+
+    return () => {
+      timers.forEach(t => t && clearTimeout(t));
+    };
+  }, [formData.plateNo, formData.motorNo, formData.chassisNo, currentStep, formMode, selectedId]);
+
+  // Validation before proceeding to next step
+  const validateCurrentStep = () => {
+    const today = new Date().toISOString().split('T')[0];
+
+    if (currentStep === 1) {
+      if (!formData.fullName?.trim()) {
+        showValidationModal('fullName', 'Operator Full Name Required', 'Please enter the complete name of the tricycle operator.');
+        return false;
+      }
+      if (!formData.address?.trim()) {
+        showValidationModal('address', 'Barangay Address Required', 'Please select your official Barangay of residence in Gasan.');
+        return false;
+      }
+      if (!formData.isOperatorDriver) {
+        if (!formData.driverName?.trim()) {
+          showValidationModal('driverName', "Driver's Name Required", 'Please enter the full name of the hired or designated driver.');
+          return false;
+        }
+        if (!formData.driverContact?.trim()) {
+          showValidationModal('driverContact', "Driver's Contact Number Required", 'Please enter an active contact number for the designated driver.');
+          return false;
+        }
+      }
+      
+      const hasLicense = uploadedDocs.license || filePreviews.license || formData.licenseUrl;
+      if (!hasLicense) {
+        showValidationModal('license', "Driver's License Upload Required", "Please upload a clear photo or copy of the driver's license (Front).");
+        return false;
+      }
+      if (!formData.driverLicenseNo?.trim()) {
+        showValidationModal('driverLicenseNo', "Driver's License Number Required", "Please enter or scan the official Driver's License Number.");
+        return false;
+      }
+      if (!formData.driverLicenseExpiryDate) {
+        showValidationModal('driverLicenseExpiryDate', "License Expiry Date Required", "Please select or verify the Driver's License expiration date.");
+        return false;
+      }
+      if (formData.driverLicenseExpiryDate < today) {
+        showValidationModal('driverLicenseExpiryDate', "Driver's License Expired", `The Driver's License expired on ${formData.driverLicenseExpiryDate}. An active, unexpired license is required.`);
+        return false;
+      }
+      return true;
+    }
+
+    if (currentStep === 2) {
+      const hasCr = uploadedDocs.crDocument || uploadedDocs.crFile || filePreviews.crDocument || formData.crUrl || uploadedDocs.orCrDocument || filePreviews.orCrDocument || formData.orCrUrl;
+      const hasOr = uploadedDocs.orDocument || uploadedDocs.orFile || filePreviews.orDocument || formData.orUrl || uploadedDocs.orCrDocument || filePreviews.orCrDocument || formData.orCrUrl;
+      if (!hasCr) {
+        showValidationModal('crDocument', 'LTO Certificate of Registration (CR) Required', 'Please upload your LTO Certificate of Registration (CR) to verify vehicle ownership and specifications.');
+        return false;
+      }
+      if (!hasOr) {
+        showValidationModal('orDocument', 'LTO Official Receipt (OR) Required', 'Please upload your latest LTO Official Receipt (OR) to verify registration validity.');
+        return false;
+      }
+      if (!formData.make?.trim()) {
+        showValidationModal('make', 'Vehicle Make Required', 'Please enter or select the vehicle make and model (e.g. Honda TMX 125).');
+        return false;
+      }
+      if (!formData.made?.trim()) {
+        showValidationModal('made', 'Model Year Required', 'Please enter the 4-digit model year of the vehicle.');
+        return false;
+      }
+      if (!formData.zone?.trim()) {
+        showValidationModal('zone', 'Municipal Route / Zone Required', 'Please select the authorized Route Zone for this franchise.');
+        return false;
+      }
+      if (!formData.plateNo?.trim()) {
+        showValidationModal('plateNo', 'Plate Number Required', 'Please enter the official Plate Number or MV File Number.');
+        return false;
+      }
+      if (!formData.motorNo?.trim()) {
+        showValidationModal('motorNo', 'Engine / Motor Number Required', 'Please enter the Engine / Motor Number from your OR/CR.');
+        return false;
+      }
+      if (!formData.chassisNo?.trim()) {
+        showValidationModal('chassisNo', 'Chassis Serial Number Required', 'Please enter the Chassis Serial Number / VIN.');
+        return false;
+      }
+      if (!formData.orCrExpiryDate) {
+        showValidationModal('orCrExpiryDate', 'LTO Registration Expiry Date Required', 'Please enter or verify the registration expiration date from your LTO OR.');
+        return false;
+      }
+      if (formData.orCrExpiryDate < today) {
+        showValidationModal('orCrExpiryDate', 'LTO Registration Expired', `The LTO OR/CR expired on ${formData.orCrExpiryDate}. Please renew vehicle registration with LTO.`);
+        return false;
+      }
+      if (duplicateStatus.plateNo.duplicate) {
+        showValidationModal('plateNo', 'Duplicate Plate Number', duplicateStatus.plateNo.message || 'This plate number is already registered to another unit.');
+        return false;
+      }
+      if (duplicateStatus.motorNo.duplicate) {
+        showValidationModal('motorNo', 'Duplicate Motor Number', duplicateStatus.motorNo.message || 'This motor number is already registered to another unit.');
+        return false;
+      }
+      if (duplicateStatus.chassisNo.duplicate) {
+        showValidationModal('chassisNo', 'Duplicate Chassis Number', duplicateStatus.chassisNo.message || 'This chassis number is already registered to another unit.');
+        return false;
+      }
+      return true;
+    }
+
+    if (currentStep === 3) {
+      const hasToda = uploadedDocs.todaEndorsement || filePreviews.todaEndorsement || formData.todaEndorsementUrl;
+      const hasBrgy = uploadedDocs.brgyClearance || filePreviews.brgyClearance || formData.brgyClearanceUrl;
+      const currentToda = formData.todaName || loggedInToda;
+      const isNotVerifiedInRoster = todaMembershipStatus && todaMembershipStatus.todaStatus !== 'verified_member' && currentToda && currentToda !== 'NON-TODA';
+
+      if (!hasToda) {
+        if (isNotVerifiedInRoster) {
+          showValidationModal(
+            'todaEndorsement',
+            'TODA Endorsement Certificate Strictly Required',
+            `Operator "${formData.fullName}" is not verified in the approved digital masterlist of ${currentToda}. Because your name is not listed in the online roster, uploading an official physical TODA Endorsement Certificate signed by the TODA President is strictly required.`
+          );
+          return false;
+        } else {
+          showValidationModal('todaEndorsement', 'TODA Endorsement Required', 'Please upload the TODA Endorsement Certificate issued by your association.');
+          return false;
+        }
+      }
+      if (!formData.todaCertNo?.trim()) {
+        showValidationModal('todaCertNo', 'TODA Certificate Number Required', 'Please enter or scan the TODA Endorsement Certificate / Control Number.');
+        return false;
+      }
+      if (!formData.todaCertDate) {
+        showValidationModal('todaCertDate', 'TODA Date Issued Required', 'Please enter or verify the issuance date of the TODA Certificate.');
+        return false;
+      }
+
+      if (!hasBrgy) {
+        showValidationModal('brgyClearance', 'Barangay Clearance Required', 'Please upload the Barangay Clearance document.');
+        return false;
+      }
+      if (!formData.brgyClearanceNo?.trim()) {
+        showValidationModal('brgyClearanceNo', 'Barangay Clearance Number Required', 'Please enter or scan the Barangay Clearance Control Number.');
+        return false;
+      }
+      if (!formData.brgyClearanceDate) {
+        showValidationModal('brgyClearanceDate', 'Barangay Clearance Date Required', 'Please enter or verify the date the Barangay Clearance was issued.');
+        return false;
+      }
+      if (!formData.brgyIssuer?.trim()) {
+        showValidationModal('brgyIssuer', 'Punong Barangay / Issuing Official Required', 'Please enter or verify the issuing official / Punong Barangay name.');
+        return false;
+      }
+      return true;
+    }
+
+    if (currentStep === 4) {
+      const currentYear = new Date().getFullYear();
+      if (!formData.cedulaSerialNo?.trim()) {
+        showValidationModal('cedulaSerialNo', 'Cedula Serial Number Required', 'Please enter or scan the Community Tax Certificate (Cedula) Serial Number.');
+        return false;
+      }
+      if (!formData.cedulaDate) {
+        showValidationModal('cedulaDate', 'Cedula Date Issued Required', 'Please enter or verify the Cedula Date Issued.');
+        return false;
+      }
+      const cedulaYear = new Date(formData.cedulaDate).getFullYear();
+      if (cedulaYear < currentYear) {
+        showValidationModal('cedulaDate', 'Cedula Expired', `Cedula for year ${cedulaYear} is expired. A valid Cedula for ${currentYear} is required.`);
+        return false;
+      }
+
+      if (formMode === 'New') {
+        const hasCedula = uploadedDocs.cedulaDoc || uploadedDocs.cedula || filePreviews.cedulaDoc || filePreviews.cedula || formData.cedulaUrl;
+        if (!hasCedula) {
+          showValidationModal('cedulaDoc', 'Cedula Document Required', 'Community Tax Certificate (Cedula) document upload is required.');
+          return false;
+        }
+      }
+      return true;
+    }
+
+    if (currentStep === 5) {
+      if (!isAgreedToTerms) {
+        showValidationModal(
+          'confirm-authenticity-checkbox',
+          'Confirmation Required',
+          'Please check the Affidavit of Authenticity box to certify that all submitted information and documents are true and correct.'
+        );
+        return false;
+      }
+      return true;
+    }
+
+    return true;
+  };
+
+  const nextStep = () => {
+    if (!validateCurrentStep()) return;
+    if (currentStep < 5) {
+      setSlideDirection('forward');
+      const nextS = currentStep + 1;
+      setCurrentStep(nextS);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      const currentMode = (formMode || 'New').toLowerCase();
+      navigate(`?mode=${currentMode}&step=${nextS}`);
+    }
+  };
+
+  const prevStep = () => {
+    if (currentStep > 1) {
+      setSlideDirection('backward');
+      const prevS = currentStep - 1;
+      setCurrentStep(prevS);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      const currentMode = (formMode || 'New').toLowerCase();
+      navigate(`?mode=${currentMode}&step=${prevS}`);
+    }
+  };
+
+  // AI OCR Discrepancy Analysis (Detects if applicant edited scanned data or expired dates)
+  const getAiDiscrepancies = (currForm = formData, currAi = aiScannedData) => {
+    const discrepancies = [];
+    const today = new Date().toISOString().split('T')[0];
+    const form = currForm || {};
+    const ai = currAi || {};
+
+    // 1. License Expiry Discrepancy
+    if (ai?.license?.expiryDate) {
+      const aiExp = ai.license.expiryDate;
+      const userExp = form.driverLicenseExpiryDate || '';
+      const wasScannedExpired = aiExp < today;
+      const isEnteredValid = userExp >= today;
+
+      if (wasScannedExpired && isEnteredValid) {
+        discrepancies.push({
+          field: 'driverLicenseExpiryDate',
+          docType: 'license',
+          step: 1,
+          label: "Driver's License Expiry Date",
+          scannedValue: aiExp,
+          enteredValue: userExp,
+          severity: 'critical',
+          reason: `Scanned Driver's License indicates expired date (${aiExp}), but entered date was modified to an unexpired date (${userExp}).`
+        });
+      } else if (userExp && userExp !== aiExp) {
+        discrepancies.push({
+          field: 'driverLicenseExpiryDate',
+          docType: 'license',
+          step: 1,
+          label: "Driver's License Expiry Date",
+          scannedValue: aiExp,
+          enteredValue: userExp,
+          severity: 'warning',
+          reason: `Scanned expiry date (${aiExp}) differs from entered date (${userExp}).`
+        });
+      }
+    }
+
+    // 2. OR/CR Expiry Discrepancy
+    if (ai?.orCr?.expiryDate) {
+      const aiExp = ai.orCr.expiryDate;
+      const userExp = form.orCrExpiryDate || '';
+      const wasScannedExpired = aiExp < today;
+      const isEnteredValid = userExp >= today;
+
+      if (wasScannedExpired && isEnteredValid) {
+        discrepancies.push({
+          field: 'orCrExpiryDate',
+          docType: 'orCr',
+          step: 2,
+          label: "LTO OR/CR Registration Expiry Date",
+          scannedValue: aiExp,
+          enteredValue: userExp,
+          severity: 'critical',
+          reason: `Scanned LTO OR/CR indicates expired registration date (${aiExp}), but entered date was modified to an unexpired date (${userExp}).`
+        });
+      } else if (userExp && userExp !== aiExp) {
+        discrepancies.push({
+          field: 'orCrExpiryDate',
+          docType: 'orCr',
+          step: 2,
+          label: "LTO OR/CR Registration Expiry Date",
+          scannedValue: aiExp,
+          enteredValue: userExp,
+          severity: 'warning',
+          reason: `Scanned registration expiry date (${aiExp}) differs from entered date (${userExp}).`
+        });
+      }
+    }
+
+    // 3. Plate No Discrepancy
+    if (ai?.orCr?.plateNo && form.plateNo) {
+      const cleanAi = String(ai.orCr.plateNo || '').replace(/[^A-Z0-9]/g, '');
+      const cleanUser = String(form.plateNo || '').replace(/[^A-Z0-9]/g, '');
+      if (cleanAi && cleanUser && cleanAi !== cleanUser) {
+        discrepancies.push({
+          field: 'plateNo',
+          docType: 'orCr',
+          step: 2,
+          label: "Vehicle Plate / MV File Number",
+          scannedValue: ai.orCr.plateNo,
+          enteredValue: form.plateNo,
+          severity: 'warning',
+          reason: `Scanned plate/MV number (${ai.orCr.plateNo}) differs from entered value (${form.plateNo}).`
+        });
+      }
+    }
+
+    // 4. Chassis No Discrepancy
+    if (ai?.orCr?.chassisNo && form.chassisNo) {
+      const cleanAi = String(ai.orCr.chassisNo || '').replace(/[^A-Z0-9]/g, '');
+      const cleanUser = String(form.chassisNo || '').replace(/[^A-Z0-9]/g, '');
+      if (cleanAi && cleanUser && cleanAi !== cleanUser) {
+        discrepancies.push({
+          field: 'chassisNo',
+          docType: 'orCr',
+          step: 2,
+          label: "Chassis Serial Number",
+          scannedValue: ai.orCr.chassisNo,
+          enteredValue: form.chassisNo,
+          severity: 'warning',
+          reason: `Scanned chassis serial number (${ai.orCr.chassisNo}) differs from entered value (${form.chassisNo}).`
+        });
+      }
+    }
+
+    // 5. Motor No Discrepancy
+    if (ai?.orCr?.motorNo && form.motorNo) {
+      const cleanAi = String(ai.orCr.motorNo || '').replace(/[^A-Z0-9]/g, '');
+      const cleanUser = String(form.motorNo || '').replace(/[^A-Z0-9]/g, '');
+      if (cleanAi && cleanUser && cleanAi !== cleanUser) {
+        discrepancies.push({
+          field: 'motorNo',
+          docType: 'orCr',
+          step: 2,
+          label: "Motor / Engine Number",
+          scannedValue: ai.orCr.motorNo,
+          enteredValue: form.motorNo,
+          severity: 'warning',
+          reason: `Scanned motor number (${ai.orCr.motorNo}) differs from entered value (${form.motorNo}).`
+        });
+      }
+    }
+
+    // 6. Driver License No Discrepancy
+    if (ai?.license?.licenseNo && form.driverLicenseNo) {
+      const cleanAi = String(ai.license.licenseNo || '').replace(/[^A-Z0-9]/g, '');
+      const cleanUser = String(form.driverLicenseNo || '').replace(/[^A-Z0-9]/g, '');
+      if (cleanAi && cleanUser && cleanAi !== cleanUser) {
+        discrepancies.push({
+          field: 'driverLicenseNo',
+          docType: 'license',
+          step: 1,
+          label: "Driver's License Number",
+          scannedValue: ai.license.licenseNo,
+          enteredValue: form.driverLicenseNo,
+          severity: 'warning',
+          reason: `Scanned driver license number (${ai.license.licenseNo}) differs from entered value (${form.driverLicenseNo}).`
+        });
+      }
+    }
+
+    // 7. CR Registered Owner vs Applicant Name
+    const scannedOwner = ai?.orCr?.ownerName || ai?.cr?.ownerName || '';
+    if (scannedOwner && form.fullName) {
+      if (!isNameMatch(scannedOwner, form.fullName)) {
+        discrepancies.push({
+          field: 'registeredOwner',
+          docType: 'cr',
+          step: 2,
+          label: "CR Registered Owner",
+          scannedValue: scannedOwner,
+          enteredValue: form.fullName,
+          severity: 'warning',
+          reason: `Vehicle registration is in the name of ${scannedOwner}. Ensure a notarized Deed of Sale or Lease/Authorization is attached.`
+        });
+      }
+    }
+
+    // 8. TODA Jurisdiction vs Barangay Address
+    if (form.todaName && form.todaName !== 'NON-TODA' && form.address) {
+      const validTodas = getTodasForBarangay(form.address);
+      if (validTodas.length > 0 && !validTodas.includes(form.todaName)) {
+        discrepancies.push({
+          field: 'jurisdiction',
+          docType: 'toda',
+          step: 1,
+          label: "TODA Operational Jurisdiction",
+          scannedValue: form.todaName,
+          enteredValue: form.address,
+          severity: 'warning',
+          reason: `Barangay "${form.address}" is outside the official operational routes of ${form.todaName}. (Authorized: ${validTodas.join(', ')})`
+        });
+      }
+    }
+
+    return discrepancies;
+  };
+
+  // Pre-submit validation and Confirmation Prompt (Prevents accidental misclicks)
+  const handlePreSubmit = (e) => {
+    if (e?.preventDefault) e.preventDefault();
+    if (isSubmitting) return;
+
+    if (!isAgreedToTerms) {
+      showValidationModal(
+        'confirm-authenticity-checkbox',
+        'Confirmation Required',
+        'Please check the Affidavit of Authenticity box before submitting the application.'
+      );
+      return;
+    }
+
+    // 1. Comprehensive Step 1 Check (Operator and Driver info)
+    if (!formData.fullName?.trim() || !formData.address?.trim() || !formData.driverLicenseNo?.trim()) {
+      showValidationModal(
+        'fullName',
+        'Kulang ang Impormasyon sa Hakbang 1',
+        'Hindi pa kumpleto ang impormasyon ng aplikante o lisensya sa Hakbang 1. Pakipunan ang mga patlang bago mag-submit.'
+      );
+      setSlideDirection('backward');
+      setCurrentStep(1);
+      return;
+    }
+
+    // 2. Comprehensive Step 2 Check (Vehicle Specifications - prevents dashed blanks)
+    if (!formData.plateNo?.trim() || !formData.motorNo?.trim() || !formData.chassisNo?.trim() || !formData.make?.trim() || !formData.made?.trim()) {
+      showValidationModal(
+        'plateNo',
+        'Kulang ang Impormasyon ng Sasakyan sa Hakbang 2',
+        'Naka-dash pa ang mga detalye ng iyong sasakyan sa Hakbang 2. Paki-type nang manual ang Plate Number, Engine/Motor Number, Chassis Number, Make, at Year Model bago mag-submit.'
+      );
+      setSlideDirection('backward');
+      setCurrentStep(2);
+      return;
+    }
+
+    if (!formData.orCrExpiryDate) {
+      showValidationModal(
+        'orCrExpiryDate',
+        'LTO Registration Expiry Date Required',
+        'Pakilagay ang registration expiration date mula sa iyong LTO OR/CR sa Hakbang 2 bago mag-submit.'
+      );
+      setSlideDirection('backward');
+      setCurrentStep(2);
+      return;
+    }
+
+    // Cedula validation
+    const currentYear = new Date().getFullYear();
+    if (!formData.cedulaSerialNo?.trim()) {
+      showValidationModal('cedulaSerialNo', 'Cedula Serial Number Required', 'Please enter the Community Tax Certificate (Cedula) Serial Number.');
+      return;
+    }
+    if (!formData.cedulaDate) {
+      showValidationModal('cedulaDate', 'Cedula Date Issued Required', 'Please enter the Cedula Date Issued.');
+      return;
+    }
+    const cedulaYear = new Date(formData.cedulaDate).getFullYear();
+    if (cedulaYear < currentYear) {
+      showValidationModal('cedulaDate', 'Cedula Expired', `Cedula for year ${cedulaYear} is expired. A valid Cedula for ${currentYear} is required.`);
+      return;
+    }
+
+    if (formMode === 'New') {
+      const hasCedula = uploadedDocs.cedulaDoc || uploadedDocs.cedula || filePreviews.cedulaDoc || filePreviews.cedula || formData.cedulaUrl;
+      if (!hasCedula) {
+        showValidationModal('cedulaDoc', 'Cedula Document Required', 'Community Tax Certificate (Cedula) upload is required.');
+        return;
+      }
+
+      // Strict TODA Gatekeeper: Block submission if applicant is not in approved roster and has no TODA certificate
+      const currentToda = formData.todaName || loggedInToda;
+      const hasTodaCert = uploadedDocs.todaEndorsement || filePreviews.todaEndorsement || formData.todaEndorsementUrl;
+      if (currentToda && currentToda !== 'NON-TODA') {
+        if (todaMembershipStatus && todaMembershipStatus.todaStatus !== 'verified_member' && !hasTodaCert) {
+          showValidationModal(
+            'todaEndorsement',
+            'Application Blocked: Missing TODA Certificate',
+            `Cannot submit application: Operator "${formData.fullName}" is not in the official masterlist of ${currentToda} and has not uploaded a TODA Endorsement Certificate. Please upload a valid certificate in Step 3.`
+          );
+          return;
+        }
+      }
+    }
+
+    // Check critical AI discrepancies
+    const discrepancies = getAiDiscrepancies(formData, aiScannedData);
+    const criticalDiscrepancies = discrepancies.filter(d => d.severity === 'critical');
+    if (criticalDiscrepancies.length > 0) {
+      setDiscrepancyModal({
+        isOpen: true,
+        discrepancies: criticalDiscrepancies
+      });
+      return;
+    }
+
+    // Open confirmation modal
+    setIsSubmitConfirmOpen(true);
+  };
+
+  // Submit Handler
+  const handleSubmit = async (e, bypassDiscrepancyCheck = false) => {
+    if (e?.preventDefault) e.preventDefault();
+    if (isSubmitting) return;
+
+    const today = new Date().toISOString().split('T')[0];
+
+    // Cedula validation
+    const currentYear = new Date().getFullYear();
+    if (!formData.cedulaSerialNo?.trim()) {
+      showValidationModal('cedulaSerialNo', 'Cedula Serial Number Required', 'Please enter the Community Tax Certificate (Cedula) Serial Number.');
+      return;
+    }
+    if (!formData.cedulaDate) {
+      showValidationModal('cedulaDate', 'Cedula Date Issued Required', 'Please enter the Cedula Date Issued.');
+      return;
+    }
+    const cedulaYear = new Date(formData.cedulaDate).getFullYear();
+    if (cedulaYear < currentYear) {
+      showValidationModal('cedulaDate', 'Cedula Expired', `Cedula for year ${cedulaYear} is expired. A valid Cedula for ${currentYear} is required.`);
+      return;
+    }
+
+    if (formMode === 'New') {
+      const hasCedula = uploadedDocs.cedulaDoc || uploadedDocs.cedula || filePreviews.cedulaDoc || filePreviews.cedula || formData.cedulaUrl;
+      if (!hasCedula) {
+        showValidationModal('cedulaDoc', 'Cedula Document Required', 'Community Tax Certificate (Cedula) upload is required.');
+        return;
+      }
+    }
+
+    const discrepancies = getAiDiscrepancies(formData, aiScannedData);
+    const criticalDiscrepancies = discrepancies.filter(d => d.severity === 'critical');
+
+    if (!bypassDiscrepancyCheck && criticalDiscrepancies.length > 0) {
+      setDiscrepancyModal({
+        isOpen: true,
+        discrepancies: criticalDiscrepancies
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+    setUploadPhase('Preparing application submission...');
+
+    try {
+      const submitData = new FormData();
+      submitData.append('applicationType', formMode === 'Renewal' ? 'Renewal' : 'New');
+      if (formMode === 'Re-apply') submitData.append('status', 'Pending');
+
+      Object.keys(formData).forEach(key => {
+        if (formData[key] !== undefined && formData[key] !== null) {
+          if (typeof formData[key] === 'object' && !(formData[key] instanceof File) && !(formData[key] instanceof Blob)) {
+            submitData.append(key, JSON.stringify(formData[key]));
+          } else {
+            submitData.append(key, formData[key]);
+          }
+        }
+      });
+
+      if (!formData.dateApplied) {
+        submitData.append('dateApplied', new Date().toISOString().substring(0, 10));
+      }
+
+      // Attach raw AI OCR scan data and discrepancy audit log
+      submitData.append('aiScannedData', JSON.stringify(aiScannedData || {}));
+      submitData.append('aiDiscrepancies', JSON.stringify(discrepancies || []));
+
+      setUploadPhase('Uploading documents and attachments...');
+
+      // Append documents
+      if (uploadedDocs.crDocument) {
+        submitData.append('crDocument', uploadedDocs.crDocument);
+        submitData.append('crFile', uploadedDocs.crDocument);
+      }
+      if (uploadedDocs.orDocument) {
+        submitData.append('orDocument', uploadedDocs.orDocument);
+        submitData.append('orFile', uploadedDocs.orDocument);
+      }
+      if (uploadedDocs.orCrDocument) submitData.append('orCrDocument', uploadedDocs.orCrDocument);
+      else if (uploadedDocs.crDocument) submitData.append('orCrDocument', uploadedDocs.crDocument);
+      if (uploadedDocs.crFile && !uploadedDocs.crDocument) submitData.append('crFile', uploadedDocs.crFile);
+      if (uploadedDocs.orFile && !uploadedDocs.orDocument) submitData.append('orFile', uploadedDocs.orFile);
+      if (uploadedDocs.license) submitData.append('license', uploadedDocs.license);
+      if (uploadedDocs.licenseBack) submitData.append('licenseBack', uploadedDocs.licenseBack);
+      if (uploadedDocs.todaEndorsement) submitData.append('todaEndorsement', uploadedDocs.todaEndorsement);
+      if (uploadedDocs.brgyClearance) submitData.append('brgyClearance', uploadedDocs.brgyClearance);
+      if (uploadedDocs.cedulaDoc) submitData.append('cedulaDoc', uploadedDocs.cedulaDoc);
+      else if (uploadedDocs.cedula) submitData.append('cedulaDoc', uploadedDocs.cedula);
+
+      const url = formMode === 'Re-apply' 
+        ? `${import.meta.env.VITE_API_URL}/api/v1/franchises/${selectedId}` 
+        : `${import.meta.env.VITE_API_URL}/api/v1/franchises`;
+
+      const response = await fetch(url, {
+        method: formMode === 'Re-apply' ? 'PUT' : 'POST',
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+        body: submitData
+      });
+
+      if (response.status === 401) {
+        setFeedbackModal({
+          isOpen: true,
+          type: 'error',
+          title: 'Session Expired',
+          message: 'Your login session has expired or the token is unauthorized. Please log in again to continue submitting your application.',
+          confirmText: 'Log In Again',
+          onConfirm: () => {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            localStorage.removeItem('role');
+            setFeedbackModal(prev => ({ ...prev, isOpen: false }));
+            navigate('/login');
+          }
+        });
+        return;
+      }
+
+      const data = await response.json();
+
+      if (response.ok) {
+        try {
+          const key = getDraftKey();
+          await localforage.removeItem(`${key}_files`);
+        } catch {}
+        try {
+          const key = getDraftKey();
+          await localforage.removeItem(key);
+          await localforage.removeItem('gtrams_apply_draft');
+          const uid = getCurrentUserId();
+          await localforage.removeItem(`gtrams_apply_draft_${uid}`);
+        } catch {}
+
+        localStorage.removeItem('gtrams_apply_draft');
+        localStorage.removeItem(DRAFT_STORAGE_KEY);
+        localStorage.removeItem('reapply_target');
+        setHasDraftRestored(false);
+
+        setFeedbackModal({
+          isOpen: true,
+          type: 'success',
+          title: formMode === 'Re-apply' ? 'Revision Submitted!' : 'Application Submitted!',
+          message: 'Your franchise application has been successfully submitted to the Sangguniang Bayan Office for evaluation.',
+          confirmText: 'Go to Dashboard',
+          onConfirm: () => {
+            setFeedbackModal(prev => ({ ...prev, isOpen: false }));
+            navigate('/operator-dashboard');
+          }
+        });
+      } else {
+        setFeedbackModal({
+          isOpen: true,
+          type: 'error',
+          title: 'Submission Failed',
+          message: data.message || 'Server error while submitting application. Please try again.',
+          confirmText: 'OK',
+          onConfirm: () => setFeedbackModal(prev => ({ ...prev, isOpen: false }))
+        });
+      }
+    } catch (err) {
+      console.error('Submit error:', err);
+      showToast('Network error while connecting to server.', 'error');
+    } finally {
+      setIsSubmitting(false);
+      setUploadPhase('');
+    }
+  };
+
+  const inputClasses = "w-full px-4 py-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#EAE7E1] placeholder-[#6B6761] dark:placeholder-[#A8A29E] text-base min-h-[48px] focus:outline-none focus:ring-2 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] focus:border-transparent transition-all shadow-xs font-medium";
+  const disabledClasses = "w-full pl-3.5 pr-36 py-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] text-base min-h-[48px] cursor-not-allowed font-semibold select-none";
+
+  const getInputClasses = (fieldName) => {
+    if (formErrors[fieldName]) {
+      return "w-full px-4 py-3 rounded-lg border-2 border-red-500 ring-2 ring-red-500/20 bg-red-50/10 dark:bg-red-950/20 text-[#1F1D1B] dark:text-[#EAE7E1] placeholder-[#6B6761] dark:placeholder-[#A8A29E] text-base min-h-[48px] focus:outline-none focus:ring-2 focus:ring-red-500 transition-all shadow-xs font-medium";
+    }
+    return inputClasses;
+  };
+
+  const steps = [
+    { num: 1, title: 'Operator', fullTitle: 'Operator & Driver' },
+    { num: 2, title: 'Vehicle', fullTitle: 'Vehicle & LTO OR/CR' },
+    { num: 3, title: 'Clearances', fullTitle: 'Barangay & TODA Clearances' },
+    { num: 4, title: 'Cedula', fullTitle: 'Community Tax Certificate (CTC)' },
+    { num: 5, title: 'Review', fullTitle: 'Review & Confirmation' }
+  ];
+
+  const isRenewing = formMode === 'Renewal' || modeParam === 'renewal';
+  const isReapplying = formMode === 'Re-apply' || modeParam === 'reapply';
+  const activeOrPendingUnits = myFranchises.filter(f => !['Cancelled', 'Revoked'].includes(f.status));
+  const isCapacityFull = activeOrPendingUnits.length >= maxAllowedUnits;
+  const availableSlots = Math.max(0, maxAllowedUnits - activeOrPendingUnits.length);
+
+  // Loading state guard when cached list is not yet populated
+  if (isLoading && myFranchises.length === 0) {
+    return (
+      <MainLayout hideNav={true}>
+        <ApplyFranchiseSkeleton isRenewal={isRenewing} />
+      </MainLayout>
+    );
+  }
+
+  // Automatic Full Capacity Blocking:
+  // If the operator already reached max quota (2/2 units) and is not renewing or reapplying,
+  // do NOT render the form at all — display the official LGU Maximum Unit Capacity Reached notice.
+  if (isCapacityFull && !isRenewing && !isReapplying) {
+    return (
+      <MainLayout hideNav={true}>
+        <div className="w-full max-w-full overflow-x-hidden min-h-screen bg-[#F6F5F3] dark:bg-[#14110F] flex flex-col transition-colors">
+          {/* Top Hero Banner */}
+          <div className="w-full bg-[#9E2A2B] text-white pt-4 pb-6 px-4 sm:px-6 relative overflow-hidden border-b border-[#7A1B22] shadow-xs">
+            <div className="absolute -right-6 -bottom-8 pointer-events-none select-none">
+              <img 
+                src="/gasan-logo.png" 
+                alt="Seal of Gasan" 
+                className="w-52 h-52 sm:w-60 sm:h-60 object-contain opacity-20 drop-shadow-md" 
+              />
+            </div>
+            <div className="max-w-2xl mx-auto relative z-10 flex items-center justify-between">
+              <button
+                type="button"
+                onClick={handleBackToDashboard}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 text-white text-sm font-bold transition-all border border-white/20 shadow-xs cursor-pointer min-h-[44px]"
+              >
+                <ArrowLeft size={18} />
+                <span>Back to Dashboard</span>
+              </button>
+              <span className="text-xs font-bold px-2.5 py-1 rounded bg-[#D4AF37] text-[#1F1D1B] uppercase tracking-wider">
+                Capacity: {activeOrPendingUnits.length} / {maxAllowedUnits} Units Full
+              </span>
+            </div>
+          </div>
+
+          {/* Centered Notice Container */}
+          <div className="flex-1 flex items-center justify-center p-4 sm:p-6">
+            <div className="max-w-lg w-full bg-white dark:bg-[#1C1917] rounded-xl p-6 sm:p-8 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm text-center">
+              
+              <div className="w-16 h-16 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-4 border border-amber-200 dark:border-amber-900/60 shadow-xs">
+                <AlertCircle size={32} />
+              </div>
+
+              <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-100/70 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 text-xs font-bold mb-3 border border-amber-300/60 dark:border-amber-800/60">
+                <span>Maximum Fleet Limit Reached</span>
+              </div>
+
+              <h2 className="text-xl sm:text-2xl font-bold text-[#1F1D1B] dark:text-[#EAE7E1] mb-2 tracking-tight">
+                Unit Quota Reached ({activeOrPendingUnits.length} / {maxAllowedUnits})
+              </h2>
+
+              <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] mb-6 leading-relaxed">
+                Under Section 4 of the Gasan Municipal Tricycle Franchising Ordinance, an individual operator is strictly limited to a maximum of <strong>{maxAllowedUnits} motorized tricycle units</strong>. You have already registered all allowed units.
+              </p>
+
+              {/* Registered Units Card List */}
+              <div className="bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg p-3.5 sm:p-4 mb-6 border border-[#E4E1DC] dark:border-[#2E2A27] text-left">
+                <div className="flex items-center justify-between mb-2.5">
+                  <span className="text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                    Your Registered Units
+                  </span>
+                  <span className="text-[11px] font-semibold text-[#6B6761] dark:text-[#A8A29E]">
+                    {activeOrPendingUnits.length} of {maxAllowedUnits} slots filled
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {activeOrPendingUnits.map((u, i) => (
+                    <div 
+                      key={u._id || i}
+                      className="flex items-center justify-between p-2.5 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27]"
+                    >
+                      <div className="min-w-0 pr-2">
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs font-mono font-bold text-[#9E2A2B] dark:text-[#D4AF37]">
+                            {u.plateNo || 'NO PLATE'}
+                          </span>
+                          <span className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                            • {u.make || 'Tricycle'}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] truncate mt-0.5">
+                          TODA: {u.todaName || 'Non-TODA'} | Zone: {u.zone || 'N/A'}
+                        </p>
+                      </div>
+                      <span className={`text-[11px] font-bold px-2 py-0.5 rounded shrink-0 ${
+                        u.status === 'Active' 
+                          ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/60'
+                          : 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/60'
+                      }`}>
+                        {u.status}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-col sm:flex-row gap-2.5">
+                <button
+                  type="button"
+                  onClick={handleBackToDashboard}
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-sm shadow-xs cursor-pointer active:scale-95 min-h-[46px] transition-all"
+                >
+                  <ArrowLeft size={16} />
+                  <span>Return to Dashboard</span>
+                </button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </MainLayout>
+    );
+  }
+
+  return (
+    <MainLayout hideNav={true}>
+      {/* Toast Notification */}
+      {toast.show && (
+        <div className="fixed bottom-6 right-6 z-[9999] pointer-events-none animate-in fade-in slide-in-from-bottom-3 duration-200">
+          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-lg rounded-lg px-4 py-3 flex items-center gap-3 max-w-sm">
+            <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border ${
+              toast.type === 'error'
+                ? 'bg-red-50 dark:bg-red-950/50 border-red-200 dark:border-red-900/60 text-red-600 dark:text-red-400'
+                : toast.type === 'info'
+                ? 'bg-blue-50 dark:bg-blue-950/50 border-blue-200 dark:border-blue-900/60 text-blue-600 dark:text-blue-400'
+                : 'bg-emerald-50 dark:bg-emerald-950/50 border-emerald-200 dark:border-emerald-900/60 text-emerald-600 dark:text-emerald-400'
+            }`}>
+              {toast.type === 'error' ? <AlertCircle size={15} /> : <CheckCircle2 size={15} />}
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] leading-snug">
+                {toast.message}
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Full-Screen Immersive Form Layout */}
+      <div className="w-full max-w-full overflow-x-hidden min-h-screen bg-[#F6F5F3] dark:bg-[#14110F] flex flex-col transition-colors">
+        
+        {/* Top Hero Banner */}
+        <div className="w-full bg-[#9E2A2B] text-white pt-4 pb-6 px-4 sm:px-6 relative overflow-hidden border-b border-[#7A1B22] shadow-xs">
+          {/* Official Gasan Seal Watermark */}
+          <div className="absolute -right-6 -bottom-8 pointer-events-none select-none">
+            <img 
+              src="/gasan-logo.png" 
+              alt="Seal of Gasan" 
+              className="w-52 h-52 sm:w-60 sm:h-60 object-contain opacity-20 drop-shadow-md" 
+            />
+          </div>
+
+          <div className="max-w-2xl mx-auto relative z-10">
+            {/* Top Navigation Row */}
+            <div className="flex items-center justify-between mb-2">
+              <button
+                type="button"
+                onClick={handleTopBack}
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 text-white text-sm font-bold transition-all border border-white/20 shadow-xs cursor-pointer min-h-[44px]"
+                title="Back"
+              >
+                <ArrowLeft size={18} />
+                <span>Back</span>
+              </button>
+
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleSaveProgress(true)}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 text-white text-xs sm:text-sm font-semibold transition-all border border-white/20 cursor-pointer min-h-[44px]"
+                  title="Save draft"
+                >
+                  <Save size={15} />
+                  <span>Save Draft</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Form Title in Banner */}
+            <div className="text-center pt-1 pb-3 flex flex-col items-center">
+              <h1 className="text-lg sm:text-2xl font-bold tracking-tight text-white uppercase">
+                {formMode === 'Renewal' ? 'RENEW APPLICATION' : 'NEW APPLICATION'}
+              </h1>
+              <p className="text-xs sm:text-sm text-white/90 font-medium mt-0.5">
+                Municipality of Gasan • Sangguniang Bayan Franchising Office
+              </p>
+            </div>
+
+            {/* Stepper Navigation - Equal 5-column grid, 100% balanced and aligned */}
+            <div className="grid grid-cols-5 w-full px-1 sm:px-3 pt-1 select-none">
+              {steps.map((step, idx) => {
+                const isCompleted = currentStep > step.num;
+                const isCurrent = currentStep === step.num;
+
+                return (
+                  <div
+                    key={step.num}
+                    onClick={() => {
+                      if (step.num < currentStep) {
+                        setSlideDirection('backward');
+                        setCurrentStep(step.num);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        const currentMode = (formMode || 'New').toLowerCase();
+                        navigate(`?mode=${currentMode}&step=${step.num}`);
+                      }
+                    }}
+                    className={`relative flex flex-col items-center text-center select-none ${
+                      step.num < currentStep ? 'cursor-pointer group' : ''
+                    }`}
+                  >
+                    {/* Seamless Connector Line */}
+                    {idx < steps.length - 1 && (
+                      <div 
+                        className={`absolute top-3.5 sm:top-4 left-1/2 w-full h-[2px] z-0 transition-colors duration-300 ${
+                          currentStep > step.num ? 'bg-[#D4AF37]' : 'bg-white/20'
+                        }`}
+                      />
+                    )}
+
+                    {/* Step Circle */}
+                    <div 
+                      className={`relative z-10 w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all duration-200 ${
+                        isCompleted 
+                          ? 'bg-[#D4AF37] text-[#14110F] font-bold shadow-xs' 
+                          : isCurrent 
+                          ? 'bg-white text-[#9E2A2B] font-bold ring-2 ring-white/40 scale-105 shadow-xs' 
+                          : 'bg-white/15 text-white/70 border border-white/20'
+                      }`}
+                    >
+                      {isCompleted ? (
+                        <Check size={16} className="stroke-[3]" />
+                      ) : (
+                        <span className="text-xs sm:text-sm font-bold">{step.num}</span>
+                      )}
+                    </div>
+                    
+                    <span className={`text-[10px] sm:text-xs font-semibold mt-1.5 text-center tracking-tight transition-colors px-0.5 truncate w-full ${
+                      isCurrent ? 'text-white font-bold' : isCompleted ? 'text-[#D4AF37]' : 'text-white/70'
+                    }`}>
+                      {step.title}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Gold Progress Bar */}
+            <div className="w-full bg-black/25 h-1.5 rounded-full overflow-hidden mt-3">
+              <div 
+                className="bg-[#D4AF37] h-full rounded-full transition-all duration-500 ease-out"
+                style={{ width: `${calculateProgress().percentage}%` }}
+              />
+            </div>
+            <div className="flex justify-between items-center text-xs text-white/90 mt-1.5 font-medium px-1">
+              <span>Step {currentStep} of 5: <strong className="font-bold text-white">{steps[currentStep - 1]?.fullTitle || steps[currentStep - 1]?.title}</strong></span>
+              <span className="font-bold text-[#D4AF37]">{calculateProgress().percentage}%</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Form Container */}
+        <div className="w-full max-w-2xl mx-auto px-4 sm:px-6 pt-5 pb-16 flex-1 flex flex-col relative z-10">
+          <form onSubmit={currentStep === 5 ? handlePreSubmit : (e) => { e.preventDefault(); nextStep(); }} className="space-y-5 w-full">
+            
+            {/* STEP 1: OPERATOR & DRIVER INFO */}
+            {currentStep === 1 && (
+              <div className={`space-y-4 ${slideDirection === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}`}>
+                
+                {/* Header */}
+                <div className="flex items-center gap-2.5 pb-2.5 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+                  <div className="w-8 h-8 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+                    <User size={18} />
+                  </div>
+                  <div>
+                    <h2 className="text-base sm:text-lg font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                      Operator & Driver Information
+                    </h2>
+                    <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] font-medium">
+                      Enter personal identity and driver credentials
+                    </p>
+                  </div>
+                </div>
+
+                {/* Operator Details Card */}
+                <div className="p-3.5 sm:p-4 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-3.5 shadow-xs">
+                  <div className="pb-1 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+                    <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E]">
+                      Operator Identity
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    <div id="field-fullName">
+                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                        Operator Full Name
+                      </label>
+                      <input 
+                        type="text" 
+                        name="fullName" 
+                        value={formData.fullName} 
+                        onChange={handleInputChange} 
+                        className={getInputClasses('fullName')} 
+                        required 
+                        autoComplete="off"
+                      />
+                      {formErrors.fullName && (
+                        <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
+                          <AlertCircle size={13} className="shrink-0" />
+                          <span>{formErrors.fullName}</span>
+                        </p>
+                      )}
+                    </div>
+
+                    <div id="field-address">
+                      <div className="flex items-center justify-between mb-1.5 flex-wrap gap-1">
+                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center">
+                          <span>Barangay Residency / Address</span>
+                          <InfoTooltip text="Tricycle Route Zone is automatically determined by your official Barangay residency." />
+                        </label>
+                      </div>
+                      <select 
+                        name="address" 
+                        value={formData.address} 
+                        onChange={handleInputChange} 
+                        className={`${getInputClasses('address')} cursor-pointer`} 
+                        required
+                      >
+                        <option value="" disabled>-- Select Official Barangay --</option>
+                        {GASAN_BARANGAYS.map((b) => (
+                          <option key={b} value={b}>{b} — {getZoneForBarangay(b)}</option>
+                        ))}
+                      </select>
+                      {formErrors.address && (
+                        <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
+                          <AlertCircle size={13} className="shrink-0" />
+                          <span>{formErrors.address}</span>
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Affiliated TODA and Assigned Route Zone (Read-only inputs) */}
+                  {(() => {
+                    const currentToda = formData.todaName || loggedInToda || 'NON-TODA';
+                    const isNonToda = currentToda === 'NON-TODA';
+                    const validTodas = formData.address ? getTodasForBarangay(formData.address) : [];
+                    const isJurisdictionMatch = (!formData.address || isNonToda || validTodas.length === 0) 
+                      ? true 
+                      : validTodas.includes(currentToda);
+                    const assignedZone = formData.address 
+                      ? `${getZoneForBarangay(formData.address)} (${formData.address})` 
+                      : 'Pending Barangay selection';
+
+                    return (
+                      <div className="space-y-3 pt-0.5">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                          {/* Affiliated TODA (Read-only Input) */}
+                          <div id="field-toda">
+                            <div className="flex items-center justify-between mb-1.5 flex-wrap gap-1">
+                              <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center gap-1.5">
+                                <span>Affiliated TODA</span>
+                                <span className="text-[11px] font-medium text-[#6B6761] dark:text-[#A8A29E] bg-[#F0EDE6] dark:bg-[#252220] px-2 py-0.5 rounded flex items-center gap-1">
+                                  <Lock size={10} className="shrink-0" />
+                                  <span>Read-only</span>
+                                </span>
+                              </label>
+                            </div>
+                            <div className="relative">
+                              <input
+                                type="text"
+                                readOnly
+                                disabled
+                                value={currentToda}
+                                className={disabledClasses}
+                              />
+                              <div className="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none">
+                                {isCheckingTodaMembership ? (
+                                  <span className="text-[11px] text-slate-500 flex items-center gap-1 px-2 py-0.5 rounded border border-slate-200 dark:border-slate-800 bg-white dark:bg-[#1C1917]">
+                                    <Loader2 size={11} className="animate-spin shrink-0 text-[#9E2A2B] dark:text-[#D4AF37]" />
+                                    <span>Checking...</span>
+                                  </span>
+                                ) : todaMembershipStatus && !isNonToda ? (
+                                  <span className={`text-[11px] font-semibold flex items-center gap-1 px-2 py-0.5 rounded border ${
+                                    todaMembershipStatus.todaStatus === 'verified_member'
+                                      ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60'
+                                      : todaMembershipStatus.todaStatus === 'not_in_roster'
+                                      ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800/60'
+                                      : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700'
+                                  }`}
+                                  title={todaMembershipStatus.message || ''}
+                                  >
+                                    {todaMembershipStatus.todaStatus === 'verified_member' ? (
+                                      <CheckCircle2 size={12} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
+                                    ) : todaMembershipStatus.todaStatus === 'not_in_roster' ? (
+                                      <AlertTriangle size={12} className="shrink-0 text-amber-600 dark:text-amber-400" />
+                                    ) : (
+                                      <Info size={12} className="shrink-0 text-slate-500" />
+                                    )}
+                                    <span>
+                                      {todaMembershipStatus.todaStatus === 'verified_member'
+                                        ? 'Verified in Roster'
+                                        : todaMembershipStatus.todaStatus === 'not_in_roster'
+                                        ? 'Not in Roster'
+                                        : 'No Roster File'}
+                                    </span>
+                                  </span>
+                                ) : (
+                                  <span className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1 bg-[#EAE7E1] dark:bg-[#252220] px-2 py-0.5 rounded">
+                                    <Lock size={11} /> Locked
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Assigned Route Zone (Read-only Input) */}
+                          <div id="field-zone">
+                            <div className="flex items-center justify-between mb-1.5 flex-wrap gap-1">
+                              <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center gap-1.5">
+                                <span>Assigned Route Zone</span>
+                                <span className="text-[11px] font-medium text-[#6B6761] dark:text-[#A8A29E] bg-[#F0EDE6] dark:bg-[#252220] px-2 py-0.5 rounded flex items-center gap-1">
+                                  <Compass size={10} className="shrink-0" />
+                                  <span>Auto-assigned</span>
+                                </span>
+                              </label>
+                            </div>
+                            <div className="relative">
+                              <input
+                                type="text"
+                                readOnly
+                                disabled
+                                value={assignedZone}
+                                className={disabledClasses}
+                              />
+                              <div className="absolute inset-y-0 right-0 pr-2.5 flex items-center pointer-events-none">
+                                {formData.address && !isNonToda && (
+                                  <span className={`text-[11px] font-semibold flex items-center gap-1 px-2 py-0.5 rounded border ${
+                                    isJurisdictionMatch
+                                      ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800/60'
+                                      : 'bg-rose-50 dark:bg-rose-950/40 text-rose-700 dark:text-rose-400 border-rose-200 dark:border-rose-800/60'
+                                  }`}>
+                                    {isJurisdictionMatch ? <CheckCircle2 size={12} className="shrink-0" /> : <AlertTriangle size={12} className="shrink-0" />}
+                                    <span>{isJurisdictionMatch ? 'Route Authorized' : 'Route Mismatch'}</span>
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Banner warning if not in roster */}
+                        {todaMembershipStatus?.todaStatus === 'not_in_roster' && !isNonToda && (
+                          <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-xs text-amber-900 dark:text-amber-200 space-y-1 animate-fadeIn">
+                            <div className="flex items-center gap-1.5 font-bold">
+                              <AlertCircle size={14} className="shrink-0 text-amber-600 dark:text-amber-400" />
+                              <span>Notice: Official TODA Certificate Required</span>
+                            </div>
+                            <p className="text-[11px] sm:text-xs leading-relaxed text-amber-800 dark:text-amber-300">
+                              Your name is not currently listed in the official approved roster for <strong>{currentToda}</strong>. 
+                              You must upload an official <strong>TODA Endorsement Certificate signed by your TODA President</strong> in Step 3 to proceed with approval.
+                            </p>
+                          </div>
+                        )}
+
+                        {/* Banner warning if jurisdiction mismatch */}
+                        {!isJurisdictionMatch && validTodas.length > 0 && !isNonToda && (
+                          <div className="p-3 rounded-lg bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-xs text-rose-800 dark:text-rose-300 space-y-1.5 animate-fadeIn">
+                            <div className="flex items-center gap-1.5 font-bold">
+                              <AlertCircle size={14} className="shrink-0 text-rose-600 dark:text-rose-400" />
+                              <span>Route Notice: TODA Jurisdiction Mismatch</span>
+                            </div>
+                            <p className="text-[11px] sm:text-xs leading-relaxed">
+                              Your affiliated TODA (<strong>{currentToda}</strong>) does not officially operate in <strong>{formData.address}</strong>. 
+                              Authorized TODAs for your barangay:
+                            </p>
+                            <div className="flex flex-wrap gap-1.5 pt-0.5">
+                              {validTodas.map(t => (
+                                <button
+                                  key={t}
+                                  type="button"
+                                  onClick={() => setFormData(prev => ({ ...prev, todaName: t }))}
+                                  className={`text-[11px] font-bold px-2.5 py-1 rounded-md border transition-colors cursor-pointer ${
+                                    formData.todaName === t
+                                      ? 'bg-[#9E2A2B] text-white border-[#9E2A2B]'
+                                      : 'bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#EAE7E1] border-rose-200 dark:border-rose-800/60 hover:bg-rose-100 dark:hover:bg-[#252220]'
+                                  }`}
+                                >
+                                  Select {t}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+
+                  {/* Municipal Unit Allocation - Clean & Uncluttered */}
+                  {activeOrPendingUnits.length === 0 ? (
+                    <div className="flex items-center justify-between pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27] text-xs">
+                      <span className="font-medium text-[#6B6761] dark:text-[#A8A29E]">Franchise Allocation:</span>
+                      <span className="font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800/60 text-[11px]">
+                        Unit 1 of 2 (2 Slots Allowed)
+                      </span>
+                    </div>
+                  ) : activeOrPendingUnits.length === 1 ? (
+                    <div className="pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
+                      <div className="p-3 bg-amber-50/70 dark:bg-amber-950/30 rounded-lg border border-amber-200 dark:border-amber-800/50 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">Applying for Unit 2 of 2</span>
+                            <span className="text-[11px] text-amber-800 dark:text-amber-400 font-semibold">(Final Slot)</span>
+                          </div>
+                          <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-0.5">
+                            Unit 1 ({activeOrPendingUnits[0]?.plateNo || 'First Unit'}) is already registered.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const u1 = activeOrPendingUnits[0];
+                            if (u1) {
+                              setFormData(prev => ({
+                                ...prev,
+                                fullName: u1.fullName || prev.fullName,
+                                address: u1.address || prev.address,
+                                zone: u1.zone || prev.zone,
+                                todaName: u1.todaName || prev.todaName,
+                                cedulaDate: (u1.cedulaDate && !isNaN(new Date(u1.cedulaDate).getTime())) ? new Date(u1.cedulaDate).toISOString().substring(0, 10) : prev.cedulaDate,
+                                cedulaSerialNo: u1.cedulaSerialNo || prev.cedulaSerialNo,
+                                cedulaAddress: u1.cedulaAddress || prev.cedulaAddress,
+                                cedulaAmount: u1.cedulaAmount || prev.cedulaAmount,
+                                todaCertNo: u1.todaCertNo || prev.todaCertNo,
+                                todaSignatory: u1.todaSignatory || prev.todaSignatory
+                              }));
+                              showToast('Fast-Track: Profile and clearances copied from Unit 1!', 'success');
+                            }
+                          }}
+                          className="px-3 py-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 shrink-0"
+                          title="Fast-Track: Automatically reuses your verified operator residency, zone, and TODA credentials from Unit 1"
+                        >
+                          <Zap size={13} className="text-amber-300" />
+                          <span>Fast-Track: Copy from Unit 1</span>
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
+
+                  {/* Driver Designation Choice */}
+                  <div className="pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
+                    <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-2">
+                      Driver Designation
+                    </label>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, isOperatorDriver: true }))}
+                        className={`p-3.5 rounded-lg border text-left flex items-start gap-3 transition-all cursor-pointer ${
+                          formData.isOperatorDriver 
+                            ? 'bg-amber-50/70 dark:bg-amber-950/30 border-[#9E2A2B] dark:border-[#D4AF37] ring-1 ring-[#9E2A2B] dark:ring-[#D4AF37]' 
+                            : 'bg-[#F6F5F3] dark:bg-[#14110F] border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-neutral-100'
+                        }`}
+                      >
+                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
+                          formData.isOperatorDriver ? 'border-[#9E2A2B] dark:border-[#D4AF37] bg-[#9E2A2B] dark:bg-[#D4AF37]' : 'border-[#6B6761]'
+                        }`}>
+                          {formData.isOperatorDriver && <div className="w-2 h-2 rounded-full bg-white" />}
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] leading-tight">
+                            Operator-Driver
+                          </p>
+                          <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1">
+                            I am the owner-operator and I will personally drive the tricycle unit
+                          </p>
+                        </div>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, isOperatorDriver: false }))}
+                        className={`p-3.5 rounded-lg border text-left flex items-start gap-3 transition-all cursor-pointer ${
+                          !formData.isOperatorDriver 
+                            ? 'bg-amber-50/70 dark:bg-amber-950/30 border-[#9E2A2B] dark:border-[#D4AF37] ring-1 ring-[#9E2A2B] dark:ring-[#D4AF37]' 
+                            : 'bg-[#F6F5F3] dark:bg-[#14110F] border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-neutral-100'
+                        }`}
+                      >
+                        <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
+                          !formData.isOperatorDriver ? 'border-[#9E2A2B] dark:border-[#D4AF37] bg-[#9E2A2B] dark:bg-[#D4AF37]' : 'border-[#6B6761]'
+                        }`}>
+                          {!formData.isOperatorDriver && <div className="w-2 h-2 rounded-full bg-white" />}
+                        </div>
+                        <div>
+                          <p className="text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] leading-tight">
+                            Operator Only (Hired / Designated Driver)
+                          </p>
+                          <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1">
+                            A designated hired driver will operate the tricycle unit
+                          </p>
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* If Hired Driver: Inputs */}
+                  {!formData.isOperatorDriver && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
+                      <div id="field-driverName">
+                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                          Driver's Full Name
+                        </label>
+                        <input 
+                          type="text" 
+                          name="driverName" 
+                          value={formData.driverName} 
+                          onChange={handleInputChange} 
+                          className={getInputClasses('driverName')} 
+                          required 
+                          autoComplete="off"
+                        />
+                        {formErrors.driverName && (
+                          <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
+                            <AlertCircle size={13} className="shrink-0" />
+                            <span>{formErrors.driverName}</span>
+                          </p>
+                        )}
+                      </div>
+                      <div id="field-driverContact">
+                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                          Driver Contact No.
+                        </label>
+                        <input 
+                          type="tel" 
+                          name="driverContact" 
+                          value={formData.driverContact} 
+                          onChange={handleInputChange} 
+                          className={getInputClasses('driverContact')} 
+                          required 
+                          autoComplete="off"
+                        />
+                        {formErrors.driverContact && (
+                          <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
+                            <AlertCircle size={13} className="shrink-0" />
+                            <span>{formErrors.driverContact}</span>
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Driver's License Documents (Front & Back) */}
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div>
+                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                        Driver's License Documents (Front &amp; Back)
+                      </label>
+                      <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                        Front: Identity &amp; Credentials &bull; Back: Card Serial Number
+                      </p>
+                    </div>
+                    <span className="text-xs sm:text-sm font-semibold text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1">
+                      <CheckCircle2 size={14} className="text-emerald-600" /> Auto-fill details
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* Front License Card */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center gap-1">
+                          <span>Driver's License (Front)</span>
+                        </span>
+                        <span className="text-[11px] font-medium text-[#6B6761] dark:text-[#A8A29E]">Identity &amp; Codes</span>
+                      </div>
+                      <DocumentUploadCard
+                        id="license"
+                        label="Driver's License (Front)"
+                        file={uploadedDocs.license}
+                        previewUrl={filePreviews.license || formData.licenseUrl}
+                        onFileSelect={handleFileChange}
+                        onFileRemove={handleRemoveFile}
+                        onPreviewZoom={setFullPreview}
+                        onRescan={handleRescan}
+                        required={true}
+                        isScanning={aiScanning.license}
+                        scanSuccess={aiSuccess.license}
+                        error={formErrors.license}
+                        hideHeaderLabel={true}
+                      />
+                    </div>
+
+                    {/* Back License Card */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center gap-1">
+                          <span>Driver's License (Back)</span>
+                        </span>
+                        <span className="text-[11px] font-medium text-[#6B6761] dark:text-[#A8A29E]">Card Serial Number</span>
+                      </div>
+                      <DocumentUploadCard
+                        id="licenseBack"
+                        label="Driver's License (Back)"
+                        file={uploadedDocs.licenseBack}
+                        previewUrl={filePreviews.licenseBack || formData.licenseBackUrl}
+                        onFileSelect={handleFileChange}
+                        onFileRemove={handleRemoveFile}
+                        onPreviewZoom={setFullPreview}
+                        onRescan={handleRescan}
+                        required={false}
+                        isScanning={aiScanning.licenseBack}
+                        scanSuccess={aiSuccess.licenseBack}
+                        error={formErrors.licenseBack}
+                        hideHeaderLabel={true}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Manual Input Alert for License */}
+                  {(manualScanAlerts.license || manualScanAlerts.licenseBack) && (
+                    <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 rounded-xl flex items-start gap-2.5 text-xs sm:text-sm text-amber-900 dark:text-amber-200 shadow-xs">
+                      <AlertTriangle size={18} className="shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+                      <div>
+                        <strong className="block font-bold text-amber-950 dark:text-amber-200">Kailangan I-manual ang Lisensya:</strong>
+                        <span className="text-amber-800 dark:text-amber-300">{manualScanAlerts.license || manualScanAlerts.licenseBack}</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Auto-filled License Details Grid */}
+                  <div className="p-3.5 bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-3">
+                    <div className="flex items-center justify-between flex-wrap gap-2">
+                      <span className="text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                        License Credentials {(aiSuccess.license || aiSuccess.licenseBack) && <span className="text-emerald-600 font-semibold">(Verified from Document)</span>}
+                      </span>
+
+                      {/* Name Match Indicator */}
+                      {(() => {
+                        const scannedName = aiScannedData.license?.driverName;
+                        const targetName = formData.isOperatorDriver ? formData.fullName : formData.driverName;
+                        if (!scannedName || !targetName) return null;
+                        const cleanS = scannedName.toUpperCase().replace(/[^A-Z]/g, '');
+                        const cleanT = targetName.toUpperCase().replace(/[^A-Z]/g, '');
+                        const isMatch = cleanS && cleanT && (cleanS.includes(cleanT) || cleanT.includes(cleanS));
+                        return (
+                          <span className={`text-[11px] font-bold px-2 py-0.5 rounded flex items-center gap-1 ${
+                            isMatch 
+                              ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300' 
+                              : 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300'
+                          }`}>
+                            {isMatch ? <CheckCircle2 size={12} /> : <AlertCircle size={12} />}
+                            <span>{isMatch ? "Name: Matches Driver's License" : `Difference: ${scannedName}`}</span>
+                          </span>
+                        );
+                      })()}
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                      <div id="field-driverLicenseNo">
+                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                          Driver's License Number
+                        </label>
+                        <input 
+                          type="text" 
+                          name="driverLicenseNo" 
+                          value={formData.driverLicenseNo} 
+                          onChange={handleInputChange} 
+                          className={getInputClasses('driverLicenseNo')} 
+                          required 
+                          autoComplete="off"
+                        />
+                        {formErrors.driverLicenseNo && (
+                          <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
+                            <AlertCircle size={13} className="shrink-0" />
+                            <span>{formErrors.driverLicenseNo}</span>
+                          </p>
+                        )}
+                      </div>
+
+                      <div id="field-driverLicenseSerialNo">
+                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5 flex items-center">
+                          <span>License Back Serial Number</span>
+                          <InfoTooltip text="Serial number printed on the back of the official LTO Driver's License card." />
+                        </label>
+                        <input 
+                          type="text" 
+                          name="driverLicenseSerialNo" 
+                          value={formData.driverLicenseSerialNo || ''} 
+                          onChange={handleInputChange} 
+                          className={getInputClasses('driverLicenseSerialNo')} 
+                          autoComplete="off"
+                        />
+                      </div>
+
+                      <div id="field-driverLicenseExpiryDate">
+                        <SimpleDatePicker
+                          name="driverLicenseExpiryDate"
+                          value={formData.driverLicenseExpiryDate}
+                          onChange={handleInputChange}
+                          label="License Expiry Date"
+                          mode="expiry"
+                          helperText="Driver's license expiration date."
+                          error={formErrors.driverLicenseExpiryDate}
+                        />
+                      </div>
+
+                      <div id="field-driverDob">
+                        <SimpleDatePicker
+                          name="driverDob"
+                          value={formData.driverDob}
+                          onChange={handleInputChange}
+                          label="Date of Birth"
+                          helperText="LTO license renewal date coincides with birthdate."
+                          error={formErrors.driverDob}
+                        />
+                      </div>
+
+                      <div id="field-driverDlCodes">
+                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5 flex items-center">
+                          <span>Authorized DL Codes</span>
+                          <InfoTooltip text="LTO Code A or A1 is required to legally operate a commercial passenger tricycle." />
+                        </label>
+                        <input 
+                          type="text" 
+                          name="driverDlCodes" 
+                          value={formData.driverDlCodes} 
+                          onChange={handleInputChange} 
+                          className={getInputClasses('driverDlCodes')} 
+                          autoComplete="off"
+                        />
+                        {formErrors.driverDlCodes && (
+                          <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
+                            <AlertCircle size={13} className="shrink-0" />
+                            <span>{formErrors.driverDlCodes}</span>
+                          </p>
+                        )}
+                      </div>
+
+                      <div id="field-driverAddress">
+                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                          Driver's Residential Address
+                        </label>
+                        <input 
+                          type="text" 
+                          name="driverAddress" 
+                          value={formData.driverAddress || ''} 
+                          onChange={handleInputChange} 
+                          className={getInputClasses('driverAddress')} 
+                          autoComplete="off"
+                        />
+                      </div>
+
+                      <div id="field-driverConditions" className="sm:col-span-2">
+                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                          Driving Conditions
+                        </label>
+                        <input 
+                          type="text" 
+                          name="driverConditions" 
+                          value={formData.driverConditions} 
+                          onChange={handleInputChange} 
+                          className={getInputClasses('driverConditions')} 
+                          autoComplete="off"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Step 1 Actions */}
+                <div className="pt-3 flex flex-col-reverse sm:flex-row justify-between items-center gap-3">
+                  <button 
+                    type="button" 
+                    onClick={handleBackToDashboard}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-lg font-bold text-sm sm:text-base text-[#1F1D1B] dark:text-[#EAE7E1] bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#F6F5F3] dark:hover:bg-[#252220] min-h-[44px] cursor-pointer"
+                  >
+                    <ArrowLeft size={18} />
+                    <span>Back to Dashboard</span>
+                  </button>
+
+                  <button 
+                    type="button" 
+                    onClick={nextStep}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-sm sm:text-base text-white bg-[#9E2A2B] hover:bg-[#7A1B22] shadow-xs cursor-pointer min-h-[44px] active:scale-95 transition-all"
+                  >
+                    <span>Next: Vehicle Details</span>
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 2: VEHICLE DETAILS & LTO OR/CR */}
+            {currentStep === 2 && (
+              <div className={`space-y-4 ${slideDirection === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}`}>
+                
+                {/* Header */}
+                <div className="flex items-center gap-2.5 pb-2.5 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+                  <div className="w-8 h-8 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+                    <TricycleIcon size={20} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                  </div>
+                  <div>
+                    <h2 className="text-base sm:text-lg font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                      Vehicle Details & LTO OR/CR
+                    </h2>
+                    <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] font-medium">
+                      Upload LTO document for instant automated vehicle pre-fill
+                    </p>
+                  </div>
+                </div>
+
+                {/* Separate Document Upload for LTO CR & LTO OR */}
+                <div className="space-y-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                    <div>
+                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center">
+                        <span>LTO Documents (Certificate of Registration &amp; Official Receipt)</span>
+                        <InfoTooltip text="Upload Certificate of Registration (CR) for vehicle specifications and Official Receipt (OR) for active annual registration." />
+                      </label>
+                      <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                        Upload official LTO CR and latest annual LTO OR.
+                      </p>
+                    </div>
+                    <span className="text-xs sm:text-sm font-semibold text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1 shrink-0">
+                      <CheckCircle2 size={14} className="text-emerald-600" /> Auto-extracts Vehicle Specs
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {/* 1. LTO Certificate of Registration (CR) */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center gap-1">
+                          <span>Certificate of Registration (CR)</span>
+                        </span>
+                        <span className="text-[11px] font-medium text-[#6B6761] dark:text-[#A8A29E]">Vehicle Specs &amp; Owner</span>
+                      </div>
+                      <DocumentUploadCard
+                        id="crDocument"
+                        label="LTO CR Document"
+                        file={uploadedDocs.crDocument || uploadedDocs.crFile}
+                        previewUrl={filePreviews.crDocument || formData.crUrl || filePreviews.crFile || filePreviews.orCrDocument || formData.orCrUrl}
+                        onFileSelect={handleFileChange}
+                        onFileRemove={handleRemoveFile}
+                        onPreviewZoom={setFullPreview}
+                        onRescan={handleRescan}
+                        required={formMode === 'New'}
+                        isScanning={aiScanning.crDocument}
+                        scanSuccess={aiSuccess.crDocument}
+                        error={formErrors.crDocument}
+                        hideHeaderLabel={true}
+                      />
+                    </div>
+
+                    {/* 2. LTO Official Receipt (OR) */}
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center gap-1">
+                          <span>Official Receipt (OR)</span>
+                        </span>
+                        <span className="text-[11px] font-medium text-[#6B6761] dark:text-[#A8A29E]">Proof of Annual Payment</span>
+                      </div>
+                      <DocumentUploadCard
+                        id="orDocument"
+                        label="LTO OR Document"
+                        file={uploadedDocs.orDocument || uploadedDocs.orFile}
+                        previewUrl={filePreviews.orDocument || formData.orUrl || filePreviews.orFile}
+                        onFileSelect={handleFileChange}
+                        onFileRemove={handleRemoveFile}
+                        onPreviewZoom={setFullPreview}
+                        onRescan={handleRescan}
+                        required={formMode === 'New'}
+                        isScanning={aiScanning.orDocument}
+                        scanSuccess={aiSuccess.orDocument}
+                        error={formErrors.orDocument}
+                        hideHeaderLabel={true}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Document Detection Banner */}
+                {(aiSuccess.crDocument || aiSuccess.orDocument || aiSuccess.orCrDocument) && (
+                  <div className="p-3.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-lg flex items-center gap-2.5 text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+                    <CheckCircle2 size={16} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
+                    <span>LTO document details detected: Plate, Motor, and Chassis numbers were auto-filled. Please verify accuracy.</span>
+                  </div>
+                )}
+
+                {/* Manual Input Alert for LTO Documents */}
+                {(manualScanAlerts.crDocument || manualScanAlerts.orDocument || manualScanAlerts.orCrDocument || manualScanAlerts.orCr) && (
+                  <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 rounded-xl flex items-start gap-3 text-xs sm:text-sm text-amber-900 dark:text-amber-200 shadow-xs">
+                    <AlertTriangle size={18} className="shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+                    <div>
+                      <strong className="block font-bold text-amber-950 dark:text-amber-200">Paalala: Kailangan I-manual ang mga Detalye ng Sasakyan</strong>
+                      <span className="text-amber-800 dark:text-amber-300">
+                        {manualScanAlerts.crDocument || manualScanAlerts.orDocument || manualScanAlerts.orCrDocument || manualScanAlerts.orCr || 'Naka-attach na ang iyong dokumento ngunit hindi ito awtomatikong na-scan. Mangyaring i-type nang manual ang Plate Number, Engine Number, Chassis Number, Make, at Year Model sa ibaba bago magpatuloy.'}
+                      </span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Vehicle Details Form Fields */}
+                <div className="p-3.5 sm:p-4 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-3.5 shadow-xs">
+                  <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E] block pb-1 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+                    Tricycle Specifications
+                  </span>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                    
+                    {/* Make / Brand */}
+                    <div id="field-make">
+                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                        Make / Brand
+                      </label>
+                      <input 
+                        type="text" 
+                        name="make" 
+                        value={formData.make} 
+                        onChange={handleInputChange} 
+                        className={getInputClasses('make')} 
+                        required 
+                        autoComplete="off"
+                      />
+                      {formErrors.make && (
+                        <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
+                          <AlertCircle size={13} className="shrink-0" />
+                          <span>{formErrors.make}</span>
+                        </p>
+                      )}
+
+                      {/* Quick Select Brand Chips */}
+                      {formMode === 'New' && (
+                        <div className="mt-2.5 flex flex-wrap gap-2">
+                          {POPULAR_MAKES.map((brand) => (
+                            <button
+                              key={brand}
+                              type="button"
+                              onClick={() => setFormData(prev => ({ ...prev, make: brand }))}
+                              className={`px-3 py-1.5 text-xs sm:text-sm font-bold rounded-lg border transition-all cursor-pointer min-h-[36px] ${
+                                formData.make === brand
+                                  ? 'bg-[#9E2A2B] text-white border-[#7A1B22]'
+                                  : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-neutral-100'
+                              }`}
+                            >
+                              {brand}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Model Year */}
+                    <div id="field-made">
+                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                        Model Year
+                      </label>
+                      <input 
+                        type="text" 
+                        inputMode="numeric"
+                        maxLength={4}
+                        name="made" 
+                        value={formData.made} 
+                        onChange={handleInputChange} 
+                        className={getInputClasses('made')} 
+                        required 
+                        autoComplete="off"
+                      />
+                      {formErrors.made && (
+                        <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
+                          <AlertCircle size={13} className="shrink-0" />
+                          <span>{formErrors.made}</span>
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Designated Route Zone (Auto-assigned from Barangay) */}
+                    <div id="field-zone" className="sm:col-span-2">
+                      <div className="p-3 bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 shadow-xs">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <Compass size={15} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                            <span className="text-xs font-bold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E]">
+                              Designated Route Zone
+                            </span>
+                            <span className="text-xs font-bold px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300">
+                              Auto-assigned
+                            </span>
+                          </div>
+                          <p className="text-sm sm:text-base font-bold text-[#1F1D1B] dark:text-[#F6F5F3] mt-0.5">
+                            {formatZoneLabel(formData.zone || getZoneForBarangay(formData.address) || 'Central')}
+                          </p>
+                          <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
+                            Zoned based on Barangay residency ({formData.address || 'Gasan'}).
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setShowTodaGuide(true)}
+                          className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline inline-flex items-center gap-1 cursor-pointer self-start sm:self-center"
+                        >
+                          <Compass size={14} />
+                          <span>View Route Guide</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Plate Number */}
+                    <div id="field-plateNo">
+                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                        Plate Number
+                      </label>
+                      <input 
+                        type="text" 
+                        name="plateNo" 
+                        maxLength={8}
+                        value={formData.plateNo} 
+                        onChange={handleInputChange} 
+                        className={`${getInputClasses('plateNo')} ${duplicateStatus.plateNo.duplicate ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} 
+                        required 
+                        autoComplete="off"
+                      />
+                      {formErrors.plateNo && (
+                        <p className="text-xs font-bold text-red-600 flex items-center gap-1 mt-1.5 animate-fadeIn">
+                          <AlertCircle size={13} /> <span>{formErrors.plateNo}</span>
+                        </p>
+                      )}
+                      {duplicateStatus.plateNo.checking && (
+                        <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1 mt-1.5">
+                          <Loader2 size={13} className="animate-spin" /> Checking plate number...
+                        </p>
+                      )}
+                      {!duplicateStatus.plateNo.checking && duplicateStatus.plateNo.duplicate && !formErrors.plateNo && (
+                        <p className="text-xs font-bold text-red-600 flex items-center gap-1 mt-1.5">
+                          <AlertCircle size={13} /> {duplicateStatus.plateNo.message}
+                        </p>
+                      )}
+                      {!duplicateStatus.plateNo.checking && !duplicateStatus.plateNo.duplicate && duplicateStatus.plateNo.message && (
+                        <p className="text-xs font-bold text-emerald-600 flex items-center gap-1 mt-1.5">
+                          <CheckCircle2 size={13} /> {duplicateStatus.plateNo.message}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Engine / Motor Number */}
+                    <div id="field-motorNo">
+                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                        Engine / Motor No.
+                      </label>
+                      <input 
+                        type="text" 
+                        name="motorNo" 
+                        maxLength={25}
+                        value={formData.motorNo} 
+                        onChange={handleInputChange} 
+                        className={`${getInputClasses('motorNo')} ${duplicateStatus.motorNo.duplicate ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} 
+                        required 
+                        autoComplete="off"
+                      />
+                      {formErrors.motorNo && (
+                        <p className="text-xs font-bold text-red-600 flex items-center gap-1 mt-1.5 animate-fadeIn">
+                          <AlertCircle size={13} /> <span>{formErrors.motorNo}</span>
+                        </p>
+                      )}
+                      {duplicateStatus.motorNo.checking && (
+                        <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1 mt-1.5">
+                          <Loader2 size={13} className="animate-spin" /> Checking motor number...
+                        </p>
+                      )}
+                      {!duplicateStatus.motorNo.checking && duplicateStatus.motorNo.duplicate && !formErrors.motorNo && (
+                        <p className="text-xs font-bold text-red-600 flex items-center gap-1 mt-1.5">
+                          <AlertCircle size={13} /> {duplicateStatus.motorNo.message}
+                        </p>
+                      )}
+                      {!duplicateStatus.motorNo.checking && !duplicateStatus.motorNo.duplicate && duplicateStatus.motorNo.message && (
+                        <p className="text-xs font-bold text-emerald-600 flex items-center gap-1 mt-1.5">
+                          <CheckCircle2 size={13} /> {duplicateStatus.motorNo.message}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Chassis Serial Number */}
+                    <div id="field-chassisNo">
+                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                        Chassis Serial No. (VIN)
+                      </label>
+                      <input 
+                        type="text" 
+                        name="chassisNo" 
+                        maxLength={25}
+                        value={formData.chassisNo} 
+                        onChange={handleInputChange} 
+                        className={`${getInputClasses('chassisNo')} ${duplicateStatus.chassisNo.duplicate ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} 
+                        required 
+                        autoComplete="off"
+                      />
+                      {formErrors.chassisNo && (
+                        <p className="text-xs font-bold text-red-600 flex items-center gap-1 mt-1.5 animate-fadeIn">
+                          <AlertCircle size={13} /> <span>{formErrors.chassisNo}</span>
+                        </p>
+                      )}
+                      {duplicateStatus.chassisNo.checking && (
+                        <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1 mt-1.5">
+                          <Loader2 size={13} className="animate-spin" /> Checking chassis number...
+                        </p>
+                      )}
+                      {!duplicateStatus.chassisNo.checking && duplicateStatus.chassisNo.duplicate && !formErrors.chassisNo && (
+                        <p className="text-xs font-bold text-red-600 flex items-center gap-1 mt-1.5">
+                          <AlertCircle size={13} /> {duplicateStatus.chassisNo.message}
+                        </p>
+                      )}
+                      {!duplicateStatus.chassisNo.checking && !duplicateStatus.chassisNo.duplicate && duplicateStatus.chassisNo.message && (
+                        <p className="text-xs font-bold text-emerald-600 flex items-center gap-1 mt-1.5">
+                          <CheckCircle2 size={13} /> {duplicateStatus.chassisNo.message}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Color */}
+                    <div id="field-color">
+                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                        Tricycle Color
+                      </label>
+                      <input
+                        type="text"
+                        name="color"
+                        value={formData.color}
+                        onChange={handleInputChange}
+                        className={inputClasses}
+                        autoComplete="off"
+                      />
+                    </div>
+
+                    {/* Fuel Type */}
+                    <div id="field-fuelType">
+                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                        Fuel Type
+                      </label>
+                      <input
+                        type="text"
+                        name="fuelType"
+                        value={formData.fuelType}
+                        onChange={handleInputChange}
+                        className={inputClasses}
+                        autoComplete="off"
+                      />
+                    </div>
+
+                    {/* LTO Registration Expiry Date */}
+                    <div id="field-orCrExpiryDate">
+                      <SimpleDatePicker
+                        name="orCrExpiryDate"
+                        value={formData.orCrExpiryDate}
+                        onChange={handleInputChange}
+                        label="LTO Expiration Date"
+                        mode="expiry"
+                        helperText="Valid registration end date on LTO OR."
+                        error={formErrors.orCrExpiryDate}
+                      />
+                    </div>
+
+                    {/* Collapsible Secondary Technical LTO Details (Accordion) */}
+                    <div className="sm:col-span-2 pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
+                      <button
+                        type="button"
+                        id="additional-lto-specs-toggle"
+                        aria-expanded={showAdvancedSpecs}
+                        aria-controls="additional-lto-specs-panel"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setShowAdvancedSpecs(prev => !prev);
+                        }}
+                        className={`w-full flex items-center justify-between p-3.5 transition-all text-left cursor-pointer border border-[#E4E1DC] dark:border-[#2E2A27] focus:outline-hidden focus:ring-2 focus:ring-[#9E2A2B]/30 dark:focus:ring-[#D4AF37]/30 ${
+                          showAdvancedSpecs 
+                            ? 'rounded-t-lg bg-[#EAE7E1] dark:bg-[#1C1917] border-b-0 shadow-xs' 
+                            : 'rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#252220]'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <div className={`p-1.5 rounded-md ${showAdvancedSpecs ? 'bg-[#9E2A2B] text-white dark:bg-[#D4AF37] dark:text-[#1F1D1B]' : 'bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37]'}`}>
+                            <FileText size={16} />
+                          </div>
+                          <div>
+                            <span className="text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                              Additional LTO Specifications &amp; Numbers
+                            </span>
+                            <span className="text-[11px] font-medium text-[#6B6761] dark:text-[#A8A29E] block sm:inline sm:ml-2">
+                              (Auto-filled &bull; Optional review)
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37]">
+                          <span>{showAdvancedSpecs ? 'Hide Details' : 'Show Details'}</span>
+                          <ChevronDown 
+                            size={16} 
+                            className={`transition-transform duration-200 transform ${showAdvancedSpecs ? 'rotate-180 text-[#9E2A2B] dark:text-[#D4AF37]' : 'rotate-0'}`} 
+                          />
+                        </div>
+                      </button>
+
+                      {showAdvancedSpecs && (
+                        <div 
+                          id="additional-lto-specs-panel"
+                          role="region"
+                          aria-labelledby="additional-lto-specs-toggle"
+                          className="p-4 bg-white dark:bg-[#181513] rounded-b-lg border border-[#E4E1DC] dark:border-[#2E2A27] border-t-0 space-y-3 shadow-xs animate-fadeIn"
+                        >
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                            <div id="field-series">
+                              <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                                Model Series
+                              </label>
+                              <input
+                                type="text"
+                                name="series"
+                                value={formData.series}
+                                onChange={handleInputChange}
+                                className={inputClasses}
+                                autoComplete="off"
+                              />
+                            </div>
+
+                            <div id="field-displacement">
+                              <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                                Displacement (cc)
+                              </label>
+                              <input
+                                type="text"
+                                name="displacement"
+                                value={formData.displacement}
+                                onChange={handleInputChange}
+                                className={inputClasses}
+                                autoComplete="off"
+                              />
+                            </div>
+
+                            <div id="field-grossWeight">
+                              <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                                Gross Weight (kg)
+                              </label>
+                              <input
+                                type="text"
+                                name="grossWeight"
+                                value={formData.grossWeight}
+                                onChange={handleInputChange}
+                                className={inputClasses}
+                                autoComplete="off"
+                              />
+                            </div>
+
+                            <div id="field-bodyType">
+                              <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                                Body Type
+                              </label>
+                              <input
+                                type="text"
+                                name="bodyType"
+                                value={formData.bodyType}
+                                onChange={handleInputChange}
+                                className={inputClasses}
+                                autoComplete="off"
+                              />
+                            </div>
+
+                            <div id="field-crNo">
+                              <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                                CR Number
+                              </label>
+                              <input
+                                type="text"
+                                name="crNo"
+                                value={formData.crNo}
+                                onChange={handleInputChange}
+                                className={inputClasses}
+                                autoComplete="off"
+                              />
+                            </div>
+
+                            <div id="field-crDate">
+                              <SimpleDatePicker
+                                name="crDate"
+                                value={formData.crDate}
+                                onChange={handleInputChange}
+                                label="CR Registration Date"
+                                helperText="Date of vehicle registration."
+                                error={formErrors.crDate}
+                              />
+                            </div>
+
+                            <div id="field-orCrNo">
+                              <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                                OR Number
+                              </label>
+                              <input
+                                type="text"
+                                name="orCrNo"
+                                value={formData.orCrNo}
+                                onChange={handleInputChange}
+                                className={inputClasses}
+                                autoComplete="off"
+                              />
+                            </div>
+
+                            <div id="field-orDate">
+                              <SimpleDatePicker
+                                name="orDate"
+                                value={formData.orDate}
+                                onChange={handleInputChange}
+                                label="OR Payment Date"
+                                helperText="Date of annual LTO renewal."
+                                error={formErrors.orDate}
+                              />
+                            </div>
+
+                            <div id="field-fileNo">
+                              <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                                MV File Number
+                              </label>
+                              <input
+                                type="text"
+                                name="fileNo"
+                                value={formData.fileNo}
+                                onChange={handleInputChange}
+                                className={inputClasses}
+                                autoComplete="off"
+                              />
+                            </div>
+
+                            <div id="field-registeredOwner" className="sm:col-span-3">
+                              <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1 flex items-center justify-between">
+                                <span>Registered Owner Name (from CR)</span>
+                                <span className="text-[11px] font-normal text-[#6B6761] dark:text-[#A8A29E]">Only required if different from applicant</span>
+                              </label>
+                              <input
+                                type="text"
+                                name="registeredOwner"
+                                value={formData.registeredOwner}
+                                onChange={handleInputChange}
+                                className={inputClasses}
+                                autoComplete="off"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                  </div>
+                </div>
+
+                {/* Step 2 Actions */}
+                <div className="pt-3 flex justify-between items-center gap-3">
+                  <button 
+                    type="button" 
+                    onClick={prevStep}
+                    className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-lg font-bold text-sm sm:text-base text-[#1F1D1B] dark:text-[#EAE7E1] bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#F6F5F3] dark:hover:bg-[#252220] min-h-[44px] cursor-pointer"
+                  >
+                    <ChevronLeft size={18} />
+                    <span>Back</span>
+                  </button>
+
+                  <button 
+                    type="button" 
+                    onClick={nextStep}
+                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg font-bold text-sm sm:text-base text-white bg-[#9E2A2B] hover:bg-[#7A1B22] shadow-xs cursor-pointer min-h-[44px] active:scale-95 transition-all"
+                  >
+                    <span>Next: Clearances</span>
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 3: CLEARANCES (TODA & BARANGAY) */}
+            {currentStep === 3 && (
+              <div className={`space-y-4 ${slideDirection === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}`}>
+                
+                {/* Header */}
+                <div className="flex items-center gap-2.5 pb-2.5 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+                  <div className="w-8 h-8 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+                    <ShieldCheck size={18} />
+                  </div>
+                  <div>
+                    <h2 className="text-base sm:text-lg font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                      Barangay & TODA Clearances
+                    </h2>
+                    <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] font-medium">
+                      Attach membership endorsement and residency clearances
+                    </p>
+                  </div>
+                </div>
+
+                {/* TODA Endorsement Card */}
+                <div className="p-3.5 sm:p-4 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-3 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                      TODA Endorsement Certificate
+                    </label>
+                    <span className="text-xs sm:text-sm font-semibold text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1">
+                      <FileCheck size={14} className="text-emerald-600" /> Auto-fill
+                    </span>
+                  </div>
+
+                  {/* Mandatory Alert if not verified in digital roster */}
+                  {todaMembershipStatus?.todaStatus === 'not_in_roster' && (
+                    <div className="p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-xs text-amber-900 dark:text-amber-200 flex items-start gap-2 animate-fadeIn">
+                      <AlertTriangle size={15} className="shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+                      <div>
+                        <span className="font-bold">MANDATORY REQUIREMENT: </span>
+                        <span>Because your name is not listed in the digital masterlist for <strong>{formData.todaName || loggedInToda}</strong>, you must upload an official TODA Certificate signed by the TODA President to submit your application.</span>
+                      </div>
+                    </div>
+                  )}
+
+                  <DocumentUploadCard
+                    id="todaEndorsement"
+                    label="TODA Endorsement Certificate"
+                    file={uploadedDocs.todaEndorsement}
+                    previewUrl={filePreviews.todaEndorsement || formData.todaEndorsementUrl}
+                    onFileSelect={handleFileChange}
+                    onFileRemove={handleRemoveFile}
+                    onPreviewZoom={setFullPreview}
+                    onRescan={handleRescan}
+                    required={formMode === 'New'}
+                    isScanning={aiScanning.todaEndorsement}
+                    scanSuccess={aiSuccess.todaEndorsement}
+                    error={formErrors.todaEndorsement}
+                    hideHeaderLabel={true}
+                  />
+
+                  {manualScanAlerts.todaEndorsement && (
+                    <div className="mt-2 p-2.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 rounded-lg flex items-start gap-2 text-xs text-amber-900 dark:text-amber-200">
+                      <AlertTriangle size={15} className="shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+                      <span>{manualScanAlerts.todaEndorsement}</span>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+                    <div id="field-todaCertNo">
+                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                        Certificate / Control No.
+                      </label>
+                      <input 
+                        type="text" 
+                        name="todaCertNo" 
+                        value={formData.todaCertNo} 
+                        onChange={handleInputChange} 
+                        className={inputClasses} 
+                        autoComplete="off"
+                      />
+                    </div>
+                    <div id="field-todaCertDate">
+                      <SimpleDatePicker
+                        name="todaCertDate"
+                        value={formData.todaCertDate}
+                        onChange={handleInputChange}
+                        label="Date Issued"
+                        mode="issuance"
+                        helperText="Date TODA certificate was issued."
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Barangay Clearance Card */}
+                <div className="p-3.5 sm:p-4 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-3 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                      Barangay Clearance
+                    </label>
+                    <span className="text-xs sm:text-sm font-semibold text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1">
+                      <FileCheck size={14} className="text-emerald-600" /> Auto-fill
+                    </span>
+                  </div>
+
+                  <DocumentUploadCard
+                    id="brgyClearance"
+                    label="Barangay Clearance"
+                    file={uploadedDocs.brgyClearance}
+                    previewUrl={filePreviews.brgyClearance || formData.brgyClearanceUrl}
+                    onFileSelect={handleFileChange}
+                    onFileRemove={handleRemoveFile}
+                    onPreviewZoom={setFullPreview}
+                    onRescan={handleRescan}
+                    required={formMode === 'New'}
+                    isScanning={aiScanning.brgyClearance}
+                    scanSuccess={aiSuccess.brgyClearance}
+                    error={formErrors.brgyClearance}
+                    hideHeaderLabel={true}
+                  />
+
+                  {manualScanAlerts.brgyClearance && (
+                    <div className="mt-2 p-2.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 rounded-lg flex items-start gap-2 text-xs text-amber-900 dark:text-amber-200">
+                      <AlertTriangle size={15} className="shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+                      <span>{manualScanAlerts.brgyClearance}</span>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-1">
+                    <div id="field-brgyClearanceNo">
+                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                        Barangay Clearance No.
+                      </label>
+                      <input 
+                        type="text" 
+                        name="brgyClearanceNo" 
+                        value={formData.brgyClearanceNo} 
+                        onChange={handleInputChange} 
+                        className={inputClasses} 
+                        autoComplete="off"
+                      />
+                    </div>
+                    <div id="field-brgyClearanceDate">
+                      <SimpleDatePicker
+                        name="brgyClearanceDate"
+                        value={formData.brgyClearanceDate}
+                        onChange={handleInputChange}
+                        label="Date Issued"
+                        mode="issuance"
+                        helperText="Date Barangay clearance was issued."
+                      />
+                    </div>
+                    <div id="field-brgyIssuer">
+                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                        Issuing Official / Punong Barangay
+                      </label>
+                      <input 
+                        type="text" 
+                        name="brgyIssuer" 
+                        value={formData.brgyIssuer} 
+                        onChange={handleInputChange} 
+                        className={inputClasses} 
+                        autoComplete="off"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Step 3 Actions */}
+                <div className="pt-3 flex justify-between items-center gap-3">
+                  <button 
+                    type="button" 
+                    onClick={prevStep}
+                    className="inline-flex items-center gap-1.5 px-5 py-2.5 rounded-lg font-bold text-sm sm:text-base text-[#1F1D1B] dark:text-[#EAE7E1] bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#F6F5F3] dark:hover:bg-[#252220] min-h-[44px] cursor-pointer"
+                  >
+                    <ChevronLeft size={18} />
+                    <span>Back</span>
+                  </button>
+
+                  <button 
+                    type="button" 
+                    onClick={nextStep}
+                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg font-bold text-sm sm:text-base text-white bg-[#9E2A2B] hover:bg-[#7A1B22] shadow-xs cursor-pointer min-h-[44px] active:scale-95 transition-all"
+                  >
+                    <span>Next: Cedula (CTC)</span>
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* STEP 4: COMMUNITY TAX CERTIFICATE (CEDULA / CTC) */}
+            {currentStep === 4 && (
+              <div className={`space-y-4 ${slideDirection === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}`}>
+                
+                {/* Header */}
+                <div className="flex items-center gap-2.5 pb-2.5 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+                  <div className="w-8 h-8 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+                    <Receipt size={18} />
+                  </div>
+                  <div>
+                    <h2 className="text-base sm:text-lg font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                      Community Tax Certificate (Cedula / CTC)
+                    </h2>
+                    <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] font-medium">
+                      Upload current-year Community Tax Certificate (Cedula) and complete details
+                    </p>
+                  </div>
+                </div>
+
+                {/* Cedula Upload & Input Container */}
+                <div className="p-3.5 sm:p-4 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-4 shadow-xs">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                      Community Tax Certificate (Cedula / CTC)
+                    </label>
+                    <span className="text-xs sm:text-sm font-semibold text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1">
+                      <FileCheck size={14} className="text-emerald-600" /> Auto-fill
+                    </span>
+                  </div>
+
+                  <DocumentUploadCard
+                    id="cedulaDoc"
+                    label="Cedula (CTC) Document"
+                    file={uploadedDocs.cedulaDoc || uploadedDocs.cedula}
+                    previewUrl={filePreviews.cedulaDoc || filePreviews.cedula || formData.cedulaUrl}
+                    onFileSelect={handleFileChange}
+                    onFileRemove={handleRemoveFile}
+                    onPreviewZoom={setFullPreview}
+                    onRescan={handleRescan}
+                    required={formMode === 'New'}
+                    isScanning={aiScanning.cedulaDoc}
+                    scanSuccess={aiSuccess.cedulaDoc}
+                    error={formErrors.cedulaDoc}
+                    hideHeaderLabel={true}
+                  />
+
+                  {manualScanAlerts.cedulaDoc && (
+                    <div className="mt-2 p-2.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 rounded-lg flex items-start gap-2 text-xs text-amber-900 dark:text-amber-200">
+                      <AlertTriangle size={15} className="shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+                      <span>{manualScanAlerts.cedulaDoc}</span>
+                    </div>
+                  )}
+
+                  {/* Section A: CTC Official Number & Details */}
+                  <div className="pt-2 border-t border-[#E4E1DC]/80 dark:border-[#2E2A27]">
+                    <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E] mb-3">
+                      Official Cedula (CTC) Information
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div id="field-cedulaSerialNo">
+                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                          Cedula Serial Number
+                        </label>
+                        <input 
+                          type="text" 
+                          name="cedulaSerialNo" 
+                          value={formData.cedulaSerialNo} 
+                          onChange={handleInputChange} 
+                          className={getInputClasses('cedulaSerialNo')} 
+                          required 
+                          autoComplete="off"
+                        />
+                        {formErrors.cedulaSerialNo && (
+                          <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
+                            <AlertCircle size={13} className="shrink-0" />
+                            <span>{formErrors.cedulaSerialNo}</span>
+                          </p>
+                        )}
+                      </div>
+
+                      <div id="field-cedulaDate">
+                        <SimpleDatePicker
+                          name="cedulaDate"
+                          value={formData.cedulaDate}
+                          onChange={handleInputChange}
+                          label="Date Issued"
+                          required
+                          mode="issuance"
+                          helperText="Date when the CTC was issued."
+                          error={formErrors.cedulaDate}
+                        />
+                      </div>
+
+                      <div id="field-cedulaAddress">
+                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                          Place / Municipality Issued
+                        </label>
+                        <input 
+                          type="text" 
+                          name="cedulaAddress" 
+                          value={formData.cedulaAddress} 
+                          onChange={handleInputChange} 
+                          className={getInputClasses('cedulaAddress')} 
+                          autoComplete="off"
+                        />
+                      </div>
+
+                      <div id="field-cedulaYear">
+                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                          Tax Year
+                        </label>
+                        <input 
+                          type="text" 
+                          name="cedulaYear" 
+                          value={formData.cedulaYear || ''} 
+                          onChange={handleInputChange} 
+                          className={inputClasses} 
+                          autoComplete="off"
+                        />
+                      </div>
+
+                      <div id="field-cedulaAmount" className="sm:col-span-2">
+                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                          Cedula Amount Paid (₱)
+                        </label>
+                        <input 
+                          type="number" 
+                          name="cedulaAmount" 
+                          value={formData.cedulaAmount || ''} 
+                          onChange={handleInputChange} 
+                          className={getInputClasses('cedulaAmount')} 
+                          step="0.01"
+                          min="0"
+                          autoComplete="off"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section B: Taxpayer Identity & Biometrics (Editable Inputs replacing the static green card) */}
+                  <div className="pt-2 border-t border-[#E4E1DC]/80 dark:border-[#2E2A27]">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E]">
+                        Taxpayer Identity &amp; Biometrics (Mula sa Cedula)
+                      </h3>
+                      <span className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-950/60 px-2 py-0.5 rounded-full inline-flex items-center gap-1">
+                        <Zap size={11} /> Auto-filled &amp; Editable
+                      </span>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <div id="field-cedulaFullName">
+                        <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                          Taxpayer Full Name
+                        </label>
+                        <input 
+                          type="text" 
+                          name="cedulaFullName" 
+                          value={formData.cedulaFullName || ''} 
+                          onChange={handleInputChange} 
+                          className={inputClasses} 
+                          autoComplete="off"
+                        />
+                      </div>
+
+                      <div id="field-cedulaCivilStatus">
+                        <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                          Civil Status
+                        </label>
+                        <input 
+                          type="text" 
+                          name="cedulaCivilStatus" 
+                          value={formData.cedulaCivilStatus || ''} 
+                          onChange={handleInputChange} 
+                          className={inputClasses} 
+                          autoComplete="off"
+                        />
+                      </div>
+
+                      <div id="field-cedulaCitizenship">
+                        <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                          Citizenship
+                        </label>
+                        <input 
+                          type="text" 
+                          name="cedulaCitizenship" 
+                          value={formData.cedulaCitizenship || ''} 
+                          onChange={handleInputChange} 
+                          className={inputClasses} 
+                          autoComplete="off"
+                        />
+                      </div>
+
+                      <div id="field-cedulaProfession">
+                        <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                          Profession / Occupation
+                        </label>
+                        <input 
+                          type="text" 
+                          name="cedulaProfession" 
+                          value={formData.cedulaProfession || ''} 
+                          onChange={handleInputChange} 
+                          className={inputClasses} 
+                          autoComplete="off"
+                        />
+                      </div>
+
+                      <div id="field-cedulaDob">
+                        <SimpleDatePicker
+                          name="cedulaDob"
+                          value={formData.cedulaDob}
+                          onChange={handleInputChange}
+                          label="Date of Birth"
+                          helperText="Petsa ng kapanganakan sa Cedula."
+                        />
+                      </div>
+
+                      <div id="field-cedulaPlaceOfBirth">
+                        <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                          Place of Birth
+                        </label>
+                        <input 
+                          type="text" 
+                          name="cedulaPlaceOfBirth" 
+                          value={formData.cedulaPlaceOfBirth || ''} 
+                          onChange={handleInputChange} 
+                          className={inputClasses} 
+                          autoComplete="off"
+                        />
+                      </div>
+
+                      <div id="field-cedulaSex">
+                        <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                          Sex / Kasarian
+                        </label>
+                        <input 
+                          type="text" 
+                          name="cedulaSex" 
+                          value={formData.cedulaSex || ''} 
+                          onChange={handleInputChange} 
+                          className={inputClasses} 
+                          autoComplete="off"
+                        />
+                      </div>
+
+                      <div id="field-cedulaTin">
+                        <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                          Tax Identification Number (TIN)
+                        </label>
+                        <input 
+                          type="text" 
+                          name="cedulaTin" 
+                          value={formData.cedulaTin || ''} 
+                          onChange={handleInputChange} 
+                          className={inputClasses} 
+                          autoComplete="off"
+                        />
+                      </div>
+
+                      <div id="field-cedulaHeight">
+                        <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                          Height (ft)
+                        </label>
+                        <input 
+                          type="text" 
+                          name="cedulaHeight" 
+                          value={formData.cedulaHeight || ''} 
+                          onChange={handleInputChange} 
+                          className={inputClasses} 
+                          autoComplete="off"
+                        />
+                      </div>
+
+                      <div id="field-cedulaWeight">
+                        <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                          Weight (kg)
+                        </label>
+                        <input 
+                          type="text" 
+                          name="cedulaWeight" 
+                          value={formData.cedulaWeight || ''} 
+                          onChange={handleInputChange} 
+                          className={inputClasses} 
+                          autoComplete="off"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+
+                {/* Step 4 Actions */}
+                <div className="pt-3 flex flex-col-reverse sm:flex-row justify-between items-center gap-3">
+                  <button 
+                    type="button" 
+                    onClick={prevStep}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-lg font-bold text-sm sm:text-base text-[#1F1D1B] dark:text-[#EAE7E1] bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#F6F5F3] dark:hover:bg-[#252220] min-h-[44px] cursor-pointer"
+                  >
+                    <ChevronLeft size={18} />
+                    <span>Back to Clearances</span>
+                  </button>
+
+                  <button 
+                    type="button" 
+                    onClick={nextStep}
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-sm sm:text-base text-white bg-[#9E2A2B] hover:bg-[#7A1B22] shadow-xs cursor-pointer min-h-[44px] active:scale-95 transition-all"
+                  >
+                    <span>Next: Review &amp; Confirmation</span>
+                    <ChevronRight size={18} />
+                  </button>
+                </div>
+
+                {/* Secondary draft actions */}
+                <div className="flex items-center justify-center gap-4 pt-1">
+                  <button
+                    type="button"
+                    onClick={() => handleSaveProgress(true)}
+                    className="text-xs sm:text-sm font-semibold text-[#6B6761] dark:text-[#A8A29E] hover:underline inline-flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <Save size={14} />
+                    <span>Save Draft</span>
+                  </button>
+                  {hasDraftRestored && (
+                    <button
+                      type="button"
+                      onClick={handleClearDraft}
+                      className="text-xs sm:text-sm font-semibold text-red-600 dark:text-red-400 hover:underline inline-flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <RotateCcw size={14} />
+                      <span>Reset Draft</span>
+                    </button>
+                  )}
+                </div>
+
+              </div>
+            )}
+
+            {/* STEP 5: APPLICATION REVIEW & CONFIRMATION */}
+            {currentStep === 5 && (
+              <div className={`space-y-4 ${slideDirection === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}`}>
+                
+                {/* Header */}
+                <div className="flex items-center gap-2.5 pb-2.5 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+                  <div className="w-8 h-8 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+                    <ShieldCheck size={18} />
+                  </div>
+                  <div>
+                    <h2 className="text-base sm:text-lg font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                      Review &amp; Confirmation
+                    </h2>
+                    <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] font-medium">
+                      Carefully review your complete application before submitting
+                    </p>
+                  </div>
+                </div>
+                {/* Official MTOP Application Form (Ord. 48 s. 1999) Print & Preview Banner */}
+                <div className="p-4 bg-gradient-to-r from-[#9E2A2B]/10 via-[#D4AF37]/15 to-[#9E2A2B]/10 dark:from-[#9E2A2B]/20 dark:via-[#D4AF37]/25 dark:to-[#9E2A2B]/20 rounded-xl border border-[#D4AF37]/50 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-[#9E2A2B] text-white flex items-center justify-center shrink-0 shadow-xs">
+                      <FileText size={20} />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3] flex items-center gap-2">
+                        Official MTOP Application Form
+                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#9E2A2B]/15 text-[#9E2A2B] dark:text-[#D4AF37] font-bold border border-[#9E2A2B]/30">
+                          Ord. 48 s. 1999
+                        </span>
+                      </h3>
+                      <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-0.5">
+                        Naka-fill in na ang iyong mga detalye sa opisyal na form. Pwede mong tingnan o i-print/i-save bilang PDF.
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsOfficialFormOpen(true)}
+                    className="w-full sm:w-auto px-4 py-2.5 bg-[#9E2A2B] hover:bg-[#851e20] text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer shrink-0 active:scale-95"
+                  >
+                    <Printer size={15} />
+                    <span>Tingnan / I-print ang Form (PDF)</span>
+                  </button>
+                </div>
+
+
+                {/* Section 1: Operator & Driver Information */}
+                <div className="p-4 bg-white dark:bg-[#1C1917] rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs space-y-3">
+                  <div className="flex items-center justify-between pb-2 border-b border-[#E4E1DC]/80 dark:border-[#2E2A27]">
+                    <div className="flex items-center gap-2">
+                      <User size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                      <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1F1D1B] dark:text-[#EAE7E1]">
+                        1. Operator &amp; Driver Details
+                      </h3>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => { setSlideDirection('backward'); setCurrentStep(1); }}
+                      className="text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer"
+                    >
+                      Edit Step 1
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs [&>div]:min-w-0 [&_span]:break-words">
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Operator Name</span>
+                      <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.fullName || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Barangay Residence</span>
+                      <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.address || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Driver Type</span>
+                      <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.isOperatorDriver ? 'Operator is Driver' : `Designated: ${formData.driverName || '—'}`}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Driver's License No.</span>
+                      <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.driverLicenseNo || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">License Expiry Date</span>
+                      <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.driverLicenseExpiryDate || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">License Serial (Back)</span>
+                      <span className="font-mono text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.driverLicenseSerialNo || '—'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 2: Vehicle & Registration */}
+                <div className="p-4 bg-white dark:bg-[#1C1917] rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs space-y-3">
+                  <div className="flex items-center justify-between pb-2 border-b border-[#E4E1DC]/80 dark:border-[#2E2A27]">
+                    <div className="flex items-center gap-2">
+                      <TricycleIcon size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                      <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1F1D1B] dark:text-[#EAE7E1]">
+                        2. Vehicle &amp; LTO Registration
+                      </h3>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => { setSlideDirection('backward'); setCurrentStep(2); }}
+                      className="text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer"
+                    >
+                      Edit Step 2
+                    </button>
+                  </div>
+
+                  {(!formData.plateNo || !formData.motorNo || !formData.chassisNo || !formData.make || !formData.made) && (
+                    <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-300 dark:border-red-800 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                      <div className="flex items-center gap-2 text-xs sm:text-sm text-red-700 dark:text-red-300 font-semibold">
+                        <AlertCircle size={18} className="text-red-600 shrink-0" />
+                        <span>Kulang ang impormasyon ng sasakyan (naka-dash pa ang mga detalye). Kailangang i-type sa Hakbang 2 bago mag-submit.</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => { setSlideDirection('backward'); setCurrentStep(2); }}
+                        className="px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold shrink-0 cursor-pointer transition-colors shadow-xs"
+                      >
+                        Pumunta sa Hakbang 2 (I-manual)
+                      </button>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs [&>div]:min-w-0 [&_span]:break-words">
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Make &amp; Model</span>
+                      <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.make || '—'} ({formData.made || '—'})</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Plate / MV File No.</span>
+                      <span className="font-mono font-bold text-[#9E2A2B] dark:text-[#D4AF37]">{formData.plateNo || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Authorized Zone</span>
+                      <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{formatZoneLabel(formData.zone)}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Engine / Motor No.</span>
+                      <span className="font-mono text-[#1F1D1B] dark:text-[#EAE7E1] break-all">{formData.motorNo || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Chassis Serial / VIN</span>
+                      <span className="font-mono text-[#1F1D1B] dark:text-[#EAE7E1] break-all">{formData.chassisNo || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">LTO OR/CR Expiry</span>
+                      <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.orCrExpiryDate || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Displacement / Weight</span>
+                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.displacement ? `${formData.displacement}` : '—'} &bull; {formData.grossWeight ? `${formData.grossWeight}` : '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Fuel &amp; Body Type</span>
+                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.fuelType || 'GAS'} &bull; {formData.bodyType || 'TRICYCLE'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">CR Registered Owner</span>
+                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1] truncate block">{formData.registeredOwner || formData.fullName || '—'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 3: Barangay & TODA Clearances */}
+                <div className="p-4 bg-white dark:bg-[#1C1917] rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs space-y-3">
+                  <div className="flex items-center justify-between pb-2 border-b border-[#E4E1DC]/80 dark:border-[#2E2A27]">
+                    <div className="flex items-center gap-2">
+                      <FileCheck size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                      <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1F1D1B] dark:text-[#EAE7E1]">
+                        3. TODA &amp; Barangay Clearances
+                      </h3>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => { setSlideDirection('backward'); setCurrentStep(3); }}
+                      className="text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer"
+                    >
+                      Edit Step 3
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs [&>div]:min-w-0 [&_span]:break-words">
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">TODA Association</span>
+                      <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.todaName || 'NON-TODA'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">TODA Certificate No.</span>
+                      <span className="font-mono font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.todaCertNo || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">TODA Date Issued</span>
+                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.todaCertDate || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Barangay Clearance No.</span>
+                      <span className="font-mono font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.brgyClearanceNo || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Barangay Date Issued</span>
+                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.brgyClearanceDate || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Issuing Official (Brgy)</span>
+                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.brgyIssuer || '—'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 4: Community Tax Certificate (Cedula) */}
+                <div className="p-4 bg-white dark:bg-[#1C1917] rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs space-y-3">
+                  <div className="flex items-center justify-between pb-2 border-b border-[#E4E1DC]/80 dark:border-[#2E2A27]">
+                    <div className="flex items-center gap-2">
+                      <Receipt size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                      <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1F1D1B] dark:text-[#EAE7E1]">
+                        4. Community Tax Certificate (Cedula / CTC)
+                      </h3>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => { setSlideDirection('backward'); setCurrentStep(4); }}
+                      className="text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer"
+                    >
+                      Edit Step 4
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs [&>div]:min-w-0 [&_span]:break-words">
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">CTC Serial Number</span>
+                      <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.cedulaSerialNo || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">CTC Date Issued</span>
+                      <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.cedulaDate || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Place Issued</span>
+                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.cedulaAddress || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Tax Year &bull; Total Paid</span>
+                      <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.cedulaYear || '2026'} &bull; ₱{Number(formData.cedulaAmount || 55).toFixed(2)}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Taxpayer Name</span>
+                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1] truncate block">{formData.cedulaFullName || formData.fullName || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Civil Status &bull; TIN</span>
+                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1] break-all">{formData.cedulaCivilStatus || '—'} &bull; {formData.cedulaTin || '—'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 5: Verification Notices & Detected Defect Checks */}
+                {(() => {
+                  const detected = getAiDiscrepancies(formData, aiScannedData);
+                  const isNotVerifiedInRoster = todaMembershipStatus && todaMembershipStatus.todaStatus !== 'verified_member' && formData.todaName && formData.todaName !== 'NON-TODA';
+
+                  return (
+                    <div className="space-y-2">
+                      {detected.length > 0 || isNotVerifiedInRoster ? (
+                        <div className="p-4 rounded-xl border border-amber-300 dark:border-amber-800 bg-amber-50/80 dark:bg-amber-950/30 space-y-2.5">
+                          <div className="flex items-center gap-2 text-amber-900 dark:text-amber-200 font-bold text-xs sm:text-sm">
+                            <AlertTriangle size={18} className="text-amber-600 dark:text-amber-400 shrink-0" />
+                            <span>Verification &amp; Defect Check Notices</span>
+                          </div>
+                          <ul className="space-y-1.5 pl-6 text-xs text-amber-900/90 dark:text-amber-200/90 list-disc">
+                            {isNotVerifiedInRoster && (
+                              <li>
+                                <strong>TODA Masterlist:</strong> Applicant is not listed in the approved online roster of {formData.todaName || 'your TODA'}, but a physical TODA Endorsement Certificate is attached.
+                              </li>
+                            )}
+                            {detected.map((disc, idx) => (
+                              <li key={idx}>
+                                <strong>{disc.label}:</strong> {disc.reason}
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      ) : (
+                        <div className="p-3.5 rounded-xl border border-emerald-300 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/20 flex items-center gap-2.5 text-xs text-emerald-900 dark:text-emerald-200">
+                          <CheckCircle2 size={18} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                          <span>No defects or discrepancies detected between scanned documents and entered data. Everything matches.</span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {/* Section 6: LGU Treasury Fee Notice */}
+                <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl flex items-center gap-2.5 text-xs sm:text-sm text-amber-900 dark:text-amber-200">
+                  <Receipt size={18} className="shrink-0 text-amber-700 dark:text-amber-400" />
+                  <div className="leading-snug">
+                    <strong className="font-bold">Franchise Filing Fee:</strong> The standard franchise filing fee (<strong className="font-bold underline">₱500.00</strong>) is payable directly at the Municipal Treasury Cashier once your application is endorsed and approved by the Franchising Office.
+                  </div>
+                </div>
+
+                {/* Section 7: Confirmation Checkbox (Affidavit of Authenticity) */}
+                <div className="p-4 rounded-xl border-2 border-[#D4AF37]/40 bg-white dark:bg-[#1C1917] shadow-xs">
+                  <label className="flex items-start gap-3 cursor-pointer select-none">
+                    <input
+                      type="checkbox"
+                      id="confirm-authenticity-checkbox"
+                      checked={isAgreedToTerms}
+                      onChange={(e) => setIsAgreedToTerms(e.target.checked)}
+                      className="mt-1 w-5 h-5 rounded text-[#9E2A2B] dark:text-[#D4AF37] focus:ring-[#9E2A2B] border-[#E4E1DC] dark:border-[#2E2A27] cursor-pointer shrink-0"
+                    />
+                    <div className="text-xs sm:text-sm text-[#1F1D1B] dark:text-[#EAE7E1] leading-relaxed">
+                      <strong className="font-bold text-sm block mb-0.5 text-[#9E2A2B] dark:text-[#D4AF37]">
+                        Affidavit of Authenticity &amp; Truthfulness:
+                      </strong>
+                      I hereby certify that all information and documents provided in this application are true, accurate, and complete to the best of my knowledge. I understand that any false statement or fraudulent document will result in the immediate denial of this application or revocation of the franchise in accordance with municipal ordinances of Gasan.
+                    </div>
+                  </label>
+                </div>
+
+                {/* Step 5 Submission Actions */}
+                <div className="pt-3 border-t border-[#E4E1DC] dark:border-[#2E2A27] space-y-3">
+                  <div className="flex flex-col-reverse sm:flex-row justify-between items-center gap-3">
+                    <button 
+                      type="button" 
+                      onClick={prevStep}
+                      className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-5 py-2.5 rounded-lg font-bold text-sm sm:text-base text-[#1F1D1B] dark:text-[#EAE7E1] bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#F6F5F3] dark:hover:bg-[#252220] min-h-[44px] cursor-pointer"
+                    >
+                      <ChevronLeft size={18} />
+                      <span>Back to Cedula</span>
+                    </button>
+
+                    <button 
+                      type="submit" 
+                      onClick={handlePreSubmit}
+                      disabled={isSubmitting || !isAgreedToTerms}
+                      className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-2.5 rounded-lg font-bold text-sm sm:text-base text-white transition-all shadow-xs active:scale-95 min-h-[44px] ${
+                        isSubmitting || !isAgreedToTerms
+                          ? 'bg-[#6B7280] opacity-60 cursor-not-allowed' 
+                          : 'bg-[#9E2A2B] hover:bg-[#7A1B22] cursor-pointer'
+                      }`}
+                    >
+                      {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <CheckCircle size={18} />}
+                      <span>{isSubmitting ? (uploadPhase || 'Submitting...') : 'Submit Application'}</span>
+                    </button>
+                  </div>
+
+                  {!isAgreedToTerms && (
+                    <p className="text-center text-xs text-[#9E2A2B] dark:text-[#D4AF37] font-semibold">
+                      * Please check the Affidavit of Authenticity box above before submitting your application.
+                    </p>
+                  )}
+
+                  {/* Secondary draft actions */}
+                  <div className="flex items-center justify-center gap-4 pt-1">
+                    <button
+                      type="button"
+                      onClick={() => handleSaveProgress(true)}
+                      className="text-xs sm:text-sm font-semibold text-[#6B6761] dark:text-[#A8A29E] hover:underline inline-flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <Save size={14} />
+                      <span>Save Draft</span>
+                    </button>
+                    {hasDraftRestored && (
+                      <button
+                        type="button"
+                        onClick={handleClearDraft}
+                        className="text-xs sm:text-sm font-semibold text-red-600 dark:text-red-400 hover:underline inline-flex items-center gap-1.5 cursor-pointer"
+                      >
+                        <RotateCcw size={14} />
+                        <span>Reset Draft</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+              </div>
+            )}
+
+          </form>
+        </div>
+
+      </div>
+
+      {/* Modals */}
+      {showTodaGuide && (
+        <TodaZoneGuideModal 
+          isOpen={showTodaGuide} 
+          onClose={() => setShowTodaGuide(false)} 
+        />
+      )}
+
+      {fullPreview && (
+        <DocumentPreviewModal 
+          fullPreview={fullPreview}
+          fileUrl={fullPreview} 
+          isOpen={!!fullPreview} 
+          setFullPreview={setFullPreview}
+          onClose={() => setFullPreview(null)} 
+        />
+      )}
+
+      {isSummaryModalOpen && (
+        <ApplicationSummaryModal
+          isOpen={isSummaryModalOpen}
+          isSummaryModalOpen={isSummaryModalOpen}
+          onClose={() => setIsSummaryModalOpen(false)}
+          setIsSummaryModalOpen={setIsSummaryModalOpen}
+          formData={formData}
+          application={{
+            ...formData,
+            status: 'Draft',
+            applicationType: formMode === 'Renewal' ? 'Renewal' : 'New',
+            createdAt: formData.dateApplied
+          }}
+          requirementsList={DEFAULT_REQUIREMENTS}
+          uploadedDocs={uploadedDocs}
+          filePreviews={filePreviews}
+          loggedInToda={formData.todaName}
+        />
+      )}
+
+      {feedbackModal.isOpen && (
+        <FeedbackModal
+          isOpen={feedbackModal.isOpen}
+          type={feedbackModal.type}
+          title={feedbackModal.title}
+          message={feedbackModal.message}
+          confirmText={feedbackModal.confirmText}
+          onConfirm={feedbackModal.onConfirm}
+        />
+      )}
+
+      
+      {/* Official MTOP Application Form Modal */}
+      {isOfficialFormOpen && (
+        <OfficialApplicationFormModal
+          isOpen={isOfficialFormOpen}
+          onClose={() => setIsOfficialFormOpen(false)}
+          formData={formData}
+          isRenewal={formMode === 'Renewal'}
+        />
+      )}
+
+      {cancelModal.isOpen && (
+        <CancelApplicationModal
+          isOpen={cancelModal.isOpen}
+          onClose={() => setCancelModal({ isOpen: false, unit: null, reason: CANCEL_REASONS[0], customReason: '', isSubmitting: false })}
+          unit={cancelModal.unit}
+          reason={cancelModal.reason}
+          setReason={(r) => setCancelModal(prev => ({ ...prev, reason: r }))}
+          customReason={cancelModal.customReason}
+          setCustomReason={(c) => setCancelModal(prev => ({ ...prev, customReason: c }))}
+          onConfirm={handleConfirmCancel}
+          isSubmitting={cancelModal.isSubmitting}
+        />
+      )}
+
+      {/* Submit Application Confirmation Modal */}
+      {isSubmitConfirmOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 animate-in fade-in duration-200">
+          <div className="relative w-full max-w-md bg-white dark:bg-[#1C1917] rounded-xl p-6 sm:p-7 shadow-xl border border-[#E4E1DC] dark:border-[#2E2A27]">
+            <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center text-emerald-600 dark:text-emerald-400">
+              <CheckCircle2 className="w-6 h-6 stroke-[2.5]" />
+            </div>
+
+            <h3 className="text-lg sm:text-xl font-bold text-[#1F1D1B] dark:text-[#EAE7E1] text-center mb-2">
+              Are you sure you want to submit?
+            </h3>
+
+            <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] text-center mb-6 leading-relaxed">
+              Please confirm that you want to submit this franchise application. Once submitted, your documents will be forwarded to the Franchising Office for official review.
+            </p>
+
+            {/* Modal Actions */}
+            <div className="flex flex-col-reverse sm:flex-row gap-2.5">
+              <button
+                type="button"
+                onClick={() => setIsSubmitConfirmOpen(false)}
+                className="w-full py-2.5 px-4 rounded-lg bg-[#F6F5F3] hover:bg-[#E4E1DC] dark:bg-[#2E2A27] dark:hover:bg-[#3D3834] text-[#1F1D1B] dark:text-[#EAE7E1] font-bold text-xs sm:text-sm transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer min-h-[44px]"
+              >
+                <span>Cancel</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={(e) => {
+                  setIsSubmitConfirmOpen(false);
+                  handleSubmit(e, true);
+                }}
+                disabled={isSubmitting}
+                className="w-full py-2.5 px-4 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-xs sm:text-sm shadow-xs transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer min-h-[44px]"
+              >
+                {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
+                <span>Yes, Submit</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* AI OCR Discrepancy Confirmation Modal */}
+      {discrepancyModal.isOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 animate-in fade-in duration-200">
+          <div className="relative w-full max-w-lg bg-white dark:bg-[#1C1917] rounded-xl p-6 sm:p-7 shadow-xl border border-[#E4E1DC] dark:border-[#2E2A27]">
+            <div className="w-12 h-12 mx-auto mb-3 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 flex items-center justify-center text-amber-700 dark:text-amber-400">
+              <AlertTriangle className="w-6 h-6 stroke-[2.5]" />
+            </div>
+
+            <h3 className="text-lg font-bold text-[#1F1D1B] dark:text-[#EAE7E1] text-center mb-1">
+              Document Verification Notice
+            </h3>
+
+            <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] text-center mb-4 leading-relaxed">
+              The system detected differences between your uploaded document image and the validity date entered in your application.
+            </p>
+
+            {/* Discrepancy comparison cards */}
+            <div className="space-y-2 mb-4 max-h-60 overflow-y-auto pr-1">
+              {discrepancyModal.discrepancies.map((disc, idx) => (
+                <div key={idx} className="bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3 text-xs space-y-1.5">
+                  <div className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                    {disc.label}
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-[11px]">
+                    <div className="bg-white dark:bg-[#1C1917] p-2 rounded border border-red-200 dark:border-red-900/50">
+                      <span className="text-[10px] text-red-600 dark:text-red-400 font-semibold block">Detected from Image:</span>
+                      <span className="font-mono font-bold text-red-700 dark:text-red-300">
+                        {disc.scannedValue || 'None'} (Expired)
+                      </span>
+                    </div>
+                    <div className="bg-white dark:bg-[#1C1917] p-2 rounded border border-slate-200 dark:border-slate-800">
+                      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block">Entered in Application:</span>
+                      <span className="font-mono font-bold text-slate-900 dark:text-slate-100">
+                        {disc.enteredValue || 'None'}
+                      </span>
+                    </div>
+                  </div>
+                  {disc.reason && (
+                    <p className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] leading-normal pt-0.5">
+                      {disc.reason}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Municipal Warning Box */}
+            <div className="p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40 text-amber-900 dark:text-amber-300 text-xs mb-5 leading-relaxed">
+              <span className="font-bold block mb-0.5">Official Sangguniang Bayan Reminder:</span>
+              Municipal evaluators personally examine all uploaded document images. Submitting expired or non-matching attachments will result in the immediate rejection of your application.
+            </div>
+
+            {/* Actions */}
+            <div className="flex flex-col sm:flex-row gap-2.5">
+              <button
+                type="button"
+                onClick={() => {
+                  const firstDisc = discrepancyModal.discrepancies[0];
+                  setDiscrepancyModal({ isOpen: false, discrepancies: [] });
+                  if (firstDisc?.step) {
+                    setCurrentStep(firstDisc.step);
+                    navigate(`?mode=${(formMode || 'New').toLowerCase()}&step=${firstDisc.step}`);
+                  }
+                  if (firstDisc?.field) {
+                    setTimeout(() => scrollToField(firstDisc.field), 150);
+                  }
+                }}
+                className="w-full py-2.5 px-4 rounded-lg bg-[#F6F5F3] hover:bg-[#E4E1DC] dark:bg-[#2E2A27] dark:hover:bg-[#3D3834] text-[#1F1D1B] dark:text-[#EAE7E1] font-bold text-xs sm:text-sm transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer min-h-[44px]"
+              >
+                <span>Review &amp; Edit Details</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setDiscrepancyModal({ isOpen: false, discrepancies: [] });
+                  handleSubmit(null, true);
+                }}
+                className="w-full py-2.5 px-4 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-xs sm:text-sm shadow-xs transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer min-h-[44px]"
+              >
+                <span>Proceed &amp; Submit Anyway</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Draft Resume Confirmation Modal */}
+      {draftResumeModal.isOpen && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 animate-in fade-in duration-200">
+          <div className="relative w-full max-w-md bg-white dark:bg-[#1C1917] rounded-lg p-6 sm:p-7 shadow-xl border border-[#E4E1DC] dark:border-[#2E2A27] text-center">
+            
+            {/* Modal Icon */}
+            <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 flex items-center justify-center text-amber-700 dark:text-amber-400">
+              <Clock className="w-6 h-6" />
+            </div>
+
+            {/* Modal Title */}
+            <h3 className="text-lg sm:text-xl font-bold text-[#1F1D1B] dark:text-[#EAE7E1] mb-2">
+              Resume In-Progress Application?
+            </h3>
+
+            {/* Modal Description */}
+            <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] mb-5 leading-relaxed">
+              You have an in-progress draft saved at <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{draftResumeModal.savedTime}</span> (Step {draftResumeModal.step} of 5). Would you like to pick up where you left off?
+            </p>
+
+            {/* Draft Details Preview */}
+            {draftResumeModal.draftData?.formData && (
+              <div className="bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4 mb-6 text-left text-xs sm:text-sm space-y-2">
+                <div className="flex justify-between items-center text-[#6B6761] dark:text-[#A8A29E]">
+                  <span>Progress:</span>
+                  <span className="font-bold text-[#9E2A2B] dark:text-[#D4AF37]">
+                    Step {draftResumeModal.step} of 5
+                  </span>
+                </div>
+                {draftResumeModal.draftData.formData.plateNo && (
+                  <div className="flex justify-between items-center text-[#6B6761] dark:text-[#A8A29E]">
+                    <span>Plate No:</span>
+                    <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                      {draftResumeModal.draftData.formData.plateNo}
+                    </span>
+                  </div>
+                )}
+                {draftResumeModal.draftData.formData.make && (
+                  <div className="flex justify-between items-center text-[#6B6761] dark:text-[#A8A29E]">
+                    <span>Model:</span>
+                    <span className="font-medium text-[#1F1D1B] dark:text-[#EAE7E1]">
+                      {draftResumeModal.draftData.formData.make}
+                    </span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Actions */}
+            <div className="flex flex-col sm:flex-row gap-3">
+              <button
+                type="button"
+                onClick={handleConfirmResumeDraft}
+                className="w-full py-2.5 px-4 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-sm shadow-xs transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer min-h-[44px]"
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span>Continue Draft</span>
+              </button>
+              <button
+                type="button"
+                onClick={handleDiscardDraft}
+                className="w-full py-2.5 px-4 rounded-lg bg-[#F6F5F3] hover:bg-[#E4E1DC] dark:bg-[#2E2A27] dark:hover:bg-[#3D3834] text-[#1F1D1B] dark:text-[#EAE7E1] font-bold text-sm transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer min-h-[44px]"
+              >
+                <PlusCircle className="w-4 h-4" />
+                <span>Start Fresh</span>
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+    </MainLayout>
+  );
+};
+
+export default ApplyFranchise;

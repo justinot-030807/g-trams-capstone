@@ -463,7 +463,7 @@ const UserManagement = () => {
       <div className="flex items-center gap-1.5 mb-4 overflow-x-auto pb-1 text-xs">
         {[
           { id: 'all', label: `All Users (${allCount})` },
-          { id: 'bplo_staff', label: `BPLO Staff (${bploStaffCount})` },
+          { id: 'bplo_staff', label: `SB Staff / LLSA I (${bploStaffCount})` },
           { id: 'admin', label: `System Admin (${adminCount})` },
           { id: 'cashier', label: `Cashiers (${cashierCount})` },
           { id: 'toda_president', label: `TODA Presidents (${todaPresidentCount})` },
@@ -661,7 +661,7 @@ const UserManagement = () => {
                             className="border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] text-xs font-medium rounded-lg px-2 py-1 outline-none cursor-pointer focus:border-[#9E2A2B] dark:focus:border-[#D4AF37]"
                           >
                             <option value="operator">Operator</option>
-                            <option value="bplo_staff">BPLO Staff</option>
+                            <option value="bplo_staff">SB Franchising Staff (LLSA I)</option>
                             <option value="system_admin">System Admin</option>
                             <option value="cashier">Cashier</option>
                             <option value="toda_president">TODA President</option>

@@ -43,7 +43,7 @@ const CancelApplicationModal = ({
           <div className="bg-[#FEF3C7]/50 dark:bg-[#78350F]/20 border border-[#F59E0B]/30 p-3.5 rounded-lg flex items-start gap-2.5">
             <AlertCircle size={16} className="text-[#B45309] dark:text-[#F59E0B] shrink-0 mt-0.5" />
             <p className="text-xs text-[#92400E] dark:text-[#FDE68A] leading-relaxed font-medium">
-              Notice: Cancelling this application will set its status to <b>Cancelled</b>. The reason provided will be recorded in audit logs for LGU Admin review.
+              Paalala: Ang pagkansela sa aplikasyon o prangkisa ay itatala sa talaan ng Sangguniang Bayan / Office of the Vice Mayor para sa opisyal na Cancellation Letter (₱50.00 cancellation fee sa Cashier).
             </p>
           </div>
 

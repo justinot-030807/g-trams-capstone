@@ -193,7 +193,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
   const getRoleBadge = () => {
     const normalized = String(role || '').toLowerCase().trim().replace(/_/g, ' ');
     if (normalized === 'system admin' || normalized === 'system_admin' || normalized === 'admin' || normalized === 'administrator') return t('nav.roleSystemAdmin', 'SYSTEM ADMIN');
-    if (normalized === 'bplo staff' || normalized === 'bplo_staff') return t('nav.roleBploStaff', 'BPLO STAFF');
+    if (normalized === 'bplo staff' || normalized === 'bplo_staff') return t('nav.roleBploStaff', 'SB FRANCHISING STAFF (LLSA I)');
     if (normalized === 'toda president' || normalized === 'toda_president') return t('nav.roleTodaPresident', 'TODA PRESIDENT');
     if (normalized === 'cashier') return t('nav.roleCashier', 'MUNICIPAL CASHIER');
     return t('nav.roleOperator', 'OPERATOR');

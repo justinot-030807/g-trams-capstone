@@ -3,11 +3,12 @@ import MainLayout from '../../components/MainLayout';
 import { 
   ShieldAlert, Search, AlertTriangle, UploadCloud, X, Loader2, 
   CheckCircle, CheckCircle2, AlertCircle, FileText, Eye, ChevronLeft, 
-  ChevronRight, Clock, ShieldCheck, Scale, History, User, Check, RefreshCw
+  ChevronRight, Clock, ShieldCheck, Scale, History, User, Check, RefreshCw, Printer
 } from 'lucide-react';
 import { TableRowsSkeleton } from '../../components/skeleton';
 import PageHeader from '../../components/common/PageHeader';
 import StatusBadge from '../../components/common/StatusBadge';
+import OfficialCancellationLetterModal from '../../components/common/OfficialCancellationLetterModal';
 
 const ManageRevocations = () => {
   const [franchises, setFranchises] = useState([]);
@@ -19,6 +20,7 @@ const ManageRevocations = () => {
   const [statusFilter, setStatusFilter] = useState('All');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
+  const [selectedCancellation, setSelectedCancellation] = useState(null);
 
   // System Violation Policy
   const [violationPolicy, setViolationPolicy] = useState({
@@ -665,16 +667,23 @@ const ManageRevocations = () => {
 
                       <td className="p-3.5 pr-5 text-center">
                         {f.status === 'Revoked' ? (
-                          f.evidenceUrl ? (
+                          <div className="flex items-center justify-center gap-1.5 flex-wrap">
                             <button
-                              onClick={() => setPreviewDoc(f.evidenceUrl)}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] text-xs font-semibold cursor-pointer"
+                              onClick={() => setSelectedCancellation(f)}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 text-red-700 dark:text-red-300 text-xs font-semibold cursor-pointer shadow-2xs"
+                              title="Print Official Franchise Cancellation Letter (Office of the Vice Mayor)"
                             >
-                              <FileText size={13} /> View Evidence
+                              <Printer size={13} /> Letter
                             </button>
-                          ) : (
-                            <span className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">Revoked</span>
-                          )
+                            {f.evidenceUrl && (
+                              <button
+                                onClick={() => setPreviewDoc(f.evidenceUrl)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] text-xs font-semibold cursor-pointer"
+                              >
+                                <FileText size={13} /> Evidence
+                              </button>
+                            )}
+                          </div>
                         ) : (
                           <button
                             onClick={() => handleSelectFranchiseForViolation(f)}
@@ -1091,6 +1100,15 @@ const ManageRevocations = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Official Sangguniang Bayan / OVM Franchise Cancellation Letter */}
+      {selectedCancellation && (
+        <OfficialCancellationLetterModal
+          isOpen={!!selectedCancellation}
+          onClose={() => setSelectedCancellation(null)}
+          franchise={selectedCancellation}
+        />
       )}
     </MainLayout>
   );

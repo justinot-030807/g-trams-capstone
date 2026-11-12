@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { X, FileText, User, Receipt, ShieldCheck, FileCheck, Eye, Award, ExternalLink } from 'lucide-react';
+import { X, FileText, User, Receipt, ShieldCheck, FileCheck, Eye, Award, ExternalLink, Printer } from 'lucide-react';
 import { formatZoneLabel } from '../../utils/constants';
 import TricycleIcon from '../common/TricycleIcon';
+import OfficialApplicationFormModal from '../common/OfficialApplicationFormModal';
 
 const DEFAULT_MODAL_REQUIREMENTS = [
   { id: 'crDocument', label: 'Certificate of Registration (CR)', fieldUrl: 'crUrl' },
@@ -29,6 +30,7 @@ const ApplicationSummaryModal = ({
 }) => {
   const visible = isOpen !== undefined ? Boolean(isOpen) : Boolean(isSummaryModalOpen);
   const [docPreview, setDocPreview] = useState(null); // { label, url }
+  const [showOfficialForm, setShowOfficialForm] = useState(false);
 
   const handleClose = () => {
     if (onClose) onClose();
@@ -382,31 +384,53 @@ const ApplicationSummaryModal = ({
 
         {/* Modal Actions */}
         <div className="pt-3 border-t border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col sm:flex-row items-center justify-between gap-2.5">
-          {data?.status === 'Active' && onViewECopy && (
+          <div className="flex items-center gap-2 w-full sm:w-auto">
             <button
               type="button"
-              onClick={() => {
-                handleClose();
-                onViewECopy(data);
-              }}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 min-h-[40px] rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-xs transition-colors cursor-pointer"
+              onClick={() => setShowOfficialForm(true)}
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-2 min-h-[40px] rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700 font-bold text-xs sm:text-sm hover:bg-amber-100 dark:hover:bg-amber-950/70 transition-colors cursor-pointer shadow-2xs"
+              title="Print official MTOP application form pursuant to Ord. 48 s. 1999"
             >
-              <Award size={15} />
-              <span>View E-Copy (Approved Certificate)</span>
+              <Printer size={15} />
+              <span>Official Form (PDF)</span>
             </button>
-          )}
+
+            {data?.status === 'Active' && onViewECopy && (
+              <button
+                type="button"
+                onClick={() => {
+                  handleClose();
+                  onViewECopy(data);
+                }}
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 min-h-[40px] rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-xs transition-colors cursor-pointer"
+              >
+                <Award size={15} />
+                <span>View E-Copy</span>
+              </button>
+            )}
+          </div>
 
           <div className="flex items-center justify-end w-full sm:w-auto ml-auto">
             <button
               type="button"
               onClick={handleClose}
-              className="w-full sm:w-auto px-5 py-2.5 min-h-[40px] rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-xs sm:text-sm shadow-xs transition-colors cursor-pointer"
+              className="w-full sm:w-auto px-5 py-2 min-h-[40px] rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-xs sm:text-sm shadow-xs transition-colors cursor-pointer"
             >
               Close
             </button>
           </div>
         </div>
       </div>
+
+      {/* Official Printable MTOP Application Form Modal */}
+      {showOfficialForm && (
+        <OfficialApplicationFormModal
+          isOpen={showOfficialForm}
+          onClose={() => setShowOfficialForm(false)}
+          formData={data}
+          isRenewal={data.applicationType === 'Renewal'}
+        />
+      )}
 
       {/* Document Lightbox Preview Modal */}
       {docPreview && (
