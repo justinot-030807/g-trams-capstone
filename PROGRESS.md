@@ -5,11 +5,11 @@
   - Naidagdag ang 17 TODA directory na may sakop na barangay at zona sa `constants.js`.
   - Naka-filter na ang TODA selection sa registration, onboarding, at franchise application.
 - **Item 2: Bilang ng Traysikel na Ipapasok**:
-  - Naidagdag ang unit selector sa Step 1 ng application form (1, 2, o 3 units na nakabase sa LGU limit).
+  - Naidagdag ang unit selector sa Step 1 ng application form (1 o 2 units na nakabase sa Municipal limit).
 - **Item 3: Back-to-Back License Upload & Detalyadong Impormasyon**:
   - Hinihingi na ang harap at likod ng lisensya.
   - Naitatala ang Date of Birth (`driverDob`) para sa birthday renewal monitoring at DL driving codes (`driverDlCodes`, hal. Code A/A1).
-  - Naibukod at hindi kinukuha ang blood type ayon sa direktiba ni Ma'am.
+  - Naibukod at hindi kinukuha ang blood type ayon sa direktiba ng LGU at RA 10173.
 - **Item 4: Hiwalay na OR at CR + Owner Verification**:
   - Magkahiwalay na ang upload dropzones para sa LTO Official Receipt (`orFile`) at Certificate of Registration (`crFile`).
   - May sariling fields para sa CR No, CR Date, OR No, OR Date, Color, Series, Year Model, File No, Vehicle Type, at Classification.
@@ -34,67 +34,31 @@
 - **Pagtanggal sa Lumang Claim Stub**:
   - Lubos nang tinanggal ang Claim Stub Voucher sa frontend at backend pabor sa Cashier / Treasury workflow.
   - Direktang over-the-counter ang bayad sa Municipal Cashier gamit ang Plate No, at may physical LGU OR logging.
-- **Dokumentasyon**:
-  - Nilikha ang `PROJECT_CONTEXT.md` sa root para sa mga external AI tools.
-- **Database at Folder Reorganization**:
-  - Na-drop ang dead legacy prototype collections (`calendars` at `reports`) na may safe backup sa `backend/backups/`.
-  - In-archive ang 3 orphaned franchises at tinanggal ang 1 orphaned notification.
-  - Na-normalize ang user roles sa `toda_president` at inalis ang duplicate enum types.
-  - Inilipat ang seed scripts sa `backend/scripts/`, TODA page sa `frontend/src/pages/toda/`, audio scripts sa `remotion/scripts/`, at documents/reports sa `docs/`.
-  - **Pagtanggal ng Obsolete Fields sa Database at Code**:
-    - Tinanggal ang `eSigned`, `releaseDate`, at `deficiencies` sa `franchises` (Mongoose model, controllers, services, seed scripts).
-    - Tinanggal ang redundant `docChecklist` sa `systemsettings` (Mongoose model, controller, admin settings UI).
-    - Matagumpay na naipatupad ang live `$unset` migration sa lahat ng 25 documents sa MongoDB Atlas (0 legacy fields remaining).
-- **Multi-Mesh Undefined & Security Audit (OWASP 2025)**:
-  - 100% Passed ang buong test suite: **10 test suites, 159 tests passing, 0 failures**.
-  - Inayos ang `notificationModel` enum casing (`lowercase: true`) at notification dispatcher upang maiwasan ang schema validation errors.
-  - Nilagyan ng safe fallback extractor ang `operatorId` sa `updateFranchiseStatus` at `processCashierPayment` laban sa unpopulated / undefined references.
-  - Nilagyan ng date validation guard ang `driverDob` bago mag-`.toISOString()` sa `documentVerificationService.js`.
-  - Pinatatag ang `pushService.js` laban sa undefined payload objects at malformed subscription keys.
-  - Na-audit ang lahat ng 96 frontend files: **0 syntax errors, 0 undeclared variables**.
-  - Pinatatag ang date `.substring()` sa `ApplyFranchise.jsx`, member roster array mappings sa `ValidateTODA.jsx`, at receipt field trimming sa `CashierDashboard.jsx`.
-  - Napatunayang matatag ang seguridad laban sa NoSQL injection, IDOR, brute force rate limiting, at privilege escalation.
-
-- **Maximum 2 Units Cap & Awtomatikong Capacity Blocking (`/apply-franchise`)**:
-  - Tinanggal ang "3 Units" option sa unit selector; mahigpit nang naka-cap sa maximum 2 units (`[ 1 Unit ]`, `[ 2 Units ]`) ayon sa Municipal Franchising Ordinance ng Gasan.
-  - Awtomatikong bina-block ang form sa `/apply-franchise` kapag ang operator ay mayroon nang 2 units (full capacity). Sa halip na form, ipinapakita ang official LGU "Maximum Fleet Limit Reached" screen kasama ang listahan ng kanilang mga rehistradong traysikel at status.
-  - Naayos ang initial state upang agad na basahin ang cached franchises mula sa storage para walang flash ng form habang naglo-load.
-  - Nilagyan ng backend clamp sa `franchiseService.js` upang hindi makapagsumite ng higit sa 2 units.
-
-- **Hiwalay na Upload Slots para sa LTO CR at LTO OR (`/apply-franchise`)**:
-  - Hiniwalay ang attachment slots sa Step 2 sa dalawang magkabukod na upload cards:
-    1. **Certificate of Registration (CR)** - para sa katibayan ng rehistro at specifications ng traysikel (Plate, Engine, Chassis, Owner).
-    2. **Official Receipt (OR)** - para sa katibayan ng taunang bayad sa rehistro ng LTO (OR No, Validity / Expiry Date).
-  - In-update ang AI scanner (`triggerAiScan`) at document validation upang i-validate at i-auto fill ang mga detalye mula sa parehong dokumento.
-- **Pagsasaayos ng Status Tabs sa Admin Franchise Approval (`/franchise-approval`)**:
-  - Inayos ang status tabs (`Needs Review`, `For Payment`, `For Signing`, `Ready for Pickup`, `All in Queue`, `Approved`, `Rejected`) upang magamit ang buong lapad ng container gamit ang `flex-wrap`.
-  - Inilipat ang triage controls (`Select Clean`, `All`, `Batch Actions`) sa sarili nitong sub-bar upang hindi ipitin o itago ang tabs.
-  - Tinanggal ang horizontal scrollbar (`overflow-x-auto`) kaya direktang nakikita at napipindot agad ang `Approved` at `Rejected` tabs sa anumang screen resolution.
-
-- **Automated Database Backup & Disaster Recovery Plan (DRP)**:
-  - Background weekly cron scheduled tuwing Linggo ng 12:00 MN (PST) para sa full snapshot ng 13 database collections sa `.json.gz`.
-  - Direct In-Memory Streaming Download (`GET /api/v1/backups/direct-download`) para sa offline storage sa USB/laptop ng IT Officer (immune sa ephemeral cloud container resets).
-  - Data Privacy Act (RA 10173) token sanitization bago i-export ang backup archive.
-  - Interactive System Admin Tab 5 na may safety modal requiring typing `RESTORE` bago mag-overwrite.
-
-- **Dual-Lookup MTOP Certificate QR Code Verification Fix**:
-  - In-update ang `verifyOperator` controller upang mag-lookup gamit ang User ID (para sa Operator ID cards) O Franchise ID (para sa vehicle MTOP certificates).
-  - May highlighted badge card na "Scanned MTOP Certificate Unit" kasama ang kumpletong detalye ng prangkisa.
-
-- **Cashier Daily Treasury Remittance Sheet & 1-Click CSV Export**:
-  - Daily Remittance Sheet modal sa `CashierDashboard.jsx` na may breakdown ng Cash, GCash, at violation collections.
-  - COA-compliant printable view na may official signature blocks para sa Cashier/Disbursing Officer at Municipal Treasurer.
-  - 1-click CSV export (`GTRAMS_Treasury_Daily_Remittance_<DATE>.csv`).
-
-- **Deliverable #7 User's Manual of the System (PDF)**:
-  - Opisyal na PDF document (`Deliverable7_Group5_GTRAMS_UsersManual.pdf`) na may 14 na live authentic screenshots alinsunod sa 100-point rubric ng Marinduque State University CICS.
-  - Sinasaklaw ang lahat ng 6 user roles (Operator, TODA President, Traffic Enforcer, Cashier, BPLO, Admin).
-
-- **Automated Stress Testing (500 Concurrent Queued Requests)**:
-  - 100% success rate, 0% failure rate, zero race conditions, at 201/201 automated unit and integration tests passing.
+- **IT Admin Sidebar Audit Logs & Persistent MongoDB Database Backups (`b81dd0f`)**:
+  - Inilipat ang Audit Trail mula sa siksikang tab sa `/admin/settings` papunta sa sariling dedicated menu sa IT Admin sidebar: `/admin/audit-logs`.
+  - May advanced search, role filtering, pagination, action category filters, at 1-click CSV export.
+  - Ginawan ng `BackupArchive` Mongoose model para i-persist ang database backups nang direkta sa MongoDB Atlas, kaya hindi na nawawala ang mga backup files kahit mag-restart o mag-sleep ang libreng cloud container ng Render.
+  - Nilagyan ng global 429 (Too Many Requests) safety failover at caching sa `/admin/settings`.
+- **Direct Backend Architecture & Cloudflare Worker Removal (`c541b2e`)**:
+  - Tinanggal ang dating Cloudflare Worker proxy (`workers.dev`) na nagdudulot minsan ng intermediate connection drops o 524 gateway timeouts.
+  - Naka-point na nang direkta ang `VITE_API_URL` sa frontend (`.env`, `vite.config.js`, `googleAuthUtils.js`, `SocketContext.jsx`) papunta sa production Render backend (`https://g-trams-web2.onrender.com`).
+- **Comprehensive Pre-UAT Audit & P0-P2 Crash Prevention (`4c99977`)**:
+  - Naayos ang nawawalang icons (`AlertTriangle`, `Megaphone`) sa `BploDashboard.jsx`.
+  - Pinalawak ang RBAC permissions para sa `system_admin` at `bplo_staff` sa `ChatContext.jsx` at controllers.
+  - Nilagyan ng voluntary cancellation option ang `Active - Under Warning` status sa Operator portal.
+  - `@media print` isolation para sa Cashier E-Resibo voucher upang malinis ang pag-print nang hindi nasasama ang navbar at sidebar.
+  - Naglagay ng 10-minute automated background keepalive ping sa backend upang maiwasan ang cold-start delays sa Render tuwing UAT.
+- **Mobile Screen Width Overflow & Long String Word-Wrap Fix (`17cc0c0`)**:
+  - Natukoy at naayos ang dahilan kung bakit nagkaroon ng malaking itim na puwang sa kanan ng phone screen sa Step 5 Review: nung nag-type ang user ng 101 characters na walang patid sa TIN at 25 characters sa chassis/motor, pinalapad nito ang card sa 950px sa isang 360px na screen.
+  - Nilinis ang `#14110F` inline dark background sa `index.html` at `MainLayout.jsx`.
+  - Nilagyan ng `break-all` at `min-w-0` ang lahat ng Review grid cells sa `ApplyFranchise.jsx` kasama ang global `overflow-x-hidden` sa `index.css`.
+- **3-Tier Resilient Document OCR Engine (`17cc0c0`)**:
+  - Nag-integrate ng local `tesseract.js` engine sa backend na may custom regex parsing para sa Philippine LTO CR, LTO OR, Driver's License, Barangay Clearance, Cedula, at TODA Roster.
+  - Gumagana 100% kahit walang active `GEMINI_API_KEY` o kapag naubos ang quota sa Render.
+  - 100% auto-fill accuracy sa lahat ng `sample_docs/TAMA/*` at 100% rejection sa `sample_docs/MALI/*` at foreign IDs (e.g. Argentine license).
 
 ## 2. Ginagawa ngayon (In Progress)
-- Handa nang ganap ang buong sistema at mga dokumento para sa Final Capstone Defense at pormal na submission sa Marinduque State University.
+- Pagsasagawa ng User Acceptance Testing (UAT) kasama ang mga test accounts para sa bawat user role (IT Admin, BPLO, Cashier, TODA President, Operator).
 
 ## 3. Susunod (Next Steps)
 - Actual Oral Defense presentation kasama ang Panel of Evaluators.
