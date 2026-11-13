@@ -10,6 +10,7 @@ import { AccordionListSkeleton, TableRowsSkeleton } from '../../components/skele
 import PageHeader from '../../components/common/PageHeader';
 import StatusBadge from '../../components/common/StatusBadge';
 import { isNameMatch } from '../../utils/nameMatcher';
+import { formatVehicleMakeAndModel } from '../../utils/vehicleFormatters';
 
 const ValidateTODA = () => {
   const [activeTab, setActiveTab] = useState('directory'); // 'directory' | 'validations' | 'removals'
@@ -18,11 +19,15 @@ const ValidateTODA = () => {
   // States
   const [searchQuery, setSearchQuery] = useState('');
   const [submissions, setSubmissions] = useState([]);
+  const [rosters, setRosters] = useState([]);
   const [users, setUsers] = useState([]);
   const [franchises, setFranchises] = useState([]);
   const [removals, setRemovals] = useState([]);
   const [selectedSubmissionOCR, setSelectedSubmissionOCR] = useState(null);
   const [ocrModalSearch, setOcrModalSearch] = useState('');
+  const [selectedTodaModal, setSelectedTodaModal] = useState(null);
+  const [todaModalSearch, setTodaModalSearch] = useState('');
+  const [todaModalFilter, setTodaModalFilter] = useState('all'); // 'all' | 'active_mtop' | 'registered' | 'roster'
   const [todaActiveSubTabs, setTodaActiveSubTabs] = useState({}); // key: todaName -> 'roster' | 'drivers'
   const [isRescanning, setIsRescanning] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
@@ -97,11 +102,26 @@ const ValidateTODA = () => {
     }
   };
 
+  const fetchRosters = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/toda/rosters`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      if (response.ok) {
+        const d = await response.json();
+        setRosters(Array.isArray(d) ? d : (d.data || []));
+      }
+    } catch (err) {
+      console.error('Error fetching TODA rosters:', err);
+    }
+  };
+
   const fetchAllData = async () => {
     setIsLoading(true);
     try {
       await Promise.allSettled([
         fetchSubmissions(),
+        fetchRosters(),
         fetchUsers(),
         fetchFranchises(),
         fetchRemovals()
@@ -122,6 +142,7 @@ const ValidateTODA = () => {
       });
       if (response.ok) {
         setSubmissions(submissions.map(sub => sub._id === id ? { ...sub, status: 'Approved' } : sub));
+        fetchRosters();
         showToast('TODA member list approved successfully! Active OCR roster ingested.', 'success');
       } else { 
         showToast('Failed to approve list.', 'error'); 
@@ -233,17 +254,114 @@ const ValidateTODA = () => {
 
   const groupedToda = useMemo(() => {
     return TODA_LIST.map(todaName => {
+      const todaUpper = todaName.toUpperCase();
       const todaMatchesQuery = isSearching && todaName.toLowerCase().includes(query);
       
-      const allMembersInToda = users.filter(u => (u.todaAssociation || 'NON-TODA').trim().toUpperCase() === todaName.toUpperCase());
+      const allMembersInToda = users.filter(u => (u.todaAssociation || 'NON-TODA').trim().toUpperCase() === todaUpper);
+      const todaFranchises = franchises.filter(f => (f.todaName || 'NON-TODA').trim().toUpperCase() === todaUpper);
+      const todaRosterDoc = rosters.find(r => (r.todaName || '').trim().toUpperCase() === todaUpper) || null;
+      const officialRosterMembers = todaRosterDoc?.members || [];
 
       // Find all submissions associated with this TODA (sorted by latest first)
       const todaSubmissions = submissions.filter(s => 
-        (s.todaAssociation || '').trim().toUpperCase() === todaName.toUpperCase() ||
-        (s.fileName || '').toUpperCase().includes(todaName.toUpperCase())
+        (s.todaAssociation || '').trim().toUpperCase() === todaUpper ||
+        (s.fileName || '').toUpperCase().includes(todaUpper)
       );
       const latestSubmission = todaSubmissions[0] || null;
       const extractedMasterlist = latestSubmission?.extractedMembers || [];
+
+      // Build unified deduplicated member list for this TODA
+      const unifiedMap = [];
+      const findOrAddUnified = (rawName) => {
+        const cleanName = String(rawName || '').trim();
+        if (!cleanName) return null;
+        let existing = unifiedMap.find(item => isNameMatch(item.name, cleanName));
+        if (!existing) {
+          existing = {
+            id: `${todaUpper}-${unifiedMap.length + 1}`,
+            name: cleanName,
+            bodyNumber: '',
+            contact: '',
+            address: '',
+            plateNo: '',
+            makeModel: '',
+            motorNo: '',
+            chassisNo: '',
+            mtopNumber: '',
+            franchiseStatus: null,
+            isRegisteredUser: false,
+            isPresident: false,
+            inOfficialRoster: false,
+            inOcrSubmission: false,
+            sources: []
+          };
+          unifiedMap.push(existing);
+        }
+        return existing;
+      };
+
+      // 1. Official TodaRoster entries
+      officialRosterMembers.forEach((rm) => {
+        const entry = findOrAddUnified(rm.operatorName || rm.name);
+        if (!entry) return;
+        entry.inOfficialRoster = true;
+        if (!entry.sources.includes('Official Roster')) entry.sources.push('Official Roster');
+        if (rm.bodyNumber && !entry.bodyNumber) entry.bodyNumber = rm.bodyNumber;
+        if (rm.plateNo && !entry.plateNo) entry.plateNo = rm.plateNo;
+        if (rm.contactNumber && !entry.contact) entry.contact = rm.contactNumber;
+      });
+
+      // 2. Extracted OCR submission members
+      extractedMasterlist.forEach((em) => {
+        const entry = findOrAddUnified(em.operatorName || em.name);
+        if (!entry) return;
+        entry.inOcrSubmission = true;
+        if (!entry.sources.includes('OCR Masterlist')) entry.sources.push('OCR Masterlist');
+        const bNo = em.bodyNumber || em.unitNo || '';
+        if (bNo && !entry.bodyNumber) entry.bodyNumber = bNo;
+        if (em.plateNo && !entry.plateNo) entry.plateNo = em.plateNo;
+      });
+
+      // 3. Registered App Users in this TODA
+      allMembersInToda.forEach((u) => {
+        const entry = findOrAddUnified(u.name);
+        if (!entry) return;
+        entry.isRegisteredUser = true;
+        entry.userId = u._id;
+        if (String(u.role || '').toLowerCase() === 'toda_president') entry.isPresident = true;
+        if (!entry.sources.includes('App Account')) entry.sources.push('App Account');
+        if (u.contact && !entry.contact) entry.contact = u.contact;
+        if (u.address && !entry.address) entry.address = u.address;
+        const f = getMemberFranchise(u);
+        if (f) {
+          entry.franchiseStatus = f.status;
+          entry.plateNo = f.plateNo || entry.plateNo;
+          entry.makeModel = formatVehicleMakeAndModel(f, '');
+          entry.motorNo = f.motorNo || entry.motorNo;
+          entry.chassisNo = f.chassisNo || entry.chassisNo;
+          entry.mtopNumber = f.mtopNumber || entry.mtopNumber;
+          if (!entry.address && f.address) entry.address = f.address;
+          if (!entry.sources.includes('MTOP Record')) entry.sources.push('MTOP Record');
+        }
+      });
+
+      // 4. Franchise applications explicitly under this TODA
+      todaFranchises.forEach((f) => {
+        const fName = f.fullName || f.operator?.name || '';
+        const entry = findOrAddUnified(fName);
+        if (!entry) return;
+        if (!entry.sources.includes('MTOP Record')) entry.sources.push('MTOP Record');
+        if (!entry.franchiseStatus || f.status === 'Active') {
+          entry.franchiseStatus = f.status;
+        }
+        if (f.plateNo && !entry.plateNo) entry.plateNo = f.plateNo;
+        if (!entry.makeModel) entry.makeModel = formatVehicleMakeAndModel(f, '');
+        if (f.motorNo && !entry.motorNo) entry.motorNo = f.motorNo;
+        if (f.chassisNo && !entry.chassisNo) entry.chassisNo = f.chassisNo;
+        if (f.mtopNumber && !entry.mtopNumber) entry.mtopNumber = f.mtopNumber;
+        if (f.address && !entry.address) entry.address = f.address;
+        if (f.contact && !entry.contact) entry.contact = f.contact;
+      });
       
       const matchingMembers = allMembersInToda.filter(member => {
         if (!isSearching) return true;
@@ -261,33 +379,43 @@ const ValidateTODA = () => {
         return nameMatch || contactMatch || addressMatch || plateMatch || motorMatch || chassisMatch;
       });
 
-      const masterlistMatchesQuery = isSearching && extractedMasterlist.some(m => 
-        (m.name || '').toLowerCase().includes(query) ||
-        (m.unitNo || '').toLowerCase().includes(query) ||
-        (m.plateNo || '').toLowerCase().includes(query)
-      );
+      const matchingCombinedMembers = unifiedMap.filter(m => {
+        if (!isSearching || todaMatchesQuery) return true;
+        return (
+          (m.name || '').toLowerCase().includes(query) ||
+          (m.bodyNumber || '').toLowerCase().includes(query) ||
+          (m.plateNo || '').toLowerCase().includes(query) ||
+          (m.address || '').toLowerCase().includes(query) ||
+          (m.contact || '').toLowerCase().includes(query) ||
+          (m.motorNo || '').toLowerCase().includes(query)
+        );
+      });
 
-      const compliantCount = allMembersInToda.filter(m => {
-        const f = getMemberFranchise(m);
-        return f && f.status === 'Active';
-      }).length;
-
-      const totalCount = allMembersInToda.length;
+      const compliantCount = unifiedMap.filter(m => m.franchiseStatus === 'Active').length;
+      const totalCount = unifiedMap.length;
+      const registeredCount = unifiedMap.filter(m => m.isRegisteredUser).length;
+      const rosterCount = unifiedMap.filter(m => m.inOfficialRoster || m.inOcrSubmission).length;
       const complianceRate = totalCount > 0 ? Math.round((compliantCount / totalCount) * 100) : 0;
-      const colorumCount = totalCount - compliantCount;
+      const colorumCount = Math.max(0, totalCount - compliantCount);
 
       return {
         name: todaName,
         members: matchingMembers,
+        combinedMembers: unifiedMap,
+        matchingCombinedMembers,
         totalCount,
+        compliantCount,
+        registeredCount,
+        rosterCount,
         complianceRate,
         colorumCount,
         latestSubmission,
         todaSubmissions,
-        extractedMasterlist
+        extractedMasterlist,
+        todaRosterDoc
       };
-    }).filter(toda => !isSearching || toda.members.length > 0 || toda.todaSubmissions.length > 0 || toda.extractedMasterlist.length > 0);
-  }, [users, franchises, submissions, searchQuery, isSearching]);
+    }).filter(toda => !isSearching || toda.matchingCombinedMembers.length > 0 || toda.members.length > 0 || toda.todaSubmissions.length > 0 || toda.extractedMasterlist.length > 0);
+  }, [users, franchises, submissions, rosters, searchQuery, isSearching]);
 
   const filteredSubmissions = useMemo(() => {
     return submissions.filter(sub => {
@@ -483,8 +611,12 @@ const ValidateTODA = () => {
                             : 'border-[#E4E1DC] dark:border-[#2E2A27] hover:border-[#9E2A2B]/40'
                         }`}
                       >
-                        <button 
-                          onClick={() => setExpandedToda(expandedToda === toda.name ? null : toda.name)}
+                        <div 
+                          onClick={() => {
+                            setSelectedTodaModal(toda);
+                            setTodaModalSearch('');
+                            setTodaModalFilter('all');
+                          }}
                           className={`w-full p-3.5 sm:p-4 flex justify-between items-center transition-colors text-left cursor-pointer ${
                             isOpen 
                               ? 'bg-[#F6F5F3] dark:bg-[#2E2A27]/30' 
@@ -492,21 +624,34 @@ const ValidateTODA = () => {
                           }`}
                         >
                           <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-8 h-8 bg-[#9E2A2B] text-white font-semibold rounded-lg flex items-center justify-center text-xs shrink-0">
+                            <div className="w-9 h-9 bg-[#9E2A2B] text-white font-bold rounded-lg flex items-center justify-center text-xs shrink-0 shadow-xs">
                               {(toda.name || '').substring(0, 3)}
                             </div>
                             <div className="min-w-0">
-                              <h3 className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] text-sm sm:text-base truncate">
-                                {toda.name}
-                              </h3>
-                              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
-                                {(toda.members || []).length} {(toda.members || []).length === 1 ? 'Driver' : 'Drivers'} 
-                                {toda.totalCount !== (toda.members || []).length && ` (filtered from ${toda.totalCount})`}
+                              <div className="flex items-center gap-2 flex-wrap">
+                                <h3 className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] text-sm sm:text-base truncate">
+                                  {toda.name}
+                                </h3>
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] border border-[#9E2A2B]/25 dark:border-[#D4AF37]/30 font-mono tabular-nums">
+                                  <Users size={11} />
+                                  <span>{toda.totalCount} {toda.totalCount === 1 ? 'Member' : 'Members'}</span>
+                                </span>
+                              </div>
+                              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5 flex items-center gap-2 flex-wrap">
+                                <span>{toda.registeredCount} App Account{toda.registeredCount === 1 ? '' : 's'}</span>
+                                <span>•</span>
+                                <span>{toda.compliantCount} Active MTOP</span>
+                                {toda.rosterCount > 0 && (
+                                  <>
+                                    <span>•</span>
+                                    <span>{toda.rosterCount} Official Roster</span>
+                                  </>
+                                )}
                               </p>
                             </div>
                           </div>
 
-                          <div className="flex items-center gap-2 sm:gap-3 shrink-0 flex-wrap justify-end">
+                          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 flex-wrap justify-end">
                             <span className={`text-[11px] font-semibold px-2 py-0.5 rounded border ${
                               toda.complianceRate >= 80 
                                 ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800' 
@@ -518,17 +663,36 @@ const ValidateTODA = () => {
                             </span>
                             {toda.colorumCount > 0 && (
                               <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800/60" title={`${toda.colorumCount} driver(s) without active MTOP`}>
-                                <AlertTriangle size={11} /> {toda.colorumCount} At-Risk
+                                <AlertTriangle size={11} /> {toda.colorumCount} Unregistered MTOP
                               </span>
                             )}
-                            <span className="text-xs font-semibold bg-white dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] px-2.5 py-0.5 rounded-lg text-[#1F1D1B] dark:text-[#F6F5F3] font-mono tabular-nums">
-                              {(toda.members || []).length}
-                            </span>
-                            <div className={`p-1 text-[#6B6761] dark:text-[#A8A29E] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
-                              <ChevronDown size={16} />
-                            </div>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedTodaModal(toda);
+                                setTodaModalSearch('');
+                                setTodaModalFilter('all');
+                              }}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white text-xs font-semibold transition-colors shadow-xs cursor-pointer"
+                              title={`Open full member list modal for ${toda.name}`}
+                            >
+                              <Users size={12} />
+                              <span>View Members ({toda.totalCount})</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setExpandedToda(expandedToda === toda.name ? null : toda.name);
+                              }}
+                              className={`p-1.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3] transition-transform duration-200 cursor-pointer ${isOpen ? 'rotate-180' : ''}`}
+                              title={isOpen ? 'Collapse inline details' : 'Expand inline details'}
+                            >
+                              <ChevronDown size={15} />
+                            </button>
                           </div>
-                        </button>
+                        </div>
                         
                         {/* Sub-tab Navigation and Content inside opened TODA card */}
                         {isOpen && (
@@ -1259,6 +1423,285 @@ const ValidateTODA = () => {
                     className="px-4 py-1.5 rounded-lg bg-[#1C1917] hover:bg-[#2E2A27] dark:bg-[#F6F5F3] dark:hover:bg-white dark:text-[#14110F] text-white text-xs font-bold cursor-pointer transition-colors shadow-xs"
                   >
                     Close Viewer
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* UNIFIED TODA DIRECTORY MEMBER LIST MODAL */}
+      {selectedTodaModal && (() => {
+        const liveToda = groupedToda.find(t => t.name === selectedTodaModal.name) || selectedTodaModal;
+        const allTodaMembers = liveToda.combinedMembers || [];
+        const modalQuery = todaModalSearch.trim().toLowerCase();
+
+        const filteredTodaMembers = allTodaMembers.filter((m) => {
+          if (todaModalFilter === 'active_mtop' && m.franchiseStatus !== 'Active') return false;
+          if (todaModalFilter === 'registered' && !m.isRegisteredUser) return false;
+          if (todaModalFilter === 'roster' && !m.inOfficialRoster && !m.inOcrSubmission) return false;
+
+          if (!modalQuery) return true;
+          return (
+            (m.name || '').toLowerCase().includes(modalQuery) ||
+            (m.bodyNumber || '').toLowerCase().includes(modalQuery) ||
+            (m.plateNo || '').toLowerCase().includes(modalQuery) ||
+            (m.address || '').toLowerCase().includes(modalQuery) ||
+            (m.contact || '').toLowerCase().includes(modalQuery) ||
+            (m.motorNo || '').toLowerCase().includes(modalQuery)
+          );
+        });
+
+        return (
+          <div className="fixed inset-0 z-[9998] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+            <div 
+              className="fixed inset-0"
+              onClick={() => { setSelectedTodaModal(null); setTodaModalSearch(''); setTodaModalFilter('all'); }}
+            />
+            <div className="relative z-10 bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-2xl rounded-xl max-w-4xl w-full overflow-hidden flex flex-col max-h-[90vh]">
+              {/* Modal Header */}
+              <div className="px-5 py-4 border-b border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-lg bg-[#9E2A2B] text-white font-bold flex items-center justify-center text-xs shrink-0 shadow-xs">
+                    {(liveToda.name || '').substring(0, 3)}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-bold text-base sm:text-lg text-[#1F1D1B] dark:text-[#F6F5F3] truncate">
+                        {liveToda.name} — Member Directory
+                      </h3>
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] border border-[#9E2A2B]/25 dark:border-[#D4AF37]/30 font-mono tabular-nums">
+                        {allTodaMembers.length} {allTodaMembers.length === 1 ? 'Member' : 'Members'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                      Consolidated directory combining registered app operators, active MTOP franchises, and certified TODA rosters.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setSelectedTodaModal(null); setTodaModalSearch(''); setTodaModalFilter('all'); }}
+                  className="p-2 rounded-lg text-[#6B6761] hover:text-[#1F1D1B] dark:text-[#A8A29E] dark:hover:text-[#F6F5F3] hover:bg-[#E4E1DC]/50 dark:hover:bg-[#2E2A27] transition-colors cursor-pointer"
+                  title="Close member list modal"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Summary Strip & Filter Bar */}
+              <div className="p-4 sm:p-5 border-b border-[#E4E1DC] dark:border-[#2E2A27] space-y-3 bg-white dark:bg-[#1C1917]">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  <div className="p-2.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E] block">Total Members</span>
+                    <span className="text-lg font-bold font-mono tabular-nums text-[#1F1D1B] dark:text-[#F6F5F3]">{allTodaMembers.length}</span>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300 block">Active MTOP</span>
+                    <span className="text-lg font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">{liveToda.compliantCount || 0}</span>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/50">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-blue-800 dark:text-blue-300 block">App Accounts</span>
+                    <span className="text-lg font-bold font-mono tabular-nums text-blue-700 dark:text-blue-400">{liveToda.registeredCount || 0}</span>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300 block">Official Roster</span>
+                    <span className="text-lg font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">{liveToda.rosterCount || 0}</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+                  {/* Filter Pills */}
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+                    {[
+                      { id: 'all', label: `All (${allTodaMembers.length})` },
+                      { id: 'active_mtop', label: `Active MTOP (${liveToda.compliantCount || 0})` },
+                      { id: 'registered', label: `App Accounts (${liveToda.registeredCount || 0})` },
+                      { id: 'roster', label: `Certified Roster (${liveToda.rosterCount || 0})` }
+                    ].map((tab) => (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setTodaModalFilter(tab.id)}
+                        className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
+                          todaModalFilter === tab.id
+                            ? 'bg-[#9E2A2B] text-white'
+                            : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E] border border-[#E4E1DC] dark:border-[#2E2A27] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3]'
+                        }`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Search Input */}
+                  <div className="relative w-full sm:w-64">
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B6761] dark:text-[#A8A29E]" />
+                    <input
+                      type="text"
+                      placeholder="Search member, body #, plate..."
+                      value={todaModalSearch}
+                      onChange={(e) => setTodaModalSearch(e.target.value)}
+                      className="w-full pl-8 pr-7 py-1.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-xs font-medium text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37]"
+                    />
+                    {todaModalSearch && (
+                      <button
+                        type="button"
+                        onClick={() => setTodaModalSearch('')}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#6B6761] hover:text-[#1F1D1B] cursor-pointer"
+                      >
+                        <X size={13} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Member List Table */}
+              <div className="flex-1 overflow-y-auto">
+                <table className="w-full text-left border-collapse text-xs min-w-[680px]">
+                  <thead className="sticky top-0 bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] font-bold uppercase text-[11px] tracking-wider z-10">
+                    <tr>
+                      <th className="p-3 pl-5 w-24">Body #</th>
+                      <th className="p-3">Member / Operator Name</th>
+                      <th className="p-3">Tricycle Unit (Plate / Model)</th>
+                      <th className="p-3">Record Source</th>
+                      <th className="p-3 pr-5 text-right">Franchise Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
+                    {filteredTodaMembers.length === 0 ? (
+                      <tr>
+                        <td colSpan="5" className="p-10 text-center text-[#6B6761] dark:text-[#A8A29E]">
+                          <Users size={28} className="mx-auto mb-2 opacity-40" />
+                          <p className="font-semibold text-sm text-[#1F1D1B] dark:text-[#F6F5F3]">
+                            No members found matching this filter.
+                          </p>
+                          <p className="text-xs mt-0.5">
+                            Try switching filter tabs or clearing your search query.
+                          </p>
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredTodaMembers.map((member, idx) => {
+                        const initials = (member.name || 'M')
+                          .split(' ')
+                          .filter(Boolean)
+                          .slice(0, 2)
+                          .map(w => w[0])
+                          .join('')
+                          .toUpperCase();
+
+                        return (
+                          <tr key={member.id || idx} className="hover:bg-[#F6F5F3]/60 dark:hover:bg-[#14110F]/60 transition-colors">
+                            <td className="p-3 pl-5 font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
+                              {member.bodyNumber ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs">
+                                  <Hash size={11} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                                  {member.bodyNumber}
+                                </span>
+                              ) : (
+                                <span className="text-[#6B6761] dark:text-[#A8A29E] font-normal">#{idx + 1}</span>
+                              )}
+                            </td>
+                            <td className="p-3">
+                              <div className="flex items-center gap-2.5">
+                                <span className="w-7 h-7 rounded-full bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/25 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center text-[10px] font-bold shrink-0">
+                                  {initials}
+                                </span>
+                                <div>
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] text-xs sm:text-sm">
+                                      {member.name}
+                                    </span>
+                                    {member.isPresident && (
+                                      <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-[#D4AF37]/20 text-[#9E2A2B] dark:text-[#D4AF37] border border-[#D4AF37]/40">
+                                        TODA President
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
+                                    {[member.address, member.contact].filter(Boolean).join(' • ') || 'Gasan, Marinduque'}
+                                  </p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="p-3">
+                              {member.plateNo ? (
+                                <div>
+                                  <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3] px-1.5 py-0.5 rounded bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                                    {member.plateNo}
+                                  </span>
+                                  {member.makeModel && (
+                                    <span className="block text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-0.5">
+                                      {member.makeModel}
+                                    </span>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] italic">No unit linked</span>
+                              )}
+                            </td>
+                            <td className="p-3">
+                              <div className="flex flex-wrap gap-1">
+                                {(member.sources || []).map((src) => (
+                                  <span
+                                    key={src}
+                                    className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27]"
+                                  >
+                                    {src}
+                                  </span>
+                                ))}
+                              </div>
+                            </td>
+                            <td className="p-3 pr-5 text-right">
+                              {member.franchiseStatus ? (
+                                <StatusBadge status={member.franchiseStatus} />
+                              ) : member.isRegisteredUser ? (
+                                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-800">
+                                  Registered Account
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center text-[11px] font-semibold text-[#6B6761] dark:text-[#A8A29E] bg-[#F6F5F3] dark:bg-[#14110F] px-2 py-0.5 rounded border border-[#E4E1DC] dark:border-[#2E2A27]">
+                                  Roster Listed
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="px-5 py-3.5 border-t border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] flex flex-col sm:flex-row items-center justify-between gap-2">
+                <div className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                  Showing <strong className="text-[#1F1D1B] dark:text-[#F6F5F3]">{filteredTodaMembers.length}</strong> of <strong className="text-[#1F1D1B] dark:text-[#F6F5F3]">{allTodaMembers.length}</strong> members in {liveToda.name}
+                </div>
+                <div className="flex items-center gap-2">
+                  {liveToda.latestSubmission && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const sub = liveToda.latestSubmission;
+                        setSelectedTodaModal(null);
+                        setSelectedSubmissionOCR(sub);
+                      }}
+                      className="px-3 py-1.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#F6F5F3] hover:bg-[#E4E1DC]/40 text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5"
+                    >
+                      <Sparkles size={13} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                      <span>Inspect OCR Submission</span>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedTodaModal(null); setTodaModalSearch(''); setTodaModalFilter('all'); }}
+                    className="px-4 py-1.5 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white text-xs font-semibold transition-colors cursor-pointer"
+                  >
+                    Close Directory
                   </button>
                 </div>
               </div>

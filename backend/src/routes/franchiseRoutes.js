@@ -24,7 +24,9 @@ const {
     scanDocument,
     checkTodaMemberStatus,
     requestFranchiseCancellation,
-    processFranchiseCancellation
+    processFranchiseCancellation,
+    downloadOriginalTemplate,
+    downloadOriginalPreview
 } = require('../controllers/franchiseController');
 
 const memoryUpload = require('multer')({
@@ -90,6 +92,8 @@ router.put('/:id/revoke', protect, authorize('bplo_staff'), upload.fields([{ nam
 router.put('/:id/status', protect, authorize('bplo_staff'), updateFranchiseStatus);
 router.put('/:id/process-cancellation', protect, authorize('bplo_staff'), processFranchiseCancellation);
 router.get('/:id/record-check', protect, authorize('bplo_staff', 'cashier'), getFranchiseRecordCheck);
+router.post('/download-original-preview', protect, downloadOriginalPreview);
+router.get('/:id/download-original', protect, downloadOriginalTemplate);
 
 // Operator routes
 router.get('/my-franchises', protect, authorize('operator', 'toda president'), getMyFranchises);

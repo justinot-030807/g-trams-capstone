@@ -8,6 +8,7 @@ import { evaluateDocumentValidity } from '../../utils/dateValidity';
 import { formatZoneLabel } from '../../utils/constants';
 import TricycleIcon from '../common/TricycleIcon';
 import OfficialApplicationFormModal from '../common/OfficialApplicationFormModal';
+import { cleanText, formatVehicleMake, formatVehicleModelYear } from '../../utils/vehicleFormatters';
 
 const AdminApplicationSummaryModal = ({
   isOpen,
@@ -199,19 +200,19 @@ const AdminApplicationSummaryModal = ({
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
               <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
                 <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Make &amp; Model</span>
-                <span className="font-bold text-slate-800 dark:text-slate-200">{franchise.make || '—'}</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">{formatVehicleMake(franchise, '—')}</span>
               </div>
               <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
                 <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Model Year</span>
-                <span className="font-bold text-slate-800 dark:text-slate-200">{franchise.made || '—'}</span>
+                <span className="font-bold text-slate-800 dark:text-slate-200">{formatVehicleModelYear(franchise, '—')}</span>
               </div>
               <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
                 <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Plate Number</span>
-                <span className="font-mono font-bold text-amber-600 dark:text-amber-400">{franchise.plateNo || '—'}</span>
+                <span className="font-mono font-bold text-amber-600 dark:text-amber-400">{cleanText(franchise.plateNo, '—')}</span>
               </div>
               <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
                 <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Motor Number</span>
-                <span className="font-mono font-bold text-slate-800 dark:text-slate-200 truncate block">{franchise.motorNo || '—'}</span>
+                <span className="font-mono font-bold text-slate-800 dark:text-slate-200 truncate block">{cleanText(franchise.motorNo, '—')}</span>
               </div>
               <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 sm:col-span-2">
                 <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Chassis Number</span>

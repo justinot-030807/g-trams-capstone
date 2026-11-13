@@ -1,4 +1,29 @@
+const path = require('path');
+const dotenv = require('dotenv');
 const axios = require('axios');
+
+function reloadGeminiEnv() {
+    try {
+        dotenv.config({ path: path.join(__dirname, '../../.env'), override: true });
+    } catch (_) {}
+}
+
+function getGeminiModelCascade() {
+    reloadGeminiEnv();
+    const preferredModel = (process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite').trim();
+    const fallbackModel = (process.env.GEMINI_FALLBACK_MODEL || 'gemini-4-hydrogen').trim();
+    return [
+        preferredModel,
+        'gemini-3.5-flash-lite',
+        fallbackModel,
+        'gemini-4-hydrogen',
+        'gemini-3.8-flash',
+        'gemini-3.1-flash-lite',
+        'gemini-2.5-flash',
+        'gemini-2.5-flash-lite',
+        'gemini-2.0-flash'
+    ].filter((val, idx, self) => Boolean(val) && self.indexOf(val) === idx);
+}
 const { GoogleGenAI } = require('@google/genai');
 const { isNameMatch } = require('../utils/nameMatcher');
 
@@ -284,6 +309,23 @@ async function getTesseractWorker() {
     return _tesseractWorkerPromise;
 }
 
+function isValidRasterImageBuffer(buf, mimeType = '') {
+    if (!buf || !Buffer.isBuffer(buf) || buf.length < 128) return false;
+    if (String(mimeType || '').toLowerCase().includes('pdf')) return false;
+    // JPEG: FF D8 FF
+    if (buf[0] === 0xFF && buf[1] === 0xD8 && buf[2] === 0xFF) return true;
+    // PNG: 89 50 4E 47
+    if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4E && buf[3] === 0x47) return true;
+    // WEBP: RIFF....WEBP
+    if (buf[0] === 0x52 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x46 &&
+        buf[8] === 0x57 && buf[9] === 0x45 && buf[10] === 0x42 && buf[11] === 0x50) return true;
+    // GIF: GIF8
+    if (buf[0] === 0x47 && buf[1] === 0x49 && buf[2] === 0x46 && buf[3] === 0x38) return true;
+    // BMP: BM
+    if (buf[0] === 0x42 && buf[1] === 0x4D) return true;
+    return false;
+}
+
 async function runOcrSpaceRawText(base64Data, mimeType) {
     if (!base64Data || process.env.NODE_ENV === 'test') return null;
 
@@ -291,10 +333,12 @@ async function runOcrSpaceRawText(base64Data, mimeType) {
     try {
         const cleanBase64 = base64Data.replace(/^data:[^;]+;base64,/, '');
         const imgBuffer = Buffer.from(cleanBase64, 'base64');
-        const worker = await getTesseractWorker();
-        const { data } = await worker.recognize(imgBuffer);
-        if (data && data.text && data.text.trim().length >= 10) {
-            return data.text.replace(/\r/g, '').trim();
+        if (isValidRasterImageBuffer(imgBuffer, mimeType)) {
+            const worker = await getTesseractWorker();
+            const { data } = await worker.recognize(imgBuffer);
+            if (data && data.text && data.text.trim().length >= 10) {
+                return data.text.replace(/\r/g, '').trim();
+            }
         }
     } catch (tessErr) {
         console.warn('[DocVerify] Local Tesseract OCR warning:', tessErr.message);
@@ -729,7 +773,8 @@ async function extractTodaRosterWithOcrSpaceFallback(base64Data, mimeType) {
 }
 
 async function extractWithGemini(base64Data, mimeType, docType) {
-    const apiKey = process.env.GEMINI_API_KEY;
+    reloadGeminiEnv();
+    const apiKey = (process.env.GEMINI_API_KEY || '').trim();
     if (!apiKey) {
         console.warn(`[DocVerify] GEMINI_API_KEY not defined in environment for ${docType}. Trying OCR.space fallback...`);
         const ocrFallbackNoKey = await extractWithOcrSpaceFallback(base64Data, mimeType, docType);
@@ -984,9 +1029,15 @@ Return raw JSON only, no markdown codeblocks, no explanations.`;
         }
 
         // High-speed multi-model auto-failover cascade:
-        const rawPreferredModel = process.env.GEMINI_MODEL || 'gemini-2.0-flash'; const preferredModel = rawPreferredModel === 'gemini-3.8-flash' ? 'gemini-2.5-flash' : rawPreferredModel;
+        const preferredModel = (process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite').trim();
+        const fallbackModel = (process.env.GEMINI_FALLBACK_MODEL || 'gemini-4-hydrogen').trim();
         const modelsToTry = [
             preferredModel,
+            'gemini-3.5-flash-lite',
+            fallbackModel,
+            'gemini-4-hydrogen',
+            'gemini-3.8-flash',
+            'gemini-3.1-flash-lite',
             'gemini-2.0-flash',
             'gemini-2.0-flash-lite',
             'gemini-2.5-flash',
@@ -1451,7 +1502,8 @@ async function verifyFranchiseDocuments(franchise) {
  * Accepts a URL string, a Buffer, or an object with { base64Data, mimeType }
  */
 async function extractTodaRosterFromDocument(input) {
-    const apiKey = process.env.GEMINI_API_KEY;
+    reloadGeminiEnv();
+    const apiKey = (process.env.GEMINI_API_KEY || '').trim();
     if (!apiKey) {
         console.warn('[TodaRosterOCR] GEMINI_API_KEY is not defined. Using resilient fallback for demo roster.');
         return {
@@ -1533,9 +1585,15 @@ Return ONLY a valid JSON object matching this schema:
 }
 Return raw JSON only, no markdown, no surrounding text.`;
 
-        const rawPreferredModel = process.env.GEMINI_MODEL || 'gemini-2.0-flash'; const preferredModel = rawPreferredModel === 'gemini-3.8-flash' ? 'gemini-2.5-flash' : rawPreferredModel;
+        const preferredModel = (process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite').trim();
+        const fallbackModel = (process.env.GEMINI_FALLBACK_MODEL || 'gemini-4-hydrogen').trim();
         const modelsToTry = [
             preferredModel,
+            'gemini-3.5-flash-lite',
+            fallbackModel,
+            'gemini-4-hydrogen',
+            'gemini-3.8-flash',
+            'gemini-3.1-flash-lite',
             'gemini-2.0-flash',
             'gemini-2.0-flash-lite',
             'gemini-2.5-flash',

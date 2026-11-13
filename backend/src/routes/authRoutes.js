@@ -57,7 +57,7 @@ router.get('/google-client-id', (req, res) => {
 router.post('/register', registerLimiter, validate(registerSchema), register);
 router.post('/verify-otp', registerLimiter, validate(verifyOtpSchema), verifyOTP);
 router.post('/login', loginLimiter, validate(loginSchema), login);
-router.get('/', protect, authorize('system_admin', 'admin'), getUsers);
+router.get('/', protect, authorize('system_admin', 'admin', 'bplo_staff'), getUsers);
 
 // Password management routes
 router.post('/forgot-password', forgotLimiter, validate(forgotPasswordSchema), forgotPassword);

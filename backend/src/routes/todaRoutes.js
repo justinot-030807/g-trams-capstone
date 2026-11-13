@@ -12,6 +12,7 @@ const { protect, authorize } = require('../middleware/authMiddleware');
 const { extractTodaRosterFromDocument } = require('../services/documentVerificationService');
 const { isNameMatch } = require('../utils/nameMatcher');
 const { syncApprovedRoster, getNextBodyNumber, addIndividualMember } = require('../controllers/todaController');
+const { logAudit } = require('../utils/auditLogger');
 
 const upload = require('../config/cloudinary');
 
@@ -21,6 +22,7 @@ const memoryUpload = multer({
 });
 
 // Auto-generate next unique body number for a TODA (strictly no duplicates)
+router.get('/rosters', protect, authorize('bplo_staff', 'admin', 'system_admin'), async (req, res) => { try { const rosters = await TodaRoster.find().sort({ todaAssociation: 1, bodyNumber: 1 }); res.status(200).json(rosters); } catch (error) { res.status(500).json({ message: 'Error fetching TODA rosters' }); } });
 router.get('/next-body-number', protect, authorize('bplo_staff', 'toda president', 'toda_president', 'admin', 'system_admin'), getNextBodyNumber);
 
 // Register an individual member (when only one operator joins a TODA)
@@ -247,6 +249,7 @@ router.put('/approve/:id', protect, authorize('bplo_staff'), async (req, res) =>
             console.warn('[TodaRoster] Non-critical sync warning:', syncErr.message);
         }
 
+        logAudit(req, { action: 'TODA_ROSTER_APPROVED', targetType: 'TODA', targetId: updatedSubmission._id, details: { todaName: updatedSubmission.todaAssociation, presidentName: updatedSubmission.presidentName, fileName: updatedSubmission.fileName, extractedCount: updatedSubmission.extractedCount || (updatedSubmission.extractedMembers || []).length, previousStatus: 'Pending', newStatus: 'Approved' } });
         res.status(200).json({ message: 'Approved successfully', submission: updatedSubmission });
     } catch (error) {
         res.status(500).json({ message: 'Error updating submission status' });

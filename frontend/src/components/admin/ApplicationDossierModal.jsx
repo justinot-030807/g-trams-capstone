@@ -7,6 +7,7 @@ import { GASAN_ZONES } from '../operator/TodaZoneGuideModal';
 import { formatZoneLabel, normalizeZone } from '../../utils/constants';
 import { getServerNow } from '../../utils/serverTime';
 import TricycleIcon from '../common/TricycleIcon';
+import { cleanText, formatVehicleMake, formatVehicleModelYear } from '../../utils/vehicleFormatters';
 
 const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReject, isProcessing = false }) => {
   const dossierRef = useRef(null);
@@ -408,19 +409,19 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
               <div className="p-3.5 grid grid-cols-2 sm:grid-cols-4 gap-3 bg-white">
                 <div>
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Make / Brand</span>
-                  <span className="text-xs font-bold text-slate-900">{franchise.make || '—'}</span>
+                  <span className="text-xs font-bold text-slate-900">{formatVehicleMake(franchise, '—')}</span>
                 </div>
                 <div>
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Model Year</span>
-                  <span className="text-xs font-bold text-slate-900">{franchise.made || '—'}</span>
+                  <span className="text-xs font-bold text-slate-900">{formatVehicleModelYear(franchise, '—')}</span>
                 </div>
                 <div>
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Plate Number</span>
-                  <span className="text-xs font-mono font-bold text-slate-900">{franchise.plateNo || '—'}</span>
+                  <span className="text-xs font-mono font-bold text-slate-900">{cleanText(franchise.plateNo, '—')}</span>
                 </div>
                 <div>
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Engine / Motor No.</span>
-                  <span className="text-xs font-mono font-bold text-slate-900 truncate block">{franchise.motorNo || '—'}</span>
+                  <span className="text-xs font-mono font-bold text-slate-900 truncate block">{cleanText(franchise.motorNo, '—')}</span>
                 </div>
                 <div className="sm:col-span-2">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Chassis Frame Serial No.</span>

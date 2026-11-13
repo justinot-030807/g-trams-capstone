@@ -52,7 +52,7 @@ const Home = () => {
       if (role === 'admin' || role === 'administrator' || role === 'system admin') {
         navigate('/admin-dashboard', { replace: true });
       } else if (role === 'bplo staff') {
-        navigate('/bplo-dashboard', { replace: true });
+        navigate('/llsa-dashboard', { replace: true });
       } else if (role === 'cashier') {
         navigate('/cashier-dashboard', { replace: true });
       } else {

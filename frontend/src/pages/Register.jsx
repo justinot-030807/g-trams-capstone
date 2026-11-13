@@ -438,7 +438,7 @@ const Register = () => {
     if (normalizedRole === 'admin' || normalizedRole === 'administrator' || normalizedRole === 'system admin') {
       navigate('/admin-dashboard');
     } else if (normalizedRole === 'bplo staff') {
-      navigate('/bplo-dashboard');
+      navigate('/llsa-dashboard');
     } else if (normalizedRole === 'cashier') {
       navigate('/cashier-dashboard');
     } else {

@@ -27,7 +27,7 @@ const HelpSupport = lazyRetry(() => import('./pages/operator/HelpSupport'), 'Hel
 
 // Admin Pages (Code-split to isolate large administrative bundles from operator devices)
 const AdminDashboard = lazyRetry(() => import('./pages/admin/AdminDashboard'), 'AdminDashboard');
-const BploDashboard = lazyRetry(() => import('./pages/admin/BploDashboard'), 'BploDashboard');
+const LlsaDashboard = lazyRetry(() => import('./pages/admin/LlsaDashboard'), 'LlsaDashboard');
 const FranchiseMasterlist = lazyRetry(() => import('./pages/admin/FranchiseMasterlist'), 'FranchiseMasterlist');
 const UserManagement = lazyRetry(() => import('./pages/admin/UserManagement'), 'UserManagement');
 const AdminSettings = lazyRetry(() => import('./pages/admin/AdminSettings'), 'AdminSettings');
@@ -128,8 +128,9 @@ function App() {
                   <Route path="/system-settings" element={<Navigate to="/admin/settings" replace />} />
                   <Route path="/admin/tickets" element={<ProtectedRoute allowedRoles={['system_admin', 'admin', 'bplo_staff']}><AdminTickets /></ProtectedRoute>} />
 
-                  {/* BPLO STAFF SECURE ROUTES (Franchise Operations, Queues, Verification, Issuance) */}
-                  <Route path="/bplo-dashboard" element={<ProtectedRoute allowedRoles={['bplo_staff']}><BploDashboard /></ProtectedRoute>} />
+                  {/* LLSA I (SB FRANCHISING STAFF) SECURE ROUTES (Franchise Operations, Queues, Verification, Issuance) */}
+                  <Route path="/llsa-dashboard" element={<ProtectedRoute allowedRoles={['bplo_staff']}><LlsaDashboard /></ProtectedRoute>} />
+                  <Route path="/bplo-dashboard" element={<Navigate to="/llsa-dashboard" replace />} />
                   <Route path="/franchise-masterlist" element={<ProtectedRoute allowedRoles={['bplo_staff']}><FranchiseMasterlist /></ProtectedRoute>} />
                   <Route path="/franchise-approval" element={<ProtectedRoute allowedRoles={['bplo_staff']}><FranchiseApproval /></ProtectedRoute>} />
                   <Route path="/franchise-approval/review/:id" element={<ProtectedRoute allowedRoles={['bplo_staff']}><FranchiseReviewPage /></ProtectedRoute>} />

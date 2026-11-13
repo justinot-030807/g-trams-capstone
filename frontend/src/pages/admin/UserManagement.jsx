@@ -9,6 +9,7 @@ import {
 import { TableRowsSkeleton } from '../../components/skeleton';
 import PageHeader from '../../components/common/PageHeader';
 import { formatZoneLabel, TODA_LIST } from '../../utils/constants';
+import { cleanText, formatVehicleMakeAndModel } from '../../utils/vehicleFormatters';
 
 const UserManagement = () => {
   const [users, setUsers] = useState([]);
@@ -463,7 +464,7 @@ const UserManagement = () => {
       <div className="flex items-center gap-1.5 mb-4 overflow-x-auto pb-1 text-xs">
         {[
           { id: 'all', label: `All Users (${allCount})` },
-          { id: 'bplo_staff', label: `SB Staff / LLSA I (${bploStaffCount})` },
+          { id: 'bplo_staff', label: `SB Staff / LLSA I — Local Legislative Staff Assistant I (${bploStaffCount})` },
           { id: 'admin', label: `System Admin (${adminCount})` },
           { id: 'cashier', label: `Cashiers (${cashierCount})` },
           { id: 'toda_president', label: `TODA Presidents (${todaPresidentCount})` },
@@ -655,13 +656,20 @@ const UserManagement = () => {
                           </span>
                         ) : (
                           <select
-                            value={user.role}
+                            value={(() => {
+                              const r = String(user.role || '').toLowerCase().trim();
+                              if (r === 'toda president' || r === 'toda_president') return 'toda_president';
+                              if (r === 'bplo staff' || r === 'bplo_staff') return 'bplo_staff';
+                              if (r === 'system admin' || r === 'system_admin' || r === 'admin' || r === 'administrator') return 'system_admin';
+                              if (r === 'cashier') return 'cashier';
+                              return 'operator';
+                            })()}
                             disabled={user.isActive === false}
                             onChange={(e) => initiateRoleChange(user, e.target.value)}
                             className="border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] text-xs font-medium rounded-lg px-2 py-1 outline-none cursor-pointer focus:border-[#9E2A2B] dark:focus:border-[#D4AF37]"
                           >
                             <option value="operator">Operator</option>
-                            <option value="bplo_staff">SB Franchising Staff (LLSA I)</option>
+                            <option value="bplo_staff">SB Franchising Staff (LLSA I — Local Legislative Staff Assistant I)</option>
                             <option value="system_admin">System Admin</option>
                             <option value="cashier">Cashier</option>
                             <option value="toda_president">TODA President</option>
@@ -948,7 +956,9 @@ const UserManagement = () => {
               <h2 className="text-base font-semibold text-white">{selectedUser.name}</h2>
               <div className="flex items-center justify-center gap-2 mt-1.5 flex-wrap">
                 <span className="text-[#D4AF37] text-xs font-semibold uppercase tracking-wider bg-black/25 px-2 py-0.5 rounded border border-[#D4AF37]/30">
-                  {(selectedUser?.role || 'operator').replace('_', ' ')}
+                  {['bplo_staff', 'bplo staff'].includes(String(selectedUser?.role || '').toLowerCase())
+                    ? 'SB Staff / LLSA I (Local Legislative Staff Assistant I)'
+                    : (selectedUser?.role || 'operator').replace(/_/g, ' ')}
                 </span>
                 {modalActivity && (
                   <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-xs font-medium border ${modalActivity.badgeClass}`}>
@@ -1097,7 +1107,7 @@ const UserManagement = () => {
                         <div className="grid grid-cols-2 gap-2 text-xs text-[#6B6761] dark:text-[#A8A29E] pt-1 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
                           <div>
                             <span>Make/Model:</span>{' '}
-                            <strong className="text-[#1F1D1B] dark:text-[#F6F5F3] font-semibold">{unit.make || unit.made || 'N/A'}</strong>
+                            <strong className="text-[#1F1D1B] dark:text-[#F6F5F3] font-semibold">{formatVehicleMakeAndModel(unit, 'N/A')}</strong>
                           </div>
                           <div>
                             <span>TODA/Route:</span>{' '}

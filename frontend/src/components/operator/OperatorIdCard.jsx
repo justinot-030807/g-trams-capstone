@@ -55,7 +55,7 @@ const OperatorIdCard = ({ user }) => {
             <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/40 relative z-10">
               <Award size={12} className="text-[#D4AF37]" />
               <span className="text-[11px] font-bold text-[#D4AF37] uppercase tracking-wider">
-                {safeUser.role === 'toda president' ? 'TODA President' : 'Registered Operator'}
+                {String(safeUser.role || '').toLowerCase().replace(/_/g, ' ') === 'toda president' ? 'TODA President' : 'Registered Operator'}
               </span>
             </div>
           </div>

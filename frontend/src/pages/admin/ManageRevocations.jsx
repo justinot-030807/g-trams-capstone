@@ -9,6 +9,7 @@ import { TableRowsSkeleton } from '../../components/skeleton';
 import PageHeader from '../../components/common/PageHeader';
 import StatusBadge from '../../components/common/StatusBadge';
 import OfficialCancellationLetterModal from '../../components/common/OfficialCancellationLetterModal';
+import { cleanText, formatVehicleMakeAndModel } from '../../utils/vehicleFormatters';
 
 const ManageRevocations = () => {
   const [franchises, setFranchises] = useState([]);
@@ -625,17 +626,18 @@ const ManageRevocations = () => {
                   paginatedItems.map((f) => (
                     <tr key={f._id} className="hover:bg-[#F6F5F3]/70 dark:hover:bg-[#14110F]/70 transition-colors">
                       <td className="p-3.5 pl-5">
-                        <p className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] text-sm">{f.fullName}</p>
-                        <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5 flex items-center gap-1.5">
+                        <p className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] text-sm">{cleanText(f.fullName, 'Operator')}</p>
+                        <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5 flex items-center gap-1.5 flex-wrap">
                           <span>Plate:</span>
-                          <span className="font-mono font-medium px-1.5 py-0.2 rounded bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3]">{f.plateNo || 'N/A'}</span>
-                          {f.motorNo && <span>&bull; Eng: {f.motorNo}</span>}
+                          <span className="font-mono font-medium px-1.5 py-0.2 rounded bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3]">{cleanText(f.plateNo, 'N/A')}</span>
+                          <span>&bull; {formatVehicleMakeAndModel(f, 'Tricycle Unit')}</span>
+                          {cleanText(f.motorNo) && <span>&bull; Eng: {cleanText(f.motorNo)}</span>}
                         </p>
                       </td>
 
                       <td className="p-3.5">
-                        <p className="font-medium text-[#1F1D1B] dark:text-[#F6F5F3]">{f.todaName || 'NON-TODA'}</p>
-                        <span className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">{f.zone || 'Gasan'}</span>
+                        <p className="font-medium text-[#1F1D1B] dark:text-[#F6F5F3]">{cleanText(f.todaName, 'NON-TODA')}</p>
+                        <span className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">{cleanText(f.zone, 'Gasan')}</span>
                       </td>
 
                       <td className="p-3.5 text-center">
@@ -645,7 +647,9 @@ const ManageRevocations = () => {
                       <td className="p-3.5">
                         {f.status === 'Revoked' ? (
                           <div>
-                            <p className="font-semibold text-red-700 dark:text-red-400">{f.cancelReason || 'Revoked by BPLO'}</p>
+                            <p className="font-semibold text-red-700 dark:text-red-400">
+                              {cleanText(f.cancelReason, 'Revoked by SB Franchising (LLSA I)').replace(/Revoked by BPLO/gi, 'Revoked by SB Franchising (LLSA I)')}
+                            </p>
                             <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">Date: {new Date(f.updatedAt).toLocaleDateString()}</p>
                           </div>
                         ) : f.status === 'Suspended' ? (

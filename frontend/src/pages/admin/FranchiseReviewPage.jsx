@@ -15,6 +15,7 @@ import { evaluateDocumentValidity } from '../../utils/dateValidity';
 import { formatZoneLabel } from '../../utils/constants';
 import { isNameMatch } from '../../utils/nameMatcher';
 import { FranchiseReviewSkeleton } from '../../components/skeleton';
+import { cleanText, formatVehicleMakeAndModel } from '../../utils/vehicleFormatters';
 
 const REJECT_REASONS = [
   'Document Expiry Date Discrepancy (Uploaded document is expired despite entered date)',
@@ -1409,13 +1410,13 @@ const FranchiseReviewPage = () => {
                       <div>
                         <span className="text-[10px] text-slate-400 block font-medium">Make, Series &amp; Year</span>
                         <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">
-                          {currentApp.make || currentApp.aiScannedData?.orCr?.make || '—'} {currentApp.series || currentApp.aiScannedData?.orCr?.series ? `${currentApp.series || currentApp.aiScannedData?.orCr?.series} ` : ''}({currentApp.yearModel || currentApp.made || currentApp.aiScannedData?.orCr?.year || '—'})
+                          {formatVehicleMakeAndModel(currentApp, '—')}
                         </span>
                       </div>
                       <div>
                         <span className="text-[10px] text-slate-400 block font-medium">Vehicle Color</span>
                         <span className="font-bold text-slate-800 dark:text-slate-100 uppercase truncate block">
-                          {currentApp.color || currentApp.aiScannedData?.orCr?.color || '—'}
+                          {cleanText(currentApp.color || currentApp.aiScannedData?.orCr?.color, '—')}
                         </span>
                       </div>
                     </div>

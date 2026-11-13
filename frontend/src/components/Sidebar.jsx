@@ -218,8 +218,8 @@ const Sidebar = ({ isOpen, onClose }) => {
   const bploStaffMenu = [
     { 
       type: 'link', 
-      name: t('nav.dashboard', 'Operations Dashboard'), 
-      path: '/bplo-dashboard', 
+      name: t('nav.dashboard', 'LLSA I Dashboard'), 
+      path: '/llsa-dashboard', 
       icon: <LayoutDashboard size={18} /> 
     },
     {
@@ -348,7 +348,7 @@ const Sidebar = ({ isOpen, onClose }) => {
 
   const getRoleLabel = () => {
     if (role === 'system_admin' || role === 'system admin' || role === 'admin' || role === 'administrator') return t('nav.roleSystemAdmin', 'SYSTEM ADMIN');
-    if (role === 'bplo_staff' || role === 'bplo staff') return t('nav.roleBploStaff', 'SB FRANCHISING STAFF (LLSA I)');
+    if (role === 'bplo_staff' || role === 'bplo staff') return t('nav.roleBploStaff', 'LLSA I (Local Legislative Staff Assistant I)');
     if (role === 'cashier') return t('nav.roleCashier', 'MUNICIPAL CASHIER');
     if (role === 'toda_president' || role === 'toda president') return t('nav.roleTodaPresident', 'TODA PRESIDENT');
     return t('nav.roleOperator', 'OPERATOR');

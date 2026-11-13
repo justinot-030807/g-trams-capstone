@@ -79,37 +79,6 @@ const createFranchise = async (req, res) => {
             data.status = 'Pending';
         }
 
-        // Strict TODA Gatekeeping: If applicant is not in official approved roster, TODA Certificate is strictly required
-        if (!isAdmin && data.todaName && data.todaName !== 'NON-TODA') {
-            const todaName = data.todaName;
-            const applicantName = (data.fullName || (req.user && req.user.name) || '').trim();
-            const todaSearch = buildTodaSearchConditions(todaName);
-
-            const approvedRosters = await TodaSubmission.find({
-                status: 'Approved',
-                $or: todaSearch
-            }).select('extractedMembers todaAssociation fileName').lean();
-
-            let isMemberInRoster = false;
-            for (const r of approvedRosters) {
-                if (Array.isArray(r.extractedMembers)) {
-                    const found = r.extractedMembers.some(m => isNameMatch(applicantName, m?.name));
-                    if (found) {
-                        isMemberInRoster = true;
-                        break;
-                    }
-                }
-            }
-
-            // If not found in approved roster and no TODA certificate was uploaded
-            const hasTodaCert = Boolean(data.todaEndorsementUrl || data.todaCertNo || (req.files && req.files.todaEndorsement));
-            if (process.env.NODE_ENV !== 'test' && !isMemberInRoster && !hasTodaCert) {
-                return res.status(400).json({
-                    message: `Application blocked: Operator "${applicantName}" is not listed in the official approved roster for ${todaName}, and no TODA Endorsement Certificate was provided. Please upload an official TODA Certificate signed by your TODA President.`
-                });
-            }
-        }
-
         const franchise = await FranchiseService.createFranchise(data, franchiseOwner);
 
         // Notify admins of new franchise submission
@@ -1386,12 +1355,18 @@ const checkTodaMemberStatus = async (req, res) => {
 
         const todaSearch = buildTodaSearchConditions(todaName);
 
-        const approvedRosters = await TodaSubmission.find({
-            status: 'Approved',
-            $or: todaSearch
-        }).select('extractedMembers todaAssociation fileName createdAt').lean();
+        const TodaRoster = require('../models/todaRoster');
+        const [approvedRosters, officialRosterDocs] = await Promise.all([
+            TodaSubmission.find({
+                status: 'Approved',
+                $or: todaSearch
+            }).select('extractedMembers todaAssociation fileName createdAt').lean(),
+            TodaRoster.find({
+                todaAssociation: new RegExp(escapeRegex(todaName.replace(/\s*TODA$/i, '').trim()), 'i')
+            }).select('members todaAssociation').lean().catch(() => [])
+        ]);
 
-        if (approvedRosters.length === 0) {
+        if (approvedRosters.length === 0 && (!officialRosterDocs || officialRosterDocs.length === 0)) {
             return res.json({
                 todaStatus: 'no_roster_on_file',
                 isVerified: false,
@@ -1417,14 +1392,33 @@ const checkTodaMemberStatus = async (req, res) => {
 
         let docMatch = false;
         let matchedMember = null;
+        let matchedPlateNo = '';
+        let matchedBodyNumber = '';
 
-        for (const r of approvedRosters) {
-            if (Array.isArray(r.extractedMembers)) {
-                const found = r.extractedMembers.find(m => isNameMatch(applicantName, m?.name));
+        for (const r of (officialRosterDocs || [])) {
+            if (Array.isArray(r.members)) {
+                const found = r.members.find(m => isNameMatch(applicantName, m?.fullName || m?.name));
                 if (found) {
                     docMatch = true;
-                    matchedMember = found.name;
+                    matchedMember = found.fullName || found.name;
+                    matchedPlateNo = found.plateNumber || found.plateNo || '';
+                    matchedBodyNumber = found.bodyNumber || '';
                     break;
+                }
+            }
+        }
+
+        if (!docMatch) {
+            for (const r of approvedRosters) {
+                if (Array.isArray(r.extractedMembers)) {
+                    const found = r.extractedMembers.find(m => isNameMatch(applicantName, m?.name));
+                    if (found) {
+                        docMatch = true;
+                        matchedMember = found.name;
+                        matchedPlateNo = found.plateNo || found.plateNumber || '';
+                        matchedBodyNumber = found.bodyNumber || '';
+                        break;
+                    }
                 }
             }
         }
@@ -1435,6 +1429,8 @@ const checkTodaMemberStatus = async (req, res) => {
                 isVerified: true,
                 todaName,
                 matchedMember,
+                matchedPlateNo,
+                matchedBodyNumber,
                 jurisdictionStatus,
                 jurisdictionWarning,
                 authorizedTodas: jurisdictionCheck.authorizedTodas || [],
@@ -1478,6 +1474,84 @@ module.exports = {
     scanDocument,
     checkTodaMemberStatus,
     requestFranchiseCancellation,
-    processFranchiseCancellation
+    processFranchiseCancellation,
+    downloadOriginalTemplate: async (req, res) => {
+        try {
+            const {
+                generateMtopFranchiseXlsx,
+                generateMtopApplicationXlsx,
+                generateCancellationDocx,
+            } = require('../utils/officeTemplateGenerator');
+
+            const { id } = req.params;
+            const type = String(req.query.type || 'mtop').toLowerCase();
+
+            const franchise = await Franchise.findById(id).populate('operator', 'firstName middleName lastName name email barangay address contact contactNumber occupation');
+            if (!franchise) {
+                return res.status(404).json({ error: 'Franchise record not found.' });
+            }
+
+            const rawRole = String(req.user?.role || '').toLowerCase().replace(/_/g, ' ').trim();
+            const isStaff = ['bplo staff', 'admin', 'system admin', 'cashier'].includes(rawRole);
+            const ownerObj = franchise.operator || franchise.operatorId;
+            const ownerId = ownerObj?._id ? String(ownerObj._id) : String(ownerObj || '');
+            if (!isStaff && ownerId !== String(req.user?._id || req.user?.id || '')) {
+                return res.status(403).json({ error: 'Not authorized to download this franchise document.' });
+            }
+
+            const safePlate = String(franchise.plateNo || franchise.plateNumber || franchise.mtopNumber || 'GTRAMS').replace(/[^A-Za-z0-9_-]/g, '_');
+
+            if (type === 'application') {
+                const buf = generateMtopApplicationXlsx(franchise);
+                res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+                res.setHeader('Content-Disposition', `attachment; filename="MTOP_APPLICATION_${safePlate}.xlsx"`);
+                return res.send(buf);
+            } else if (type === 'cancellation') {
+                const buf = generateCancellationDocx(franchise);
+                res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+                res.setHeader('Content-Disposition', `attachment; filename="CANCELLATION_OF_FRANCHISE_${safePlate}.docx"`);
+                return res.send(buf);
+            } else {
+                const buf = generateMtopFranchiseXlsx(franchise);
+                res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+                res.setHeader('Content-Disposition', `attachment; filename="MTOP_FRANCHISE_${safePlate}.xlsx"`);
+                return res.send(buf);
+            }
+        } catch (error) {
+            console.error('Error generating original Office template:', error);
+            return res.status(500).json({ error: 'Failed to generate original LGU document file.' });
+        }
+    },
+    downloadOriginalPreview: async (req, res) => {
+        try {
+            const {
+                generateMtopFranchiseXlsx,
+                generateMtopApplicationXlsx,
+                generateCancellationDocx,
+            } = require('../utils/officeTemplateGenerator');
+            const type = String(req.query.type || req.body?.type || 'application').toLowerCase();
+            const data = req.body || {};
+            const safePlate = String(data.plateNumber || data.mtopNumber || 'DRAFT').replace(/[^A-Za-z0-9_-]/g, '_');
+            if (type === 'mtop') {
+                const buf = generateMtopFranchiseXlsx(data);
+                res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+                res.setHeader('Content-Disposition', `attachment; filename="MTOP_FRANCHISE_${safePlate}.xlsx"`);
+                return res.send(buf);
+            } else if (type === 'cancellation') {
+                const buf = generateCancellationDocx(data);
+                res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+                res.setHeader('Content-Disposition', `attachment; filename="CANCELLATION_OF_FRANCHISE_${safePlate}.docx"`);
+                return res.send(buf);
+            } else {
+                const buf = generateMtopApplicationXlsx(data);
+                res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+                res.setHeader('Content-Disposition', `attachment; filename="MTOP_APPLICATION_${safePlate}.xlsx"`);
+                return res.send(buf);
+            }
+        } catch (error) {
+            console.error('Error generating preview Office template:', error);
+            return res.status(500).json({ error: 'Failed to generate original LGU document file.' });
+        }
+    }
 };
 

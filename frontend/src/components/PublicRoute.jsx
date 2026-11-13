@@ -10,7 +10,7 @@ const PublicRoute = ({ children }) => {
       return <Navigate to="/admin-dashboard" replace />;
     }
     if (role === 'bplo staff') {
-      return <Navigate to="/bplo-dashboard" replace />;
+      return <Navigate to="/llsa-dashboard" replace />;
     }
     if (role === 'cashier') {
       return <Navigate to="/cashier-dashboard" replace />;

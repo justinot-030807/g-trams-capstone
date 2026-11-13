@@ -48,7 +48,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
     return (Array.isArray(ctxNotifs) ? ctxNotifs : []).map((n) => {
       let defaultLink = '/operator-dashboard';
       if (isRoleSystemAdmin) defaultLink = '/admin-dashboard';
-      if (isRoleBplo) defaultLink = '/bplo-dashboard';
+      if (isRoleBplo) defaultLink = '/llsa-dashboard';
       if (isRoleCashier) defaultLink = '/cashier-dashboard';
       if (n?.type === 'chat') defaultLink = (isRoleSystemAdmin || isRoleBplo) ? '/admin/tickets' : '/operator-dashboard';
 
@@ -193,7 +193,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
   const getRoleBadge = () => {
     const normalized = String(role || '').toLowerCase().trim().replace(/_/g, ' ');
     if (normalized === 'system admin' || normalized === 'system_admin' || normalized === 'admin' || normalized === 'administrator') return t('nav.roleSystemAdmin', 'SYSTEM ADMIN');
-    if (normalized === 'bplo staff' || normalized === 'bplo_staff') return t('nav.roleBploStaff', 'SB FRANCHISING STAFF (LLSA I)');
+    if (normalized === 'bplo staff' || normalized === 'bplo_staff') return t('nav.roleBploStaff', 'LLSA I (Local Legislative Staff Assistant I)');
     if (normalized === 'toda president' || normalized === 'toda_president') return t('nav.roleTodaPresident', 'TODA PRESIDENT');
     if (normalized === 'cashier') return t('nav.roleCashier', 'MUNICIPAL CASHIER');
     return t('nav.roleOperator', 'OPERATOR');
@@ -202,7 +202,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
   const getBreadcrumbTitle = () => {
     const path = location.pathname;
     if (path === '/admin-dashboard') return 'IT Dashboard';
-    if (path === '/bplo-dashboard') return 'Operations Dashboard';
+    if (path === '/llsa-dashboard' || path === '/bplo-dashboard') return 'LLSA I Operations Dashboard';
     if (path === '/operator-dashboard') return t('nav.dashboard', 'Dashboard');
     if (path === '/franchise-masterlist') return 'Franchise Masterlist';
     if (path === '/franchise-approval') return 'Approvals Queue';
@@ -599,7 +599,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
             <div className="w-full h-full rounded-full bg-[#9E2A2B] text-[#D4AF37] font-semibold text-xs flex items-center justify-center shadow-inner overflow-hidden border border-[#D4AF37]/30">
               {profilePic ? (
                 <img src={profilePic} alt="User" className="w-full h-full object-cover" />
-              ) : role === 'admin' ? (
+              ) : ['admin', 'administrator', 'system admin', 'system_admin'].includes(String(role || '').toLowerCase().trim()) ? (
                 <img src="/gasan-logo.png" alt="Admin" className="w-full h-full object-contain p-1" />
               ) : (
                 userName.charAt(0).toUpperCase()
