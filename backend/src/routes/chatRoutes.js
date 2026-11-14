@@ -256,39 +256,43 @@ router.post('/messages', async (req, res) => {
         
         // Wait 1.5 seconds for realism
         setTimeout(async () => {
-          const autoMsg = await ChatMessage.create({
-            thread: thread._id,
-            sender: adminSenderId,
-            message: autoReply
-          });
-          
-          thread.lastMessage = autoReply;
-          thread.lastMessageAt = new Date();
-          await thread.save();
+          try {
+            const autoMsg = await ChatMessage.create({
+              thread: thread._id,
+              sender: adminSenderId,
+              message: autoReply
+            });
+            
+            thread.lastMessage = autoReply;
+            thread.lastMessageAt = new Date();
+            await thread.save();
 
-          const popAutoMsg = await ChatMessage.findById(autoMsg._id).populate('sender', 'name profilePic role');
-          
-          // Emit to all participants in the thread so admins see the auto-reply too
-          const allParticipants = thread.participants;
-          for (const pId of allParticipants) {
-            emitToUser(pId.toString(), 'chat_message', popAutoMsg);
+            const popAutoMsg = await ChatMessage.findById(autoMsg._id).populate('sender', 'name profilePic role');
+            
+            // Emit to all participants in the thread so admins see the auto-reply too
+            const allParticipants = thread.participants;
+            for (const pId of allParticipants) {
+              emitToUser(pId.toString(), 'chat_message', popAutoMsg);
+            }
+
+            // But only notify the operator
+            emitToUser(req.user._id.toString(), 'notification', await Notification.create({
+              recipient: req.user._id,
+              type: 'chat',
+              title: 'Auto-Reply from GTRAMS',
+              message: autoReply
+            }));
+            
+            const { sendPushToUser } = require('../services/pushService');
+            sendPushToUser(req.user._id, {
+              title: 'Auto-Reply from GTRAMS',
+              message: autoReply,
+              type: 'chat',
+              url: '/operator-dashboard'
+            });
+          } catch (err) {
+            console.error('[Chat Auto-Reply Error]:', err.message);
           }
-
-          // But only notify the operator
-          emitToUser(req.user._id.toString(), 'notification', await Notification.create({
-            recipient: req.user._id,
-            type: 'chat',
-            title: 'Auto-Reply from GTRAMS',
-            message: autoReply
-          }));
-          
-          const { sendPushToUser } = require('../services/pushService');
-          sendPushToUser(req.user._id, {
-            title: 'Auto-Reply from GTRAMS',
-            message: autoReply,
-            type: 'chat',
-            url: '/operator-dashboard'
-          });
         }, 1500);
       }
     }

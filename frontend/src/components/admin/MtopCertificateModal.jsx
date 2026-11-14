@@ -120,7 +120,7 @@ const MtopCertificateModal = ({ isOpen, onClose, unit, isECopy = false }) => {
   }
 
   // Parse MTOP Number into Year Prefix ("2026 - ") and Sequence No ("186") matching FRANCHISE.xlsx I11 & J11
-  const rawMtop = String(unit.mtopNumber || unit.franchiseNumber || '').trim();
+  const rawMtop = String(unit.mtopNo || unit.mtopNumber || unit.franchiseNumber || '').trim();
   const yearSeqMatch = rawMtop.match(/(20\d{2})\D+(\d+)/);
   const mtopYearPrefix = yearSeqMatch ? `${yearSeqMatch[1]} - ` : `${validYear} - `;
   const mtopSeqNo = yearSeqMatch
@@ -133,7 +133,7 @@ const MtopCertificateModal = ({ isOpen, onClose, unit, isECopy = false }) => {
     (unit.operator?.firstName
       ? `${unit.operator.firstName} ${unit.operator.middleName ? unit.operator.middleName.charAt(0) + '. ' : ''}${unit.operator.lastName || ''}`
       : unit.operator?.name) ||
-    'CHRISTIAN S. SADICON'
+    '—'
   ).toUpperCase().trim();
 
   const rawAddress = (unit.address || unit.barangay || unit.operator?.barangay || 'BAHI, GASAN, MARINDUQUE').toUpperCase().trim();

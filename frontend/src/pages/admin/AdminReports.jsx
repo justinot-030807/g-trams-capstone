@@ -394,8 +394,8 @@ const AdminReports = () => {
             <div>
               <p className="text-xs uppercase font-bold text-slate-500 mb-8">Prepared By:</p>
               <div className="border-b border-slate-900 w-4/5 mx-auto mb-1"></div>
-              <p className="font-bold text-slate-900 uppercase text-xs">{localStorage.getItem('name') || 'ADMINISTRATOR'}</p>
-              <p className="text-xs text-slate-600">G-TRAMS System Administrator</p>
+              <p className="font-bold text-slate-900 uppercase text-xs">{localStorage.getItem('name') || 'LLSA I Franchising Staff'}</p>
+              <p className="text-xs text-slate-600">LLSA I — BPLO Franchising Staff</p>
             </div>
             <div>
               <p className="text-xs uppercase font-bold text-slate-500 mb-8">Verified & Certified Correct:</p>

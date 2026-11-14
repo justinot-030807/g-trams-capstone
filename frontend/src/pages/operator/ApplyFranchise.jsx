@@ -307,14 +307,14 @@ const ApplyFranchise = () => {
     series: '',
     yearModel: '',
     fileNo: '',
-    vehicleType: '',
-    vehicleCategory: '',
-    classification: '',
-    bodyType: '',
+    vehicleType: 'Tricycle',
+    vehicleCategory: 'L4',
+    classification: 'For Hire / PUV',
+    bodyType: 'MOTORCYCLE WITH SIDECAR',
     displacement: '',
     grossWeight: '',
-    fuelType: '',
-    passengerCapacity: '',
+    fuelType: 'GASOLINE',
+    passengerCapacity: '4',
     registeredOwner: '',
     ownerAddress: '',
     numberOfUnits: 1,
@@ -325,7 +325,7 @@ const ApplyFranchise = () => {
     driverLicenseSerialNo: '',
     driverLicenseExpiryDate: '',
     driverDob: '',
-    driverDlCodes: '',
+    driverDlCodes: 'A, A1',
     driverConditions: 'None',
     driverAddress: '',
     driverNationality: 'Filipino',
@@ -723,9 +723,11 @@ const ApplyFranchise = () => {
       cedulaSerialNo: '',
       cedulaAmount: '55.00',
       orCrNo: '',
+      orNo: '',
       orCrExpiryDate: '',
       crNo: '',
       orDate: '',
+      crDate: '',
       numberOfUnits: 1,
       isOperatorDriver: true,
       driverName: '',
@@ -734,7 +736,11 @@ const ApplyFranchise = () => {
       driverLicenseSerialNo: '',
       driverLicenseExpiryDate: '',
       driverDob: '',
-      driverDlCodes: '',
+      driverDlCodes: 'A, A1',
+      driverConditions: 'None',
+      driverAddress: '',
+      driverNationality: 'Filipino',
+      driverSex: '',
       todaCertNo: '',
       todaCertDate: '',
       todaSignatory: '',
@@ -748,10 +754,10 @@ const ApplyFranchise = () => {
       vehicleType: 'Tricycle',
       vehicleCategory: 'L4',
       classification: 'For Hire / PUV',
-      bodyType: 'Semi-Cabin',
+      bodyType: 'MOTORCYCLE WITH SIDECAR',
       displacement: '',
       grossWeight: '',
-      fuelType: 'Gasoline',
+      fuelType: 'GASOLINE',
       passengerCapacity: '4',
       registeredOwner: '',
       ownerAddress: '',
@@ -952,11 +958,42 @@ const ApplyFranchise = () => {
       todaName: franchise.todaName || loggedInToda,
       dateApplied: franchise.dateApplied ? String(franchise.dateApplied).substring(0, 10) : '',
       cedulaDate: franchise.cedulaDate ? String(franchise.cedulaDate).substring(0, 10) : '',
-      cedulaAddress: franchise.cedulaAddress || '',
+      cedulaAddress: franchise.cedulaAddress || 'Gasan, Marinduque',
       cedulaSerialNo: franchise.cedulaSerialNo || '',
-      cedulaAmount: franchise.cedulaAmount || '',
+      cedulaAmount: franchise.cedulaAmount || '55.00',
+      cedulaYear: franchise.cedulaYear || String(new Date().getFullYear()),
+      cedulaPlaceIssued: franchise.cedulaPlaceIssued || franchise.cedulaAddress || 'Gasan, Marinduque',
+      cedulaFullName: franchise.cedulaFullName || '',
+      cedulaCitizenship: franchise.cedulaCitizenship || 'Filipino',
+      cedulaCivilStatus: franchise.cedulaCivilStatus || '',
+      cedulaProfession: franchise.cedulaProfession || '',
+      cedulaDob: franchise.cedulaDob ? String(franchise.cedulaDob).substring(0, 10) : '',
+      cedulaPlaceOfBirth: franchise.cedulaPlaceOfBirth || '',
+      cedulaSex: franchise.cedulaSex || '',
+      cedulaHeight: franchise.cedulaHeight || '',
+      cedulaWeight: franchise.cedulaWeight || '',
+      cedulaTin: franchise.cedulaTin || '',
       orCrNo: franchise.orCrNo || '',
+      orNo: franchise.orNo || franchise.orCrNo || '',
       orCrExpiryDate: franchise.orCrExpiryDate ? String(franchise.orCrExpiryDate).substring(0, 10) : '',
+      crNo: franchise.crNo || '',
+      orDate: franchise.orDate ? String(franchise.orDate).substring(0, 10) : '',
+      crDate: franchise.crDate ? String(franchise.crDate).substring(0, 10) : '',
+      color: franchise.color || '',
+      series: franchise.series || '',
+      yearModel: franchise.yearModel || franchise.made || '',
+      fileNo: franchise.fileNo || '',
+      vehicleType: franchise.vehicleType || 'Tricycle',
+      vehicleCategory: franchise.vehicleCategory || 'L4',
+      classification: franchise.classification || 'For Hire / PUV',
+      bodyType: franchise.bodyType || 'MOTORCYCLE WITH SIDECAR',
+      displacement: franchise.displacement || '',
+      grossWeight: franchise.grossWeight || '',
+      fuelType: franchise.fuelType || 'GASOLINE',
+      passengerCapacity: franchise.passengerCapacity || '4',
+      registeredOwner: franchise.registeredOwner || '',
+      ownerAddress: franchise.ownerAddress || '',
+      numberOfUnits: franchise.numberOfUnits || 1,
       isOperatorDriver: franchise.isOperatorDriver !== undefined ? Boolean(franchise.isOperatorDriver) : true,
       driverName: franchise.driverName || '',
       driverContact: franchise.driverContact || '',
@@ -964,9 +1001,11 @@ const ApplyFranchise = () => {
       driverLicenseSerialNo: franchise.driverLicenseSerialNo || '',
       driverLicenseExpiryDate: franchise.driverLicenseExpiryDate ? String(franchise.driverLicenseExpiryDate).substring(0, 10) : '',
       driverDob: franchise.driverDob ? String(franchise.driverDob).substring(0, 10) : '',
-      driverDlCodes: franchise.driverDlCodes || '',
+      driverDlCodes: franchise.driverDlCodes || 'A, A1',
       driverConditions: franchise.driverConditions || 'None',
       driverAddress: franchise.driverAddress || '',
+      driverNationality: franchise.driverNationality || 'Filipino',
+      driverSex: franchise.driverSex || '',
       todaCertNo: franchise.todaCertNo || '',
       todaCertDate: franchise.todaCertDate ? String(franchise.todaCertDate).substring(0, 10) : '',
       todaSignatory: franchise.todaSignatory || '',
@@ -974,7 +1013,10 @@ const ApplyFranchise = () => {
       brgyClearanceDate: franchise.brgyClearanceDate ? String(franchise.brgyClearanceDate).substring(0, 10) : '',
       brgyIssuer: franchise.brgyIssuer || '',
       orCrUrl: franchise.orCrUrl || '',
+      crUrl: franchise.crUrl || '',
+      orUrl: franchise.orUrl || '',
       licenseUrl: franchise.licenseUrl || '',
+      licenseBackUrl: franchise.licenseBackUrl || '',
       todaEndorsementUrl: franchise.todaEndorsementUrl || '',
       brgyClearanceUrl: franchise.brgyClearanceUrl || '',
       cedulaUrl: franchise.cedulaUrl || ''
@@ -986,16 +1028,16 @@ const ApplyFranchise = () => {
       setAiScannedData({});
     }
 
-    const previews = {};
-    if (franchise.crUrl) previews.crDocument = franchise.crUrl;
-    if (franchise.orUrl) previews.orDocument = franchise.orUrl;
-    if (franchise.orCrUrl && !franchise.crUrl) previews.crDocument = franchise.orCrUrl;
-    if (franchise.licenseUrl) previews.license = franchise.licenseUrl;
-    if (franchise.licenseBackUrl) previews.licenseBack = franchise.licenseBackUrl;
-    if (franchise.todaEndorsementUrl) previews.todaEndorsement = franchise.todaEndorsementUrl;
-    if (franchise.brgyClearanceUrl) previews.brgyClearance = franchise.brgyClearanceUrl;
-    if (franchise.cedulaUrl) previews.cedulaDoc = franchise.cedulaUrl;
-    setFilePreviews(previews);
+    setFilePreviews({
+      crDocument: franchise.crUrl || franchise.orCrUrl || null,
+      orDocument: franchise.orUrl || null,
+      orCrDocument: franchise.orCrUrl || null,
+      license: franchise.licenseUrl || null,
+      licenseBack: franchise.licenseBackUrl || null,
+      todaEndorsement: franchise.todaEndorsementUrl || null,
+      brgyClearance: franchise.brgyClearanceUrl || null,
+      cedulaDoc: franchise.cedulaUrl || null
+    });
     setUploadedDocs({});
   };
 
@@ -1454,7 +1496,7 @@ const ApplyFranchise = () => {
               });
               setAiSuccess(prev => ({ ...prev, [reqId]: true }));
               showToast("AI Scan: Barangay Clearance details detected.", 'success');
-              scrollToField('brgyClearanceNo');
+              scrollToField('brgyClearanceDate');
             } else {
               showToast("Document attached. Please verify Barangay Clearance details manually.", 'info');
             }

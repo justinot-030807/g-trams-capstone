@@ -1,5 +1,6 @@
 const Ticket = require('../models/ticketModel');
 const Notification = require('../models/notificationModel');
+const User = require('../models/userModel');
 const { emitToUser } = require('../config/socket');
 
 const createTicket = async (req, res, next) => {
@@ -12,6 +13,21 @@ const createTicket = async (req, res, next) => {
             contactNumber,
             message
         });
+
+        try {
+            const sysAdmins = await User.find({ role: { $in: ['system_admin', 'admin', 'administrator', 'Administrator'] } }).select('_id');
+            for (const adm of sysAdmins) {
+                const notif = await Notification.create({
+                    recipient: adm._id,
+                    type: 'system',
+                    title: 'New Support Ticket Submitted',
+                    message: `${req.user?.name || 'An operator'} submitted a support ticket: "${subject}".`
+                });
+                emitToUser(String(adm._id), 'notification', notif);
+            }
+        } catch (notifErr) {
+            console.error('Error notifying system_admin of new ticket:', notifErr.message);
+        }
 
         res.status(201).json({ message: 'Ticket submitted successfully', ticket });
     } catch (error) {
@@ -50,14 +66,20 @@ const updateTicketStatus = async (req, res, next) => {
         await ticket.save();
 
         // Notify operator if resolved or responded to
-        if (adminResponse || status === 'Resolved') {
+        const recipientId = ticket.user || ticket.operator;
+        if (recipientId && (adminResponse || status === 'Resolved')) {
+            const notifTitle = status === 'Resolved' ? 'Support Ticket Resolved' : 'Support Ticket Updated';
+            const notifMessage = status === 'Resolved'
+                ? `Your support ticket regarding "${ticket.subject}" has been marked as Resolved.${adminResponse ? ` Response: ${adminResponse}` : ''}`
+                : `Your ticket regarding "${ticket.subject}" has been updated by an admin.`;
+
             const notification = await Notification.create({
-                recipient: ticket.operator,
+                recipient: recipientId,
                 type: 'status_change',
-                title: `Support Ticket Updated`,
-                message: `Your ticket regarding "${ticket.subject}" has been updated by an admin.`
+                title: notifTitle,
+                message: notifMessage
             });
-            emitToUser(String(ticket.operator), 'notification', notification);
+            emitToUser(String(recipientId), 'notification', notification);
         }
 
         res.status(200).json({ message: 'Ticket updated', ticket });

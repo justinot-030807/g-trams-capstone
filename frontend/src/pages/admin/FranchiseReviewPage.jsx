@@ -45,6 +45,7 @@ const FranchiseReviewPage = () => {
   // Queue and Application State
   const [queue, setQueue] = useState([]);
   const [currentApp, setCurrentApp] = useState(null);
+  const selectedApp = currentApp;
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
@@ -91,6 +92,7 @@ const FranchiseReviewPage = () => {
   const [isPrintOpen, setIsPrintOpen] = useState(false);
   const [isAppFormOpen, setIsAppFormOpen] = useState(false);
   const [isDossierOpen, setIsDossierOpen] = useState(false);
+  const [showViolationConfirmModal, setShowViolationConfirmModal] = useState(false);
 
   // Accordion Toggle States
   const [isAiNoticeOpen, setIsAiNoticeOpen] = useState(false);
@@ -335,16 +337,9 @@ const FranchiseReviewPage = () => {
       url: currentApp?.cedulaUrl 
     },
     { 
-      key: 'todaEndorsement', 
-      label: 'TODA Endorsement Certificate', 
-      short: 'TODA Endorsement', 
-      sub: 'Zone Route Recommendation',
-      url: currentApp?.todaEndorsementUrl 
-    },
-    { 
       key: 'brgyClearance', 
-      label: 'Barangay Clearance (Gasan)', 
-      short: 'Barangay Clearance', 
+      label: '5. Brgy Clearance', 
+      short: 'Brgy Clearance', 
       sub: 'Community Residency Proof',
       url: currentApp?.brgyClearanceUrl 
     }
@@ -2088,7 +2083,7 @@ const FranchiseReviewPage = () => {
                     <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
                       <span className="text-[10px] text-slate-400 block font-medium">Authorized TODA Signatory</span>
                       <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">
-                        {currentApp.todaSignatory || currentApp.aiScannedData?.todaEndorsement?.signatory || 'PEDRO SANTOS'}
+                        {currentApp.todaSignatory || currentApp.aiScannedData?.todaEndorsement?.signatory || '—'}
                       </span>
                     </div>
                   </div>
@@ -2184,7 +2179,7 @@ const FranchiseReviewPage = () => {
                       <div>
                         <span className="text-[10px] text-slate-400 block font-medium">Punong Barangay / Issuer</span>
                         <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">
-                          {currentApp.brgyIssuer || currentApp.aiScannedData?.brgyClearance?.issuer || 'HON. VICENTE MORALES'}
+                          {currentApp.brgyIssuer || currentApp.aiScannedData?.brgyClearance?.issuer || '—'}
                         </span>
                       </div>
                     </div>
@@ -2466,6 +2461,10 @@ const FranchiseReviewPage = () => {
         franchise={currentApp} 
         onApprove={() => { 
           setIsDossierOpen(false); 
+          if (selectedApp.status === 'Pending' && recordCheck.data?.violations?.length > 0) {
+            setShowViolationConfirmModal(true);
+            return;
+          }
           handleUpdateStatus('For Payment', null, true); 
         }} 
         onReject={() => { 
@@ -2474,6 +2473,43 @@ const FranchiseReviewPage = () => {
         }} 
         isProcessing={isProcessing} 
       />
+
+      {showViolationConfirmModal && (
+        <div className="fixed inset-0 z-[10002] bg-black/60 flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg max-w-md w-full p-5 shadow-lg space-y-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle size={20} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+              <div>
+                <h3 className="text-sm font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
+                  Prior Violation / Revocation Record Found
+                </h3>
+                <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1 leading-relaxed">
+                  {currentApp?.fullName} has {recordCheck.data?.violations?.length || 1} revoked franchise record(s). Send this application to the Municipal Cashier anyway?
+                </p>
+              </div>
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setShowViolationConfirmModal(false)}
+                className="px-3.5 py-2 rounded-lg text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#E4E1DC] cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowViolationConfirmModal(false);
+                  handleUpdateStatus('For Payment', null, true);
+                }}
+                className="px-4 py-2 rounded-lg text-xs font-bold text-white bg-[#9E2A2B] hover:bg-[#7A1B22] cursor-pointer"
+              >
+                Proceed to Cashier
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

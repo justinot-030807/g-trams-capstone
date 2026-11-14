@@ -231,7 +231,7 @@ const AdminAuditLogs = () => {
             </thead>
             <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27] text-xs">
               {isLoading ? (
-                <TableRowsSkeleton rows={8} cols={5} />
+                <TableRowsSkeleton rows={8} columns={5} />
               ) : logs.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="py-12 text-center">

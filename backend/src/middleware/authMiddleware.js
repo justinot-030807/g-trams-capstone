@@ -78,7 +78,7 @@ const authorize = (...roles) => {
         }
 
         // Strict Cashier Guard: Only Cashier can execute Cashier operations
-        if (allowedRoles.includes('cashier') && userRole !== 'cashier') {
+        if (!isAuthorized && allowedRoles.includes('cashier') && userRole !== 'cashier') {
             return res.status(403).json({
                 message: 'ACCESS DENIED: Official receipt and payment logging is restricted to Municipal Cashier.'
             });

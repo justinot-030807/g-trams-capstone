@@ -248,7 +248,7 @@ const ApplicationSummaryModal = ({
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   <div>
                     <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Serial No.</span>
-                    <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{data?.cedulaSerialNo || '—'}</span>
+                    <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{data?.cedulaSerialNo || data?.cedulaNo || data?.ctcNo || '—'}</span>
                   </div>
                   <div>
                     <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Tax Year</span>

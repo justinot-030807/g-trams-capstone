@@ -135,7 +135,7 @@ function App() {
                   <Route path="/franchise-approval" element={<ProtectedRoute allowedRoles={['bplo_staff']}><FranchiseApproval /></ProtectedRoute>} />
                   <Route path="/franchise-approval/review/:id" element={<ProtectedRoute allowedRoles={['bplo_staff']}><FranchiseReviewPage /></ProtectedRoute>} />
                   <Route path="/manage-revocations" element={<ProtectedRoute allowedRoles={['bplo_staff']}><ManageRevocations /></ProtectedRoute>} />
-                  <Route path="/admin/violations" element={<ProtectedRoute allowedRoles={['bplo_staff', 'admin']}><ManageRevocations /></ProtectedRoute>} />
+                  <Route path="/admin/violations" element={<ProtectedRoute allowedRoles={['bplo_staff']}><ManageRevocations /></ProtectedRoute>} />
                   <Route path="/validate-toda" element={<ProtectedRoute allowedRoles={['bplo_staff']}><ValidateTODA /></ProtectedRoute>} />
                   <Route path="/system-reports" element={<ProtectedRoute allowedRoles={['bplo_staff']}><AdminReports /></ProtectedRoute>} />
 

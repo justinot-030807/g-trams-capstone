@@ -22,12 +22,18 @@ const MaintenanceMode = () => {
           setStatusMessage('Maintenance mode has ended! Redirecting...');
           setTimeout(() => {
             const role = (localStorage.getItem('role') || '').toLowerCase();
-            if (role.includes('admin')) { navigate('/admin-dashboard'); } else if (role.includes('bplo') || role.includes('llsa')) { navigate('/llsa-dashboard'); } else if (role.includes('cashier')) { navigate('/cashier-dashboard'); return; } if (role.includes('admin')) {
-              navigate('/admin-dashboard');
-            } else if (localStorage.getItem('token')) {
-              navigate('/operator-dashboard');
-            } else {
+            if (!localStorage.getItem('token')) {
               navigate('/login');
+            } else if (role === 'system_admin' || role === 'admin' || role.includes('admin')) {
+              navigate('/admin-dashboard');
+            } else if (role === 'bplo_staff' || role.includes('bplo') || role.includes('llsa')) {
+              navigate('/llsa-dashboard');
+            } else if (role === 'toda_president' || role.includes('toda')) {
+              navigate('/toda-dashboard');
+            } else if (role === 'cashier' || role.includes('cashier')) {
+              navigate('/cashier-dashboard');
+            } else {
+              navigate('/operator-dashboard');
             }
           }, 1200);
         } else {

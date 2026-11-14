@@ -12,6 +12,8 @@ const franchiseSchema = new mongoose.Schema({
     chassisNo: { type: String, required: true },
     plateNo: { type: String, required: true },
     todaName: { type: String, required: true },
+    mtopNo: { type: String, trim: true, default: '' },
+    bodyNumber: { type: String, trim: true, default: '' },
     
     orCrUrl: { type: String },
     crUrl: { type: String, default: '' },

@@ -34,7 +34,7 @@ const OfficialCancellationLetterModal = ({
     (data.operator?.firstName
       ? `${data.operator.firstName} ${data.operator.middleName ? data.operator.middleName.charAt(0) + '. ' : ''}${data.operator.lastName || ''}`
       : '') ||
-    'NESTOR J. MONTIANO'
+    '—'
   ).toUpperCase().trim();
 
   const recipientLine = /^(MR\.|MS\.|MRS\.)/i.test(rawName) ? rawName : `MR./MS. ${rawName}`;
@@ -42,13 +42,13 @@ const OfficialCancellationLetterModal = ({
   const lastWord = nameWords[nameWords.length - 1] || 'Operator';
   const salutationName = `Mr./Ms. ${lastWord.charAt(0).toUpperCase()}${lastWord.slice(1).toLowerCase()}`;
 
-  const rawBarangay = String(data.barangay || data.address || 'Bachao Ibaba')
+  const rawBarangay = String(data.barangay || data.address || '')
     .replace(/^Brgy\.?\s*/i, '')
     .replace(/,?\s*Gasan.*$/i, '')
-    .trim() || 'Poblacion';
+    .trim() || '—';
 
-  const plateNo = cleanText(data.plateNo || data.plateNumber || data.mvFileNo, '3874IW').toUpperCase();
-  const rawFranchiseNo = cleanText(data.franchiseNo || data.mtopNo || data.mtopNumber || data.franchiseNumber, '2026-047')
+  const plateNo = cleanText(data.plateNo || data.plateNumber || data.mvFileNo, '—').toUpperCase();
+  const rawFranchiseNo = cleanText(data.franchiseNo || data.mtopNo || data.mtopNumber || data.franchiseNumber, '—')
     .replace(/^MTOP-GASAN-/i, '')
     .toUpperCase();
 
@@ -77,7 +77,7 @@ const OfficialCancellationLetterModal = ({
     ? new Date(data.cancellationRequestedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
     : fullDateStr;
 
-  const orNo = data.cancellationOrNo || data.cancellationOrNumber || data.orNo || data.orNumber || '7368238';
+  const orNo = data.cancellationOrNo || data.cancellationOrNumber || data.paymentOrNumber || '';
   const orDate = data.cancellationOrDate
     ? new Date(data.cancellationOrDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
     : fullDateStr;
@@ -342,7 +342,7 @@ const OfficialCancellationLetterModal = ({
                     className="absolute -top-12 left-1/2 -translate-x-1/2 w-48 h-16 object-contain pointer-events-none"
                   />
                   <div className="font-bold underline text-[14pt] tracking-wide">
-                    LIDANY A. BALDO
+                    LIDANY A. LAO-BALDO
                   </div>
                   <div className="font-bold text-[12pt]">
                     Municipal Vice Mayor

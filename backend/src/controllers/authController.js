@@ -732,7 +732,11 @@ exports.changePassword = async (req, res) => {
     try {
         const { oldPassword, newPassword } = req.body;
 
-        if (!newPassword || newPassword.length < 8) {
+        if (!oldPassword || typeof oldPassword !== 'string') {
+            return res.status(400).json({ message: 'Current password is required.' });
+        }
+
+        if (!newPassword || typeof newPassword !== 'string' || newPassword.length < 8) {
             return res.status(400).json({ message: 'New password must be at least 8 characters long.' });
         }
 
@@ -753,6 +757,7 @@ exports.changePassword = async (req, res) => {
         }
 
         const user = await User.findById(req.user._id);
+        if (!user) return res.status(404).json({ message: 'User not found' });
         const isMatch = await user.matchPassword(oldPassword);
         if (!isMatch) return res.status(400).json({ message: 'Incorrect old password.' });
         
@@ -776,7 +781,11 @@ exports.changePassword = async (req, res) => {
 exports.verifyAdminPassword = async (req, res) => {
     try {
         const { password } = req.body;
+        if (!password || typeof password !== 'string') {
+            return res.status(400).json({ message: 'Password is required.' });
+        }
         const user = await User.findById(req.user._id); 
+        if (!user) return res.status(404).json({ message: 'User not found' });
         const isMatch = await user.matchPassword(password);
         if (!isMatch) return res.status(401).json({ message: 'Incorrect Admin Password' });
         
@@ -910,8 +919,19 @@ exports.updateUser = async (req, res) => {
 // Delete user
 exports.deleteUser = async (req, res) => {
     try {
+        if (req.user && String(req.params.id) === String(req.user._id)) {
+            return res.status(400).json({ message: 'You cannot delete your own account.' });
+        }
+
+        const existingUser = await User.findById(req.params.id);
+        if (!existingUser) return res.status(404).json({ message: 'User not found' });
+
+        const targetRole = String(existingUser.role || '').toLowerCase().trim().replace(/[\s-]+/g, '_');
+        if (['system_admin', 'admin', 'administrator'].includes(targetRole)) {
+            return res.status(403).json({ message: 'Cannot delete a System Administrator account.' });
+        }
+
         const user = await User.findByIdAndDelete(req.params.id);
-        if (!user) return res.status(404).json({ message: 'User not found' });
 
         logAudit(req, {
             action: 'USER_DELETED',
@@ -1245,18 +1265,18 @@ exports.googleAuth = async (req, res) => {
                 });
             }
 
-            const normalizedRole = String(user.role || '').toLowerCase().trim().replace(/_/g, ' ');
-            const isAdmin = normalizedRole === 'admin' || normalizedRole === 'administrator';
+            const normalizedRole = String(user.role || '').toLowerCase().trim().replace(/[\s-]+/g, '_');
+            const isStaffOrAdmin = ['admin', 'administrator', 'system_admin', 'bplo_staff', 'cashier'].includes(normalizedRole);
 
             // Protect administrative and cashier accounts from unauthorized public Google takeover
-            const isOperator = normalizedRole === 'operator';
-            if (!isOperator && user.authProvider !== 'google' && !user.googleId) {
+            const isOperatorOrToda = normalizedRole === 'operator' || normalizedRole === 'toda_president';
+            if (!isOperatorOrToda && user.authProvider !== 'google' && !user.googleId) {
                 return res.status(403).json({ 
                     message: 'Administrative and Cashier accounts must log in using their official municipal credentials.' 
                 });
             }
 
-            if (isMaintenance && !isAdmin) {
+            if (isMaintenance && !isStaffOrAdmin && !isOperatorOrToda) {
                 return res.status(503).json({ 
                     message: sysSettings.maintenanceMessage || 'Portal is currently undergoing system maintenance. Access is restricted.',
                     maintenanceMode: true
@@ -1400,11 +1420,21 @@ exports.googleAuth = async (req, res) => {
         // Create new operator user with isVerified: true (NO 6-DIGIT OTP CODE REQUIRED!)
         const randomPass = crypto.randomBytes(24).toString('base64').replace(/[^a-zA-Z0-9]/g, '') + 'G!9a';
         const chosenPassword = (onboardingData?.password && onboardingData.password.length >= 6) ? onboardingData.password : randomPass;
+        const rawBackupContact = onboardingData?.backupContact || req.body?.backupContact || '';
+        const backupContact = rawBackupContact ? normalizeContact(rawBackupContact) : '';
+        const rawRecoveryEmail = onboardingData?.recoveryEmail || req.body?.recoveryEmail || (backupContact && backupContact.includes('@') ? backupContact : '');
+        const recoveryEmail = rawRecoveryEmail && String(rawRecoveryEmail).includes('@') ? String(rawRecoveryEmail).toLowerCase().trim() : '';
+        const rawRecoveryPhone = onboardingData?.recoveryPhone || req.body?.recoveryPhone || (backupContact && !backupContact.includes('@') ? backupContact : '');
+        const recoveryPhone = rawRecoveryPhone ? String(rawRecoveryPhone).trim() : '';
+
         user = new User({
             name: fullName,
             address: address,
             contact: contact,
+            backupContact,
             email: email,
+            recoveryEmail,
+            recoveryPhone,
             googleId: googleId || '',
             password: chosenPassword,
             role: assignedRole,
@@ -1493,19 +1523,28 @@ function maskContactInfo(val) {
     return str.length > 4 ? `${str.slice(0, 2)}****` : '****';
 };
 
-// Verify Operator for QR Code (Accepts User ID or Franchise ID from MTOP Certificate)
+// Verify Operator for QR Code (Accepts User ID, Franchise ID, MTOP No, or Plate No from MTOP Certificate)
 exports.verifyOperator = async (req, res) => {
     try {
-        const queryId = req.params.id;
+        const mongoose = require('mongoose');
+        const queryId = String(req.params.id || '').trim();
+        if (!queryId) {
+            return res.status(400).json({ message: 'Verification ID is required.' });
+        }
 
-        // 1. Try finding by User ID first
-        let user = await User.findById(queryId).select('name fullName profilePic role todaAssociation contact isActive');
+        const isValidObjectId = mongoose.Types.ObjectId.isValid(queryId);
+        const baseUrl = (process.env.BACKEND_URL || process.env.VITE_API_URL || '').replace(/\/+$/, '');
+
+        // 1. Try finding by User ID first (only if valid ObjectId)
+        let user = isValidObjectId
+            ? await User.findById(queryId).select('name fullName profilePic role todaAssociation contact isActive')
+            : null;
         let franchises = [];
 
         if (user) {
-            let formattedProfilePic = user.profilePic;
-            if (formattedProfilePic && !formattedProfilePic.startsWith('http')) {
-                formattedProfilePic = `${process.env.VITE_API_URL || 'http://localhost:3000'}/${formattedProfilePic.replace(/\\/g, '/')}`;
+            let formattedProfilePic = user.profilePic || '';
+            if (formattedProfilePic && !formattedProfilePic.startsWith('http') && baseUrl) {
+                formattedProfilePic = `${baseUrl}/${formattedProfilePic.replace(/^\/+/, '').replace(/\\/g, '/')}`;
             }
 
             const operatorName = user.name || user.fullName || 'Registered Operator';
@@ -1530,14 +1569,29 @@ exports.verifyOperator = async (req, res) => {
             });
         }
 
-        // 2. If not a User ID, try finding by Franchise ID (from printed MTOP Certificate QR code)
-        const franchise = await Franchise.findById(queryId).populate('operator', 'name fullName profilePic role todaAssociation contact isActive');
+        // 2. If not a User ID, try finding by Franchise ID (if valid ObjectId) or fallback to mtopNo / plateNo
+        let franchise = isValidObjectId
+            ? await Franchise.findById(queryId).populate('operator', 'name fullName profilePic role todaAssociation contact isActive')
+            : null;
+
+        if (!franchise) {
+            const escapedQuery = queryId.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const queryRegex = new RegExp(`^${escapedQuery}$`, 'i');
+            franchise = await Franchise.findOne({
+                $or: [
+                    { mtopNo: queryRegex },
+                    { plateNo: queryRegex },
+                    { bodyNumber: queryRegex }
+                ]
+            }).populate('operator', 'name fullName profilePic role todaAssociation contact isActive');
+        }
+
         if (franchise) {
             const opUser = franchise.operator;
             const opName = franchise.fullName || opUser?.name || opUser?.fullName || 'Registered Operator';
             let formattedProfilePic = opUser?.profilePic || '';
-            if (formattedProfilePic && !formattedProfilePic.startsWith('http')) {
-                formattedProfilePic = `${process.env.VITE_API_URL || 'http://localhost:3000'}/${formattedProfilePic.replace(/\\/g, '/')}`;
+            if (formattedProfilePic && !formattedProfilePic.startsWith('http') && baseUrl) {
+                formattedProfilePic = `${baseUrl}/${formattedProfilePic.replace(/^\/+/, '').replace(/\\/g, '/')}`;
             }
 
             const allFranchises = await Franchise.find({

@@ -42,6 +42,7 @@ const RenewFranchise = () => {
     driverLicenseExpiryDate: ''
   });
 
+  const ctcData = { ctcNumber: formData.ctcNo, dateIssued: formData.dateIssued, placeIssued: formData.placeIssued };
   const [orcrFile, setOrcrFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
   const [cedulaFile, setCedulaFile] = useState(null);
@@ -123,7 +124,7 @@ const RenewFranchise = () => {
     setCedulaScanSuccess(false);
     try {
       const scanFormData = new FormData();
-      scanFormData.append('document', file);
+      scanFormData.append('file', file);
       scanFormData.append('docType', 'cedula');
 
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/scan-document`, {
@@ -849,9 +850,12 @@ const RenewFranchise = () => {
           onClose={() => setIsOfficialFormOpen(false)}
           formData={{
             ...franchise,
-            cedulaNo: ctcData.ctcNumber,
-            cedulaDate: ctcData.dateIssued,
-            cedulaAddress: ctcData.placeIssued
+            cedulaNo: ctcData.ctcNumber || franchise.cedulaSerialNo || franchise.cedulaNo || '',
+            cedulaSerialNo: ctcData.ctcNumber || franchise.cedulaSerialNo || franchise.cedulaNo || '',
+            cedulaDate: ctcData.dateIssued || franchise.cedulaDate || franchise.cedulaDateIssued || '',
+            cedulaDateIssued: ctcData.dateIssued || franchise.cedulaDateIssued || franchise.cedulaDate || '',
+            cedulaAddress: ctcData.placeIssued || franchise.cedulaAddress || franchise.cedulaPlaceIssued || '',
+            cedulaPlaceIssued: ctcData.placeIssued || franchise.cedulaPlaceIssued || franchise.cedulaAddress || ''
           }}
           isRenewal={true}
         />

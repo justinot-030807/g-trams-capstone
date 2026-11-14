@@ -514,7 +514,7 @@ const AdminApplicationSummaryModal = ({
                 className="px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-95 cursor-pointer disabled:opacity-50 whitespace-nowrap"
               >
                 {isProcessing ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />}
-                <span>Approve for Signing</span>
+                <span>Send to Cashier</span>
               </button>
             )}
           </div>

@@ -1390,7 +1390,7 @@ const SubmitMembers = () => {
                         <td className="p-3">
                           <StatusBadge 
                             status={req.status === 'Approved' ? 'Active' : (req.status === 'Rejected' ? 'Expired' : 'Pending')} 
-                            label={req.status} 
+                            customLabel={req.status} 
                           />
                         </td>
                         <td className="p-3 pr-4 text-[#6B6761] dark:text-[#A8A29E] italic">

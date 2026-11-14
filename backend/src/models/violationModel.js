@@ -4,7 +4,8 @@ const violationSchema = new mongoose.Schema({
     operator: { 
         type: mongoose.Schema.Types.ObjectId, 
         ref: 'User', 
-        required: true, 
+        required: false, 
+        default: null,
         index: true 
     },
     franchise: { 

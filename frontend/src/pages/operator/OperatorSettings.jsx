@@ -279,16 +279,64 @@ const OperatorSettings = () => {
               type: 'orCr'
             });
           }
+          if (unit.crUrl && unit.crUrl !== unit.orCrUrl) {
+            docs.push({
+              id: `${unit._id}_cr`,
+              title: 'Certificate of Registration (LTO CR)',
+              category: 'Vehicle Document',
+              plate: unitPlate,
+              unitDesc,
+              url: unit.crUrl,
+              status: unit.status,
+              type: 'cr'
+            });
+          }
+          if (unit.orUrl && unit.orUrl !== unit.orCrUrl) {
+            docs.push({
+              id: `${unit._id}_or`,
+              title: 'Official Receipt (LTO OR)',
+              category: 'Vehicle Document',
+              plate: unitPlate,
+              unitDesc,
+              url: unit.orUrl,
+              status: unit.status,
+              type: 'or'
+            });
+          }
           if (unit.licenseUrl) {
             docs.push({
               id: `${unit._id}_license`,
-              title: "Professional Driver's License",
+              title: "Professional Driver's License (Front)",
               category: "Driver's Credential",
               plate: unitPlate,
               unitDesc,
               url: unit.licenseUrl,
               status: unit.status,
               type: 'license'
+            });
+          }
+          if (unit.licenseBackUrl) {
+            docs.push({
+              id: `${unit._id}_license_back`,
+              title: "Professional Driver's License (Back)",
+              category: "Driver's Credential",
+              plate: unitPlate,
+              unitDesc,
+              url: unit.licenseBackUrl,
+              status: unit.status,
+              type: 'licenseBack'
+            });
+          }
+          if (unit.cedulaUrl) {
+            docs.push({
+              id: `${unit._id}_cedula`,
+              title: 'Community Tax Certificate (Cedula / CTC)',
+              category: 'LGU Clearance',
+              plate: unitPlate,
+              unitDesc,
+              url: unit.cedulaUrl,
+              status: unit.status,
+              type: 'cedula'
             });
           }
           if (unit.brgyClearanceUrl) {
@@ -444,8 +492,9 @@ const OperatorSettings = () => {
       showToast(t('profile.passMismatch', 'New passwords do not match!'), 'error');
       return;
     }
-    if (passwordData.newPassword.length < 6) {
-      showToast(t('profile.passTooShort', 'Password must be at least 6 characters.'), 'error');
+    const strongPassRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
+    if (!strongPassRegex.test(passwordData.newPassword)) {
+      showToast(t('profile.passTooWeak', 'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.'), 'error');
       return;
     }
     if (passwordData.currentPassword === passwordData.newPassword) {
@@ -1868,7 +1917,7 @@ const OperatorSettings = () => {
                     {showNewPass ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
-                <p className="text-[11px] font-medium text-[#6B6761] dark:text-[#A8A29E] mt-1">Must be at least 6 characters.</p>
+                <p className="text-[11px] font-medium text-[#6B6761] dark:text-[#A8A29E] mt-1">Must be at least 8 characters with uppercase, lowercase, number, and special character.</p>
               </div>
 
               <div>

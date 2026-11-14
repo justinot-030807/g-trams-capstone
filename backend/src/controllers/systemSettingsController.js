@@ -4,6 +4,7 @@ const User = require('../models/userModel');
 const Franchise = require('../models/franchiseModel');
 const AuditLog = require('../models/auditLogModel');
 const Ticket = require('../models/ticketModel');
+const { logAudit } = require('../utils/auditLogger');
 
 // Get server-authoritative time in Asia/Manila (UTC+8)
 const getServerTime = (req, res) => {
@@ -145,6 +146,17 @@ const updateSettings = async (req, res) => {
 
     // Remove any stale older duplicates so there is always a single authoritative record
     await SystemSettings.deleteMany({ _id: { $ne: settings._id } });
+
+    logAudit(req, {
+      action: 'SYSTEM_SETTINGS_UPDATED',
+      targetType: 'SystemSettings',
+      targetId: settings._id,
+      details: {
+        updatedFields: Object.keys(req.body || {}),
+        maintenanceMode: settings.maintenanceMode,
+        fiscalYear: settings.fiscalYear
+      }
+    });
 
     res.status(200).json({
       success: true,

@@ -29,7 +29,8 @@ async function dispatchExpirationSms({
     franchise,
     daysRemaining = 30,
     simulated = true,
-    customPhone = null
+    customPhone = null,
+    skipGatewaySend = false
 }) {
     try {
         const now = getManilaNow();
@@ -49,7 +50,7 @@ async function dispatchExpirationSms({
         );
 
         // If TextBee or Semaphore API key is present
-        if (hasLiveSmsKey) {
+        if (hasLiveSmsKey && !skipGatewaySend) {
             try {
                 const smsRes = await sendSms({
                     phone: recipientPhone,
@@ -62,6 +63,8 @@ async function dispatchExpirationSms({
                 console.warn('[notificationService] SMS gateway call failed, logging as simulated fallback:', apiErr.message);
                 status = 'SIMULATED';
             }
+        } else if (hasLiveSmsKey && skipGatewaySend) {
+            status = 'DELIVERED';
         }
 
         // Create timestamped audit record

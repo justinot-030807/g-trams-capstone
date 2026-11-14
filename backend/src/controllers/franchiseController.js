@@ -177,6 +177,13 @@ const updateFranchise = async (req, res) => {
             return res.status(403).json({ message: 'ACCESS DENIED: You are not authorized to update this franchise record.' });
         }
 
+        // Prevent operators from overwriting vehicle/permit fields on an already Active, For Payment, For Signing, or Ready for Pickup franchise
+        if (!isAdmin && !['Pending', 'Pending for Approval', 'Rejected', 'Cancelled'].includes(existingFranchise.status)) {
+            return res.status(400).json({
+                message: `Cannot modify franchise details while application status is '${existingFranchise.status}'. Only Pending, Rejected, or Cancelled applications can be edited.`
+            });
+        }
+
         let updateData = { ...req.body };
         const wasCancelled = existingFranchise.status === 'Cancelled';
 
@@ -272,10 +279,10 @@ const updateFranchise = async (req, res) => {
                 details: { plateNo: updatedFranchise.plateNo, updatedFields: Object.keys(updateData) }
             });
         } else if (wasCancelled && updatedFranchise.status === 'Pending') {
-            // Notify admins of re-submitted corrected application
+            // Notify admins and BPLO staff of re-submitted corrected application
             try {
                 const User = require('../models/userModel');
-                const admins = await User.find({ role: { $in: ['admin', 'administrator', 'Administrator'] } });
+                const admins = await User.find({ role: { $in: ['bplo_staff', 'admin', 'administrator', 'Administrator'] } });
                 for (const adm of admins) {
                     const notif = await Notification.create({
                         recipient: adm._id,
@@ -372,6 +379,7 @@ const renewFranchise = async (req, res) => {
             if (req.files['crDocument'] && req.files['crDocument'][0]) updateData.crUrl = req.files['crDocument'][0].path;
             if (req.files['orDocument'] && req.files['orDocument'][0]) updateData.orUrl = req.files['orDocument'][0].path;
             if (req.files['cedulaDoc'] && req.files['cedulaDoc'][0]) updateData.cedulaUrl = req.files['cedulaDoc'][0].path;
+            if (req.files['cedula'] && req.files['cedula'][0]) updateData.cedulaUrl = req.files['cedula'][0].path;
             if (req.files['license'] && req.files['license'][0]) updateData.licenseUrl = req.files['license'][0].path;
             if (req.files['licenseBack'] && req.files['licenseBack'][0]) updateData.licenseBackUrl = req.files['licenseBack'][0].path;
             if (req.files['brgyClearance'] && req.files['brgyClearance'][0]) updateData.brgyClearanceUrl = req.files['brgyClearance'][0].path;
@@ -382,6 +390,33 @@ const renewFranchise = async (req, res) => {
             updateData,
             { returnDocument: 'after' }
         ).populate('operator', 'name address contact');
+
+        logAudit(req, {
+            action: 'FRANCHISE_RENEWAL_SUBMITTED',
+            targetType: 'Franchise',
+            targetId: req.params.id,
+            details: {
+                plateNo: updatedFranchise.plateNo,
+                fullName: updatedFranchise.fullName,
+                applicationType: 'Renewal'
+            }
+        });
+
+        try {
+            const staffRecipients = await User.find({ role: { $in: ['bplo_staff', 'admin', 'administrator', 'Administrator'] } });
+            for (const staff of staffRecipients) {
+                const notif = await Notification.create({
+                    recipient: staff._id,
+                    type: 'info',
+                    title: 'Franchise Renewal Application Submitted',
+                    message: `Operator ${updatedFranchise.fullName || req.user?.name || 'User'} submitted a renewal application for unit ${updatedFranchise.plateNo} (${updatedFranchise.todaName || 'TODA'}).`,
+                    relatedFranchise: updatedFranchise._id
+                });
+                emitToUser(staff._id.toString(), 'notification', notif);
+            }
+        } catch (notifyErr) {
+            console.error('Error notifying BPLO staff on franchise renewal:', notifyErr);
+        }
 
         res.status(200).json(updatedFranchise);
     } catch (error) {
@@ -450,6 +485,21 @@ const updateFranchiseStatus = async (req, res) => {
 
         if (['For Payment', 'For Signing', 'Ready for Pickup', 'Active'].includes(status) && !existingFranchise.approvalDate) {
             updateData.approvalDate = new Date();
+        }
+
+        if (['For Signing', 'Ready for Pickup', 'Active'].includes(status) && !existingFranchise.mtopNo) {
+            const currentYear = new Date().getFullYear();
+            const yearPrefix = `${currentYear}-`;
+            const latestWithMtop = await Franchise.findOne({ mtopNo: { $regex: `^${yearPrefix}\\d+$` } })
+                .sort({ mtopNo: -1 })
+                .select('mtopNo')
+                .lean();
+            let nextSeq = 1;
+            if (latestWithMtop && latestWithMtop.mtopNo) {
+                const parsed = parseInt(String(latestWithMtop.mtopNo).replace(yearPrefix, ''), 10);
+                if (!isNaN(parsed)) nextSeq = parsed + 1;
+            }
+            updateData.mtopNo = `${yearPrefix}${String(nextSeq).padStart(3, '0')}`;
         }
 
         if (status === 'Active') {
@@ -990,38 +1040,61 @@ const getFranchiseRecordCheck = async (req, res) => {
         const appType = String(franchise.applicationType || 'New');
         const isRenewal = /renew/i.test(appType) || pastFranchises.length > 0;
 
-        // 1. Verify applicant against official TODA association roster (ONLY approved TodaSubmission masterlists)
+        // 1. Verify applicant against official TODA association roster (Approved TodaSubmission masterlists AND TodaRoster)
         let todaStatus = 'non_toda';
         let todaRosterMessage = '';
         let todaMatchedMember = null;
         let todaApprovedCount = 0;
+        let inRoster = false;
 
         if (franchise.todaName && franchise.todaName !== 'NON-TODA') {
             const todaSearch = buildTodaSearchConditions(franchise.todaName);
+            const TodaRoster = require('../models/todaModel');
+            const todaRegex = new RegExp(escapeRegex(franchise.todaName.replace(/\s*TODA$/i, '').trim()), 'i');
             
-            // Query only Approved masterlists for this TODA
-            const approvedRosters = await TodaSubmission.find({
-                status: 'Approved',
-                $or: todaSearch
-            }).select('extractedMembers todaAssociation fileName createdAt');
+            // Query Approved masterlists and active TodaRoster records for this TODA
+            const [approvedRosters, directRosterEntries] = await Promise.all([
+                TodaSubmission.find({
+                    status: { $in: ['Approved', 'Verified', 'Active'] },
+                    $or: todaSearch
+                }).select('extractedMembers todaAssociation fileName createdAt'),
+                TodaRoster.find({
+                    todaAssociation: todaRegex,
+                    status: { $ne: 'Inactive' }
+                }).lean().catch(() => [])
+            ]);
 
-            todaApprovedCount = approvedRosters.length;
+            todaApprovedCount = approvedRosters.length + (directRosterEntries.length > 0 ? 1 : 0);
 
-            if (approvedRosters.length === 0) {
+            if (approvedRosters.length === 0 && directRosterEntries.length === 0) {
                 // No approved roster has been uploaded by the TODA President yet
                 todaStatus = 'no_roster_on_file';
                 todaRosterMessage = `No approved roster on file for ${franchise.todaName}. (Awaiting President masterlist submission)`;
             } else {
                 const applicantName = (franchise.fullName || '').trim();
+                const applicantPlate = (franchise.plateNo || '').trim().toUpperCase();
                 let docMatch = false;
 
-                if (applicantName) {
+                if (directRosterEntries.length > 0) {
+                    const foundDirect = directRosterEntries.find(r =>
+                        (applicantName && isNameMatch(applicantName, r.operatorName)) ||
+                        (applicantPlate && r.plateNo && r.plateNo.trim().toUpperCase() === applicantPlate)
+                    );
+                    if (foundDirect) {
+                        docMatch = true;
+                        inRoster = true;
+                        todaMatchedMember = foundDirect.operatorName;
+                    }
+                }
+
+                if (!docMatch && applicantName) {
                     for (const r of approvedRosters) {
                         if (Array.isArray(r.extractedMembers)) {
-                            const found = r.extractedMembers.find(m => isNameMatch(applicantName, m?.name));
+                            const found = r.extractedMembers.find(m => isNameMatch(applicantName, m?.name || m?.operatorName));
                             if (found) {
                                 docMatch = true;
-                                todaMatchedMember = found.name;
+                                inRoster = true;
+                                todaMatchedMember = found.name || found.operatorName;
                                 break;
                             }
                         }
@@ -1033,7 +1106,7 @@ const getFranchiseRecordCheck = async (req, res) => {
                     todaRosterMessage = `Verified in official ${franchise.todaName} roster (Matched: ${todaMatchedMember})`;
                 } else {
                     todaStatus = 'not_in_roster';
-                    todaRosterMessage = `Not found in official ${franchise.todaName} roster (${approvedRosters.length} masterlist file/s on record)`;
+                    todaRosterMessage = `Not found in official ${franchise.todaName} roster (${todaApprovedCount} masterlist record/s on file)`;
                 }
             }
         }
@@ -1075,6 +1148,7 @@ const getFranchiseRecordCheck = async (req, res) => {
             rejected,
             pastFranchises,
             activeUnitsCount: activeUnits.length,
+            inRoster,
             todaStatus,
             todaName: franchise.todaName || 'NON-TODA',
             todaRosterMessage,
@@ -1354,16 +1428,19 @@ const checkTodaMemberStatus = async (req, res) => {
         const jurisdictionWarning = jurisdictionCheck.warning || '';
 
         const todaSearch = buildTodaSearchConditions(todaName);
+        const todaRegex = new RegExp(escapeRegex(todaName.replace(/\s*TODA$/i, '').trim()), 'i');
+        const plateNo = (req.query.plateNo || req.query.plateNumber || '').trim();
 
-        const TodaRoster = require('../models/todaRoster');
+        const TodaRoster = require('../models/todaModel');
         const [approvedRosters, officialRosterDocs] = await Promise.all([
             TodaSubmission.find({
-                status: 'Approved',
-                $or: todaSearch
+                status: { $in: ['Approved', 'Verified', 'Active'] },
+                $or: [{ todaAssociation: todaRegex }, ...todaSearch]
             }).select('extractedMembers todaAssociation fileName createdAt').lean(),
             TodaRoster.find({
-                todaAssociation: new RegExp(escapeRegex(todaName.replace(/\s*TODA$/i, '').trim()), 'i')
-            }).select('members todaAssociation').lean().catch(() => [])
+                todaAssociation: todaRegex,
+                status: { $ne: 'Inactive' }
+            }).select('operatorName bodyNumber plateNo contact todaAssociation status').lean().catch(() => [])
         ]);
 
         if (approvedRosters.length === 0 && (!officialRosterDocs || officialRosterDocs.length === 0)) {
@@ -1378,7 +1455,7 @@ const checkTodaMemberStatus = async (req, res) => {
             });
         }
 
-        if (!applicantName) {
+        if (!applicantName && !plateNo) {
             return res.json({
                 todaStatus: 'pending_name',
                 isVerified: false,
@@ -1396,11 +1473,24 @@ const checkTodaMemberStatus = async (req, res) => {
         let matchedBodyNumber = '';
 
         for (const r of (officialRosterDocs || [])) {
-            if (Array.isArray(r.members)) {
-                const found = r.members.find(m => isNameMatch(applicantName, m?.fullName || m?.name));
+            if (r.operatorName) {
+                const nameMatches = applicantName && isNameMatch(applicantName, r.operatorName);
+                const plateMatches = plateNo && r.plateNo && r.plateNo.trim().toUpperCase() === plateNo.toUpperCase();
+                if (nameMatches || plateMatches) {
+                    docMatch = true;
+                    matchedMember = r.operatorName;
+                    matchedPlateNo = r.plateNo || '';
+                    matchedBodyNumber = r.bodyNumber || '';
+                    break;
+                }
+            } else if (Array.isArray(r.members)) {
+                const found = r.members.find(m =>
+                    (applicantName && isNameMatch(applicantName, m?.fullName || m?.name || m?.operatorName)) ||
+                    (plateNo && (m?.plateNo || m?.plateNumber || '').trim().toUpperCase() === plateNo.toUpperCase())
+                );
                 if (found) {
                     docMatch = true;
-                    matchedMember = found.fullName || found.name;
+                    matchedMember = found.fullName || found.name || found.operatorName;
                     matchedPlateNo = found.plateNumber || found.plateNo || '';
                     matchedBodyNumber = found.bodyNumber || '';
                     break;
@@ -1411,12 +1501,15 @@ const checkTodaMemberStatus = async (req, res) => {
         if (!docMatch) {
             for (const r of approvedRosters) {
                 if (Array.isArray(r.extractedMembers)) {
-                    const found = r.extractedMembers.find(m => isNameMatch(applicantName, m?.name));
+                    const found = r.extractedMembers.find(m =>
+                        (applicantName && isNameMatch(applicantName, m?.name || m?.operatorName)) ||
+                        (plateNo && (m?.plateNo || m?.plateNumber || '').trim().toUpperCase() === plateNo.toUpperCase())
+                    );
                     if (found) {
                         docMatch = true;
-                        matchedMember = found.name;
+                        matchedMember = found.name || found.operatorName;
                         matchedPlateNo = found.plateNo || found.plateNumber || '';
-                        matchedBodyNumber = found.bodyNumber || '';
+                        matchedBodyNumber = found.bodyNumber || found.unitNo || '';
                         break;
                     }
                 }
@@ -1431,6 +1524,14 @@ const checkTodaMemberStatus = async (req, res) => {
                 matchedMember,
                 matchedPlateNo,
                 matchedBodyNumber,
+                fullName: matchedMember,
+                plateNo: matchedPlateNo,
+                bodyNumber: matchedBodyNumber,
+                member: {
+                    fullName: matchedMember,
+                    plateNo: matchedPlateNo,
+                    bodyNumber: matchedBodyNumber
+                },
                 jurisdictionStatus,
                 jurisdictionWarning,
                 authorizedTodas: jurisdictionCheck.authorizedTodas || [],
