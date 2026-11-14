@@ -2857,44 +2857,80 @@ const ApplyFranchise = () => {
                   )}
                 </div>
 
-                {/* Driver's License Document & Essential Fields */}
+                {/* Driver's License Documents (Front & Back) & Credentials */}
                 <div className="p-3.5 sm:p-4 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-3.5 shadow-xs">
-                  <div className="flex items-center justify-between flex-wrap gap-2">
-                    <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                      Driver's License
-                    </label>
-                    <span className="text-xs sm:text-sm font-semibold text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1">
-                      <CheckCircle2 size={14} className="text-emerald-600" /> Auto-fill
+                  <div className="flex items-center justify-between flex-wrap gap-2 pb-1 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+                    <div>
+                      <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E] block">
+                        Driver's License Documents &amp; Credentials
+                      </span>
+                    </div>
+                    <span className="text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1">
+                      <CheckCircle2 size={14} className="text-emerald-600" /> AI Auto-fill
                     </span>
                   </div>
 
-                  <DocumentUploadCard
-                    id="license"
-                    label="Driver's License"
-                    file={uploadedDocs.license}
-                    previewUrl={filePreviews.license || formData.licenseUrl}
-                    onFileSelect={handleFileChange}
-                    onFileRemove={handleRemoveFile}
-                    onPreviewZoom={setFullPreview}
-                    onRescan={handleRescan}
-                    required={true}
-                    isScanning={aiScanning.license}
-                    scanSuccess={aiSuccess.license}
-                    error={formErrors.license}
-                    hideHeaderLabel={true}
-                  />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                          Driver's License (Front)
+                        </span>
+                        <span className="text-[11px] font-medium text-[#6B6761] dark:text-[#A8A29E]">Identity &amp; DL Codes</span>
+                      </div>
+                      <DocumentUploadCard
+                        id="license"
+                        label="Driver's License (Front)"
+                        file={uploadedDocs.license}
+                        previewUrl={filePreviews.license || formData.licenseUrl}
+                        onFileSelect={handleFileChange}
+                        onFileRemove={handleRemoveFile}
+                        onPreviewZoom={setFullPreview}
+                        onRescan={handleRescan}
+                        required={true}
+                        isScanning={aiScanning.license}
+                        scanSuccess={aiSuccess.license}
+                        error={formErrors.license}
+                        hideHeaderLabel={true}
+                      />
+                    </div>
 
-                  {manualScanAlerts.license && (
+                    <div>
+                      <div className="flex items-center justify-between mb-1.5">
+                        <span className="text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                          Driver's License (Back)
+                        </span>
+                        <span className="text-[11px] font-medium text-[#6B6761] dark:text-[#A8A29E]">Card Serial Number</span>
+                      </div>
+                      <DocumentUploadCard
+                        id="licenseBack"
+                        label="Driver's License (Back)"
+                        file={uploadedDocs.licenseBack}
+                        previewUrl={filePreviews.licenseBack || formData.licenseBackUrl}
+                        onFileSelect={handleFileChange}
+                        onFileRemove={handleRemoveFile}
+                        onPreviewZoom={setFullPreview}
+                        onRescan={handleRescan}
+                        required={false}
+                        isScanning={aiScanning.licenseBack}
+                        scanSuccess={aiSuccess.licenseBack}
+                        error={formErrors.licenseBack}
+                        hideHeaderLabel={true}
+                      />
+                    </div>
+                  </div>
+
+                  {(manualScanAlerts.license || manualScanAlerts.licenseBack) && (
                     <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 rounded-xl flex items-start gap-2.5 text-xs sm:text-sm text-amber-900 dark:text-amber-200 shadow-xs">
                       <AlertTriangle size={18} className="shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
                       <div>
                         <strong className="block font-bold text-amber-950 dark:text-amber-200">Kailangan I-manual ang Lisensya:</strong>
-                        <span className="text-amber-800 dark:text-amber-300">{manualScanAlerts.license}</span>
+                        <span className="text-amber-800 dark:text-amber-300">{manualScanAlerts.license || manualScanAlerts.licenseBack}</span>
                       </div>
                     </div>
                   )}
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-1">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2 border-t border-[#E4E1DC]/80 dark:border-[#2E2A27]">
                     <div id="field-driverLicenseNo">
                       <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
                         Driver's License Number
@@ -2916,6 +2952,20 @@ const ApplyFranchise = () => {
                       )}
                     </div>
 
+                    <div id="field-driverLicenseSerialNo">
+                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                        License Back Serial Number
+                      </label>
+                      <input 
+                        type="text" 
+                        name="driverLicenseSerialNo" 
+                        value={formData.driverLicenseSerialNo || ''} 
+                        onChange={handleInputChange} 
+                        className={getInputClasses('driverLicenseSerialNo')} 
+                        autoComplete="off"
+                      />
+                    </div>
+
                     <div id="field-driverLicenseExpiryDate">
                       <SimpleDatePicker
                         name="driverLicenseExpiryDate"
@@ -2924,6 +2974,67 @@ const ApplyFranchise = () => {
                         label="License Expiry Date"
                         mode="expiry"
                         error={formErrors.driverLicenseExpiryDate}
+                      />
+                    </div>
+
+                    <div id="field-driverDob">
+                      <SimpleDatePicker
+                        name="driverDob"
+                        value={formData.driverDob}
+                        onChange={handleInputChange}
+                        label="Date of Birth"
+                        error={formErrors.driverDob}
+                      />
+                    </div>
+
+                    <div id="field-driverDlCodes">
+                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                        Authorized DL Codes
+                      </label>
+                      <select
+                        name="driverDlCodes"
+                        value={formData.driverDlCodes || 'A, A1'}
+                        onChange={handleInputChange}
+                        className={`${getInputClasses('driverDlCodes')} cursor-pointer`}
+                      >
+                        {withCurrentOption(DL_CODE_OPTIONS, formData.driverDlCodes).map((code) => (
+                          <option key={code} value={code}>{code}</option>
+                        ))}
+                      </select>
+                      {formErrors.driverDlCodes && (
+                        <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
+                          <AlertCircle size={13} className="shrink-0" />
+                          <span>{formErrors.driverDlCodes}</span>
+                        </p>
+                      )}
+                    </div>
+
+                    <div id="field-driverConditions">
+                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                        Driving Conditions
+                      </label>
+                      <select
+                        name="driverConditions"
+                        value={formData.driverConditions || 'None'}
+                        onChange={handleInputChange}
+                        className={`${getInputClasses('driverConditions')} cursor-pointer`}
+                      >
+                        {withCurrentOption(DRIVING_CONDITION_OPTIONS, formData.driverConditions).map((cond) => (
+                          <option key={cond} value={cond}>{cond}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div id="field-driverAddress" className="sm:col-span-2">
+                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                        Driver's Residential Address
+                      </label>
+                      <PhilippineAddressAutocomplete
+                        name="driverAddress"
+                        value={formData.driverAddress || ''}
+                        onChange={(val) => setFormData((prev) => ({ ...prev, driverAddress: val }))}
+                        placeholder="Type Barangay, Town/City, Province (Auto-suggests nationwide)"
+                        className={getInputClasses('driverAddress')}
                       />
                     </div>
                   </div>
@@ -3045,7 +3156,7 @@ const ApplyFranchise = () => {
                   </div>
                 )}
 
-                {/* Vehicle Details Form Fields (6 Essential Fields Only) */}
+                {/* Vehicle Details Form Fields */}
                 <div className="p-3.5 sm:p-4 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-3.5 shadow-xs">
                   <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E] block pb-1 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
                     Tricycle Specifications
@@ -3225,6 +3336,231 @@ const ApplyFranchise = () => {
                         error={formErrors.orCrExpiryDate}
                       />
                     </div>
+
+                    {/* 7. Tricycle Color */}
+                    <div id="field-color">
+                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                        Tricycle Color
+                      </label>
+                      <select
+                        name="color"
+                        value={formData.color || ''}
+                        onChange={handleInputChange}
+                        className={`${inputClasses} cursor-pointer`}
+                      >
+                        <option value="">-- Select Color --</option>
+                        {withCurrentOption(VEHICLE_COLOR_OPTIONS, formData.color).map((col) => (
+                          <option key={col} value={col}>{col}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* 8. Fuel Type */}
+                    <div id="field-fuelType">
+                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                        Fuel Type
+                      </label>
+                      <select
+                        name="fuelType"
+                        value={formData.fuelType || 'GASOLINE'}
+                        onChange={handleInputChange}
+                        className={`${inputClasses} cursor-pointer`}
+                      >
+                        {withCurrentOption(FUEL_TYPE_OPTIONS, formData.fuelType).map((ft) => (
+                          <option key={ft} value={ft}>{ft}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Collapsible Secondary Technical LTO Details (Accordion) */}
+                    <div className="sm:col-span-2 pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
+                      <button
+                        type="button"
+                        id="additional-lto-specs-toggle"
+                        aria-expanded={showAdvancedSpecs}
+                        aria-controls="additional-lto-specs-panel"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          setShowAdvancedSpecs(prev => !prev);
+                        }}
+                        className={`w-full flex items-center justify-between p-3.5 transition-all text-left cursor-pointer border border-[#E4E1DC] dark:border-[#2E2A27] focus:outline-hidden focus:ring-2 focus:ring-[#9E2A2B]/30 dark:focus:ring-[#D4AF37]/30 ${
+                          showAdvancedSpecs 
+                            ? 'rounded-t-lg bg-[#EAE7E1] dark:bg-[#1C1917] border-b-0 shadow-xs' 
+                            : 'rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#252220]'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2.5">
+                          <div className={`p-1.5 rounded-md ${showAdvancedSpecs ? 'bg-[#9E2A2B] text-white dark:bg-[#D4AF37] dark:text-[#1F1D1B]' : 'bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37]'}`}>
+                            <FileText size={16} />
+                          </div>
+                          <div>
+                            <span className="text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                              Additional LTO Specifications &amp; Numbers
+                            </span>
+                            <span className="text-[11px] font-medium text-[#6B6761] dark:text-[#A8A29E] block sm:inline sm:ml-2">
+                              (AI Auto-filled)
+                            </span>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37]">
+                          <span>{showAdvancedSpecs ? 'Hide Details' : 'Show Details'}</span>
+                          <ChevronDown 
+                            size={16} 
+                            className={`transition-transform duration-200 transform ${showAdvancedSpecs ? 'rotate-180 text-[#9E2A2B] dark:text-[#D4AF37]' : 'rotate-0'}`} 
+                          />
+                        </div>
+                      </button>
+
+                      {showAdvancedSpecs && (
+                        <div 
+                          id="additional-lto-specs-panel"
+                          role="region"
+                          aria-labelledby="additional-lto-specs-toggle"
+                          className="p-4 bg-white dark:bg-[#181513] rounded-b-lg border border-[#E4E1DC] dark:border-[#2E2A27] border-t-0 space-y-3 shadow-xs animate-fadeIn"
+                        >
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                            <div id="field-series">
+                              <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                                Model Series
+                              </label>
+                              <input
+                                type="text"
+                                name="series"
+                                value={formData.series}
+                                onChange={handleInputChange}
+                                className={inputClasses}
+                                autoComplete="off"
+                              />
+                            </div>
+
+                            <div id="field-displacement">
+                              <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                                Displacement (cc)
+                              </label>
+                              <select
+                                name="displacement"
+                                value={formData.displacement || ''}
+                                onChange={handleInputChange}
+                                className={`${inputClasses} cursor-pointer`}
+                              >
+                                <option value="">-- Select cc --</option>
+                                {withCurrentOption(DISPLACEMENT_OPTIONS, formData.displacement).map((cc) => (
+                                  <option key={cc} value={cc}>{cc} cc</option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div id="field-grossWeight">
+                              <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                                Gross Weight (kg)
+                              </label>
+                              <input
+                                type="text"
+                                name="grossWeight"
+                                value={formData.grossWeight}
+                                onChange={handleInputChange}
+                                className={inputClasses}
+                                autoComplete="off"
+                              />
+                            </div>
+
+                            <div id="field-bodyType">
+                              <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                                Body Type
+                              </label>
+                              <select
+                                name="bodyType"
+                                value={formData.bodyType || 'MOTORCYCLE WITH SIDECAR'}
+                                onChange={handleInputChange}
+                                className={`${inputClasses} cursor-pointer`}
+                              >
+                                {withCurrentOption(BODY_TYPE_OPTIONS, formData.bodyType).map((bt) => (
+                                  <option key={bt} value={bt}>{bt}</option>
+                                ))}
+                              </select>
+                            </div>
+
+                            <div id="field-crNo">
+                              <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                                CR Number
+                              </label>
+                              <input
+                                type="text"
+                                name="crNo"
+                                value={formData.crNo}
+                                onChange={handleInputChange}
+                                className={inputClasses}
+                                autoComplete="off"
+                              />
+                            </div>
+
+                            <div id="field-crDate">
+                              <SimpleDatePicker
+                                name="crDate"
+                                value={formData.crDate}
+                                onChange={handleInputChange}
+                                label="CR Registration Date"
+                                error={formErrors.crDate}
+                              />
+                            </div>
+
+                            <div id="field-orCrNo">
+                              <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                                OR Number
+                              </label>
+                              <input
+                                type="text"
+                                name="orCrNo"
+                                value={formData.orCrNo}
+                                onChange={handleInputChange}
+                                className={inputClasses}
+                                autoComplete="off"
+                              />
+                            </div>
+
+                            <div id="field-orDate">
+                              <SimpleDatePicker
+                                name="orDate"
+                                value={formData.orDate}
+                                onChange={handleInputChange}
+                                label="OR Payment Date"
+                                error={formErrors.orDate}
+                              />
+                            </div>
+
+                            <div id="field-fileNo">
+                              <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                                MV File Number
+                              </label>
+                              <input
+                                type="text"
+                                name="fileNo"
+                                value={formData.fileNo}
+                                onChange={handleInputChange}
+                                className={inputClasses}
+                                autoComplete="off"
+                              />
+                            </div>
+
+                            <div id="field-registeredOwner" className="sm:col-span-3">
+                              <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1 flex items-center justify-between">
+                                <span>Registered Owner Name (from CR)</span>
+                                <span className="text-[11px] font-normal text-[#6B6761] dark:text-[#A8A29E]">Only required if different from applicant</span>
+                              </label>
+                              <input
+                                type="text"
+                                name="registeredOwner"
+                                value={formData.registeredOwner}
+                                onChange={handleInputChange}
+                                className={inputClasses}
+                                autoComplete="off"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
@@ -3251,7 +3587,7 @@ const ApplyFranchise = () => {
               </div>
             )}
 
-            {/* STEP 3: BARANGAY CLEARANCE (UPLOAD ONLY) */}
+            {/* STEP 3: BARANGAY CLEARANCE */}
             {currentStep === 3 && (
               <div className={`space-y-4 ${slideDirection === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}`}>
                 
@@ -3265,19 +3601,19 @@ const ApplyFranchise = () => {
                       Barangay Clearance
                     </h2>
                     <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] font-medium">
-                      Attach your current Barangay Clearance
+                      Attach your current Barangay Clearance for automated extraction
                     </p>
                   </div>
                 </div>
 
-                {/* Barangay Clearance Card (Upload Only) */}
-                <div className="p-3.5 sm:p-4 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-3 shadow-xs">
+                {/* Barangay Clearance Card with Issuance Metadata */}
+                <div className="p-3.5 sm:p-4 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-3.5 shadow-xs">
                   <div className="flex items-center justify-between">
                     <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
                       Barangay Clearance Document
                     </label>
                     <span className="text-xs sm:text-sm font-semibold text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1">
-                      <FileCheck size={14} className="text-emerald-600" /> Upload Document
+                      <FileCheck size={14} className="text-emerald-600" /> AI Auto-fill
                     </span>
                   </div>
 
@@ -3296,6 +3632,51 @@ const ApplyFranchise = () => {
                     error={formErrors.brgyClearance}
                     hideHeaderLabel={true}
                   />
+
+                  {manualScanAlerts.brgyClearance && (
+                    <div className="mt-2 p-2.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 rounded-lg flex items-start gap-2 text-xs text-amber-900 dark:text-amber-200">
+                      <AlertTriangle size={15} className="shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+                      <span>{manualScanAlerts.brgyClearance}</span>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-2 border-t border-[#E4E1DC]/80 dark:border-[#2E2A27]">
+                    <div id="field-brgyClearanceNo">
+                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                        Barangay Clearance No.
+                      </label>
+                      <input 
+                        type="text" 
+                        name="brgyClearanceNo" 
+                        value={formData.brgyClearanceNo} 
+                        onChange={handleInputChange} 
+                        className={inputClasses} 
+                        autoComplete="off"
+                      />
+                    </div>
+                    <div id="field-brgyClearanceDate">
+                      <SimpleDatePicker
+                        name="brgyClearanceDate"
+                        value={formData.brgyClearanceDate}
+                        onChange={handleInputChange}
+                        label="Date Issued"
+                        mode="issuance"
+                      />
+                    </div>
+                    <div id="field-brgyIssuer">
+                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                        Issuing Official / Punong Barangay
+                      </label>
+                      <input 
+                        type="text" 
+                        name="brgyIssuer" 
+                        value={formData.brgyIssuer} 
+                        onChange={handleInputChange} 
+                        className={inputClasses} 
+                        autoComplete="off"
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 {/* Step 3 Actions */}
@@ -3335,19 +3716,19 @@ const ApplyFranchise = () => {
                       Community Tax Certificate (Cedula / CTC)
                     </h2>
                     <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] font-medium">
-                      Upload current-year Community Tax Certificate (Cedula)
+                      Upload current-year Community Tax Certificate (Cedula) and verify extracted details
                     </p>
                   </div>
                 </div>
 
-                {/* Cedula Upload & 3 Simple Inputs Container */}
+                {/* Cedula Upload & Input Container */}
                 <div className="p-3.5 sm:p-4 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-4 shadow-xs">
                   <div className="flex items-center justify-between">
                     <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
                       Community Tax Certificate (Cedula / CTC)
                     </label>
                     <span className="text-xs sm:text-sm font-semibold text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1">
-                      <FileCheck size={14} className="text-emerald-600" /> Auto-fill
+                      <FileCheck size={14} className="text-emerald-600" /> AI Auto-fill
                     </span>
                   </div>
 
@@ -3374,52 +3755,245 @@ const ApplyFranchise = () => {
                     </div>
                   )}
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-2 border-t border-[#E4E1DC]/80 dark:border-[#2E2A27]">
-                    <div id="field-cedulaSerialNo">
-                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                        Cedula Serial Number
-                      </label>
-                      <input 
-                        type="text" 
-                        name="cedulaSerialNo" 
-                        value={formData.cedulaSerialNo} 
-                        onChange={handleInputChange} 
-                        className={getInputClasses('cedulaSerialNo')} 
-                        required 
-                        autoComplete="off"
-                      />
-                      {formErrors.cedulaSerialNo && (
-                        <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
-                          <AlertCircle size={13} className="shrink-0" />
-                          <span>{formErrors.cedulaSerialNo}</span>
-                        </p>
-                      )}
+                  {/* Section A: CTC Official Number & Details */}
+                  <div className="pt-2 border-t border-[#E4E1DC]/80 dark:border-[#2E2A27]">
+                    <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E] mb-3">
+                      Official Cedula (CTC) Information
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      <div id="field-cedulaSerialNo">
+                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                          Cedula Serial Number
+                        </label>
+                        <input 
+                          type="text" 
+                          name="cedulaSerialNo" 
+                          value={formData.cedulaSerialNo} 
+                          onChange={handleInputChange} 
+                          className={getInputClasses('cedulaSerialNo')} 
+                          required 
+                          autoComplete="off"
+                        />
+                        {formErrors.cedulaSerialNo && (
+                          <p className="mt-1.5 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1 animate-fadeIn">
+                            <AlertCircle size={13} className="shrink-0" />
+                            <span>{formErrors.cedulaSerialNo}</span>
+                          </p>
+                        )}
+                      </div>
+
+                      <div id="field-cedulaDate">
+                        <SimpleDatePicker
+                          name="cedulaDate"
+                          value={formData.cedulaDate}
+                          onChange={handleInputChange}
+                          label="Date Issued"
+                          required
+                          mode="issuance"
+                          error={formErrors.cedulaDate}
+                        />
+                      </div>
+
+                      <div id="field-cedulaAddress">
+                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                          Place / Municipality Issued
+                        </label>
+                        <PhilippineAddressAutocomplete
+                          name="cedulaAddress"
+                          value={formData.cedulaAddress || 'Gasan, Marinduque'}
+                          onChange={(val) => setFormData((prev) => ({ ...prev, cedulaAddress: val, cedulaPlaceIssued: val }))}
+                          placeholder="e.g., Gasan, Marinduque"
+                          className={getInputClasses('cedulaAddress')}
+                        />
+                      </div>
+
+                      <div id="field-cedulaYear">
+                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                          Tax Year
+                        </label>
+                        <select
+                          name="cedulaYear"
+                          value={formData.cedulaYear || String(new Date().getFullYear())}
+                          onChange={handleInputChange}
+                          className={`${inputClasses} cursor-pointer`}
+                        >
+                          {withCurrentOption(TAX_YEAR_OPTIONS, formData.cedulaYear).map((yr) => (
+                            <option key={yr} value={yr}>{yr}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div id="field-cedulaAmount" className="sm:col-span-2">
+                        <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                          Cedula Amount Paid (₱)
+                        </label>
+                        <input 
+                          type="number" 
+                          name="cedulaAmount" 
+                          value={formData.cedulaAmount || ''} 
+                          onChange={handleInputChange} 
+                          className={getInputClasses('cedulaAmount')} 
+                          step="0.01"
+                          min="0"
+                          autoComplete="off"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Section B: Taxpayer Identity & Biometrics */}
+                  <div className="pt-2 border-t border-[#E4E1DC]/80 dark:border-[#2E2A27]">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E]">
+                        Taxpayer Identity &amp; Biometrics (Mula sa Cedula)
+                      </h3>
                     </div>
 
-                    <div id="field-cedulaDate">
-                      <SimpleDatePicker
-                        name="cedulaDate"
-                        value={formData.cedulaDate}
-                        onChange={handleInputChange}
-                        label="Date Issued"
-                        required
-                        mode="issuance"
-                        error={formErrors.cedulaDate}
-                      />
-                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      <div id="field-cedulaFullName">
+                        <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                          Taxpayer Full Name
+                        </label>
+                        <input 
+                          type="text" 
+                          name="cedulaFullName" 
+                          value={formData.cedulaFullName || ''} 
+                          onChange={handleInputChange} 
+                          className={inputClasses} 
+                          autoComplete="off"
+                        />
+                      </div>
 
-                    <div id="field-cedulaAddress">
-                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                        Place Issued
-                      </label>
-                      <input
-                        type="text"
-                        name="cedulaAddress"
-                        value={formData.cedulaAddress || 'Gasan, Marinduque'}
-                        readOnly
-                        disabled
-                        className={disabledClasses}
-                      />
+                      <div id="field-cedulaCivilStatus">
+                        <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                          Civil Status
+                        </label>
+                        <select
+                          name="cedulaCivilStatus"
+                          value={formData.cedulaCivilStatus || ''}
+                          onChange={handleInputChange}
+                          className={`${inputClasses} cursor-pointer`}
+                        >
+                          <option value="">-- Select Civil Status --</option>
+                          {withCurrentOption(CIVIL_STATUS_OPTIONS, formData.cedulaCivilStatus).map((cs) => (
+                            <option key={cs} value={cs}>{cs}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div id="field-cedulaCitizenship">
+                        <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                          Citizenship
+                        </label>
+                        <select
+                          name="cedulaCitizenship"
+                          value={formData.cedulaCitizenship || 'Filipino'}
+                          onChange={handleInputChange}
+                          className={`${inputClasses} cursor-pointer`}
+                        >
+                          {withCurrentOption(CITIZENSHIP_OPTIONS, formData.cedulaCitizenship).map((cit) => (
+                            <option key={cit} value={cit}>{cit}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div id="field-cedulaProfession">
+                        <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                          Profession / Occupation
+                        </label>
+                        <select
+                          name="cedulaProfession"
+                          value={formData.cedulaProfession || ''}
+                          onChange={handleInputChange}
+                          className={`${inputClasses} cursor-pointer`}
+                        >
+                          <option value="">-- Select Occupation --</option>
+                          {withCurrentOption(PROFESSION_OPTIONS, formData.cedulaProfession).map((prof) => (
+                            <option key={prof} value={prof}>{prof}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div id="field-cedulaDob">
+                        <SimpleDatePicker
+                          name="cedulaDob"
+                          value={formData.cedulaDob}
+                          onChange={handleInputChange}
+                          label="Date of Birth"
+                        />
+                      </div>
+
+                      <div id="field-cedulaPlaceOfBirth">
+                        <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                          Place of Birth
+                        </label>
+                        <PhilippineAddressAutocomplete
+                          name="cedulaPlaceOfBirth"
+                          value={formData.cedulaPlaceOfBirth || ''}
+                          onChange={(val) => setFormData((prev) => ({ ...prev, cedulaPlaceOfBirth: val }))}
+                          placeholder="Type Municipality/City, Province (Auto-suggests nationwide)"
+                          className={inputClasses}
+                        />
+                      </div>
+
+                      <div id="field-cedulaSex">
+                        <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                          Sex / Kasarian
+                        </label>
+                        <select
+                          name="cedulaSex"
+                          value={formData.cedulaSex || ''}
+                          onChange={handleInputChange}
+                          className={`${inputClasses} cursor-pointer`}
+                        >
+                          <option value="">-- Select Sex --</option>
+                          {withCurrentOption(SEX_OPTIONS, formData.cedulaSex).map((sx) => (
+                            <option key={sx} value={sx}>{sx}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div id="field-cedulaTin">
+                        <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                          Tax Identification Number (TIN)
+                        </label>
+                        <input 
+                          type="text" 
+                          name="cedulaTin" 
+                          value={formData.cedulaTin || ''} 
+                          onChange={handleInputChange} 
+                          className={inputClasses} 
+                          autoComplete="off"
+                        />
+                      </div>
+
+                      <div id="field-cedulaHeight">
+                        <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                          Height (ft)
+                        </label>
+                        <input 
+                          type="text" 
+                          name="cedulaHeight" 
+                          value={formData.cedulaHeight || ''} 
+                          onChange={handleInputChange} 
+                          className={inputClasses} 
+                          autoComplete="off"
+                        />
+                      </div>
+
+                      <div id="field-cedulaWeight">
+                        <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
+                          Weight (kg)
+                        </label>
+                        <input 
+                          type="text" 
+                          name="cedulaWeight" 
+                          value={formData.cedulaWeight || ''} 
+                          onChange={handleInputChange} 
+                          className={inputClasses} 
+                          autoComplete="off"
+                        />
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -3560,6 +4134,18 @@ const ApplyFranchise = () => {
                       <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">License Expiry Date</span>
                       <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.driverLicenseExpiryDate || '—'}</span>
                     </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">License Serial (Back)</span>
+                      <span className="font-mono text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.driverLicenseSerialNo || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">DL Codes &amp; Conditions</span>
+                      <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.driverDlCodes || 'A, A1'} ({formData.driverConditions || 'None'})</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Driver DOB</span>
+                      <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.driverDob || '—'}</span>
+                    </div>
                   </div>
                 </div>
 
@@ -3614,47 +4200,82 @@ const ApplyFranchise = () => {
                       <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Engine / Motor No.</span>
                       <span className="font-mono text-[#1F1D1B] dark:text-[#EAE7E1] break-all">{formData.motorNo || '—'}</span>
                     </div>
-                    <div className="sm:col-span-2">
+                    <div>
                       <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Chassis Serial / VIN</span>
                       <span className="font-mono text-[#1F1D1B] dark:text-[#EAE7E1] break-all">{formData.chassisNo || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Color &amp; Fuel Type</span>
+                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.color || '—'} &bull; {formData.fuelType || 'GASOLINE'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Displacement / Weight</span>
+                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.displacement ? `${formData.displacement} cc` : '—'} &bull; {formData.grossWeight ? `${formData.grossWeight}` : '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">CR No. &amp; OR No.</span>
+                      <span className="font-mono text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.crNo || '—'} / {formData.orCrNo || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">CR Registered Owner</span>
+                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1] truncate block">{formData.registeredOwner || formData.fullName || '—'}</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Section 3 & 4: Barangay Clearance & Cedula (CTC) */}
+                {/* Section 3: Barangay Clearance */}
                 <div className="p-4 bg-white dark:bg-[#1C1917] rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs space-y-3">
                   <div className="flex items-center justify-between pb-2 border-b border-[#E4E1DC]/80 dark:border-[#2E2A27]">
                     <div className="flex items-center gap-2">
                       <FileCheck size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                       <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1F1D1B] dark:text-[#EAE7E1]">
-                        3. Barangay Clearance &amp; Cedula (CTC)
+                        3. Barangay Clearance
                       </h3>
                     </div>
-                    <div className="flex items-center gap-3">
-                      <button
-                        type="button"
-                        onClick={() => { setSlideDirection('backward'); setCurrentStep(3); }}
-                        className="text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer"
-                      >
-                        Edit Step 3
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => { setSlideDirection('backward'); setCurrentStep(4); }}
-                        className="text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer"
-                      >
-                        Edit Step 4
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={() => { setSlideDirection('backward'); setCurrentStep(3); }}
+                      className="text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer"
+                    >
+                      Edit Step 3
+                    </button>
                   </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 text-xs [&>div]:min-w-0 [&_span]:break-words">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs [&>div]:min-w-0 [&_span]:break-words">
                     <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Barangay Clearance</span>
-                      <span className="font-bold text-emerald-700 dark:text-emerald-400">
-                        {(uploadedDocs.brgyClearance || filePreviews.brgyClearance || formData.brgyClearanceUrl) ? 'Attached' : 'Not Attached'}
-                      </span>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Barangay Clearance No.</span>
+                      <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.brgyClearanceNo || '—'}</span>
                     </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Date Issued</span>
+                      <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.brgyClearanceDate || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Issuing Official / Punong Barangay</span>
+                      <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.brgyIssuer || '—'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Section 4: Community Tax Certificate (Cedula) */}
+                <div className="p-4 bg-white dark:bg-[#1C1917] rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs space-y-3">
+                  <div className="flex items-center justify-between pb-2 border-b border-[#E4E1DC]/80 dark:border-[#2E2A27]">
+                    <div className="flex items-center gap-2">
+                      <Receipt size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                      <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1F1D1B] dark:text-[#EAE7E1]">
+                        4. Community Tax Certificate (Cedula / CTC)
+                      </h3>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => { setSlideDirection('backward'); setCurrentStep(4); }}
+                      className="text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer"
+                    >
+                      Edit Step 4
+                    </button>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs [&>div]:min-w-0 [&_span]:break-words">
                     <div>
                       <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">CTC Serial Number</span>
                       <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.cedulaSerialNo || '—'}</span>
@@ -3666,6 +4287,18 @@ const ApplyFranchise = () => {
                     <div>
                       <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Place Issued</span>
                       <span className="text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.cedulaAddress || 'Gasan, Marinduque'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Tax Year &bull; Total Paid</span>
+                      <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.cedulaYear || '2026'} &bull; ₱{Number(formData.cedulaAmount || 55).toFixed(2)}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Taxpayer Name</span>
+                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1] truncate block">{formData.cedulaFullName || formData.fullName || '—'}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Civil Status &bull; TIN</span>
+                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1] break-all">{formData.cedulaCivilStatus || '—'} &bull; {formData.cedulaTin || '—'}</span>
                     </div>
                   </div>
                 </div>
