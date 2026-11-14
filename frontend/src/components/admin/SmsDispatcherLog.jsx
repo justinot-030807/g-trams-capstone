@@ -133,7 +133,7 @@ const SmsDispatcherLog = () => {
   };
 
   return (
-    <div className="w-full bg-white dark:bg-[#1C1917] p-5 sm:p-6 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs">
+    <div className="w-full bg-white dark:bg-[#1C1917] p-5 sm:p-6 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm">
       {/* Toast Alert */}
       {toast.show && (
         <div className="fixed bottom-6 right-6 z-[9999] animate-in fade-in slide-in-from-bottom-2 duration-200">
@@ -184,7 +184,7 @@ const SmsDispatcherLog = () => {
           <button
             type="button"
             onClick={() => setShowSimulateModal(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-[#9E2A2B] hover:bg-[#7A1B22] rounded-md transition-colors shadow-xs active:scale-95 cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-[#9E2A2B] hover:bg-[#7A1B22] rounded-md transition-colors shadow-sm active:scale-95 cursor-pointer"
             title="Trigger simulated 30-day expiration SMS for defense demonstration"
           >
             <Zap size={13} className="text-[#D4AF37]" />
@@ -202,7 +202,7 @@ const SmsDispatcherLog = () => {
             placeholder="Search phone, plate, or operator..."
             value={searchQuery}
             onChange={(e) => { setSearchQuery(e.target.value); setPage(1); }}
-            className="w-full pl-8 pr-3 py-1.5 text-xs rounded-md bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] focus:outline-hidden focus:ring-1 focus:ring-[#9E2A2B]"
+            className="w-full pl-8 pr-3 py-1.5 text-xs rounded-md bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] focus:outline-none focus:ring-1 focus:ring-[#9E2A2B]"
           />
         </div>
 
@@ -259,7 +259,7 @@ const SmsDispatcherLog = () => {
                     </p>
                   </td>
                   <td className="py-2.5 px-3 min-w-[260px] text-[#1F1D1B] dark:text-[#EAE7E1] leading-relaxed">
-                    <div className="p-2 rounded bg-neutral-50 dark:bg-[#14110F] border border-[#E4E1DC]/60 dark:border-[#2E2A27]/60 text-[11px]">
+                    <div className="p-2 rounded bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC]/60 dark:border-[#2E2A27]/60 text-[11px]">
                       {log.message}
                     </div>
                   </td>
@@ -309,7 +309,7 @@ const SmsDispatcherLog = () => {
 
       {/* Live Simulation Modal for Defense Presentation */}
       {showSimulateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white dark:bg-[#1C1917] w-full max-w-md rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] shadow-2xl p-5 relative">
             <button
               type="button"
@@ -387,7 +387,7 @@ const SmsDispatcherLog = () => {
                 </div>
               </div>
 
-              <div className="p-3 bg-neutral-50 dark:bg-[#14110F] rounded-lg border border-[#E4E1DC]/80 dark:border-[#2E2A27]/80">
+              <div className="p-3 bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg border border-[#E4E1DC]/80 dark:border-[#2E2A27]/80">
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E] block mb-1">
                   Live Dispatch Preview
                 </span>
@@ -407,7 +407,7 @@ const SmsDispatcherLog = () => {
                 <button
                   type="submit"
                   disabled={isSimulating}
-                  className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold text-white bg-[#9E2A2B] hover:bg-[#7A1B22] rounded-md transition-colors shadow-xs active:scale-95 cursor-pointer disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold text-white bg-[#9E2A2B] hover:bg-[#7A1B22] rounded-md transition-colors shadow-sm active:scale-95 cursor-pointer disabled:opacity-50"
                 >
                   {isSimulating ? <RefreshCw size={13} className="animate-spin" /> : <Send size={13} />}
                   <span>{isSimulating ? 'Dispatching...' : 'Dispatch Simulated SMS'}</span>

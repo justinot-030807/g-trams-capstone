@@ -330,7 +330,7 @@ const RenewFranchise = () => {
       {/* Full-Screen Immersive Form Layout (Zero Navbars) */}
       <div className="w-full min-h-screen bg-[#F6F5F3] dark:bg-[#14110F] flex flex-col transition-colors">
         {/* Top Hero Banner */}
-        <div className="w-full bg-[#9E2A2B] text-white pt-4 pb-6 px-4 sm:px-6 relative overflow-hidden border-b border-[#7A1B22] shadow-xs">
+        <div className="w-full bg-[#9E2A2B] text-white pt-4 pb-6 px-4 sm:px-6 relative overflow-hidden border-b border-[#7A1B22] shadow-sm">
           {/* Official Gasan Seal Watermark */}
           <div className="absolute -right-6 -bottom-8 pointer-events-none select-none">
             <img 
@@ -346,7 +346,7 @@ const RenewFranchise = () => {
               <button
                 type="button"
                 onClick={handleBack}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 text-white text-sm font-bold transition-all border border-white/20 shadow-xs cursor-pointer min-h-[44px]"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 text-white text-sm font-bold transition-all border border-white/20 shadow-sm cursor-pointer min-h-[44px]"
                 title="Back"
               >
                 <ArrowLeft size={16} />
@@ -373,23 +373,23 @@ const RenewFranchise = () => {
           {loadingFranchise && (
             <div className="space-y-6">
               {/* Transport Pass Skeleton */}
-              <div className="p-4 sm:p-6 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs space-y-4">
+              <div className="p-4 sm:p-6 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm space-y-4">
                 <div className="flex justify-between items-center">
-                  <SkeletonElement height="14px" className="w-48" rounded="rounded-xs" delay={30} />
+                  <SkeletonElement height="14px" className="w-48" rounded="rounded-sm" delay={30} />
                   <SkeletonElement height="20px" className="w-18" rounded="rounded-md" delay={45} />
                 </div>
                 <div className="rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] p-4 space-y-3">
                   <div className="flex justify-between items-center pb-2 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
-                    <SkeletonElement height="16px" className="w-36" rounded="rounded-xs" delay={60} />
-                    <SkeletonElement height="16px" className="w-24" rounded="rounded-xs" delay={75} />
+                    <SkeletonElement height="16px" className="w-36" rounded="rounded-sm" delay={60} />
+                    <SkeletonElement height="16px" className="w-24" rounded="rounded-sm" delay={75} />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 items-center">
                     <div className="sm:col-span-2 space-y-1.5">
-                      <SkeletonElement height="10px" className="w-24" rounded="rounded-xs" delay={90} />
+                      <SkeletonElement height="10px" className="w-24" rounded="rounded-sm" delay={90} />
                       <SkeletonElement height="36px" className="w-48" rounded="rounded-lg" delay={105} />
                     </div>
                     <div className="space-y-1.5">
-                      <SkeletonElement height="10px" className="w-20" rounded="rounded-xs" delay={120} />
+                      <SkeletonElement height="10px" className="w-20" rounded="rounded-sm" delay={120} />
                       <SkeletonElement height="24px" className="w-32" rounded="rounded-md" delay={135} />
                     </div>
                   </div>
@@ -397,24 +397,24 @@ const RenewFranchise = () => {
               </div>
 
               {/* Renewal Form Card Skeleton */}
-              <div className="p-5 sm:p-6 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs space-y-4">
+              <div className="p-5 sm:p-6 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm space-y-4">
                 <div className="flex items-center gap-2 pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
                   <SkeletonElement rounded="rounded-md" className="w-6 h-6" delay={150} />
-                  <SkeletonElement height="16px" className="w-40" rounded="rounded-xs" delay={165} />
+                  <SkeletonElement height="16px" className="w-40" rounded="rounded-sm" delay={165} />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                    <SkeletonElement height="11px" className="w-24" rounded="rounded-xs" delay={180} />
+                    <SkeletonElement height="11px" className="w-24" rounded="rounded-sm" delay={180} />
                     <SkeletonElement height="40px" className="w-full" rounded="rounded-lg" delay={195} />
                   </div>
                   <div className="space-y-1.5">
-                    <SkeletonElement height="11px" className="w-28" rounded="rounded-xs" delay={210} />
+                    <SkeletonElement height="11px" className="w-28" rounded="rounded-sm" delay={210} />
                     <SkeletonElement height="40px" className="w-full" rounded="rounded-lg" delay={225} />
                   </div>
                 </div>
                 <div className="h-32 rounded-lg border border-dashed border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3]/50 dark:bg-[#14110F]/50 flex flex-col items-center justify-center space-y-2">
                   <SkeletonElement rounded="rounded-lg" className="w-8 h-8" delay={240} />
-                  <SkeletonElement height="12px" className="w-36" rounded="rounded-xs" delay={255} />
+                  <SkeletonElement height="12px" className="w-36" rounded="rounded-sm" delay={255} />
                 </div>
               </div>
             </div>
@@ -422,7 +422,7 @@ const RenewFranchise = () => {
 
           {/* If Franchise Not Found */}
           {!loadingFranchise && !franchise && (
-            <div className="p-8 sm:p-12 text-center bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs">
+            <div className="p-8 sm:p-12 text-center bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm">
               <div className="w-12 h-12 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/60 flex items-center justify-center mx-auto mb-3">
                 <AlertCircle size={24} />
               </div>
@@ -435,7 +435,7 @@ const RenewFranchise = () => {
               <button
                 type="button"
                 onClick={handleBack}
-                className="mt-4 inline-flex items-center gap-1.5 px-5 py-2.5 rounded-lg bg-[#9E2A2B] text-white font-bold text-sm shadow-xs hover:bg-[#7A1B22] cursor-pointer active:scale-95 min-h-[44px]"
+                className="mt-4 inline-flex items-center gap-1.5 px-5 py-2.5 rounded-lg bg-[#9E2A2B] text-white font-bold text-sm shadow-sm hover:bg-[#7A1B22] cursor-pointer active:scale-95 min-h-[44px]"
               >
                 <ArrowLeft size={15} />
                 <span>Back</span>
@@ -445,7 +445,7 @@ const RenewFranchise = () => {
 
           {/* Transport Summary Pass Card */}
           {!loadingFranchise && franchise && (
-            <div className="p-4 sm:p-6 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs">
+            <div className="p-4 sm:p-6 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm">
               <div className="flex items-center justify-between gap-2 mb-3">
                 <span className="text-xs font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider flex items-center gap-1.5">
                   <TricycleIcon size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
@@ -461,7 +461,7 @@ const RenewFranchise = () => {
                 {/* Top Pass Header */}
                 <div className="bg-[#1C1917] dark:bg-[#14110F] text-white px-4 sm:px-5 py-3 flex items-center justify-between flex-wrap gap-2 border-b border-[#2E2A27]">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-md bg-[#D4AF37] flex items-center justify-center text-[#14110F] font-bold text-xs shadow-xs">
+                    <div className="w-7 h-7 rounded-md bg-[#D4AF37] flex items-center justify-center text-[#14110F] font-bold text-xs shadow-sm">
                       GT
                     </div>
                     <div>
@@ -482,7 +482,7 @@ const RenewFranchise = () => {
                     <span className="text-xs font-bold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E] block mb-1">
                       Plate Number
                     </span>
-                    <div className="inline-flex items-center gap-2.5 bg-white dark:bg-[#1C1917] px-3.5 py-1.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs">
+                    <div className="inline-flex items-center gap-2.5 bg-white dark:bg-[#1C1917] px-3.5 py-1.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm">
                       <span className="font-mono text-xl sm:text-2xl font-bold tracking-wider text-[#1F1D1B] dark:text-[#EAE7E1]">
                         {franchise.plateNo}
                       </span>
@@ -539,7 +539,7 @@ const RenewFranchise = () => {
 
           {/* Renewal Form */}
           {!loadingFranchise && franchise && (
-            <form onSubmit={handleSubmit} className="p-4 sm:p-6 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-5 sm:space-y-6 shadow-xs">
+            <form onSubmit={handleSubmit} className="p-4 sm:p-6 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-5 sm:space-y-6 shadow-sm">
               
               {/* Step 1: Updated Cedula Information */}
               <div className="space-y-3.5">
@@ -569,7 +569,7 @@ const RenewFranchise = () => {
                       value={formData.ctcNo}
                       onChange={handleChange} 
                       required 
-                      className="w-full bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-4 py-3 text-base font-medium text-[#1F1D1B] dark:text-[#EAE7E1] outline-none focus:outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] transition-all shadow-xs placeholder:text-[#6B6761] dark:placeholder:text-[#A8A29E] min-h-[48px]" 
+                      className="w-full bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-4 py-3 text-base font-medium text-[#1F1D1B] dark:text-[#EAE7E1] outline-none focus:outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] transition-all shadow-sm placeholder:text-[#6B6761] dark:placeholder:text-[#A8A29E] min-h-[48px]" 
                       placeholder="e.g. 08123456"
                     />
                     <p className="text-xs font-medium text-[#6B6761] dark:text-[#A8A29E] mt-1">8–16 characters (letters &amp; numbers)</p>
@@ -603,7 +603,7 @@ const RenewFranchise = () => {
                       value={formData.placeIssued}
                       onChange={handleChange} 
                       required 
-                      className="w-full bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-4 py-3 text-base font-medium text-[#1F1D1B] dark:text-[#EAE7E1] outline-none focus:outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] transition-all shadow-xs min-h-[48px]" 
+                      className="w-full bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-4 py-3 text-base font-medium text-[#1F1D1B] dark:text-[#EAE7E1] outline-none focus:outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] transition-all shadow-sm min-h-[48px]" 
                       placeholder="Gasan, Marinduque"
                     />
                   </div>
@@ -653,7 +653,7 @@ const RenewFranchise = () => {
                       name="orCrNo" 
                       value={formData.orCrNo}
                       onChange={handleChange} 
-                      className="w-full bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-4 py-3 text-base font-medium text-[#1F1D1B] dark:text-[#EAE7E1] outline-none focus:outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] transition-all shadow-xs min-h-[48px]" 
+                      className="w-full bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-4 py-3 text-base font-medium text-[#1F1D1B] dark:text-[#EAE7E1] outline-none focus:outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] transition-all shadow-sm min-h-[48px]" 
                       placeholder="e.g. OR-12345678 / CR-87654321"
                     />
                   </div>
@@ -719,7 +719,7 @@ const RenewFranchise = () => {
                       name="driverLicenseNo" 
                       value={formData.driverLicenseNo}
                       onChange={handleChange} 
-                      className="w-full bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-4 py-3 text-base font-medium text-[#1F1D1B] dark:text-[#EAE7E1] outline-none focus:outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] transition-all shadow-xs min-h-[48px]" 
+                      className="w-full bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-4 py-3 text-base font-medium text-[#1F1D1B] dark:text-[#EAE7E1] outline-none focus:outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] transition-all shadow-sm min-h-[48px]" 
                       placeholder="e.g. D01-23-456789"
                     />
                   </div>
@@ -761,9 +761,9 @@ const RenewFranchise = () => {
 
               
               {/* Official MTOP Application Form (Ord. 48 s. 1999) Print & Preview */}
-              <div className="p-3.5 bg-gradient-to-r from-[#9E2A2B]/10 via-[#D4AF37]/15 to-[#9E2A2B]/10 dark:from-[#9E2A2B]/20 dark:via-[#D4AF37]/25 dark:to-[#9E2A2B]/20 rounded-xl border border-[#D4AF37]/50 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3 mb-4">
+              <div className="p-3.5 bg-gradient-to-r from-[#9E2A2B]/10 via-[#D4AF37]/15 to-[#9E2A2B]/10 dark:from-[#9E2A2B]/20 dark:via-[#D4AF37]/25 dark:to-[#9E2A2B]/20 rounded-xl border border-[#D4AF37]/50 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3 mb-4">
                 <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-[#9E2A2B] text-white flex items-center justify-center shrink-0 shadow-xs">
+                  <div className="w-8 h-8 rounded-lg bg-[#9E2A2B] text-white flex items-center justify-center shrink-0 shadow-sm">
                     <FileText size={16} />
                   </div>
                   <div>
@@ -781,7 +781,7 @@ const RenewFranchise = () => {
                 <button
                   type="button"
                   onClick={() => setIsOfficialFormOpen(true)}
-                  className="w-full sm:w-auto px-3.5 py-2 bg-[#9E2A2B] hover:bg-[#851e20] text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+                  className="w-full sm:w-auto px-3.5 py-2 bg-[#9E2A2B] hover:bg-[#851e20] text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
                 >
                   <Printer size={14} />
                   <span>Preview / Print Form</span>
@@ -793,7 +793,7 @@ const RenewFranchise = () => {
                 <button 
                   type="button" 
                   onClick={handleBack} 
-                  className="w-full sm:w-auto px-6 py-2.5 rounded-lg font-bold text-sm sm:text-base text-[#1F1D1B] dark:text-[#EAE7E1] bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#F6F5F3] dark:hover:bg-[#252220] transition-all cursor-pointer min-h-[44px] flex items-center justify-center active:scale-95 shadow-xs"
+                  className="w-full sm:w-auto px-6 py-2.5 rounded-lg font-bold text-sm sm:text-base text-[#1F1D1B] dark:text-[#EAE7E1] bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#F6F5F3] dark:hover:bg-[#252220] transition-all cursor-pointer min-h-[44px] flex items-center justify-center active:scale-95 shadow-sm"
                 >
                   <span>Back</span>
                 </button>
@@ -801,7 +801,7 @@ const RenewFranchise = () => {
                 <button 
                   type="submit" 
                   disabled={isSubmitting}
-                  className={`w-full sm:w-auto flex items-center justify-center gap-2 px-7 py-2.5 rounded-lg font-bold text-sm sm:text-base text-white transition-all shadow-xs active:scale-95 cursor-pointer min-h-[44px] ${
+                  className={`w-full sm:w-auto flex items-center justify-center gap-2 px-7 py-2.5 rounded-lg font-bold text-sm sm:text-base text-white transition-all shadow-sm active:scale-95 cursor-pointer min-h-[44px] ${
                     isSubmitting ? 'bg-[#6B7280] cursor-not-allowed' : 'bg-[#9E2A2B] hover:bg-[#7A1B22]'
                   }`}
                 >

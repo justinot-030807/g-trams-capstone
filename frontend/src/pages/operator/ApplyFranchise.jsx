@@ -2362,12 +2362,12 @@ const ApplyFranchise = () => {
     }
   };
 
-  const inputClasses = "w-full px-4 py-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#EAE7E1] placeholder-[#6B6761] dark:placeholder-[#A8A29E] text-base min-h-[48px] focus:outline-none focus:ring-2 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] focus:border-transparent transition-all shadow-xs font-medium";
+  const inputClasses = "w-full px-4 py-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#EAE7E1] placeholder-[#6B6761] dark:placeholder-[#A8A29E] text-base min-h-[48px] focus:outline-none focus:ring-2 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] focus:border-transparent transition-all shadow-sm font-medium";
   const disabledClasses = "w-full px-4 py-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] text-base min-h-[48px] cursor-not-allowed font-semibold select-none opacity-90";
 
   const getInputClasses = (fieldName) => {
     if (formErrors[fieldName]) {
-      return "w-full px-4 py-3 rounded-lg border-2 border-red-500 ring-2 ring-red-500/20 bg-red-50/10 dark:bg-red-950/20 text-[#1F1D1B] dark:text-[#EAE7E1] placeholder-[#6B6761] dark:placeholder-[#A8A29E] text-base min-h-[48px] focus:outline-none focus:ring-2 focus:ring-red-500 transition-all shadow-xs font-medium";
+      return "w-full px-4 py-3 rounded-lg border-2 border-red-500 ring-2 ring-red-500/20 bg-red-50/10 dark:bg-red-950/20 text-[#1F1D1B] dark:text-[#EAE7E1] placeholder-[#6B6761] dark:placeholder-[#A8A29E] text-base min-h-[48px] focus:outline-none focus:ring-2 focus:ring-red-500 transition-all shadow-sm font-medium";
     }
     return inputClasses;
   };
@@ -2403,7 +2403,7 @@ const ApplyFranchise = () => {
       <MainLayout hideNav={true}>
         <div className="w-full max-w-full overflow-x-hidden min-h-screen bg-[#F6F5F3] dark:bg-[#14110F] flex flex-col transition-colors">
           {/* Top Hero Banner */}
-          <div className="w-full bg-[#9E2A2B] text-white pt-4 pb-6 px-4 sm:px-6 relative overflow-hidden border-b border-[#7A1B22] shadow-xs">
+          <div className="w-full bg-[#9E2A2B] text-white pt-4 pb-6 px-4 sm:px-6 relative overflow-hidden border-b border-[#7A1B22] shadow-sm">
             <div className="absolute -right-6 -bottom-8 pointer-events-none select-none">
               <img 
                 src="/gasan-logo.png" 
@@ -2415,7 +2415,7 @@ const ApplyFranchise = () => {
               <button
                 type="button"
                 onClick={handleBackToDashboard}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 text-white text-sm font-bold transition-all border border-white/20 shadow-xs cursor-pointer min-h-[44px]"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 text-white text-sm font-bold transition-all border border-white/20 shadow-sm cursor-pointer min-h-[44px]"
               >
                 <ArrowLeft size={18} />
                 <span>Back to Dashboard</span>
@@ -2430,7 +2430,7 @@ const ApplyFranchise = () => {
           <div className="flex-1 flex items-center justify-center p-4 sm:p-6">
             <div className="max-w-lg w-full bg-white dark:bg-[#1C1917] rounded-xl p-6 sm:p-8 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm text-center">
               
-              <div className="w-16 h-16 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-4 border border-amber-200 dark:border-amber-900/60 shadow-xs">
+              <div className="w-16 h-16 rounded-full bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-4 border border-amber-200 dark:border-amber-900/60 shadow-sm">
                 <AlertCircle size={32} />
               </div>
 
@@ -2492,7 +2492,7 @@ const ApplyFranchise = () => {
                 <button
                   type="button"
                   onClick={handleBackToDashboard}
-                  className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-sm shadow-xs cursor-pointer active:scale-95 min-h-[46px] transition-all"
+                  className="flex-1 inline-flex items-center justify-center gap-2 px-5 py-3 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-sm shadow-sm cursor-pointer active:scale-95 min-h-[46px] transition-all"
                 >
                   <ArrowLeft size={16} />
                   <span>Return to Dashboard</span>
@@ -2534,13 +2534,13 @@ const ApplyFranchise = () => {
       <div className="w-full max-w-full overflow-x-hidden min-h-screen bg-[#F6F5F3] dark:bg-[#14110F] flex flex-col transition-colors">
         
         {/* Top Hero Banner */}
-        <div className="w-full bg-[#9E2A2B] text-white pt-4 pb-6 px-4 sm:px-6 relative overflow-hidden border-b border-[#7A1B22] shadow-xs">
+        <div className="w-full bg-[#9E2A2B] text-white pt-4 pb-6 px-4 sm:px-6 relative overflow-hidden border-b border-[#7A1B22] shadow-sm">
           {/* Official Gasan Seal Watermark */}
-          <div className="absolute -right-6 -bottom-8 pointer-events-none select-none">
+          <div className="absolute -right-4 -top-6 sm:-right-6 sm:-bottom-8 sm:top-auto pointer-events-none select-none">
             <img 
               src="/gasan-logo.png" 
               alt="Seal of Gasan" 
-              className="w-52 h-52 sm:w-60 sm:h-60 object-contain opacity-20 drop-shadow-md" 
+              className="w-28 h-28 sm:w-48 sm:h-48 object-contain opacity-10 sm:opacity-15 drop-shadow-md" 
             />
           </div>
 
@@ -2550,7 +2550,7 @@ const ApplyFranchise = () => {
               <button
                 type="button"
                 onClick={handleTopBack}
-                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 text-white text-sm font-bold transition-all border border-white/20 shadow-xs cursor-pointer min-h-[44px]"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20 active:scale-95 text-white text-sm font-bold transition-all border border-white/20 shadow-sm cursor-pointer min-h-[44px]"
                 title="Back"
               >
                 <ArrowLeft size={18} />
@@ -2615,9 +2615,9 @@ const ApplyFranchise = () => {
                     <div 
                       className={`relative z-10 w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all duration-200 ${
                         isCompleted 
-                          ? 'bg-[#D4AF37] text-[#14110F] font-bold shadow-xs' 
+                          ? 'bg-[#D4AF37] text-[#14110F] font-bold shadow-sm' 
                           : isCurrent 
-                          ? 'bg-white text-[#9E2A2B] font-bold ring-2 ring-white/40 scale-105 shadow-xs' 
+                          ? 'bg-white text-[#9E2A2B] font-bold ring-2 ring-white/40 scale-105 shadow-sm' 
                           : 'bg-white/15 text-white/70 border border-white/20'
                       }`}
                     >
@@ -2676,7 +2676,7 @@ const ApplyFranchise = () => {
                 </div>
 
                 {/* Operator Details Card */}
-                <div className="p-3.5 sm:p-4 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-3.5 shadow-xs">
+                <div className="p-3.5 sm:p-4 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-3.5 shadow-sm">
                   <div className="pb-1 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
                     <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E]">
                       Operator Identity
@@ -2695,54 +2695,44 @@ const ApplyFranchise = () => {
                           <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
                             Operator Full Name
                           </label>
-                          <input
-                            type="text"
-                            name="fullName"
-                            value={formData.fullName || ''}
-                            readOnly
-                            disabled
-                            className={disabledClasses}
-                          />
+                          <div
+                            className={`${disabledClasses} flex items-center whitespace-normal break-words leading-snug`}
+                          >
+                            {formData.fullName || '—'}
+                          </div>
                         </div>
 
                         <div id="field-address">
                           <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
                             Barangay
                           </label>
-                          <input
-                            type="text"
-                            name="address"
-                            value={formData.address || ''}
-                            readOnly
-                            disabled
-                            className={disabledClasses}
-                          />
+                          <div
+                            className={`${disabledClasses} flex items-center whitespace-normal break-words leading-snug`}
+                          >
+                            {formData.address || '—'}
+                          </div>
                         </div>
 
                         <div id="field-toda">
                           <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
                             TODA
                           </label>
-                          <input
-                            type="text"
-                            value={currentToda}
-                            readOnly
-                            disabled
-                            className={disabledClasses}
-                          />
+                          <div
+                            className={`${disabledClasses} flex items-center whitespace-normal break-words leading-snug`}
+                          >
+                            {currentToda}
+                          </div>
                         </div>
 
                         <div id="field-zone">
                           <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
                             Route Zone
                           </label>
-                          <input
-                            type="text"
-                            value={assignedZone}
-                            readOnly
-                            disabled
-                            className={disabledClasses}
-                          />
+                          <div
+                            className={`${disabledClasses} flex items-center whitespace-normal break-words leading-snug`}
+                          >
+                            {assignedZone}
+                          </div>
                         </div>
                       </div>
                     );
@@ -2786,7 +2776,7 @@ const ApplyFranchise = () => {
                               showToast('Fast-Track: Profile and clearances copied from Unit 1!', 'success');
                             }
                           }}
-                          className="px-3 py-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 shrink-0"
+                          className="px-3 py-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95 shrink-0"
                         >
                           <Zap size={13} className="text-amber-300" />
                           <span>Fast-Track: Copy from Unit 1</span>
@@ -2808,7 +2798,7 @@ const ApplyFranchise = () => {
                         className={`p-3.5 rounded-lg border text-left flex items-start gap-3 transition-all cursor-pointer ${
                           formData.isOperatorDriver 
                             ? 'bg-amber-50/70 dark:bg-amber-950/30 border-[#9E2A2B] dark:border-[#D4AF37] ring-1 ring-[#9E2A2B] dark:ring-[#D4AF37]' 
-                            : 'bg-[#F6F5F3] dark:bg-[#14110F] border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-neutral-100'
+                            : 'bg-[#F6F5F3] dark:bg-[#14110F] border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#EAE7E1] dark:hover:bg-[#252220]'
                         }`}
                       >
                         <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
@@ -2832,7 +2822,7 @@ const ApplyFranchise = () => {
                         className={`p-3.5 rounded-lg border text-left flex items-start gap-3 transition-all cursor-pointer ${
                           !formData.isOperatorDriver 
                             ? 'bg-amber-50/70 dark:bg-amber-950/30 border-[#9E2A2B] dark:border-[#D4AF37] ring-1 ring-[#9E2A2B] dark:ring-[#D4AF37]' 
-                            : 'bg-[#F6F5F3] dark:bg-[#14110F] border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-neutral-100'
+                            : 'bg-[#F6F5F3] dark:bg-[#14110F] border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#EAE7E1] dark:hover:bg-[#252220]'
                         }`}
                       >
                         <div className={`w-5 h-5 rounded-full border flex items-center justify-center shrink-0 mt-0.5 ${
@@ -2900,7 +2890,7 @@ const ApplyFranchise = () => {
                 </div>
 
                 {/* Driver's License Documents (Front & Back) & Credentials */}
-                <div className="p-3.5 sm:p-4 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-3.5 shadow-xs">
+                <div className="p-3.5 sm:p-4 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-3.5 shadow-sm">
                   <div className="flex items-center justify-between flex-wrap gap-2 pb-1 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
                     <div>
                       <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E] block">
@@ -2963,7 +2953,7 @@ const ApplyFranchise = () => {
                   </div>
 
                   {(manualScanAlerts.license || manualScanAlerts.licenseBack) && (
-                    <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 rounded-xl flex items-start gap-2.5 text-xs sm:text-sm text-amber-900 dark:text-amber-200 shadow-xs">
+                    <div className="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 rounded-xl flex items-start gap-2.5 text-xs sm:text-sm text-amber-900 dark:text-amber-200 shadow-sm">
                       <AlertTriangle size={18} className="shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
                       <div>
                         <strong className="block font-bold text-amber-950 dark:text-amber-200">Kailangan I-manual ang Lisensya:</strong>
@@ -3096,7 +3086,7 @@ const ApplyFranchise = () => {
                   <button 
                     type="button" 
                     onClick={nextStep}
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-sm sm:text-base text-white bg-[#9E2A2B] hover:bg-[#7A1B22] shadow-xs cursor-pointer min-h-[44px] active:scale-95 transition-all"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-sm sm:text-base text-white bg-[#9E2A2B] hover:bg-[#7A1B22] shadow-sm cursor-pointer min-h-[44px] active:scale-95 transition-all"
                   >
                     <span>Next: Vehicle Details</span>
                     <ChevronRight size={18} />
@@ -3187,7 +3177,7 @@ const ApplyFranchise = () => {
 
                 {/* Manual Input Alert for LTO Documents */}
                 {(manualScanAlerts.crDocument || manualScanAlerts.orDocument || manualScanAlerts.orCrDocument || manualScanAlerts.orCr) && (
-                  <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 rounded-xl flex items-start gap-3 text-xs sm:text-sm text-amber-900 dark:text-amber-200 shadow-xs">
+                  <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 rounded-xl flex items-start gap-3 text-xs sm:text-sm text-amber-900 dark:text-amber-200 shadow-sm">
                     <AlertTriangle size={18} className="shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
                     <div>
                       <strong className="block font-bold text-amber-950 dark:text-amber-200">Paalala: Kailangan I-manual ang mga Detalye ng Sasakyan</strong>
@@ -3199,7 +3189,7 @@ const ApplyFranchise = () => {
                 )}
 
                 {/* Vehicle Details Form Fields */}
-                <div className="p-3.5 sm:p-4 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-3.5 shadow-xs">
+                <div className="p-3.5 sm:p-4 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-3.5 shadow-sm">
                   <span className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E] block pb-1 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
                     Tricycle Specifications
                   </span>
@@ -3426,9 +3416,9 @@ const ApplyFranchise = () => {
                           e.stopPropagation();
                           setShowAdvancedSpecs(prev => !prev);
                         }}
-                        className={`w-full flex items-center justify-between p-3.5 transition-all text-left cursor-pointer border border-[#E4E1DC] dark:border-[#2E2A27] focus:outline-hidden focus:ring-2 focus:ring-[#9E2A2B]/30 dark:focus:ring-[#D4AF37]/30 ${
+                        className={`w-full flex items-center justify-between p-3.5 transition-all text-left cursor-pointer border border-[#E4E1DC] dark:border-[#2E2A27] focus:outline-none focus:ring-2 focus:ring-[#9E2A2B]/30 dark:focus:ring-[#D4AF37]/30 ${
                           showAdvancedSpecs 
-                            ? 'rounded-t-lg bg-[#EAE7E1] dark:bg-[#1C1917] border-b-0 shadow-xs' 
+                            ? 'rounded-t-lg bg-[#EAE7E1] dark:bg-[#1C1917] border-b-0 shadow-sm' 
                             : 'rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#252220]'
                         }`}
                       >
@@ -3459,7 +3449,7 @@ const ApplyFranchise = () => {
                           id="additional-lto-specs-panel"
                           role="region"
                           aria-labelledby="additional-lto-specs-toggle"
-                          className="p-4 bg-white dark:bg-[#181513] rounded-b-lg border border-[#E4E1DC] dark:border-[#2E2A27] border-t-0 space-y-3 shadow-xs animate-fadeIn"
+                          className="p-4 bg-white dark:bg-[#181513] rounded-b-lg border border-[#E4E1DC] dark:border-[#2E2A27] border-t-0 space-y-3 shadow-sm animate-fadeIn"
                         >
                           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                             <div id="field-series">
@@ -3620,7 +3610,7 @@ const ApplyFranchise = () => {
                   <button 
                     type="button" 
                     onClick={nextStep}
-                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg font-bold text-sm sm:text-base text-white bg-[#9E2A2B] hover:bg-[#7A1B22] shadow-xs cursor-pointer min-h-[44px] active:scale-95 transition-all"
+                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg font-bold text-sm sm:text-base text-white bg-[#9E2A2B] hover:bg-[#7A1B22] shadow-sm cursor-pointer min-h-[44px] active:scale-95 transition-all"
                   >
                     <span>Next: Barangay Clearance</span>
                     <ChevronRight size={18} />
@@ -3649,7 +3639,7 @@ const ApplyFranchise = () => {
                 </div>
 
                 {/* Barangay Clearance Card with Issuance Metadata */}
-                <div className="p-3.5 sm:p-4 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-3.5 shadow-xs">
+                <div className="p-3.5 sm:p-4 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-3.5 shadow-sm">
                   <div className="flex items-center justify-between">
                     <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
                       Barangay Clearance Document
@@ -3722,7 +3712,7 @@ const ApplyFranchise = () => {
                   <button 
                     type="button" 
                     onClick={nextStep}
-                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg font-bold text-sm sm:text-base text-white bg-[#9E2A2B] hover:bg-[#7A1B22] shadow-xs cursor-pointer min-h-[44px] active:scale-95 transition-all"
+                    className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg font-bold text-sm sm:text-base text-white bg-[#9E2A2B] hover:bg-[#7A1B22] shadow-sm cursor-pointer min-h-[44px] active:scale-95 transition-all"
                   >
                     <span>Next: Cedula (CTC)</span>
                     <ChevronRight size={18} />
@@ -3751,7 +3741,7 @@ const ApplyFranchise = () => {
                 </div>
 
                 {/* Cedula Upload & Input Container */}
-                <div className="p-3.5 sm:p-4 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-4 shadow-xs">
+                <div className="p-3.5 sm:p-4 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-4 shadow-sm">
                   <div className="flex items-center justify-between">
                     <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
                       Community Tax Certificate (Cedula / CTC)
@@ -3996,7 +3986,7 @@ const ApplyFranchise = () => {
                   <button 
                     type="button" 
                     onClick={nextStep}
-                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-sm sm:text-base text-white bg-[#9E2A2B] hover:bg-[#7A1B22] shadow-xs cursor-pointer min-h-[44px] active:scale-95 transition-all"
+                    className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-sm sm:text-base text-white bg-[#9E2A2B] hover:bg-[#7A1B22] shadow-sm cursor-pointer min-h-[44px] active:scale-95 transition-all"
                   >
                     <span>Next: Review &amp; Confirmation</span>
                     <ChevronRight size={18} />
@@ -4048,9 +4038,9 @@ const ApplyFranchise = () => {
                 </div>
 
                 {/* Official MTOP Application Form (Ord. 48 s. 1999) Print & Preview Banner */}
-                <div className="p-4 bg-gradient-to-r from-[#9E2A2B]/10 via-[#D4AF37]/15 to-[#9E2A2B]/10 dark:from-[#9E2A2B]/20 dark:via-[#D4AF37]/25 dark:to-[#9E2A2B]/20 rounded-xl border border-[#D4AF37]/50 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div className="p-4 bg-gradient-to-r from-[#9E2A2B]/10 via-[#D4AF37]/15 to-[#9E2A2B]/10 dark:from-[#9E2A2B]/20 dark:via-[#D4AF37]/25 dark:to-[#9E2A2B]/20 rounded-xl border border-[#D4AF37]/50 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[#9E2A2B] text-white flex items-center justify-center shrink-0 shadow-xs">
+                    <div className="w-10 h-10 rounded-xl bg-[#9E2A2B] text-white flex items-center justify-center shrink-0 shadow-sm">
                       <FileText size={20} />
                     </div>
                     <div>
@@ -4068,7 +4058,7 @@ const ApplyFranchise = () => {
                   <button
                     type="button"
                     onClick={() => setIsOfficialFormOpen(true)}
-                    className="w-full sm:w-auto px-4 py-2.5 bg-[#9E2A2B] hover:bg-[#851e20] text-white rounded-xl text-xs font-bold transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer shrink-0 active:scale-95"
+                    className="w-full sm:w-auto px-4 py-2.5 bg-[#9E2A2B] hover:bg-[#851e20] text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer shrink-0 active:scale-95"
                   >
                     <Printer size={15} />
                     <span>Tingnan / I-print ang Form (PDF)</span>
@@ -4076,7 +4066,7 @@ const ApplyFranchise = () => {
                 </div>
 
                 {/* Section 1: Operator & Driver Information */}
-                <div className="p-4 bg-white dark:bg-[#1C1917] rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs space-y-3">
+                <div className="p-4 bg-white dark:bg-[#1C1917] rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm space-y-3">
                   <div className="flex items-center justify-between pb-2 border-b border-[#E4E1DC]/80 dark:border-[#2E2A27]">
                     <div className="flex items-center gap-2">
                       <User size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
@@ -4134,7 +4124,7 @@ const ApplyFranchise = () => {
                 </div>
 
                 {/* Section 2: Vehicle & Registration */}
-                <div className="p-4 bg-white dark:bg-[#1C1917] rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs space-y-3">
+                <div className="p-4 bg-white dark:bg-[#1C1917] rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm space-y-3">
                   <div className="flex items-center justify-between pb-2 border-b border-[#E4E1DC]/80 dark:border-[#2E2A27]">
                     <div className="flex items-center gap-2">
                       <TricycleIcon size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
@@ -4160,7 +4150,7 @@ const ApplyFranchise = () => {
                       <button
                         type="button"
                         onClick={() => { setSlideDirection('backward'); setCurrentStep(2); }}
-                        className="px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold shrink-0 cursor-pointer transition-colors shadow-xs"
+                        className="px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold shrink-0 cursor-pointer transition-colors shadow-sm"
                       >
                         Pumunta sa Hakbang 2
                       </button>
@@ -4208,7 +4198,7 @@ const ApplyFranchise = () => {
                 </div>
 
                 {/* Section 3: Barangay Clearance */}
-                <div className="p-4 bg-white dark:bg-[#1C1917] rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs space-y-3">
+                <div className="p-4 bg-white dark:bg-[#1C1917] rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm space-y-3">
                   <div className="flex items-center justify-between pb-2 border-b border-[#E4E1DC]/80 dark:border-[#2E2A27]">
                     <div className="flex items-center gap-2">
                       <FileCheck size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
@@ -4238,7 +4228,7 @@ const ApplyFranchise = () => {
                 </div>
 
                 {/* Section 4: Community Tax Certificate (Cedula) */}
-                <div className="p-4 bg-white dark:bg-[#1C1917] rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs space-y-3">
+                <div className="p-4 bg-white dark:bg-[#1C1917] rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm space-y-3">
                   <div className="flex items-center justify-between pb-2 border-b border-[#E4E1DC]/80 dark:border-[#2E2A27]">
                     <div className="flex items-center gap-2">
                       <Receipt size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
@@ -4322,7 +4312,7 @@ const ApplyFranchise = () => {
                 </div>
 
                 {/* Section 7: Confirmation Checkbox (Affidavit of Authenticity) */}
-                <div className="p-4 rounded-xl border-2 border-[#D4AF37]/40 bg-white dark:bg-[#1C1917] shadow-xs">
+                <div className="p-4 rounded-xl border-2 border-[#D4AF37]/40 bg-white dark:bg-[#1C1917] shadow-sm">
                   <label className="flex items-start gap-3 cursor-pointer select-none">
                     <input
                       type="checkbox"
@@ -4356,7 +4346,7 @@ const ApplyFranchise = () => {
                       type="submit" 
                       onClick={handlePreSubmit}
                       disabled={isSubmitting || !isAgreedToTerms}
-                      className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-2.5 rounded-lg font-bold text-sm sm:text-base text-white transition-all shadow-xs active:scale-95 min-h-[44px] ${
+                      className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-2.5 rounded-lg font-bold text-sm sm:text-base text-white transition-all shadow-sm active:scale-95 min-h-[44px] ${
                         isSubmitting || !isAgreedToTerms
                           ? 'bg-[#6B7280] opacity-60 cursor-not-allowed' 
                           : 'bg-[#9E2A2B] hover:bg-[#7A1B22] cursor-pointer'
@@ -4511,7 +4501,7 @@ const ApplyFranchise = () => {
                   handleSubmit(e, true);
                 }}
                 disabled={isSubmitting}
-                className="w-full py-2.5 px-4 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-xs sm:text-sm shadow-xs transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer min-h-[44px]"
+                className="w-full py-2.5 px-4 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-xs sm:text-sm shadow-sm transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer min-h-[44px]"
               >
                 {isSubmitting ? <Loader2 size={16} className="animate-spin" /> : <CheckCircle2 size={16} />}
                 <span>Yes, Submit</span>
@@ -4599,7 +4589,7 @@ const ApplyFranchise = () => {
                   setDiscrepancyModal({ isOpen: false, discrepancies: [] });
                   handleSubmit(null, true);
                 }}
-                className="w-full py-2.5 px-4 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-xs sm:text-sm shadow-xs transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer min-h-[44px]"
+                className="w-full py-2.5 px-4 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-xs sm:text-sm shadow-sm transition-all active:scale-95 flex items-center justify-center gap-1.5 cursor-pointer min-h-[44px]"
               >
                 <span>Proceed &amp; Submit Anyway</span>
               </button>
@@ -4661,7 +4651,7 @@ const ApplyFranchise = () => {
               <button
                 type="button"
                 onClick={handleConfirmResumeDraft}
-                className="w-full py-2.5 px-4 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-sm shadow-xs transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer min-h-[44px]"
+                className="w-full py-2.5 px-4 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-sm shadow-sm transition-all active:scale-95 flex items-center justify-center gap-2 cursor-pointer min-h-[44px]"
               >
                 <RotateCcw className="w-4 h-4" />
                 <span>Continue Draft</span>

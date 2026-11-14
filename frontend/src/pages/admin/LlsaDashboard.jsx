@@ -295,7 +295,7 @@ const LlsaDashboard = () => {
           <>
             <StatCard
               label={t('admin.statActiveFranchises', 'Active Franchises')}
-              value={stats.active}
+              count={stats.active}
               subtext={t('admin.statActiveSub', 'Compliant & registered')}
               delta={{
                 text: `${getPercentage(stats.active)}% ${t('admin.statOfTotal', 'of total')}`,
@@ -307,7 +307,7 @@ const LlsaDashboard = () => {
 
             <StatCard
               label={t('admin.statPendingApprovals', 'Pending Approvals')}
-              value={stats.pending}
+              count={stats.pending}
               subtext={
                 stats.pending > 0
                   ? t('admin.statActionNeeded', 'Review required')
@@ -328,7 +328,7 @@ const LlsaDashboard = () => {
 
             <StatCard
               label={t('admin.statInPipeline', 'In Pipeline')}
-              value={stats.pipeline}
+              count={stats.pipeline}
               subtext={t('admin.statPipelineSub', 'Review, signing & pickup')}
               delta={{
                 text: `${stats.forSigning} ${t('admin.statSigning', 'signing')} · ${stats.readyForPickup} ${t('admin.statPickup', 'pickup')}`,
@@ -340,7 +340,7 @@ const LlsaDashboard = () => {
 
             <StatCard
               label={t('admin.statExpiringWarning', 'Expiring & Expired')}
-              value={stats.expired}
+              count={stats.expired}
               subtext={t('admin.statExpiredSub', 'Expired or cancelled')}
               delta={
                 stats.expired > 0
@@ -363,7 +363,7 @@ const LlsaDashboard = () => {
         <DashboardHealthSkeleton />
       ) : (
         <div className="bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] p-4 sm:p-5 mb-6">
-          <div className="flex items-center justify-between pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27] mb-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27] mb-3">
             <div className="flex items-center gap-2">
               <Layers size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
               <h2 className="text-sm font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
@@ -479,7 +479,7 @@ const LlsaDashboard = () => {
                 {t('admin.pendingApprovalsQueue', 'Pending Approvals Queue')}
               </h2>
               {stats.pending > 0 && (
-                <span className="bg-[#9E2A2B] text-white text-xs font-mono font-medium px-2 py-0.2 rounded">
+                <span className="bg-[#9E2A2B] text-white text-xs font-mono font-medium px-2 py-0.5 rounded">
                   {stats.pending}
                 </span>
               )}

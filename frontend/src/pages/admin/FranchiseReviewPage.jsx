@@ -16,6 +16,7 @@ import { formatZoneLabel } from '../../utils/constants';
 import { isNameMatch } from '../../utils/nameMatcher';
 import { FranchiseReviewSkeleton } from '../../components/skeleton';
 import { cleanText, formatVehicleMakeAndModel } from '../../utils/vehicleFormatters';
+import { useConfirm } from '../../components/ui/ConfirmContext';
 
 const REJECT_REASONS = [
   'Document Expiry Date Discrepancy (Uploaded document is expired despite entered date)',
@@ -41,6 +42,7 @@ const FranchiseReviewPage = () => {
   const [searchParams] = useSearchParams();
   const currentTab = searchParams.get('tab') || 'pending';
   const { socket } = useSocket() || {};
+  const { confirm } = useConfirm();
 
   // Queue and Application State
   const [queue, setQueue] = useState([]);
@@ -621,15 +623,15 @@ const FranchiseReviewPage = () => {
 
   if (!currentApp) {
     return (
-      <div className="fixed inset-0 w-full h-full bg-slate-50 dark:bg-[#0b0f19] text-slate-800 dark:text-slate-100 flex flex-col items-center justify-center p-6 text-center z-50">
+      <div className="fixed inset-0 w-full h-full bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] flex flex-col items-center justify-center p-6 text-center z-50">
         <AlertCircle size={44} className="text-amber-500 mb-3" />
-        <h2 className="text-base font-bold text-slate-800 dark:text-slate-100">Franchise Application Not Found</h2>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm">
+        <h2 className="text-base font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">Franchise Application Not Found</h2>
+        <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1 max-w-sm">
           This record may have been processed or the queue has finished.
         </p>
         <button
           onClick={() => navigate(`/franchise-approval?tab=${currentTab}`)}
-          className="mt-4 px-4 py-2 bg-[#9E2A2B] hover:bg-[#65151c] text-white rounded-xl text-xs font-semibold transition-all shadow-xs cursor-pointer"
+          className="mt-4 px-4 py-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white rounded-lg text-xs font-semibold transition-all shadow-sm cursor-pointer"
         >
           Return to Review Queue
         </button>
@@ -672,14 +674,14 @@ const FranchiseReviewPage = () => {
               </div>
               <button
                 onClick={handleExecuteUndo}
-                className="px-3 py-1.5 bg-[#D4AF37] hover:bg-[#c29d28] text-slate-950 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer shrink-0"
+                className="px-3 py-1.5 bg-[#D4AF37] hover:bg-[#c29d28] text-[#14110F] rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer shrink-0"
               >
                 <Undo2 size={14} />
                 <span>Undo ({undoState.secondsLeft}s)</span>
               </button>
             </div>
             {/* Countdown progress line */}
-            <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+            <div className="w-full bg-[#2E2A27] h-1.5 rounded-full overflow-hidden">
               <div 
                 className="bg-[#D4AF37] h-full transition-all duration-1000 ease-linear rounded-full"
                 style={{ width: `${(undoState.secondsLeft / 10) * 100}%` }}
@@ -691,7 +693,7 @@ const FranchiseReviewPage = () => {
 
       {/* Concurrency Warning Banner (if another admin has this record open) */}
       {reviewLock.isLocked && (
-        <div className="h-9 px-4 bg-amber-500 text-slate-950 text-xs font-bold flex items-center justify-center gap-2 shrink-0 z-35 shadow-sm">
+        <div className="h-9 px-4 bg-amber-500 text-[#14110F] text-xs font-bold flex items-center justify-center gap-2 shrink-0 z-35 shadow-sm">
           <Lock size={14} className="shrink-0" />
           <span>Currently being reviewed by Admin. Decision actions are locked to prevent duplicate processing.</span>
         </div>
@@ -700,7 +702,7 @@ const FranchiseReviewPage = () => {
       {/* ========================================================================= */}
       {/* TOP HEADER: CLEAN, UNIFIED MUNICIPAL WORKSTATION BAR                      */}
       {/* ========================================================================= */}
-      <header className="h-14 px-4 bg-slate-900 border-b border-slate-800 text-white flex items-center justify-between gap-3 shrink-0 z-30 shadow-xs">
+      <header className="h-14 px-4 bg-[#1C1917] border-b border-[#2E2A27] text-white flex items-center justify-between gap-3 shrink-0 z-30 shadow-sm">
         
         {/* Left: Back & Applicant Info */}
         <div className="flex items-center gap-3 min-w-0">
@@ -720,7 +722,7 @@ const FranchiseReviewPage = () => {
             </h1>
 
             {/* Single clean status badge */}
-            <span className="text-xs font-medium px-2.5 py-0.5 rounded-md bg-white/10 text-slate-200 border border-white/15 shrink-0">
+            <span className="text-xs font-medium px-2.5 py-0.5 rounded-md bg-white/10 text-[#EAE7E1] border border-white/15 shrink-0">
               {currentApp.status === 'Pending' || currentApp.status === 'Pending for Approval' ? 'Needs Review' : currentApp.status}
             </span>
 
@@ -813,9 +815,18 @@ const FranchiseReviewPage = () => {
           {/* Primary Action Button */}
           {currentApp.status === 'Pending' || currentApp.status === 'Pending for Approval' ? (
             <button
-              onClick={() => {
+              onClick={async () => {
                 const v = recordCheck.data?.violations?.length || 0;
-                if (v > 0 && !window.confirm(`${currentApp.fullName} has ${v} revoked franchise${v > 1 ? 's' : ''} on record. Send to the cashier anyway?`)) return;
+                if (v > 0) {
+                  const ok = await confirm({
+                    title: 'Confirm Sending with Prior Violations',
+                    description: `${currentApp.fullName} has ${v} revoked franchise${v > 1 ? 's' : ''} on record. Send to the cashier anyway?`,
+                    confirmLabel: 'Send to Cashier',
+                    cancelLabel: 'Cancel',
+                    variant: 'danger'
+                  });
+                  if (!ok) return;
+                }
                 handleUpdateStatus('For Payment', null, true);
               }}
               disabled={isProcessing || reviewLock.isLocked}
@@ -868,7 +879,7 @@ const FranchiseReviewPage = () => {
         {/* ======================================================================= */}
         {/* LEFT REVIEW SHEET: DOCUMENT CHECKLIST & TABBED METADATA INSPECTOR       */}
         {/* ======================================================================= */}
-        <aside className="w-full md:w-[380px] lg:w-[420px] xl:w-[450px] bg-white dark:bg-[#1C1917] border-r border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col shrink-0 h-full overflow-y-auto shadow-xs z-10">
+        <aside className="w-full md:w-[380px] lg:w-[420px] xl:w-[450px] bg-white dark:bg-[#1C1917] border-r border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col shrink-0 h-full overflow-y-auto shadow-sm z-10">
           
           <div className="p-3.5 space-y-3 flex-1 flex flex-col">
             
@@ -942,11 +953,8 @@ const FranchiseReviewPage = () => {
             {(() => {
               const rc = recordCheck.data;
               const hasViolations = rc?.hasViolations;
-              const accent = recordCheck.loading || !rc
-                ? 'border-l-[#E4E1DC] dark:border-l-[#2E2A27]'
-                : hasViolations ? 'border-l-red-600' : 'border-l-emerald-600';
               return (
-                <div className={`bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] border-l-4 ${accent} rounded-lg p-2.5 space-y-1.5`}>
+                <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-2.5 space-y-1.5">
                   <div 
                     onClick={() => setIsRecordCheckOpen(prev => !prev)}
                     className="flex items-center justify-between gap-2 cursor-pointer select-none"
@@ -966,7 +974,7 @@ const FranchiseReviewPage = () => {
                     </div>
                     <div className="flex items-center gap-1.5">
                       {rc?.todaName && rc.todaName !== 'NON-TODA' && (
-                        <span className={`text-[10px] font-bold px-1.5 py-0.2 rounded border ${
+                        <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${
                           rc.todaStatus === 'verified_member'
                             ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-200'
                             : 'bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-400 border-amber-200'
@@ -1032,7 +1040,7 @@ const FranchiseReviewPage = () => {
                               rc.todaStatus === 'verified_member'
                                 ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300'
                                 : rc.todaStatus === 'no_roster_on_file'
-                                ? 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300'
+                                ? 'bg-[#F6F5F3] dark:bg-[#14110F] border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1]'
                                 : 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-rose-300'
                             }`}
                             title={rc.todaRosterMessage || ''}
@@ -1041,7 +1049,7 @@ const FranchiseReviewPage = () => {
                                 {rc.todaStatus === 'verified_member' ? (
                                   <CheckCircle2 size={13} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
                                 ) : rc.todaStatus === 'no_roster_on_file' ? (
-                                  <Info size={13} className="text-slate-500 dark:text-slate-400 shrink-0" />
+                                  <Info size={13} className="text-[#6B6761] dark:text-[#A8A29E] shrink-0" />
                                 ) : (
                                   <AlertTriangle size={13} className="text-rose-600 dark:text-rose-400 shrink-0" />
                                 )}
@@ -1064,7 +1072,7 @@ const FranchiseReviewPage = () => {
                                 ? 'bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800/60 text-emerald-800 dark:text-emerald-300'
                                 : rc.jurisdictionStatus === 'mismatch'
                                 ? 'bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800/60 text-rose-800 dark:text-rose-300'
-                                : 'bg-slate-100 dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-300'
+                                : 'bg-[#F6F5F3] dark:bg-[#14110F] border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1]'
                             }`}
                             title={rc.jurisdictionWarning || ''}
                             >
@@ -1074,7 +1082,7 @@ const FranchiseReviewPage = () => {
                                 ) : rc.jurisdictionStatus === 'mismatch' ? (
                                   <AlertTriangle size={13} className="text-rose-600 dark:text-rose-400 shrink-0" />
                                 ) : (
-                                  <Info size={13} className="text-slate-500 dark:text-slate-400 shrink-0" />
+                                  <Info size={13} className="text-[#6B6761] dark:text-[#A8A29E] shrink-0" />
                                 )}
                                 Jurisdiction:
                               </span>
@@ -1186,7 +1194,7 @@ const FranchiseReviewPage = () => {
                     handleUpdateStatus('Cancelled', reason, true, rejectField);
                   }}
                   disabled={isProcessing}
-                  className="w-full py-2 bg-red-700 hover:bg-red-800 text-white font-semibold text-xs rounded-lg flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-95 cursor-pointer"
+                  className="w-full py-2 bg-red-700 hover:bg-red-800 text-white font-semibold text-xs rounded-lg flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
                 >
                   {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={14} />}
                   <span>Confirm Rejection &amp; Next</span>
@@ -1196,7 +1204,7 @@ const FranchiseReviewPage = () => {
 
             {/* Global AI Discrepancies & Modifications Notice Accordion */}
             {currentApp?.aiDiscrepancies && currentApp.aiDiscrepancies.length > 0 && (
-              <div className="rounded-xl border border-amber-300 dark:border-amber-800 bg-amber-50/90 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 text-xs overflow-hidden shadow-xs transition-all">
+              <div className="rounded-xl border border-amber-300 dark:border-amber-800 bg-amber-50/90 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 text-xs overflow-hidden shadow-sm transition-all">
                 <button
                   type="button"
                   onClick={() => setIsAiNoticeOpen(prev => !prev)}
@@ -1213,7 +1221,7 @@ const FranchiseReviewPage = () => {
                     </span>
                   </div>
                   <div className="flex items-center gap-1 text-[11px] font-semibold text-amber-800 dark:text-amber-300 shrink-0">
-                    <span className="hidden sm:inline">{isAiNoticeOpen ? 'Itago' : 'Ipakita'}</span>
+                    <span className="hidden sm:inline">{isAiNoticeOpen ? 'Hide' : 'Show'}</span>
                     {isAiNoticeOpen ? <ChevronUp size={15} /> : <ChevronDown size={15} />}
                   </div>
                 </button>
@@ -1227,9 +1235,9 @@ const FranchiseReviewPage = () => {
                       {(currentApp?.aiDiscrepancies || []).map((d, i) => {
                         const targetTabKey = getDocKeyForDiscrepancy(d);
                         return (
-                          <div key={i} className="bg-white/90 dark:bg-[#1C1917] p-2.5 rounded-lg border border-amber-200 dark:border-amber-900/50 space-y-1.5 shadow-2xs">
+                          <div key={i} className="bg-white/90 dark:bg-[#1C1917] p-2.5 rounded-lg border border-amber-200 dark:border-amber-900/50 space-y-1.5 shadow-sm">
                             <div className="flex items-center justify-between gap-1">
-                              <span className="font-bold text-slate-900 dark:text-slate-100 text-[11px]">{d.label || d.field}</span>
+                              <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] text-[11px]">{d.label || d.field}</span>
                               <button
                                 type="button"
                                 onClick={() => handleSelectDoc(targetTabKey)}
@@ -1246,15 +1254,15 @@ const FranchiseReviewPage = () => {
                                   {d.scannedValue || '—'} {d.severity === 'critical' ? '(Expired)' : ''}
                                 </span>
                               </div>
-                              <div className="p-1.5 rounded bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800">
-                                <span className="text-[9px] text-slate-500 dark:text-slate-400 block font-bold uppercase">Entered by Applicant</span>
-                                <span className="font-mono font-bold text-slate-900 dark:text-slate-100 truncate block">
+                              <div className="p-1.5 rounded bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                                <span className="text-[9px] text-[#6B6761] dark:text-[#A8A29E] block font-bold uppercase">Entered by Applicant</span>
+                                <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">
                                   {d.enteredValue || '—'}
                                 </span>
                               </div>
                             </div>
                             {d.reason && (
-                              <p className="text-[10px] text-slate-600 dark:text-slate-400 leading-snug pt-0.5">
+                              <p className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] leading-snug pt-0.5">
                                 {d.reason}
                               </p>
                             )}
@@ -1315,7 +1323,7 @@ const FranchiseReviewPage = () => {
                             <span className="truncate">CR Discrepancy Flagged ({crDiscrepancies.length})</span>
                           </div>
                           <div className="flex items-center gap-1 text-[10px] shrink-0">
-                            <span>{isDocDiscrepancyOpen ? 'Itago' : 'Ipakita'}</span>
+                            <span>{isDocDiscrepancyOpen ? 'Hide' : 'Show'}</span>
                             {isDocDiscrepancyOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
                           </div>
                         </div>
@@ -1324,15 +1332,15 @@ const FranchiseReviewPage = () => {
                           <div className="p-2 pt-0 space-y-1.5 border-t border-amber-200 dark:border-amber-900/40 mt-1">
                             {crDiscrepancies.map((d, i) => (
                               <div key={i} className="bg-white/90 dark:bg-[#1C1917] p-2 rounded-lg border border-amber-200 dark:border-amber-900/50 space-y-1">
-                                <div className="text-[11px] font-semibold text-slate-800 dark:text-slate-200">{d.label || d.field}</div>
+                                <div className="text-[11px] font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{d.label || d.field}</div>
                                 <div className="grid grid-cols-2 gap-1 text-[11px]">
                                   <div>
-                                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Scanned</span>
+                                    <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Scanned</span>
                                     <span className="font-mono font-bold text-red-600 dark:text-red-400">{d.scannedValue || '—'} {d.severity === 'critical' ? '(Expired)' : ''}</span>
                                   </div>
                                   <div>
-                                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Entered</span>
-                                    <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{d.enteredValue || '—'}</span>
+                                    <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Entered</span>
+                                    <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{d.enteredValue || '—'}</span>
                                   </div>
                                 </div>
                                 {d.reason && (
@@ -1361,82 +1369,82 @@ const FranchiseReviewPage = () => {
                     )}
 
                     {/* Plate No & MV File No */}
-                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27]">
                       <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">Plate No.</span>
+                        <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Plate No.</span>
                         <span className="font-mono font-bold text-[#9E2A2B] dark:text-[#D4AF37]">{currentApp.plateNo || currentApp.aiScannedData?.orCr?.plateNo || 'Pending'}</span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">MV File No.</span>
-                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100 truncate block">{currentApp.fileNo || currentApp.aiScannedData?.orCr?.fileNo || '—'}</span>
+                        <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">MV File No.</span>
+                        <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">{currentApp.fileNo || currentApp.aiScannedData?.orCr?.fileNo || '—'}</span>
                       </div>
                     </div>
 
                     {/* Motor & Chassis Serial Numbers */}
-                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27]">
                       <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">Motor / Engine No.</span>
-                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100 truncate block">{currentApp.motorNo || currentApp.aiScannedData?.orCr?.motorNo || '—'}</span>
+                        <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Motor / Engine No.</span>
+                        <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">{currentApp.motorNo || currentApp.aiScannedData?.orCr?.motorNo || '—'}</span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">Chassis No. (VIN)</span>
-                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100 truncate block">{currentApp.chassisNo || currentApp.aiScannedData?.orCr?.chassisNo || '—'}</span>
+                        <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Chassis No. (VIN)</span>
+                        <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">{currentApp.chassisNo || currentApp.aiScannedData?.orCr?.chassisNo || '—'}</span>
                       </div>
                     </div>
 
                     {/* CR No & Date */}
-                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27]">
                       <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">CR Number</span>
-                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100 truncate block">
+                        <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">CR Number</span>
+                        <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">
                           {currentApp.crNo || currentApp.orCrNo || currentApp.aiScannedData?.orCr?.crNo || '—'}
                         </span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">CR Date Issued</span>
-                        <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">
+                        <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">CR Date Issued</span>
+                        <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">
                           {formatDate(currentApp.crDate || currentApp.aiScannedData?.orCr?.crDate)}
                         </span>
                       </div>
                     </div>
 
                     {/* Make, Series, Year Model & Color */}
-                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27]">
                       <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">Make, Series &amp; Year</span>
-                        <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">
+                        <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Make, Series &amp; Year</span>
+                        <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">
                           {formatVehicleMakeAndModel(currentApp, '—')}
                         </span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">Vehicle Color</span>
-                        <span className="font-bold text-slate-800 dark:text-slate-100 uppercase truncate block">
+                        <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Vehicle Color</span>
+                        <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] uppercase truncate block">
                           {cleanText(currentApp.color || currentApp.aiScannedData?.orCr?.color, '—')}
                         </span>
                       </div>
                     </div>
 
                     {/* Type, Classification & Body Type */}
-                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27]">
                       <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">Type &amp; Classification</span>
-                        <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">
+                        <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Type &amp; Classification</span>
+                        <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">
                           {currentApp.vehicleType || currentApp.aiScannedData?.orCr?.vehicleType || 'Tricycle'} {currentApp.classification || currentApp.vehicleCategory || currentApp.aiScannedData?.orCr?.classification ? `• ${currentApp.classification || currentApp.vehicleCategory || currentApp.aiScannedData?.orCr?.classification}` : ''}
                         </span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">Body Type</span>
-                        <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">
+                        <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Body Type</span>
+                        <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">
                           {currentApp.bodyType || currentApp.aiScannedData?.orCr?.bodyType || 'Semi-Cabin'}
                         </span>
                       </div>
                     </div>
 
                     {/* Displacement, Fuel Type & Gross Weight */}
-                    <div className="grid grid-cols-3 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                    <div className="grid grid-cols-3 gap-1.5 p-2 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27]">
                       <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">Displacement</span>
-                        <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">
+                        <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Displacement</span>
+                        <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">
                           {(() => {
                             const val = currentApp.displacement || currentApp.aiScannedData?.orCr?.pistonDisplacement || currentApp.aiScannedData?.orCr?.displacement;
                             if (!val) return '—';
@@ -1445,14 +1453,14 @@ const FranchiseReviewPage = () => {
                         </span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">Fuel Type</span>
-                        <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">
+                        <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Fuel Type</span>
+                        <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">
                           {currentApp.fuelType || currentApp.aiScannedData?.orCr?.fuelType || 'Gasoline'}
                         </span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">Gross Weight</span>
-                        <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">
+                        <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Gross Weight</span>
+                        <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">
                           {(() => {
                             const val = currentApp.grossWeight || currentApp.aiScannedData?.orCr?.grossWeight;
                             if (!val) return '—';
@@ -1463,17 +1471,17 @@ const FranchiseReviewPage = () => {
                     </div>
 
                     {/* Passenger Capacity */}
-                    <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
-                      <span className="text-[10px] text-slate-400 block font-medium">Passenger Capacity</span>
-                      <span className="font-bold text-slate-800 dark:text-slate-100">
+                    <div className="p-2 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Passenger Capacity</span>
+                      <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
                         {currentApp.passengerCapacity || currentApp.aiScannedData?.orCr?.passengerCapacity ? `${currentApp.passengerCapacity || currentApp.aiScannedData?.orCr?.passengerCapacity} Persons` : '4-5 Persons'}
                       </span>
                     </div>
 
                     {/* Registered Owner on CR verification */}
-                    <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800 space-y-1">
+                    <div className="p-2 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] space-y-1">
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] text-slate-400 block font-medium">Registered Owner on CR</span>
+                        <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Registered Owner on CR</span>
                         {currentApp.registeredOwner && currentApp.fullName && (() => {
                           const isMatch = isNameMatch(currentApp.registeredOwner, currentApp.fullName);
                           return (
@@ -1487,13 +1495,13 @@ const FranchiseReviewPage = () => {
                           );
                         })()}
                       </div>
-                      <span className="font-bold text-xs text-slate-800 dark:text-slate-100 block">
+                      <span className="font-bold text-xs text-[#1F1D1B] dark:text-[#F6F5F3] block">
                         {currentApp.registeredOwner || currentApp.fullName || '—'}
                       </span>
                       {currentApp.ownerAddress && (
-                        <div className="pt-0.5 border-t border-slate-100 dark:border-slate-800/80">
-                          <span className="text-[10px] text-slate-400 block font-medium">Owner Address</span>
-                          <span className="text-xs text-slate-700 dark:text-slate-300 block truncate">
+                        <div className="pt-0.5 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
+                          <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Owner Address</span>
+                          <span className="text-xs text-[#1F1D1B] dark:text-[#EAE7E1] block truncate">
                             {currentApp.ownerAddress}
                           </span>
                         </div>
@@ -1508,7 +1516,7 @@ const FranchiseReviewPage = () => {
                           <span>Unit Registered in Another Person's Name</span>
                         </div>
                         <p className="text-[10px] text-amber-800 dark:text-amber-300 leading-tight">
-                          Ang rehistro ay nakapangalan kay <strong>{currentApp.registeredOwner}</strong>. Tiyakin na may kalakip na <strong>Notarized Deed of Absolute Sale</strong>, <strong>Lease Agreement</strong>, o <strong>Special Power of Attorney (SPA)</strong> bago aprubahan.
+                          The registration is under <strong>{currentApp.registeredOwner}</strong>. Ensure a notarized <strong>Deed of Absolute Sale</strong>, <strong>Lease Agreement</strong>, or <strong>Special Power of Attorney (SPA)</strong> is attached before approving.
                         </p>
                       </div>
                     )}
@@ -1530,7 +1538,7 @@ const FranchiseReviewPage = () => {
                             <span className="truncate">OR Discrepancy Flagged ({orDiscrepancies.length})</span>
                           </div>
                           <div className="flex items-center gap-1 text-[10px] shrink-0">
-                            <span>{isDocDiscrepancyOpen ? 'Itago' : 'Ipakita'}</span>
+                            <span>{isDocDiscrepancyOpen ? 'Hide' : 'Show'}</span>
                             {isDocDiscrepancyOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
                           </div>
                         </div>
@@ -1539,15 +1547,15 @@ const FranchiseReviewPage = () => {
                           <div className="p-2 pt-0 space-y-1.5 border-t border-amber-200 dark:border-amber-900/40 mt-1">
                             {orDiscrepancies.map((d, i) => (
                               <div key={i} className="bg-white/90 dark:bg-[#1C1917] p-2 rounded-lg border border-amber-200 dark:border-amber-900/50 space-y-1">
-                                <div className="text-[11px] font-semibold text-slate-800 dark:text-slate-200">{d.label || d.field}</div>
+                                <div className="text-[11px] font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{d.label || d.field}</div>
                                 <div className="grid grid-cols-2 gap-1 text-[11px]">
                                   <div>
-                                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Scanned</span>
+                                    <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Scanned</span>
                                     <span className="font-mono font-bold text-red-600 dark:text-red-400">{d.scannedValue || '—'} {d.severity === 'critical' ? '(Expired)' : ''}</span>
                                   </div>
                                   <div>
-                                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Entered</span>
-                                    <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{d.enteredValue || '—'}</span>
+                                    <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Entered</span>
+                                    <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{d.enteredValue || '—'}</span>
                                   </div>
                                 </div>
                                 {d.reason && (
@@ -1589,22 +1597,22 @@ const FranchiseReviewPage = () => {
                       return (
                         <div className="space-y-1.5">
                           {/* Official Receipt No & Date */}
-                          <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                          <div className="grid grid-cols-2 gap-1.5 p-2 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27]">
                             <div>
-                              <span className="text-[10px] text-slate-400 block font-medium">Official Receipt No. (OR)</span>
+                              <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Official Receipt No. (OR)</span>
                               <span className="font-mono font-bold text-[#9E2A2B] dark:text-[#D4AF37] truncate block">{orNum}</span>
                             </div>
                             <div>
-                              <span className="text-[10px] text-slate-400 block font-medium">OR Payment Date</span>
-                              <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">{formatDate(orDt)}</span>
+                              <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">OR Payment Date</span>
+                              <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">{formatDate(orDt)}</span>
                             </div>
                           </div>
 
                           {/* Registration Expiry Date */}
-                          <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800 flex items-center justify-between">
+                          <div className="p-2 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-between">
                             <div>
-                              <span className="text-[10px] text-slate-400 block font-medium">Registration Validity / Expiry</span>
-                              <span className="font-bold text-slate-800 dark:text-slate-100">{formatDate(expDt)}</span>
+                              <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Registration Validity / Expiry</span>
+                              <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{formatDate(expDt)}</span>
                             </div>
                             {expDt && (
                               <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${
@@ -1620,9 +1628,9 @@ const FranchiseReviewPage = () => {
                           </div>
 
                           {/* Received From (Payer Name) & Match Status */}
-                          <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800 space-y-1">
+                          <div className="p-2 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] space-y-1">
                             <div className="flex items-center justify-between">
-                              <span className="text-[10px] text-slate-400 block font-medium">Received From (Payer Name)</span>
+                              <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Received From (Payer Name)</span>
                               <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${
                                 isPayerApplicant
                                   ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950/60 dark:text-emerald-300'
@@ -1631,24 +1639,24 @@ const FranchiseReviewPage = () => {
                                 {isPayerApplicant ? 'Payer Matches Applicant' : 'Payer Name Differs'}
                               </span>
                             </div>
-                            <span className="font-bold text-xs text-slate-800 dark:text-slate-100 block">{payer}</span>
+                            <span className="font-bold text-xs text-[#1F1D1B] dark:text-[#F6F5F3] block">{payer}</span>
                             {payerAddr && payerAddr !== '—' && (
-                              <div className="pt-0.5 border-t border-slate-100 dark:border-slate-800/80">
-                                <span className="text-[10px] text-slate-400 block font-medium">Payer Address</span>
-                                <span className="text-xs text-slate-700 dark:text-slate-300 block truncate">{payerAddr}</span>
+                              <div className="pt-0.5 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
+                                <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Payer Address</span>
+                                <span className="text-xs text-[#1F1D1B] dark:text-[#EAE7E1] block truncate">{payerAddr}</span>
                               </div>
                             )}
                           </div>
 
                           {/* Field Office & Office Code */}
-                          <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                          <div className="grid grid-cols-2 gap-1.5 p-2 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27]">
                             <div>
-                              <span className="text-[10px] text-slate-400 block font-medium">LTO Field Office</span>
-                              <span className="font-medium text-slate-800 dark:text-slate-100 truncate block">{fieldOffice}</span>
+                              <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">LTO Field Office</span>
+                              <span className="font-medium text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">{fieldOffice}</span>
                             </div>
                             <div>
-                              <span className="text-[10px] text-slate-400 block font-medium">Office Code</span>
-                              <span className="font-mono font-medium text-slate-800 dark:text-slate-100">{officeCode || '—'}</span>
+                              <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Office Code</span>
+                              <span className="font-mono font-medium text-[#1F1D1B] dark:text-[#F6F5F3]">{officeCode || '—'}</span>
                             </div>
                           </div>
                         </div>
@@ -1672,7 +1680,7 @@ const FranchiseReviewPage = () => {
                             <span className="truncate">License Discrepancy Flagged ({licenseDiscrepancies.length})</span>
                           </div>
                           <div className="flex items-center gap-1 text-[10px] shrink-0">
-                            <span>{isDocDiscrepancyOpen ? 'Itago' : 'Ipakita'}</span>
+                            <span>{isDocDiscrepancyOpen ? 'Hide' : 'Show'}</span>
                             {isDocDiscrepancyOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
                           </div>
                         </div>
@@ -1681,15 +1689,15 @@ const FranchiseReviewPage = () => {
                           <div className="p-2 pt-0 space-y-1.5 border-t border-amber-200 dark:border-amber-900/40 mt-1">
                             {licenseDiscrepancies.map((d, i) => (
                               <div key={i} className="bg-white/90 dark:bg-[#1C1917] p-2 rounded-lg border border-amber-200 dark:border-amber-900/50 space-y-1">
-                                <div className="text-[11px] font-semibold text-slate-800 dark:text-slate-200">{d.label || d.field}</div>
+                                <div className="text-[11px] font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{d.label || d.field}</div>
                                 <div className="grid grid-cols-2 gap-1 text-[11px]">
                                   <div>
-                                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Scanned</span>
+                                    <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Scanned</span>
                                     <span className="font-mono font-bold text-red-600 dark:text-red-400">{d.scannedValue || '—'} {d.severity === 'critical' ? '(Expired)' : ''}</span>
                                   </div>
                                   <div>
-                                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Entered</span>
-                                    <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{d.enteredValue || '—'}</span>
+                                    <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Entered</span>
+                                    <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{d.enteredValue || '—'}</span>
                                   </div>
                                 </div>
                                 {d.reason && (
@@ -1718,29 +1726,29 @@ const FranchiseReviewPage = () => {
                     )}
 
                     {/* Driver & Designation */}
-                    <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
-                      <span className="text-[10px] text-slate-400 block font-medium">Driver &amp; Designation</span>
+                    <div className="p-2 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Driver &amp; Designation</span>
                       <div className="flex items-center justify-between gap-1 mt-0.5">
-                        <span className="font-bold text-slate-800 dark:text-slate-100 truncate">
+                        <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate">
                           {currentApp.isOperatorDriver ? currentApp.fullName : (currentApp.driverName || '—')}
                         </span>
-                        <span className="text-[10px] font-semibold px-1.5 py-0.2 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 shrink-0">
+                        <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E] border border-[#E4E1DC] dark:border-[#2E2A27] shrink-0">
                           {currentApp.isOperatorDriver ? 'Self-Drive (Operator)' : 'Employed Driver'}
                         </span>
                       </div>
                     </div>
 
                     {/* License No & Card Serial No */}
-                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27]">
                       <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">License No.</span>
-                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100 truncate block">
+                        <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">License No.</span>
+                        <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">
                           {currentApp.driverLicenseNo || currentApp.aiScannedData?.license?.licenseNo || '—'}
                         </span>
                       </div>
                       <div>
                         <div className="flex items-center justify-between">
-                          <span className="text-[10px] text-slate-400 block font-medium">Card Serial (Back)</span>
+                          <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Card Serial (Back)</span>
                           <button
                             type="button"
                             onClick={() => {
@@ -1757,22 +1765,22 @@ const FranchiseReviewPage = () => {
                             <span>{licenseSide === 'back' ? 'Front' : 'Flip'}</span>
                           </button>
                         </div>
-                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100 truncate block">
+                        <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">
                           {currentApp.driverLicenseSerialNo || currentApp.aiScannedData?.licenseBack?.serialNo || '—'}
                         </span>
                       </div>
                     </div>
 
                     {/* License Expiry & DL Codes */}
-                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27]">
                       <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">License Expiry</span>
+                        <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">License Expiry</span>
                         <div className="flex items-center gap-1 flex-wrap">
-                          <span className="font-bold text-slate-800 dark:text-slate-100">
+                          <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
                             {formatDate(currentApp.driverLicenseExpiryDate || currentApp.aiScannedData?.license?.expiryDate)}
                           </span>
                           {(currentApp.driverLicenseExpiryDate || currentApp.aiScannedData?.license?.expiryDate) && (
-                            <span className={`text-[10px] font-bold px-1 py-0.2 rounded border ${
+                            <span className={`text-[10px] font-bold px-1 py-0.5 rounded border ${
                               licenseValidity.isExpired
                                 ? 'bg-rose-50 text-rose-600 border-rose-200'
                                 : licenseValidity.isExpiringSoon
@@ -1785,49 +1793,49 @@ const FranchiseReviewPage = () => {
                         </div>
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">DL Authority Codes</span>
-                        <span className="font-bold text-slate-800 dark:text-slate-100">
+                        <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">DL Authority Codes</span>
+                        <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
                           {currentApp.driverDlCodes || currentApp.aiScannedData?.license?.dlCodes || 'A, A1'}
                         </span>
                       </div>
                     </div>
 
                     {/* Driving Conditions & Date of Birth */}
-                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27]">
                       <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">Conditions</span>
-                        <span className="font-bold text-slate-800 dark:text-slate-100">
+                        <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Conditions</span>
+                        <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
                           {currentApp.driverConditions || currentApp.aiScannedData?.license?.conditions || 'None'}
                         </span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">Date of Birth</span>
-                        <span className="font-bold text-slate-800 dark:text-slate-100">
+                        <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Date of Birth</span>
+                        <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
                           {formatDate(currentApp.driverDob || currentApp.aiScannedData?.license?.dateOfBirth)}
                         </span>
                       </div>
                     </div>
 
                     {/* Sex / Nationality & Driver Contact */}
-                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27]">
                       <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">Sex / Nationality</span>
-                        <span className="font-bold text-slate-800 dark:text-slate-100">
+                        <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Sex / Nationality</span>
+                        <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
                           {currentApp.driverSex || '—'} • {currentApp.driverNationality || 'Filipino'}
                         </span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">Driver Contact</span>
-                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100">
+                        <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Driver Contact</span>
+                        <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
                           {currentApp.isOperatorDriver ? (currentApp.contact || currentApp.operator?.contact || '—') : (currentApp.driverContact || '—')}
                         </span>
                       </div>
                     </div>
 
                     {/* Driver Address */}
-                    <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
-                      <span className="text-[10px] text-slate-400 block font-medium">Driver Address</span>
-                      <span className="font-medium text-slate-800 dark:text-slate-100 truncate block">
+                    <div className="p-2 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Driver Address</span>
+                      <span className="font-medium text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">
                         {currentApp.isOperatorDriver ? (currentApp.barangay || currentApp.address || currentApp.operator?.address || '—') : (currentApp.driverAddress || '—')}
                       </span>
                     </div>
@@ -1849,7 +1857,7 @@ const FranchiseReviewPage = () => {
                             <span className="truncate">Cedula Discrepancy Flagged ({cedulaDiscrepancies.length})</span>
                           </div>
                           <div className="flex items-center gap-1 text-[10px] shrink-0">
-                            <span>{isDocDiscrepancyOpen ? 'Itago' : 'Ipakita'}</span>
+                            <span>{isDocDiscrepancyOpen ? 'Hide' : 'Show'}</span>
                             {isDocDiscrepancyOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
                           </div>
                         </div>
@@ -1858,15 +1866,15 @@ const FranchiseReviewPage = () => {
                           <div className="p-2 pt-0 space-y-1.5 border-t border-amber-200 dark:border-amber-900/40 mt-1">
                             {cedulaDiscrepancies.map((d, i) => (
                               <div key={i} className="bg-white/90 dark:bg-[#1C1917] p-2 rounded-lg border border-amber-200 dark:border-amber-900/50 space-y-1">
-                                <div className="text-[11px] font-semibold text-slate-800 dark:text-slate-200">{d.label || d.field}</div>
+                                <div className="text-[11px] font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{d.label || d.field}</div>
                                 <div className="grid grid-cols-2 gap-1 text-[11px]">
                                   <div>
-                                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Scanned</span>
+                                    <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Scanned</span>
                                     <span className="font-mono font-bold text-red-600 dark:text-red-400">{d.scannedValue || '—'} {d.severity === 'critical' ? '(Expired)' : ''}</span>
                                   </div>
                                   <div>
-                                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Entered</span>
-                                    <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{d.enteredValue || '—'}</span>
+                                    <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Entered</span>
+                                    <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{d.enteredValue || '—'}</span>
                                   </div>
                                 </div>
                                 {d.reason && (
@@ -1898,68 +1906,68 @@ const FranchiseReviewPage = () => {
                       const cExt = currentApp.cedulaDetails || currentApp.aiScannedData?.cedula || currentApp.aiVerification?.documents?.cedula?.extracted || {};
                       return (
                         <div className="space-y-1.5">
-                          <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                          <div className="grid grid-cols-2 gap-1.5 p-2 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27]">
                             <div>
-                              <span className="text-[10px] text-slate-400 block font-medium">CTC Serial No.</span>
+                              <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">CTC Serial No.</span>
                               <span className="font-mono font-bold text-[#9E2A2B] dark:text-[#D4AF37]">{currentApp.cedulaSerialNo || cExt.serialNo || '—'}</span>
                             </div>
                             <div>
-                              <span className="text-[10px] text-slate-400 block font-medium">Tax Year</span>
-                              <span className="font-bold text-slate-800 dark:text-slate-100">{currentApp.cedulaYear || cExt.year || (currentApp.cedulaDate && !isNaN(new Date(currentApp.cedulaDate).getTime()) ? new Date(currentApp.cedulaDate).getFullYear() : '—')}</span>
+                              <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Tax Year</span>
+                              <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{currentApp.cedulaYear || cExt.year || (currentApp.cedulaDate && !isNaN(new Date(currentApp.cedulaDate).getTime()) ? new Date(currentApp.cedulaDate).getFullYear() : '—')}</span>
                             </div>
                           </div>
 
-                          <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                          <div className="grid grid-cols-2 gap-1.5 p-2 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27]">
                             <div>
-                              <span className="text-[10px] text-slate-400 block font-medium">Date Issued</span>
-                              <span className="font-bold text-slate-800 dark:text-slate-100">{formatDate(currentApp.cedulaDate || cExt.dateIssued)}</span>
+                              <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Date Issued</span>
+                              <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{formatDate(currentApp.cedulaDate || cExt.dateIssued)}</span>
                             </div>
                             <div>
-                              <span className="text-[10px] text-slate-400 block font-medium">Place Issued</span>
-                              <span className="font-medium text-slate-800 dark:text-slate-100 truncate block">{currentApp.cedulaPlaceIssued || currentApp.cedulaAddress || cExt.placeIssued || 'Gasan, Marinduque'}</span>
+                              <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Place Issued</span>
+                              <span className="font-medium text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">{currentApp.cedulaPlaceIssued || currentApp.cedulaAddress || cExt.placeIssued || 'Gasan, Marinduque'}</span>
                             </div>
                           </div>
 
-                          <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
-                            <span className="text-[10px] text-slate-400 block font-medium">Taxpayer Full Name</span>
-                            <span className="font-bold text-slate-800 dark:text-slate-100">{currentApp.cedulaFullName || cExt.fullName || currentApp.fullName || '—'}</span>
+                          <div className="p-2 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                            <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Taxpayer Full Name</span>
+                            <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{currentApp.cedulaFullName || cExt.fullName || currentApp.fullName || '—'}</span>
                             {(currentApp.address || cExt.address) && (
-                              <div className="mt-1 pt-1 border-t border-slate-100 dark:border-slate-800 text-[11px] text-slate-600 dark:text-slate-400">
-                                <span className="text-[10px] text-slate-400 block font-medium">Taxpayer Address</span>
-                                <span className="font-medium text-slate-800 dark:text-slate-200">{currentApp.address || cExt.address}</span>
+                              <div className="mt-1 pt-1 border-t border-[#E4E1DC] dark:border-[#2E2A27] text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
+                                <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Taxpayer Address</span>
+                                <span className="font-medium text-[#1F1D1B] dark:text-[#F6F5F3]">{currentApp.address || cExt.address}</span>
                               </div>
                             )}
                           </div>
 
-                          <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                          <div className="grid grid-cols-2 gap-1.5 p-2 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27]">
                             <div>
-                              <span className="text-[10px] text-slate-400 block font-medium">Citizenship</span>
-                              <span className="font-medium text-slate-800 dark:text-slate-100">{currentApp.cedulaCitizenship || cExt.citizenship || 'Filipino'}</span>
+                              <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Citizenship</span>
+                              <span className="font-medium text-[#1F1D1B] dark:text-[#F6F5F3]">{currentApp.cedulaCitizenship || cExt.citizenship || 'Filipino'}</span>
                             </div>
                             <div>
-                              <span className="text-[10px] text-slate-400 block font-medium">Civil Status</span>
-                              <span className="font-medium text-slate-800 dark:text-slate-100">{currentApp.cedulaCivilStatus || cExt.civilStatus || '—'}</span>
+                              <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Civil Status</span>
+                              <span className="font-medium text-[#1F1D1B] dark:text-[#F6F5F3]">{currentApp.cedulaCivilStatus || cExt.civilStatus || '—'}</span>
                             </div>
                           </div>
 
                           {(currentApp.cedulaProfession || cExt.profession || currentApp.cedulaDob || cExt.dateOfBirth) && (
-                            <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                            <div className="grid grid-cols-2 gap-1.5 p-2 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27]">
                               <div>
-                                <span className="text-[10px] text-slate-400 block font-medium">Profession / Occupation</span>
-                                <span className="font-medium text-slate-800 dark:text-slate-100 truncate block">{currentApp.cedulaProfession || cExt.profession || '—'}</span>
+                                <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Profession / Occupation</span>
+                                <span className="font-medium text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">{currentApp.cedulaProfession || cExt.profession || '—'}</span>
                               </div>
                               <div>
-                                <span className="text-[10px] text-slate-400 block font-medium">Date of Birth</span>
-                                <span className="font-medium text-slate-800 dark:text-slate-100">{currentApp.cedulaDob ? formatDate(currentApp.cedulaDob) : (cExt.dateOfBirth || '—')}</span>
+                                <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Date of Birth</span>
+                                <span className="font-medium text-[#1F1D1B] dark:text-[#F6F5F3]">{currentApp.cedulaDob ? formatDate(currentApp.cedulaDob) : (cExt.dateOfBirth || '—')}</span>
                               </div>
                             </div>
                           )}
 
                           {(currentApp.cedulaSex || cExt.sex || currentApp.cedulaHeight || cExt.height || currentApp.cedulaWeight || cExt.weight || currentApp.cedulaTin || cExt.tin) && (
-                            <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                            <div className="grid grid-cols-2 gap-1.5 p-2 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27]">
                               <div>
-                                <span className="text-[10px] text-slate-400 block font-medium">Biometrics (Sex / Ht / Wt)</span>
-                                <span className="font-medium text-slate-800 dark:text-slate-100">
+                                <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Biometrics (Sex / Ht / Wt)</span>
+                                <span className="font-medium text-[#1F1D1B] dark:text-[#F6F5F3]">
                                   {[
                                     currentApp.cedulaSex || cExt.sex, 
                                     (currentApp.cedulaHeight || cExt.height) ? `${currentApp.cedulaHeight || cExt.height} ft` : null, 
@@ -1968,19 +1976,19 @@ const FranchiseReviewPage = () => {
                                 </span>
                               </div>
                               <div>
-                                <span className="text-[10px] text-slate-400 block font-medium">TIN</span>
-                                <span className="font-mono font-medium text-slate-800 dark:text-slate-100">{currentApp.cedulaTin || cExt.tin || '—'}</span>
+                                <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">TIN</span>
+                                <span className="font-mono font-medium text-[#1F1D1B] dark:text-[#F6F5F3]">{currentApp.cedulaTin || cExt.tin || '—'}</span>
                               </div>
                             </div>
                           )}
 
-                          <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                          <div className="grid grid-cols-2 gap-1.5 p-2 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27]">
                             <div>
-                              <span className="text-[10px] text-slate-400 block font-medium">Basic Tax Due</span>
-                              <span className="font-mono font-medium text-slate-800 dark:text-slate-100">{cExt.basicCommunityTax ? `₱${cExt.basicCommunityTax}` : '—'}</span>
+                              <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Basic Tax Due</span>
+                              <span className="font-mono font-medium text-[#1F1D1B] dark:text-[#F6F5F3]">{cExt.basicCommunityTax ? `₱${cExt.basicCommunityTax}` : '—'}</span>
                             </div>
                             <div>
-                              <span className="text-[10px] text-slate-400 block font-medium">Total Amount Paid</span>
+                              <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Total Amount Paid</span>
                               <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">
                                 {Number.isFinite(Number(currentApp.cedulaAmount)) && Number(currentApp.cedulaAmount) > 0 ? `₱${Number(currentApp.cedulaAmount).toFixed(2)}` : (cExt.totalAmountPaid ? `₱${cExt.totalAmountPaid}` : '₱55.00')}
                               </span>
@@ -2007,7 +2015,7 @@ const FranchiseReviewPage = () => {
                             <span className="truncate">TODA Discrepancy Flagged ({todaDiscrepancies.length})</span>
                           </div>
                           <div className="flex items-center gap-1 text-[10px] shrink-0">
-                            <span>{isDocDiscrepancyOpen ? 'Itago' : 'Ipakita'}</span>
+                            <span>{isDocDiscrepancyOpen ? 'Hide' : 'Show'}</span>
                             {isDocDiscrepancyOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
                           </div>
                         </div>
@@ -2016,15 +2024,15 @@ const FranchiseReviewPage = () => {
                           <div className="p-2 pt-0 space-y-1.5 border-t border-amber-200 dark:border-amber-900/40 mt-1">
                             {todaDiscrepancies.map((d, i) => (
                               <div key={i} className="bg-white/90 dark:bg-[#1C1917] p-2 rounded-lg border border-amber-200 dark:border-amber-900/50 space-y-1">
-                                <div className="text-[11px] font-semibold text-slate-800 dark:text-slate-200">{d.label || d.field}</div>
+                                <div className="text-[11px] font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{d.label || d.field}</div>
                                 <div className="grid grid-cols-2 gap-1 text-[11px]">
                                   <div>
-                                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Scanned</span>
+                                    <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Scanned</span>
                                     <span className="font-mono font-bold text-red-600 dark:text-red-400">{d.scannedValue || '—'}</span>
                                   </div>
                                   <div>
-                                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Entered</span>
-                                    <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{d.enteredValue || '—'}</span>
+                                    <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Entered</span>
+                                    <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{d.enteredValue || '—'}</span>
                                   </div>
                                 </div>
                                 {d.reason && (
@@ -2052,37 +2060,37 @@ const FranchiseReviewPage = () => {
                       </div>
                     )}
 
-                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27]">
                       <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">TODA Association</span>
+                        <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">TODA Association</span>
                         <span className="font-bold text-[#9E2A2B] dark:text-[#D4AF37] truncate block">{currentApp.todaName || currentApp.toda || '—'}</span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">Assigned Zone</span>
-                        <span className="font-bold text-slate-800 dark:text-slate-100">
+                        <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Assigned Zone</span>
+                        <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
                           {currentApp.zone ? formatZoneLabel(currentApp.zone) : '—'}
                         </span>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27]">
                       <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">Certificate No.</span>
-                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100 truncate block">
+                        <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Certificate No.</span>
+                        <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">
                           {currentApp.todaCertNo || currentApp.aiScannedData?.todaEndorsement?.certNo || '—'}
                         </span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">Date Issued</span>
-                        <span className="font-bold text-slate-800 dark:text-slate-100">
+                        <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Date Issued</span>
+                        <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
                           {formatDate(currentApp.todaCertDate || currentApp.aiScannedData?.todaEndorsement?.dateIssued)}
                         </span>
                       </div>
                     </div>
 
-                    <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
-                      <span className="text-[10px] text-slate-400 block font-medium">Authorized TODA Signatory</span>
-                      <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">
+                    <div className="p-2 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Authorized TODA Signatory</span>
+                      <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">
                         {currentApp.todaSignatory || currentApp.aiScannedData?.todaEndorsement?.signatory || '—'}
                       </span>
                     </div>
@@ -2104,7 +2112,7 @@ const FranchiseReviewPage = () => {
                             <span className="truncate">Barangay Clearance Discrepancy ({brgyDiscrepancies.length})</span>
                           </div>
                           <div className="flex items-center gap-1 text-[10px] shrink-0">
-                            <span>{isDocDiscrepancyOpen ? 'Itago' : 'Ipakita'}</span>
+                            <span>{isDocDiscrepancyOpen ? 'Hide' : 'Show'}</span>
                             {isDocDiscrepancyOpen ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
                           </div>
                         </div>
@@ -2113,15 +2121,15 @@ const FranchiseReviewPage = () => {
                           <div className="p-2 pt-0 space-y-1.5 border-t border-amber-200 dark:border-amber-900/40 mt-1">
                             {brgyDiscrepancies.map((d, i) => (
                               <div key={i} className="bg-white/90 dark:bg-[#1C1917] p-2 rounded-lg border border-amber-200 dark:border-amber-900/50 space-y-1">
-                                <div className="text-[11px] font-semibold text-slate-800 dark:text-slate-200">{d.label || d.field}</div>
+                                <div className="text-[11px] font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{d.label || d.field}</div>
                                 <div className="grid grid-cols-2 gap-1 text-[11px]">
                                   <div>
-                                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Scanned</span>
+                                    <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Scanned</span>
                                     <span className="font-mono font-bold text-red-600 dark:text-red-400">{d.scannedValue || '—'}</span>
                                   </div>
                                   <div>
-                                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block font-medium">Entered</span>
-                                    <span className="font-mono font-bold text-slate-900 dark:text-slate-100">{d.enteredValue || '—'}</span>
+                                    <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Entered</span>
+                                    <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{d.enteredValue || '—'}</span>
                                   </div>
                                 </div>
                                 {d.reason && (
@@ -2149,36 +2157,36 @@ const FranchiseReviewPage = () => {
                       </div>
                     )}
 
-                    <div className="p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
-                      <span className="text-[10px] text-slate-400 block font-medium">Barangay of Residence</span>
+                    <div className="p-2 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Barangay of Residence</span>
                       <span className="font-bold text-[#9E2A2B] dark:text-[#D4AF37]">{currentApp.barangay || currentApp.address || currentApp.operator?.address || currentApp.aiScannedData?.brgyClearance?.barangay || '—'}</span>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27]">
                       <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">Clearance No.</span>
-                        <span className="font-mono font-bold text-slate-800 dark:text-slate-100 truncate block">
+                        <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Clearance No.</span>
+                        <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">
                           {currentApp.brgyClearanceNo || currentApp.aiScannedData?.brgyClearance?.clearanceNo || '—'}
                         </span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">Date Issued</span>
-                        <span className="font-bold text-slate-800 dark:text-slate-100">
+                        <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Date Issued</span>
+                        <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
                           {formatDate(currentApp.brgyClearanceDate || currentApp.aiScannedData?.brgyClearance?.dateIssued)}
                         </span>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-xl bg-white dark:bg-[#151c2c] border border-slate-200/80 dark:border-slate-800">
+                    <div className="grid grid-cols-2 gap-1.5 p-2 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27]">
                       <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">Resident Name</span>
-                        <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">
+                        <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Resident Name</span>
+                        <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">
                           {currentApp.fullName || currentApp.aiScannedData?.brgyClearance?.residentName || '—'}
                         </span>
                       </div>
                       <div>
-                        <span className="text-[10px] text-slate-400 block font-medium">Punong Barangay / Issuer</span>
-                        <span className="font-bold text-slate-800 dark:text-slate-100 truncate block">
+                        <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] block font-medium">Punong Barangay / Issuer</span>
+                        <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">
                           {currentApp.brgyIssuer || currentApp.aiScannedData?.brgyClearance?.issuer || '—'}
                         </span>
                       </div>
@@ -2194,10 +2202,10 @@ const FranchiseReviewPage = () => {
         {/* ======================================================================= */}
         {/* RIGHT DOCUMENT VIEWER CANVAS                                           */}
         {/* ======================================================================= */}
-        <main className="flex-1 flex flex-col bg-slate-100 dark:bg-[#070a12] min-w-0 h-full overflow-hidden">
+        <main className="flex-1 flex flex-col bg-[#F6F5F3] dark:bg-[#14110F] min-w-0 h-full overflow-hidden">
           
           {/* HORIZONTAL DOCUMENT TAB BAR + VIEWER CONTROLS */}
-          <div className="h-12 bg-white dark:bg-[#111827] border-b border-slate-200 dark:border-slate-800 px-3 flex items-center justify-between gap-3 shrink-0">
+          <div className="h-12 bg-white dark:bg-[#1C1917] border-b border-[#E4E1DC] dark:border-[#2E2A27] px-3 flex items-center justify-between gap-3 shrink-0">
             {/* 5 Compact Document Tabs */}
             <div className="flex items-center gap-1.5 overflow-x-auto min-w-0 py-1">
               {docTabs.map((tab, idx) => {
@@ -2212,12 +2220,12 @@ const FranchiseReviewPage = () => {
                     key={tab.key}
                     type="button"
                     onClick={() => handleSelectDoc(tab.key)}
-                    className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer shrink-0 ${
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all whitespace-nowrap cursor-pointer shrink-0 ${
                       isActive
-                        ? 'bg-[#9E2A2B] text-white shadow-xs'
+                        ? 'bg-[#9E2A2B] text-white shadow-sm'
                         : hasDiscrepancy
                         ? 'bg-amber-100 dark:bg-amber-950/40 text-amber-900 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900/60 border border-amber-300 dark:border-amber-800'
-                        : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
+                        : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] hover:bg-[#E4E1DC] dark:hover:bg-[#2E2A27] border border-[#E4E1DC] dark:border-[#2E2A27]'
                     }`}
                     title={hasDiscrepancy ? 'Document discrepancy detected' : ''}
                   >
@@ -2235,7 +2243,7 @@ const FranchiseReviewPage = () => {
             </div>
 
             {/* Viewer Zoom & Rotation Tools */}
-            <div className="flex items-center gap-1 shrink-0 text-slate-700 dark:text-slate-200">
+            <div className="flex items-center gap-1 shrink-0 text-[#1F1D1B] dark:text-[#EAE7E1]">
               {activeDocKey === 'license' && (
                 <button
                   type="button"
@@ -2247,7 +2255,7 @@ const FranchiseReviewPage = () => {
                     setDocError(false);
                     resetCanvasView();
                   }}
-                  className={`px-2.5 py-1 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border shadow-2xs mr-1 ${
+                  className={`px-2.5 py-1 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer border shadow-sm mr-1 ${
                     licenseSide === 'back'
                       ? 'bg-[#9E2A2B] text-white border-[#7A1B22]'
                       : 'bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 border-amber-300 dark:border-amber-700 hover:bg-amber-100'
@@ -2256,7 +2264,7 @@ const FranchiseReviewPage = () => {
                 >
                   <RotateCw size={13} className={licenseSide === 'back' ? 'text-amber-300' : 'text-amber-600 dark:text-amber-400'} />
                   <span>{licenseSide === 'back' ? 'Card: Back View' : 'Card: Front View'}</span>
-                  <span className="text-[10px] px-1.5 py-0.2 rounded bg-black/10 dark:bg-white/10 uppercase font-black">
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-black/10 dark:bg-white/10 uppercase font-black">
                     {licenseSide === 'back' ? 'Flip to Front' : 'Flip to Back'}
                   </span>
                 </button>
@@ -2264,7 +2272,7 @@ const FranchiseReviewPage = () => {
 
               <button
                 onClick={() => setZoomScale(prev => Math.max(0.5, Number((prev - 0.25).toFixed(2))))}
-                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg transition-colors cursor-pointer"
+                className="p-1.5 hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] rounded-lg transition-colors cursor-pointer"
                 title="Zoom Out"
               >
                 <ZoomOut size={15} />
@@ -2272,7 +2280,7 @@ const FranchiseReviewPage = () => {
 
               <button
                 onClick={resetCanvasView}
-                className="text-xs font-bold px-1.5 py-0.5 rounded hover:bg-slate-100 dark:hover:bg-slate-800 text-[#9E2A2B] dark:text-[#D4AF37] min-w-[42px] text-center cursor-pointer"
+                className="text-xs font-bold px-1.5 py-0.5 rounded hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] text-[#9E2A2B] dark:text-[#D4AF37] min-w-[42px] text-center cursor-pointer"
                 title="Reset to 100%"
               >
                 {Math.round(zoomScale * 100)}%
@@ -2280,20 +2288,20 @@ const FranchiseReviewPage = () => {
 
               <button
                 onClick={() => setZoomScale(prev => Math.min(4.0, Number((prev + 0.25).toFixed(2))))}
-                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg transition-colors cursor-pointer"
+                className="p-1.5 hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] rounded-lg transition-colors cursor-pointer"
                 title="Zoom In"
               >
                 <ZoomIn size={15} />
               </button>
 
-              <div className="h-4 w-px bg-slate-200 dark:bg-slate-700 mx-0.5" />
+              <div className="h-4 w-px bg-[#E4E1DC] dark:bg-[#2E2A27] mx-0.5" />
 
               <button
                 onClick={() => setIsFitToWidth(prev => !prev)}
                 className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
                   isFitToWidth 
                     ? 'bg-[#9E2A2B]/10 text-[#9E2A2B] dark:text-[#D4AF37] font-bold' 
-                    : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300'
+                    : 'hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E]'
                 }`}
                 title="Toggle Fit to Width"
               >
@@ -2305,7 +2313,7 @@ const FranchiseReviewPage = () => {
                 className={`p-1.5 rounded-lg transition-colors cursor-pointer flex items-center gap-1 ${
                   brightness > 100 
                     ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-700 dark:text-amber-400 font-bold' 
-                    : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300'
+                    : 'hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E]'
                 }`}
                 title={`Brightness: ${brightness}%`}
               >
@@ -2315,7 +2323,7 @@ const FranchiseReviewPage = () => {
 
               <button
                 onClick={() => setRotation(prev => (prev + 90) % 360)}
-                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg transition-colors cursor-pointer"
+                className="p-1.5 hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] rounded-lg transition-colors cursor-pointer"
                 title="Rotate 90° Clockwise"
               >
                 <RotateCw size={15} />
@@ -2323,7 +2331,7 @@ const FranchiseReviewPage = () => {
 
               <button
                 onClick={resetCanvasView}
-                className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300 rounded-lg transition-colors cursor-pointer"
+                className="p-1.5 hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] rounded-lg transition-colors cursor-pointer"
                 title="Reset View"
               >
                 <RefreshCw size={14} />
@@ -2331,12 +2339,12 @@ const FranchiseReviewPage = () => {
 
               {currentDoc?.url && (
                 <>
-                  <div className="h-4 w-px bg-slate-200 dark:bg-slate-700 mx-0.5" />
+                  <div className="h-4 w-px bg-[#E4E1DC] dark:bg-[#2E2A27] mx-0.5" />
                   <a
                     href={currentDoc.url}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 text-[#9E2A2B] dark:text-[#D4AF37] rounded-lg transition-colors flex items-center cursor-pointer"
+                    className="p-1.5 hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] text-[#9E2A2B] dark:text-[#D4AF37] rounded-lg transition-colors flex items-center cursor-pointer"
                     title="Open Original in New Tab"
                   >
                     <ExternalLink size={15} />

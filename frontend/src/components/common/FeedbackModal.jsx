@@ -1,4 +1,4 @@
-﻿import React, { useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { CheckCircle2, AlertCircle, Info, AlertTriangle, X } from 'lucide-react';
 
 const FeedbackModal = ({
@@ -65,7 +65,7 @@ const FeedbackModal = ({
 
   return (
     <div 
-      className="fixed inset-0 z-[9999] bg-slate-950/65 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200"
+      className="fixed inset-0 z-[9999] bg-slate-950/65 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
       onClick={onClose || handleConfirm}
     >
       <div 
@@ -110,7 +110,7 @@ const FeedbackModal = ({
             type="button"
             onClick={handleConfirm}
             disabled={isLoading}
-            className={`w-full ${cancelText ? 'flex-1' : ''} bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 font-bold text-xs sm:text-sm py-2.5 px-6 rounded-xl shadow-xs transition-all active:scale-95 cursor-pointer min-h-[42px] flex items-center justify-center`}
+            className={`w-full ${cancelText ? 'flex-1' : ''} bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 font-bold text-xs sm:text-sm py-2.5 px-6 rounded-xl shadow-sm transition-all active:scale-95 cursor-pointer min-h-[42px] flex items-center justify-center`}
           >
             {confirmText}
           </button>

@@ -31,10 +31,10 @@ const PageHeader = ({
 
   return (
     <div
-      className={`bg-white dark:bg-[#1C1917] p-5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 ${className}`}
+      className={`bg-white dark:bg-[#1C1917] p-5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 ${className}`}
     >
-      {/* Title & Subtitle with 4px Maroon Left Border Accent */}
-      <div className="border-l-4 border-[#9E2A2B] pl-3.5 py-0.5 min-w-0">
+      {/* Title & Subtitle */}
+      <div className="py-0.5 min-w-0">
         <div className="flex items-center gap-3 flex-wrap">
           <h1 className="text-xl font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] tracking-normal">
             {title}
@@ -45,7 +45,7 @@ const PageHeader = ({
         </div>
 
         {subtitle && (
-          <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1 leading-normal line-clamp-1">
+          <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1 leading-normal">
             {subtitle}
           </p>
         )}

@@ -9,7 +9,7 @@ import { useLanguage } from '../../context/LanguageContext';
  * 3. Danger (Expired, Revoked): Red
  * 4. Neutral (Cancelled, Draft, Empty, None): Gray
  */
-const StatusBadge = ({ status = '', customLabel = null, className = '', isExpired = false }) => {
+const StatusBadge = ({ status = '', customLabel = null, label: labelProp = null, className = '', isExpired = false }) => {
   const { t } = useLanguage() || { t: (_, def) => def };
   let rawStatus = String(status || '').trim();
   if (isExpired && (rawStatus.toLowerCase() === 'active' || rawStatus.toLowerCase() === 'operational')) {
@@ -85,7 +85,7 @@ const StatusBadge = ({ status = '', customLabel = null, className = '', isExpire
     }
   }
 
-  const label = customLabel || defaultLabel;
+  const label = customLabel || labelProp || defaultLabel;
 
   // Exact 4 semantic styling tokens
   const styles = {

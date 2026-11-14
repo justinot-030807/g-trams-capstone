@@ -104,8 +104,8 @@ const PublicStats = () => {
 
         <motion.div variants={staggerContainer} className="grid grid-cols-1 sm:grid-cols-3 gap-6 sm:gap-8 max-w-5xl mx-auto">
           {/* Stat 1 */}
-          <motion.div variants={fadeIn} className="relative group bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-8 text-center transition-colors hover:border-[#D4AF37] shadow-xs">
-            <div className="w-14 h-14 mx-auto bg-[#9E2A2B] rounded-lg flex items-center justify-center mb-6 shadow-xs">
+          <motion.div variants={fadeIn} className="relative group bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-8 text-center transition-colors hover:border-[#D4AF37] shadow-sm">
+            <div className="w-14 h-14 mx-auto bg-[#9E2A2B] rounded-lg flex items-center justify-center mb-6 shadow-sm">
               <Users className="text-white w-7 h-7" />
             </div>
             <div className="text-4xl sm:text-5xl font-black text-[#1F1D1B] dark:text-[#F6F5F3] tracking-tighter mb-2">
@@ -118,8 +118,8 @@ const PublicStats = () => {
           </motion.div>
 
           {/* Stat 2 */}
-          <motion.div variants={fadeIn} className="relative group bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-8 text-center transition-colors hover:border-[#D4AF37] shadow-xs">
-            <div className="w-14 h-14 mx-auto bg-[#D4AF37] rounded-lg flex items-center justify-center mb-6 shadow-xs">
+          <motion.div variants={fadeIn} className="relative group bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-8 text-center transition-colors hover:border-[#D4AF37] shadow-sm">
+            <div className="w-14 h-14 mx-auto bg-[#D4AF37] rounded-lg flex items-center justify-center mb-6 shadow-sm">
               <Building2 className="text-[#1C1917] w-7 h-7" />
             </div>
             <div className="text-4xl sm:text-5xl font-black text-[#1F1D1B] dark:text-[#F6F5F3] tracking-tighter mb-2">
@@ -131,8 +131,8 @@ const PublicStats = () => {
           </motion.div>
 
           {/* Stat 3 */}
-          <motion.div variants={fadeIn} className="relative group bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-8 text-center transition-colors hover:border-[#D4AF37] shadow-xs">
-            <div className="w-14 h-14 mx-auto bg-[#9E2A2B] rounded-lg flex items-center justify-center mb-6 shadow-xs">
+          <motion.div variants={fadeIn} className="relative group bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-8 text-center transition-colors hover:border-[#D4AF37] shadow-sm">
+            <div className="w-14 h-14 mx-auto bg-[#9E2A2B] rounded-lg flex items-center justify-center mb-6 shadow-sm">
               <FileCheck2 className="text-white w-7 h-7" />
             </div>
             <div className="text-4xl sm:text-5xl font-black text-[#1F1D1B] dark:text-[#F6F5F3] tracking-tighter mb-2">

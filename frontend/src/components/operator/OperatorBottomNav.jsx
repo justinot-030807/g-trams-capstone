@@ -64,7 +64,7 @@ const OperatorBottomNav = ({ role }) => {
 
   return (
     <div 
-      className="fixed bottom-0 inset-x-0 z-40 md:hidden print:hidden bg-white dark:bg-[#1C1917] border-t border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs"
+      className="fixed bottom-0 inset-x-0 z-40 md:hidden print:hidden bg-white dark:bg-[#1C1917] border-t border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm"
       style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
     >
       <nav id="tour-bottom-nav" className="flex items-center justify-around px-2 py-1.5 max-w-lg mx-auto">

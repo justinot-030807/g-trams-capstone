@@ -282,12 +282,12 @@ const ForgotPassword = () => {
         <main className="relative z-10 w-full max-w-md mx-auto px-4 my-auto py-8 sm:py-12 flex flex-col items-center justify-center">
           <div className="w-full bg-white dark:bg-[#1C1917] rounded-lg shadow-xl border border-[#E4E1DC] dark:border-[#2E2A27] p-6 sm:p-8">
             <div className="mb-6 text-center">
-              <div className="w-12 h-12 mx-auto mb-3 rounded-lg bg-[#9E2A2B]/10 flex items-center justify-center text-[#9E2A2B]">
+              <div className="w-12 h-12 mx-auto mb-3 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 flex items-center justify-center text-[#9E2A2B] dark:text-[#F5E6B3]">
                 {step === 1 ? <ShieldAlert size={24} /> : <KeyRound size={24} />}
               </div>
-              <h2 className="text-2xl sm:text-3xl font-black text-[#9E2A2B] tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-black text-[#9E2A2B] dark:text-[#F6F5F3] tracking-tight">
                 {step === 1 ? 'Forgot Password?' : 'Reset Password'}
-              </h2>
+              </h1>
               <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] font-medium mt-1.5 leading-relaxed">
                 {step === 1 
                   ? 'Enter your registered email or phone number to receive a 6-digit verification code.' 
@@ -296,12 +296,12 @@ const ForgotPassword = () => {
             </div>
 
             {error && (
-              <div className="mb-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 text-red-600 dark:text-red-400 text-xs font-bold rounded-lg p-3 text-center shadow-xs tracking-wide">
+              <div className="mb-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 text-red-600 dark:text-red-400 text-xs font-bold rounded-lg p-3 text-center shadow-sm tracking-wide">
                 {error}
               </div>
             )}
             {success && (
-              <div className="mb-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-400 text-xs font-bold rounded-lg p-3 text-center shadow-xs tracking-wide">
+              <div className="mb-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-400 text-xs font-bold rounded-lg p-3 text-center shadow-sm tracking-wide">
                 {success}
               </div>
             )}
@@ -331,7 +331,7 @@ const ForgotPassword = () => {
                   <button 
                     type="submit" 
                     disabled={isLoading}
-                    className="w-full flex items-center justify-center gap-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white py-3 rounded-lg text-sm font-bold shadow-xs active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer min-h-[44px]"
+                    className="w-full flex items-center justify-center gap-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white py-3 rounded-lg text-sm font-bold shadow-sm active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer min-h-[44px]"
                   >
                     {isLoading ? (
                       <>
@@ -479,7 +479,7 @@ const ForgotPassword = () => {
                             {rule.met ? (
                               <Check size={12} className="shrink-0 stroke-[3] text-emerald-600" />
                             ) : (
-                              <span className="w-1.5 h-1.5 rounded-full bg-[#E4E1DC] dark:bg-[#2E2A27] shrink-0 mx-0.5" />
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#A8A29E] dark:bg-[#6B6761] shrink-0 mx-0.5" />
                             )}
                             <span>{rule.label}</span>
                           </div>
@@ -519,7 +519,7 @@ const ForgotPassword = () => {
                   <button 
                     type="submit" 
                     disabled={isLoading}
-                    className="w-full flex items-center justify-center gap-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white py-3 rounded-lg text-sm font-bold shadow-xs active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer min-h-[44px]"
+                    className="w-full flex items-center justify-center gap-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white py-3 rounded-lg text-sm font-bold shadow-sm active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer min-h-[44px]"
                   >
                     {isLoading ? (
                       <>

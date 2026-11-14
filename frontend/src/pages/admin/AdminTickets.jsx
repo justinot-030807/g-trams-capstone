@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import MainLayout from '../../components/MainLayout';
 import { Mail, CheckCircle, Search, XCircle, MessageSquare, Megaphone } from 'lucide-react';
 import AdminLiveChat from '../../components/admin/AdminLiveChat';
@@ -16,6 +17,15 @@ const AdminTickets = () => {
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [adminResponse, setAdminResponse] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
+
+  useEffect(() => {
+    if (!selectedTicket) return;
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') setSelectedTicket(null);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [selectedTicket]);
 
   const fetchTickets = async () => {
     if (isLlsaStaff) {
@@ -60,14 +70,15 @@ const AdminTickets = () => {
         body: JSON.stringify(payload)
       });
       if (res.ok) {
+        toast.success(`Ticket marked as ${newStatus}`);
         setAdminResponse('');
         setSelectedTicket(null);
         fetchTickets();
       } else {
-        alert('Failed to update ticket');
+        toast.error('Failed to update ticket');
       }
     } catch {
-      alert('Network error');
+      toast.error('Network error while updating ticket');
     } finally {
       setIsUpdating(false);
     }
@@ -90,20 +101,6 @@ const AdminTickets = () => {
           subtitle={isLlsaStaff 
             ? "Manage live operator chats and broadcast official municipal announcements." 
             : "Manage live operator chats, broadcast municipal announcements, and resolve tickets."}
-          actions={
-            !isLlsaStaff && activeTab === 'tickets' ? (
-              <div className="relative w-full sm:w-64">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B6761] dark:text-[#A8A29E]" size={15} />
-                <input 
-                  type="text" 
-                  placeholder="Search tickets..." 
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-9 pr-3.5 py-1.5 bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3] placeholder-[#6B6761] dark:placeholder-[#A8A29E] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] transition-colors"
-                />
-              </div>
-            ) : null
-          }
         />
 
         {/* Tab Navigation */}
@@ -165,6 +162,22 @@ const AdminTickets = () => {
 
         {!isLlsaStaff && activeTab === 'tickets' && (
           <div className="bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] overflow-hidden">
+            <div className="p-4 border-b border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h2 className="text-sm font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">Citizen & Operator Support Tickets</h2>
+                <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">Review submitted inquiries and post official municipal replies.</p>
+              </div>
+              <div className="relative w-full sm:w-72">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B6761] dark:text-[#A8A29E]" size={15} />
+                <input 
+                  type="text" 
+                  placeholder="Search tickets..." 
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="w-full pl-9 pr-3.5 py-2 bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3] placeholder-[#6B6761] dark:placeholder-[#A8A29E] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] transition-colors"
+                />
+              </div>
+            </div>
             {isLoading ? (
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
@@ -185,54 +198,89 @@ const AdminTickets = () => {
             ) : filteredTickets.length === 0 ? (
               <div className="p-8 text-center text-xs text-[#6B6761] dark:text-[#A8A29E]">No tickets found.</div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27]">
-                      <th className="p-3.5 text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">Date</th>
-                      <th className="p-3.5 text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">Operator</th>
-                      <th className="p-3.5 text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">Subject</th>
-                      <th className="p-3.5 text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">Status</th>
-                      <th className="p-3.5 text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider text-right">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
-                    {filteredTickets.map(ticket => (
-                      <tr key={ticket._id} className="hover:bg-[#F6F5F3]/60 dark:hover:bg-[#14110F]/60 transition-colors">
-                        <td className="p-3.5 text-xs text-[#6B6761] dark:text-[#A8A29E] font-mono tabular-nums">
-                          {new Date(ticket.createdAt).toLocaleDateString()}
-                        </td>
-                        <td className="p-3.5">
-                          <p className="text-sm font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{ticket.operator?.name || 'Unknown'}</p>
-                          <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-mono">{ticket.contactNumber}</p>
-                        </td>
-                        <td className="p-3.5">
-                          <p className="text-sm font-medium text-[#1F1D1B] dark:text-[#F6F5F3]">{ticket.subject}</p>
-                          <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] truncate max-w-[240px]">{ticket.message}</p>
-                        </td>
-                        <td className="p-3.5">
-                          <StatusBadge 
-                            status={
-                              ticket.status === 'Resolved' ? 'Active' :
-                              ticket.status === 'Open' || ticket.status === 'In Progress' ? 'Pending' :
-                              'Cancelled'
-                            }
-                            label={ticket.status}
-                          />
-                        </td>
-                        <td className="p-3.5 text-right">
-                          <button 
-                            onClick={() => setSelectedTicket(ticket)}
-                            className="text-xs font-medium text-white bg-[#9E2A2B] hover:bg-[#7A1B22] px-3 py-1.5 rounded-lg active:scale-95 transition-all shadow-xs cursor-pointer"
-                          >
-                            View / Reply
-                          </button>
-                        </td>
+              <>
+                <div className="md:hidden divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
+                  {filteredTickets.map(ticket => (
+                    <div key={ticket._id} className="p-4 space-y-2.5">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] truncate">{ticket.operator?.name || 'Unknown'}</p>
+                          <p className="text-[11px] font-mono text-[#6B6761] dark:text-[#A8A29E]">
+                            {ticket.contactNumber || 'No contact'} • {new Date(ticket.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <StatusBadge
+                          status={
+                            ticket.status === 'Resolved' ? 'Active' :
+                            ticket.status === 'Open' || ticket.status === 'In Progress' ? 'Pending' :
+                            'Cancelled'
+                          }
+                          customLabel={ticket.status}
+                        />
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{ticket.subject}</p>
+                        <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] line-clamp-2 mt-0.5">{ticket.message}</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedTicket(ticket)}
+                        className="w-full py-2 text-xs font-semibold text-white bg-[#9E2A2B] hover:bg-[#7A1B22] rounded-lg transition-colors cursor-pointer"
+                      >
+                        View / Reply
+                      </button>
+                    </div>
+                  ))}
+                </div>
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-left border-collapse">
+                    <thead>
+                      <tr className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+                        <th className="p-3.5 text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">Date</th>
+                        <th className="p-3.5 text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">Operator</th>
+                        <th className="p-3.5 text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">Subject</th>
+                        <th className="p-3.5 text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">Status</th>
+                        <th className="p-3.5 text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider text-right">Action</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                    </thead>
+                    <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
+                      {filteredTickets.map(ticket => (
+                        <tr key={ticket._id} className="hover:bg-[#F6F5F3]/60 dark:hover:bg-[#14110F]/60 transition-colors">
+                          <td className="p-3.5 text-xs text-[#6B6761] dark:text-[#A8A29E] font-mono tabular-nums">
+                            {new Date(ticket.createdAt).toLocaleDateString()}
+                          </td>
+                          <td className="p-3.5">
+                            <p className="text-sm font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{ticket.operator?.name || 'Unknown'}</p>
+                            <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-mono">{ticket.contactNumber}</p>
+                          </td>
+                          <td className="p-3.5">
+                            <p className="text-sm font-medium text-[#1F1D1B] dark:text-[#F6F5F3]">{ticket.subject}</p>
+                            <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] truncate max-w-[240px]">{ticket.message}</p>
+                          </td>
+                          <td className="p-3.5">
+                            <StatusBadge 
+                              status={
+                                ticket.status === 'Resolved' ? 'Active' :
+                                ticket.status === 'Open' || ticket.status === 'In Progress' ? 'Pending' :
+                                'Cancelled'
+                              }
+                              customLabel={ticket.status}
+                            />
+                          </td>
+                          <td className="p-3.5 text-right">
+                            <button 
+                              onClick={() => setSelectedTicket(ticket)}
+                              className="text-xs font-medium text-white bg-[#9E2A2B] hover:bg-[#7A1B22] px-3 py-1.5 rounded-lg active:scale-95 transition-all shadow-sm cursor-pointer"
+                            >
+                              View / Reply
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </div>
         )}
@@ -240,10 +288,19 @@ const AdminTickets = () => {
 
       {/* Ticket Modal */}
       {selectedTicket && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60">
-          <div className="bg-white dark:bg-[#1C1917] rounded-lg w-full max-w-lg overflow-hidden border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xl">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="ticket-details-modal-title"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60"
+          onClick={() => setSelectedTicket(null)}
+        >
+          <div
+            className="bg-white dark:bg-[#1C1917] rounded-lg w-full max-w-lg overflow-hidden border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="p-4 sm:p-5 border-b border-[#E4E1DC] dark:border-[#2E2A27] flex justify-between items-center bg-[#F6F5F3] dark:bg-[#14110F]">
-              <h3 className="font-semibold text-base text-[#1F1D1B] dark:text-[#F6F5F3] flex items-center gap-2">
+              <h3 id="ticket-details-modal-title" className="font-semibold text-base text-[#1F1D1B] dark:text-[#F6F5F3] flex items-center gap-2">
                 <MessageSquare className="w-4 h-4 text-[#9E2A2B] dark:text-[#D4AF37]" />
                 Ticket Details
               </h3>

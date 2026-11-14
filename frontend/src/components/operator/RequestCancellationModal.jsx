@@ -118,7 +118,7 @@ const RequestCancellationModal = ({ isOpen, onClose, unit, onSuccess }) => {
     <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 overflow-y-auto">
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200" 
+        className="fixed inset-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" 
         onClick={() => !isSubmitting && onClose()} 
       />
 
@@ -128,7 +128,7 @@ const RequestCancellationModal = ({ isOpen, onClose, unit, onSuccess }) => {
         {/* Header */}
         <div className="flex items-center justify-between pb-3.5 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-[#FEF2F2] dark:bg-[#450A0A] border border-[#FECACA] dark:border-[#991B1B] text-[#B91C1C] dark:text-[#EF4444] flex items-center justify-center shrink-0 shadow-2xs">
+            <div className="w-10 h-10 rounded-lg bg-[#FEF2F2] dark:bg-[#450A0A] border border-[#FECACA] dark:border-[#991B1B] text-[#B91C1C] dark:text-[#EF4444] flex items-center justify-center shrink-0 shadow-sm">
               <ShieldAlert size={20} />
             </div>
             <div>
@@ -243,7 +243,7 @@ const RequestCancellationModal = ({ isOpen, onClose, unit, onSuccess }) => {
                 onClick={() => fileInputRef.current?.click()}
                 className="border-2 border-dashed border-[#E4E1DC] dark:border-[#2E2A27] hover:border-[#9E2A2B] dark:hover:border-[#D4AF37] rounded-lg p-5 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all bg-[#F6F5F3]/50 dark:bg-[#14110F]/50 group"
               >
-                <div className="w-10 h-10 rounded-full bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37] group-hover:scale-110 transition-transform shadow-2xs">
+                <div className="w-10 h-10 rounded-full bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37] group-hover:scale-110 transition-transform shadow-sm">
                   <UploadCloud size={20} />
                 </div>
                 <div className="text-center">
@@ -311,7 +311,7 @@ const RequestCancellationModal = ({ isOpen, onClose, unit, onSuccess }) => {
             <button
               type="submit"
               disabled={isSubmitting || !file}
-              className="flex items-center justify-center gap-2 px-5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs text-white bg-[#B91C1C] hover:bg-[#991B1B] transition-all shadow-xs active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+              className="flex items-center justify-center gap-2 px-5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs text-white bg-[#B91C1C] hover:bg-[#991B1B] transition-all shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {isSubmitting ? (
                 <>

@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { toast } from 'sonner';
 import MainLayout from '../../components/MainLayout';
 import { 
   Users, Search, Info, MapPin, Phone, Calendar, ShieldCheck, X, 
   AlertTriangle, User, UserMinus, UserCheck, ShieldAlert,
   Clock, Activity, RefreshCw, Radio, Building2, CheckCircle2,
-  ChevronLeft, ChevronRight
+  ChevronLeft, ChevronRight, ChevronDown
 } from 'lucide-react';
 import { TableRowsSkeleton } from '../../components/skeleton';
 import PageHeader from '../../components/common/PageHeader';
@@ -208,6 +209,24 @@ const UserManagement = () => {
     };
   }, []);
 
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key !== 'Escape') return;
+      if (statusModal.isOpen) {
+        setStatusModal({ isOpen: false, user: null });
+        setDeactivateReason('');
+        setAdminPasswordInput('');
+      } else if (isConfirmOpen) {
+        setIsConfirmOpen(false);
+        setAdminPasswordInput('');
+      } else if (isDetailsModalOpen) {
+        setIsDetailsModalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [statusModal.isOpen, isConfirmOpen, isDetailsModalOpen]);
+
   //Role management
   const [adminPasswordInput, setAdminPasswordInput] = useState('');
 
@@ -232,7 +251,7 @@ const UserManagement = () => {
   const confirmAndSaveRole = async () => {
     if (!pendingRoleChange) return;
     if (!adminPasswordInput.trim()) {
-      alert('Please enter your System Administrator password to authorize this role change.');
+      toast.error('Please enter your System Administrator password to authorize this role change.');
       return;
     }
     const { userId, newRole, todaAssociation } = pendingRoleChange;
@@ -240,7 +259,7 @@ const UserManagement = () => {
     const payload = { role: newRole, adminPassword: adminPasswordInput.trim() };
     if (newRole === 'toda_president') {
       if (!todaAssociation || todaAssociation === 'NON-TODA') {
-        alert('Please assign an accredited TODA association for this TODA President.');
+        toast.error('Please assign an accredited TODA association for this TODA President.');
         return;
       }
       payload.todaAssociation = todaAssociation;
@@ -264,11 +283,12 @@ const UserManagement = () => {
         setIsConfirmOpen(false); 
         setPendingRoleChange(null);
         setAdminPasswordInput('');
+        toast.success('User role updated successfully.');
       } else {
-        alert(data.message || 'Failed to update role. Try logging in again.');
+        toast.error(data.message || 'Failed to update role. Try logging in again.');
       }
     } catch (error) {
-      alert('Cannot connect to the server.');
+      toast.error('Cannot connect to the server.');
       setIsConfirmOpen(false);
     }
   };
@@ -282,11 +302,11 @@ const UserManagement = () => {
     try {
       const isDeactivating = statusModal.user.isActive !== false;
       if (isDeactivating && !deactivateReason.trim()) {
-        alert('Please provide a reason for deactivation.');
+        toast.error('Please provide a reason for deactivation.');
         return;
       }
       if (!adminPasswordInput.trim()) {
-        alert('Please enter your System Administrator password to confirm.');
+        toast.error('Please enter your System Administrator password to confirm.');
         return;
       }
       
@@ -319,12 +339,13 @@ const UserManagement = () => {
         setStatusModal({ isOpen: false, user: null });
         setDeactivateReason('');
         setAdminPasswordInput('');
+        toast.success(updatedStatus ? 'Account reactivated successfully.' : 'Account deactivated.');
       } else {
         const errorData = await response.json();
-        alert(`Failed: ${errorData.message}`);
+        toast.error(`Failed: ${errorData.message}`);
       }
     } catch (error) {
-      alert('Network Error.');
+      toast.error('Network error.');
       setStatusModal({ isOpen: false, user: null });
       setDeactivateReason('');
       setAdminPasswordInput('');
@@ -518,8 +539,162 @@ const UserManagement = () => {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[960px]">
+        {/* Mobile User Cards */}
+        <div className="md:hidden divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
+          {isLoading ? (
+            <div className="p-4 space-y-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-28 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] animate-pulse" />
+              ))}
+            </div>
+          ) : sortedUsers.length === 0 ? (
+            <div className="p-8 text-center text-xs font-medium text-[#6B6761] dark:text-[#A8A29E]">
+              No users found matching current filters
+            </div>
+          ) : (
+            paginatedUsers.map((user) => {
+              const activity = getActivityStatus(user);
+              const activeOrPendingUnits = (user.activeUnitsCount || 0) + (user.pendingUnitsCount || 0);
+              const isMaxUnits = activeOrPendingUnits >= 2;
+              const r = (user.role || '').toLowerCase().trim();
+              const isAdminUser = r === 'admin' || r === 'administrator' || r === 'system_admin' || r === 'system admin';
+              const isStaffOrCashier = r === 'bplo_staff' || r === 'bplo staff' || r === 'cashier';
+              const roleDisplayLabel =
+                r === 'bplo_staff' || r === 'bplo staff' ? 'LLSA I (Franchising Staff)' :
+                isAdminUser ? 'System Administrator' :
+                r === 'cashier' ? 'Municipal Cashier' :
+                r === 'toda_president' || r === 'toda president' ? 'TODA President' :
+                'Operator';
+              let isSelf = false;
+              try {
+                const stored = JSON.parse(localStorage.getItem('user') || '{}');
+                const myId = localStorage.getItem('userId') || stored._id || stored.id;
+                if (myId && String(myId) === String(user._id)) isSelf = true;
+              } catch {}
+
+              return (
+                <div
+                  key={user._id}
+                  className={`p-4 space-y-3 ${user.isActive === false ? 'opacity-75 bg-red-50/20 dark:bg-red-950/10' : 'bg-white dark:bg-[#1C1917]'}`}
+                >
+                  <div className="flex items-start justify-between gap-2.5">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="relative shrink-0">
+                        <div className={`w-9 h-9 rounded-full overflow-hidden flex items-center justify-center border ${user.isActive === false ? 'border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/50 text-red-500' : 'border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761]'}`}>
+                          {user.profilePic ? (
+                            <img src={user.profilePic} alt={user.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <User size={16} />
+                          )}
+                        </div>
+                        {activity.isOnline && (
+                          <span className="absolute bottom-0 right-0 inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 border-2 border-white dark:border-[#1C1917]" />
+                        )}
+                      </div>
+                      <div className="min-w-0">
+                        <p className={`font-semibold text-sm truncate ${user.isActive === false ? 'text-red-700 dark:text-red-400 line-through' : 'text-[#1F1D1B] dark:text-[#F6F5F3]'}`}>
+                          {user.name}
+                        </p>
+                        <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] font-mono truncate">
+                          {user.contact}
+                        </p>
+                      </div>
+                    </div>
+
+                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] font-medium border shrink-0 ${activity.badgeClass}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${activity.dotClass}`}></span>
+                      <span>{activity.statusText}</span>
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-[11px] font-semibold text-[#9E2A2B] dark:text-[#D4AF37] uppercase tracking-wider bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 px-2 py-0.5 rounded border border-[#9E2A2B]/20">
+                      {user.todaAssociation || 'NON-TODA'}
+                    </span>
+                    {user.bodyNumber && (
+                      <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                        #{user.bodyNumber}
+                      </span>
+                    )}
+                    {!(isAdminUser || isStaffOrCashier) && (
+                      <span className={`px-2 py-0.5 rounded text-[11px] font-mono font-semibold border ${
+                        isMaxUnits
+                          ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/60'
+                          : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E] border-[#E4E1DC] dark:border-[#2E2A27]'
+                      }`}>
+                        {Math.min(2, activeOrPendingUnits)}/2 Units
+                      </span>
+                    )}
+                    <span className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
+                      {roleDisplayLabel}
+                    </span>
+                  </div>
+
+                  <div className="flex flex-wrap items-center justify-between gap-2 pt-1 border-t border-[#E4E1DC]/70 dark:border-[#2E2A27]">
+                    {isSelf || isAdminUser ? (
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 text-[#9E2A2B] dark:text-[#D4AF37] border border-[#9E2A2B]/20">
+                        {isSelf ? 'System Admin (You)' : 'System Admin (Locked)'}
+                      </span>
+                    ) : (
+                      <div className="relative flex-1 min-w-[165px]">
+                        <select
+                          aria-label={`Role for ${user.name}`}
+                          value={(() => {
+                            const roleKey = String(user.role || '').toLowerCase().trim();
+                            if (roleKey === 'toda president' || roleKey === 'toda_president') return 'toda_president';
+                            if (roleKey === 'bplo staff' || roleKey === 'bplo_staff') return 'bplo_staff';
+                            if (roleKey === 'cashier') return 'cashier';
+                            return 'operator';
+                          })()}
+                          disabled={user.isActive === false}
+                          onChange={(e) => initiateRoleChange(user, e.target.value)}
+                          className="w-full appearance-none border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] text-xs font-semibold rounded-lg pl-2.5 pr-8 py-1.5 outline-none cursor-pointer focus:border-[#9E2A2B] dark:focus:border-[#D4AF37]"
+                        >
+                          <option value="operator">Operator</option>
+                          <option value="bplo_staff">LLSA I Staff</option>
+                          <option value="cashier">Municipal Cashier</option>
+                          <option value="toda_president">TODA President</option>
+                        </select>
+                        <ChevronDown size={13} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[#6B6761] dark:text-[#A8A29E]" />
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => openDetailsModal(user)}
+                        className="inline-flex items-center justify-center gap-1 h-8 px-2.5 bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] text-xs font-semibold rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] cursor-pointer"
+                        title="View Profile & Fleet Details"
+                        aria-label={`View profile details for ${user.name}`}
+                      >
+                        <Info size={14} />
+                        <span>Info</span>
+                      </button>
+                      {!(isSelf || isAdminUser) && (
+                        <button
+                          type="button"
+                          onClick={() => { setAdminPasswordInput(''); setStatusModal({ isOpen: true, user }); }}
+                          className={`inline-flex items-center justify-center gap-1 h-8 px-2.5 text-xs font-semibold rounded-lg border cursor-pointer ${
+                            user.isActive === false
+                              ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800'
+                              : 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800'
+                          }`}
+                        >
+                          {user.isActive === false ? <UserCheck size={14} /> : <UserMinus size={14} />}
+                          <span>{user.isActive === false ? 'Activate' : 'Deactivate'}</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Desktop Users Table */}
+        <div className="hidden md:block overflow-x-auto">
+          <table className="w-full text-left border-collapse min-w-[880px]">
             <thead>
               <tr className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] text-xs uppercase tracking-wider font-semibold">
                 <th className="py-3 pl-5 pr-3">Profile / User</th>
@@ -568,7 +743,7 @@ const UserManagement = () => {
                       className={`hover:bg-[#F6F5F3]/80 dark:hover:bg-[#14110F]/80 transition-colors group ${user.isActive === false ? 'opacity-70 bg-red-50/20 dark:bg-red-950/10' : ''}`}
                     >
                       {/* Profile / User */}
-                      <td className="py-3.5 pl-5 pr-3 min-w-[230px] max-w-[280px]">
+                      <td className="py-3.5 pl-5 pr-3 min-w-[210px] max-w-[260px]">
                         <div className="flex items-center gap-3">
                           <div className="relative shrink-0">
                             <div className={`w-8 h-8 rounded-full overflow-hidden flex items-center justify-center border ${user.isActive === false ? 'border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/50 text-red-500' : 'border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761]'}`}>
@@ -580,10 +755,7 @@ const UserManagement = () => {
                             </div>
                             {/* Live online dot */}
                             {activity.isOnline && (
-                              <span className="absolute bottom-0 right-0 flex h-2 w-2">
-                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500 border border-white dark:border-[#1C1917]"></span>
-                              </span>
+                              <span className="absolute bottom-0 right-0 inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500 border border-white dark:border-[#1C1917]" />
                             )}
                           </div>
                           <div className="min-w-0">
@@ -605,14 +777,14 @@ const UserManagement = () => {
                             {user.todaAssociation || 'NON-TODA'}
                           </p>
                           {user.bodyNumber && (
-                            <span className="text-[11px] font-mono font-bold px-1.5 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                            <span className="text-[11px] font-mono font-bold px-1.5 py-0.5 rounded bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27]">
                               #{user.bodyNumber}
                             </span>
                           )}
                         </div>
                       </td>
 
-                      {/* Units / Fleet (Compact Badge - No Logo) */}
+                      {/* Units / Fleet */}
                       <td className="py-3.5 px-3 text-center whitespace-nowrap">
                         {isAdminUser || isStaffOrCashier ? (
                           <span className="text-[#6B6761] dark:text-[#A8A29E] font-medium">—</span>
@@ -667,7 +839,7 @@ const UserManagement = () => {
                             </span>
                           )
                         ) : (
-                          <span className="inline-flex px-2 py-0.5 rounded-md bg-[#F3F4F6] text-[#4B5563] border-[#E5E7EB] dark:bg-[#1F2937]/60 dark:text-[#9CA3AF] dark:border-[#374151] text-xs font-medium uppercase tracking-wider">
+                          <span className="inline-flex px-2 py-0.5 rounded-md bg-[#F6F5F3] text-[#6B6761] border-[#E4E1DC] dark:bg-[#14110F] dark:text-[#A8A29E] dark:border-[#2E2A27] text-xs font-medium uppercase tracking-wider">
                             Unverified
                           </span>
                         )}
@@ -680,54 +852,63 @@ const UserManagement = () => {
                             {isSelf ? 'System Admin (You)' : 'System Admin (Locked)'}
                           </span>
                         ) : (
-                          <select
-                            value={(() => {
-                              const r = String(user.role || '').toLowerCase().trim();
-                              if (r === 'toda president' || r === 'toda_president') return 'toda_president';
-                              if (r === 'bplo staff' || r === 'bplo_staff') return 'bplo_staff';
-                              if (r === 'cashier') return 'cashier';
-                              return 'operator';
-                            })()}
-                            disabled={user.isActive === false}
-                            onChange={(e) => initiateRoleChange(user, e.target.value)}
-                            className="w-[175px] border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] text-xs font-semibold rounded-lg px-2.5 py-1.5 outline-none cursor-pointer focus:border-[#9E2A2B] dark:focus:border-[#D4AF37]"
-                          >
-                            <option value="operator">Operator</option>
-                            <option value="bplo_staff">LLSA I (Franchising Staff)</option>
-                            <option value="cashier">Municipal Cashier</option>
-                            <option value="toda_president">TODA President</option>
-                          </select>
+                          <div className="relative inline-block w-[165px]">
+                            <select
+                              aria-label={`Role for ${user.name}`}
+                              value={(() => {
+                                const roleKey = String(user.role || '').toLowerCase().trim();
+                                if (roleKey === 'toda president' || roleKey === 'toda_president') return 'toda_president';
+                                if (roleKey === 'bplo staff' || roleKey === 'bplo_staff') return 'bplo_staff';
+                                if (roleKey === 'cashier') return 'cashier';
+                                return 'operator';
+                              })()}
+                              disabled={user.isActive === false}
+                              onChange={(e) => initiateRoleChange(user, e.target.value)}
+                              className="w-full appearance-none border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] text-xs font-semibold rounded-lg pl-2.5 pr-7 py-1.5 outline-none cursor-pointer focus:border-[#9E2A2B] dark:focus:border-[#D4AF37]"
+                            >
+                              <option value="operator">Operator</option>
+                              <option value="bplo_staff">LLSA I Staff</option>
+                              <option value="cashier">Municipal Cashier</option>
+                              <option value="toda_president">TODA President</option>
+                            </select>
+                            <ChevronDown size={13} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[#6B6761] dark:text-[#A8A29E]" />
+                          </div>
                         )}
                       </td>
 
                       {/* Actions */}
-                      <td className="py-3 pr-5 pl-3 text-center space-x-1.5">
-                        <button 
-                          onClick={() => openDetailsModal(user)}
-                          className="inline-flex items-center justify-center gap-1 px-2.5 py-1.5 bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] text-xs font-semibold rounded-lg transition-colors border border-[#E4E1DC] dark:border-[#2E2A27] cursor-pointer"
-                          title="View Profile & Fleet Details"
-                        >
-                          <Info size={14} />
-                        </button>
-
-                        {isSelf || isAdminUser ? (
-                          <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-[#6B6761] dark:text-[#A8A29E]">
-                            Protected
-                          </span>
-                        ) : (
+                      <td className="py-3 pr-5 pl-3 text-center whitespace-nowrap">
+                        <div className="inline-flex items-center justify-center gap-1.5">
                           <button 
-                            onClick={() => { setAdminPasswordInput(''); setStatusModal({ isOpen: true, user: user }); }}
-                            className={`inline-flex items-center justify-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-colors border cursor-pointer ${
-                              user.isActive === false 
-                              ? 'bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800' 
-                              : 'bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-950/60 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800'
-                            }`}
-                            title={user.isActive === false ? "Restore Account" : "Deactivate Account"}
+                            type="button"
+                            onClick={() => openDetailsModal(user)}
+                            className="inline-flex items-center justify-center h-8 px-2.5 bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] text-xs font-semibold rounded-lg transition-colors border border-[#E4E1DC] dark:border-[#2E2A27] cursor-pointer"
+                            title="View Profile & Fleet Details"
+                            aria-label={`View profile details for ${user.name}`}
                           >
-                            {user.isActive === false ? <UserCheck size={14} /> : <UserMinus size={14} />}
-                            <span className="hidden sm:inline">{user.isActive === false ? 'Activate' : 'Deactivate'}</span>
+                            <Info size={14} />
                           </button>
-                        )}
+
+                          {isSelf || isAdminUser ? (
+                            <span className="inline-flex items-center h-8 px-2 text-xs font-medium text-[#6B6761] dark:text-[#A8A29E]">
+                              Protected
+                            </span>
+                          ) : (
+                            <button 
+                              type="button"
+                              onClick={() => { setAdminPasswordInput(''); setStatusModal({ isOpen: true, user: user }); }}
+                              className={`inline-flex items-center justify-center gap-1 h-8 px-2.5 text-xs font-semibold rounded-lg transition-colors border cursor-pointer whitespace-nowrap ${
+                                user.isActive === false 
+                                ? 'bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800' 
+                                : 'bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-950/60 text-red-700 dark:text-red-400 border-red-200 dark:border-red-800'
+                              }`}
+                              title={user.isActive === false ? "Restore Account" : "Deactivate Account"}
+                            >
+                              {user.isActive === false ? <UserCheck size={14} /> : <UserMinus size={14} />}
+                              <span>{user.isActive === false ? 'Activate' : 'Deactivate'}</span>
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );
@@ -810,7 +991,7 @@ const UserManagement = () => {
                         onClick={() => setCurrentPage(item)}
                         className={`min-w-[30px] h-[30px] rounded-lg font-semibold text-xs tabular-nums flex items-center justify-center transition-all cursor-pointer ${
                           isCurrent
-                            ? 'bg-[#9E2A2B] text-white shadow-2xs'
+                            ? 'bg-[#9E2A2B] text-white shadow-sm'
                             : 'bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27]'
                         }`}
                       >
@@ -836,7 +1017,12 @@ const UserManagement = () => {
 
       {/* Account status confirmation modal */}
       {statusModal.isOpen && statusModal.user && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="user-status-modal-title"
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+        >
           <div className="absolute inset-0 bg-black/60 transition-opacity" onClick={() => setStatusModal({ isOpen: false, user: null })}></div>
           <div className="relative bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg shadow-xl w-full max-w-sm p-6 text-center">
             <div className={`w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-3 border ${
@@ -845,7 +1031,7 @@ const UserManagement = () => {
               {statusModal.user.isActive === false ? <UserCheck size={22} /> : <UserMinus size={22} />}
             </div>
             
-            <h3 className="text-base font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] mb-1">
+            <h3 id="user-status-modal-title" className="text-base font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] mb-1">
               {statusModal.user.isActive === false ? 'Reactivate Account?' : 'Deactivate Account?'}
             </h3>
             <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mb-4 leading-relaxed">
@@ -893,7 +1079,7 @@ const UserManagement = () => {
               <button 
                 onClick={handleToggleStatus}
                 disabled={!adminPasswordInput.trim()}
-                className={`flex-1 py-2 rounded-lg font-semibold text-white transition-colors text-xs shadow-xs cursor-pointer disabled:opacity-50 ${
+                className={`flex-1 py-2 rounded-lg font-semibold text-white transition-colors text-xs shadow-sm cursor-pointer disabled:opacity-50 ${
                   statusModal.user.isActive === false ? 'bg-emerald-700 hover:bg-emerald-800' : 'bg-red-700 hover:bg-red-800'
                 }`}
               >
@@ -932,13 +1118,18 @@ const UserManagement = () => {
         const hasRoleConflict = Boolean(conflictingPres || conflictingLlsa || conflictingCashier);
 
         return (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="role-change-modal-title"
+            className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+          >
             <div className="absolute inset-0 bg-black/60 transition-opacity" onClick={() => setIsConfirmOpen(false)}></div>
             <div className="relative bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg shadow-xl w-full max-w-sm p-6 text-center">
               <div className="w-12 h-12 bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 rounded-lg flex items-center justify-center mx-auto mb-3">
                 <AlertTriangle size={22} />
               </div>
-              <h3 className="text-base font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] mb-1">Change User Role?</h3>
+              <h3 id="role-change-modal-title" className="text-base font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] mb-1">Change User Role?</h3>
               <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mb-3 leading-relaxed">
                 Are you sure you want to change <strong className="text-[#1F1D1B] dark:text-[#F6F5F3] font-semibold">{pendingRoleChange.userName}</strong>'s role from <br/>
                 <span className="inline-block mt-1.5 px-2 py-0.5 bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] font-semibold text-xs rounded border border-[#E4E1DC] dark:border-[#2E2A27] uppercase tracking-wider">{pendingRoleChange.oldRole}</span> 
@@ -948,13 +1139,13 @@ const UserManagement = () => {
 
               {conflictingLlsa && (
                 <div className="mb-3 p-2.5 rounded bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 text-red-700 dark:text-red-400 text-[11px] text-left leading-tight">
-                  <strong>Bawal:</strong> May aktibo nang LLSA I Staff (<strong>{conflictingLlsa.name}</strong>). Tanging 1 aktibong LLSA I account lamang ang pinapayagan.
+                  <strong>Restricted:</strong> An active LLSA I Staff already exists (<strong>{conflictingLlsa.name}</strong>). Only 1 active LLSA I account is permitted.
                 </div>
               )}
 
               {conflictingCashier && (
                 <div className="mb-3 p-2.5 rounded bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 text-red-700 dark:text-red-400 text-[11px] text-left leading-tight">
-                  <strong>Bawal:</strong> May aktibo nang Municipal Cashier (<strong>{conflictingCashier.name}</strong>). Tanging 1 aktibong Cashier account lamang ang pinapayagan.
+                  <strong>Restricted:</strong> An active Municipal Cashier already exists (<strong>{conflictingCashier.name}</strong>). Only 1 active Cashier account is permitted.
                 </div>
               )}
 
@@ -963,23 +1154,26 @@ const UserManagement = () => {
                   <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
                     Assign TODA Association:
                   </label>
-                  <select
-                    value={pendingRoleChange.todaAssociation}
-                    onChange={(e) => setPendingRoleChange(prev => ({ ...prev, todaAssociation: e.target.value }))}
-                    className="w-full p-2 border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#F6F5F3] text-xs font-semibold rounded-lg outline-none cursor-pointer"
-                  >
-                    {TODA_LIST.filter(t => t !== 'NON-TODA').map(toda => (
-                      <option key={toda} value={toda}>{toda}</option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select
+                      value={pendingRoleChange.todaAssociation}
+                      onChange={(e) => setPendingRoleChange(prev => ({ ...prev, todaAssociation: e.target.value }))}
+                      className="w-full appearance-none p-2 pr-8 border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#F6F5F3] text-xs font-semibold rounded-lg outline-none cursor-pointer"
+                    >
+                      {TODA_LIST.filter(t => t !== 'NON-TODA').map(toda => (
+                        <option key={toda} value={toda}>{toda}</option>
+                      ))}
+                    </select>
+                    <ChevronDown size={14} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[#6B6761] dark:text-[#A8A29E]" />
+                  </div>
 
                   {conflictingPres ? (
                     <div className="p-2 rounded bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 text-red-700 dark:text-red-400 text-[11px] leading-tight">
-                      <strong>Bawal:</strong> May nakatalaga nang TODA President para sa <strong>{pendingRoleChange.todaAssociation}</strong> ({conflictingPres.name}). Tanging 1 TODA President lamang ang pinapayagan bawat TODA.
+                      <strong>Restricted:</strong> A TODA President is already assigned for <strong>{pendingRoleChange.todaAssociation}</strong> ({conflictingPres.name}). Only 1 TODA President is permitted per TODA.
                     </div>
                   ) : (
                     <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium">
-                      ✓ Bakante ang presidency para sa {pendingRoleChange.todaAssociation}.
+                      ✓ The presidency slot for {pendingRoleChange.todaAssociation} is available.
                     </p>
                   )}
                 </div>
@@ -1004,7 +1198,7 @@ const UserManagement = () => {
                 <button 
                   onClick={confirmAndSaveRole} 
                   disabled={hasRoleConflict || !adminPasswordInput.trim()}
-                  className={`flex-1 py-2 rounded-lg font-semibold text-white transition-colors text-xs shadow-xs cursor-pointer ${
+                  className={`flex-1 py-2 rounded-lg font-semibold text-white transition-colors text-xs shadow-sm cursor-pointer ${
                     hasRoleConflict || !adminPasswordInput.trim() ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#9E2A2B] hover:bg-[#7A1B22]'
                   }`}
                 >
@@ -1018,24 +1212,28 @@ const UserManagement = () => {
 
       {/* User details modal */}
       {isDetailsModalOpen && selectedUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="user-details-modal-title"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+        >
           <div className="absolute inset-0 bg-black/60 transition-opacity" onClick={() => setIsDetailsModalOpen(false)}></div>
           <div className="relative bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg shadow-xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden">
             {/* Header */}
             <div className="bg-[#9E2A2B] p-5 text-center relative shrink-0 text-white">
               <button onClick={() => setIsDetailsModalOpen(false)} className="absolute top-3.5 right-3.5 text-white/80 hover:text-white p-1 rounded-md transition-colors cursor-pointer"><X size={18} /></button>
               <div className="relative inline-block mx-auto mb-2">
-                <div className="w-16 h-16 bg-[#F6F5F3] rounded-full flex items-center justify-center shadow-xs border-2 border-[#D4AF37] overflow-hidden">
+                <div className="w-16 h-16 bg-[#F6F5F3] rounded-full flex items-center justify-center shadow-sm border-2 border-[#D4AF37] overflow-hidden">
                   {selectedUser.profilePic ? <img src={selectedUser.profilePic} alt={selectedUser.name} className="w-full h-full object-cover" /> : <User className="text-[#6B6761]" size={30} />}
                 </div>
                 {modalActivity?.isOnline && (
                   <span className="absolute bottom-0 right-0 flex h-3.5 w-3.5">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                     <span className="relative inline-flex rounded-full h-3.5 w-3.5 bg-emerald-500 border-2 border-white dark:border-[#1C1917]"></span>
                   </span>
                 )}
               </div>
-              <h2 className="text-base font-semibold text-white">{selectedUser.name}</h2>
+              <h2 id="user-details-modal-title" className="text-base font-semibold text-white">{selectedUser.name}</h2>
               <div className="flex items-center justify-center gap-2 mt-1.5 flex-wrap">
                 <span className="text-[#D4AF37] text-xs font-semibold uppercase tracking-wider bg-black/25 px-2 py-0.5 rounded border border-[#D4AF37]/30">
                   {['bplo_staff', 'bplo staff'].includes(String(selectedUser?.role || '').toLowerCase())
@@ -1095,7 +1293,7 @@ const UserManagement = () => {
                       {selectedUser.todaAssociation || 'NON-TODA'}
                     </span>
                     {selectedUser.bodyNumber && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-mono font-bold bg-neutral-100 dark:bg-neutral-800 text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-mono font-bold bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27]">
                         Body No. #{selectedUser.bodyNumber}
                       </span>
                     )}

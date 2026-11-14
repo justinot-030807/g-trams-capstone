@@ -2,12 +2,18 @@ import React, { useState, useEffect, useCallback } from 'react';
 import MainLayout from '../../components/MainLayout';
 import PageHeader from '../../components/common/PageHeader';
 import {
-  Shield, Search, RefreshCw, ChevronLeft, ChevronRight,
+  Shield, Search, RefreshCw, ChevronLeft, ChevronRight, ChevronDown,
   Clock, User, FileText, Filter, Eye, X, Copy, Check,
   ArrowRight, Globe, Terminal, Layers
 } from 'lucide-react';
 import { TableRowsSkeleton } from '../../components/skeleton';
 import { formatRoleDisplayName, cleanText } from '../../utils/vehicleFormatters';
+
+const formatAuditActionLabel = (action = 'SYSTEM_EVENT') =>
+  String(action || 'SYSTEM_EVENT')
+    .replace(/_/g, ' ')
+    .toLowerCase()
+    .replace(/\b\w/g, (c) => c.toUpperCase());
 
 const AdminAuditLogs = () => {
   const [logs, setLogs] = useState([]);
@@ -27,6 +33,15 @@ const AdminAuditLogs = () => {
   const [limit, setLimit] = useState(20);
   const [selectedLog, setSelectedLog] = useState(null);
   const [copiedId, setCopiedId] = useState(false);
+
+  useEffect(() => {
+    if (!selectedLog) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setSelectedLog(null);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [selectedLog]);
 
   // Debounce search input
   useEffect(() => {
@@ -196,37 +211,114 @@ const AdminAuditLogs = () => {
             <Filter size={13} />
             <span className="font-medium">Category:</span>
           </div>
-          <select
-            value={targetType}
-            onChange={(e) => {
-              setTargetType(e.target.value);
-              setPage(1);
-            }}
-            className="px-2.5 py-1.5 text-xs font-medium rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] focus:outline-none focus:border-[#9E2A2B] cursor-pointer"
-          >
-            <option value="All">All Categories</option>
-            <option value="Franchise">Franchise</option>
-            <option value="User">User Account</option>
-            <option value="Violation">Violation &amp; Sanction</option>
-            <option value="TODA">TODA Roster &amp; Directory</option>
-            <option value="SystemSettings">System Settings</option>
-            <option value="Auth">Authentication</option>
-            <option value="General">General</option>
-          </select>
+          <div className="relative">
+            <select
+              value={targetType}
+              onChange={(e) => {
+                setTargetType(e.target.value);
+                setPage(1);
+              }}
+              className="appearance-none pl-2.5 pr-8 py-1.5 text-xs font-medium rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] focus:outline-none focus:border-[#9E2A2B] cursor-pointer"
+            >
+              <option value="All">All Categories</option>
+              <option value="Franchise">Franchise</option>
+              <option value="User">User Account</option>
+              <option value="Violation">Violation &amp; Sanction</option>
+              <option value="TODA">TODA Roster &amp; Directory</option>
+              <option value="SystemSettings">System Settings</option>
+              <option value="Auth">Authentication</option>
+              <option value="General">General</option>
+            </select>
+            <ChevronDown size={13} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[#6B6761] dark:text-[#A8A29E]" />
+          </div>
         </div>
       </div>
 
-      {/* 3. AUDIT LOGS TABLE */}
+      {/* 3. AUDIT LOGS (MOBILE CARDS + DESKTOP TABLE) */}
       <div className="bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Mobile Stacked Cards */}
+        <div className="md:hidden divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
+          {isLoading ? (
+            <div className="p-4 space-y-3">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-24 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] animate-pulse" />
+              ))}
+            </div>
+          ) : logs.length === 0 ? (
+            <div className="py-10 px-4 text-center text-[#6B6761] dark:text-[#A8A29E]">
+              <Shield size={28} className="mx-auto mb-2 opacity-40" />
+              <p className="text-sm font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">No audit logs found</p>
+              <p className="text-xs mt-0.5">Try adjusting your search query or category filter.</p>
+            </div>
+          ) : (
+            logs.map((log) => {
+              const info = extractStructuredDetails(log);
+              const roleLabel = log.actorRoleLabel || log.details?.actorRoleLabel || formatRoleDisplayName(log.actorRole);
+              const cleanActorName = log.actorName === 'BPLO Licensing Officer'
+                ? 'LLSA I — Local Legislative Staff Assistant I (Madhelyn Pastoral)'
+                : cleanText(log.actorName, 'System Administrator');
+
+              return (
+                <div
+                  key={log._id}
+                  onClick={() => setSelectedLog(log)}
+                  className="p-4 space-y-2.5 hover:bg-[#F6F5F3]/60 dark:hover:bg-[#14110F]/50 transition-colors cursor-pointer"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <span className={`inline-block px-2 py-0.5 rounded text-[11px] font-semibold border ${getActionBadgeColor(log.action)}`}>
+                        {formatAuditActionLabel(log.action)}
+                      </span>
+                      <p className="text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] mt-1.5 truncate">
+                        {cleanActorName}
+                      </p>
+                      <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
+                        {roleLabel.includes('LLSA I') ? 'LLSA I (Franchising Staff)' : roleLabel} • {cleanText(log.targetType, 'General')}
+                      </p>
+                    </div>
+                    <span className="font-mono text-[11px] text-[#6B6761] dark:text-[#A8A29E] shrink-0 text-right">
+                      {log.createdAt
+                        ? new Date(log.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+                        : '—'}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] line-clamp-2 leading-relaxed">
+                    {info.summary}
+                  </p>
+
+                  <div className="flex items-center justify-between gap-2 pt-1">
+                    <span className="font-mono text-[10px] text-[#6B6761] dark:text-[#A8A29E] truncate">
+                      IP: {cleanText(log.ipAddress, '127.0.0.1')}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setSelectedLog(log);
+                      }}
+                      className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] text-xs font-semibold cursor-pointer shrink-0"
+                    >
+                      <Eye size={13} />
+                      <span>Details</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        {/* Desktop Table */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3]/60 dark:bg-[#14110F]/60 text-[11px] font-semibold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E]">
-                <th className="py-2.5 px-4">Timestamp &amp; IP</th>
-                <th className="py-2.5 px-4">Actor &amp; Official Role</th>
-                <th className="py-2.5 px-4">Action &amp; Category</th>
-                <th className="py-2.5 px-4">Detailed Event Breakdown</th>
-                <th className="py-2.5 px-4 text-right">Inspect</th>
+                <th className="py-2.5 px-3">Timestamp &amp; IP</th>
+                <th className="py-2.5 px-3">Actor &amp; Official Role</th>
+                <th className="py-2.5 px-3">Action &amp; Category</th>
+                <th className="py-2.5 px-3">Detailed Event Breakdown</th>
+                <th className="py-2.5 px-3 text-right">Inspect</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27] text-xs">
@@ -261,7 +353,7 @@ const AdminAuditLogs = () => {
                       className="hover:bg-[#F6F5F3]/60 dark:hover:bg-[#14110F]/50 transition-colors cursor-pointer group"
                     >
                       {/* Timestamp & IP */}
-                      <td className="py-3 px-4 whitespace-nowrap align-top">
+                      <td className="py-3 px-3 whitespace-nowrap align-top">
                         <div className="flex items-center gap-1.5 text-[#1F1D1B] dark:text-[#F6F5F3] font-mono text-xs font-medium">
                           <Clock size={12} className="text-[#6B6761] dark:text-[#A8A29E] shrink-0" />
                           <span>
@@ -284,7 +376,7 @@ const AdminAuditLogs = () => {
                             : ''}
                         </span>
                         <span 
-                          className="text-[10px] font-mono text-[#6B6761] dark:text-[#A8A29E] pl-4 mt-0.5 block max-w-[145px] truncate"
+                          className="text-[10px] font-mono text-[#6B6761] dark:text-[#A8A29E] pl-4 mt-0.5 block max-w-[130px] truncate"
                           title={`IP: ${cleanText(log.ipAddress, '127.0.0.1')}`}
                         >
                           IP: {cleanText(log.ipAddress, '127.0.0.1')}
@@ -292,13 +384,13 @@ const AdminAuditLogs = () => {
                       </td>
 
                       {/* Actor & Official Role */}
-                      <td className="py-3 px-4 align-top max-w-[240px]">
+                      <td className="py-3 px-3 align-top max-w-[200px]">
                         <div className="flex items-start gap-2">
                           <div className="w-7 h-7 rounded-full bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0 mt-0.5">
                             <User size={13} />
                           </div>
                           <div className="min-w-0">
-                            <p className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] leading-snug">
+                            <p className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] leading-snug break-words">
                               {cleanActorName}
                             </p>
                             <span className={`inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-semibold border ${getRoleBadgeStyle(log.actorRole)}`}>
@@ -309,21 +401,22 @@ const AdminAuditLogs = () => {
                       </td>
 
                       {/* Action & Category */}
-                      <td className="py-3 px-4 align-top">
+                      <td className="py-3 px-3 align-top max-w-[200px]">
                         <span
-                          className={`inline-block px-2 py-0.5 rounded text-[11px] font-mono font-semibold border ${getActionBadgeColor(
+                          title={log.action}
+                          className={`inline-block px-2 py-0.5 rounded text-[11px] font-semibold border leading-snug ${getActionBadgeColor(
                             log.action
                           )}`}
                         >
-                          {log.action}
+                          {formatAuditActionLabel(log.action)}
                         </span>
-                        <div className="flex items-center gap-1.5 mt-1.5 text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
-                          <Layers size={11} />
+                        <div className="flex items-center gap-1.5 mt-1.5 text-[11px] text-[#6B6761] dark:text-[#A8A29E] flex-wrap">
+                          <Layers size={11} className="shrink-0" />
                           <span className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
                             {cleanText(log.targetType, 'General')}
                           </span>
                           {log.targetId && (
-                            <span className="font-mono text-[10px] px-1.5 py-0.2 rounded bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                            <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27]">
                               #{String(log.targetId).slice(-6).toUpperCase()}
                             </span>
                           )}
@@ -331,7 +424,7 @@ const AdminAuditLogs = () => {
                       </td>
 
                       {/* Detailed Event Breakdown */}
-                      <td className="py-3 px-4 align-top max-w-md">
+                      <td className="py-3 px-3 align-top max-w-[320px]">
                         {/* Primary Chips */}
                         <div className="flex flex-wrap items-center gap-1.5 mb-1">
                           {info.operatorName && (
@@ -377,13 +470,13 @@ const AdminAuditLogs = () => {
                         </div>
 
                         {/* Narrative Summary */}
-                        <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] line-clamp-2 leading-relaxed">
+                        <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] line-clamp-2 leading-relaxed break-words">
                           {info.summary}
                         </p>
                       </td>
 
                       {/* Inspect Action */}
-                      <td className="py-3 px-4 text-right align-top whitespace-nowrap">
+                      <td className="py-3 px-3 text-right align-top whitespace-nowrap">
                         <button
                           type="button"
                           onClick={(e) => {
@@ -466,8 +559,16 @@ const AdminAuditLogs = () => {
           : cleanText(selectedLog.actorName, 'System Administrator');
 
         return (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 animate-in fade-in duration-150">
-            <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg w-full max-w-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]">
+          <div
+            role="dialog"
+            aria-modal="true"
+            onClick={() => setSelectedLog(null)}
+            className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/60 animate-in fade-in duration-150"
+          >
+            <div
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg w-full max-w-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]"
+            >
               {/* Modal Header */}
               <div className="p-4 sm:p-5 bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] flex items-start justify-between gap-3">
                 <div className="flex items-start gap-3">

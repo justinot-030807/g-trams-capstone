@@ -31,8 +31,19 @@ export default {
           DEFAULT: '#D4AF37',
         },
 
-        // 2. NEUTRAL TOKENS (Warm government palette)
+        // 2. NEUTRAL TOKENS (Warm government palette — preserve numeric stops too)
         neutral: {
+          50: '#FAF9F7',
+          100: '#F6F5F3',
+          200: '#E4E1DC',
+          300: '#D4D0C8',
+          400: '#A8A29E',
+          500: '#6B6761',
+          600: '#524E49',
+          700: '#2E2A27',
+          800: '#1C1917',
+          900: '#1F1D1B',
+          950: '#14110F',
           bg: '#F6F5F3',          // Canvas / page background (light)
           surface: '#FFFFFF',     // Cards / panels (light)
           border: '#E4E1DC',      // 1px subtle card/table border (light)

@@ -71,7 +71,7 @@ const VerifyOperator = () => {
           <h1 className="text-white font-bold tracking-tight text-lg mb-0.5">
             {isScannedUnitInvalid ? `FRANCHISE ${scannedStatus.toUpperCase()}` : 'VERIFIED OPERATOR'}
           </h1>
-          <p className="text-[#D4AF37] text-xs font-bold uppercase tracking-wider">Official LGU Record</p>
+          <p className="text-[#F5E6B3] text-xs font-bold uppercase tracking-wider">Official LGU Record</p>
         </div>
         
         <div className="bg-white dark:bg-[#1C1917] rounded-b-lg p-5 sm:p-6 shadow-md border-x border-b border-[#E4E1DC] dark:border-[#2E2A27]">

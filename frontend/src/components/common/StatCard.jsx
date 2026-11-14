@@ -10,8 +10,10 @@ import React from 'react';
  */
 const StatCard = ({
   label = '',
-  count = 0,
+  count = undefined,
+  value = undefined,
   subtext = '',
+  delta = null,
   onClick = null,
   title = '',
   className = '',
@@ -19,6 +21,7 @@ const StatCard = ({
   onAction = null,
 }) => {
   const isClickable = Boolean(onClick);
+  const resolvedCount = count !== undefined ? count : (value !== undefined ? value : 0);
 
   return (
     <div
@@ -36,7 +39,7 @@ const StatCard = ({
             }
           : undefined
       }
-      className={`bg-white dark:bg-[#1C1917] p-4 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs flex flex-col justify-between transition-colors ${
+      className={`bg-white dark:bg-[#1C1917] p-4 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm flex flex-col justify-between transition-colors ${
         isClickable
           ? 'hover:border-[#9E2A2B]/50 dark:hover:border-[#D4AF37]/50 cursor-pointer active:scale-[0.99] focus-visible:outline-2 focus-visible:outline-[#9E2A2B]'
           : ''
@@ -54,21 +57,26 @@ const StatCard = ({
                 e.stopPropagation();
                 onAction();
               }}
-              className="text-xs font-medium text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer"
+              className="text-xs font-medium text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer shrink-0"
             >
               {actionLabel}
             </button>
           )}
         </div>
-        <div className="mt-1.5 flex items-baseline gap-2">
+        <div className="mt-1.5 flex items-baseline justify-between gap-2 flex-wrap">
           <p className="text-2xl font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] tabular-nums font-mono">
-            {typeof count === 'number' ? count.toLocaleString() : count}
+            {typeof resolvedCount === 'number' ? resolvedCount.toLocaleString() : resolvedCount}
           </p>
+          {delta?.text && (
+            <span className="text-[11px] font-semibold font-mono text-[#6B6761] dark:text-[#A8A29E]">
+              {delta.text}
+            </span>
+          )}
         </div>
       </div>
 
       {subtext && (
-        <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1.5 line-clamp-1">
+        <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1.5 line-clamp-2 leading-snug">
           {subtext}
         </p>
       )}

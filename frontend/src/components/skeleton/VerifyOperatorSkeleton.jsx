@@ -17,7 +17,7 @@ export const VerifyOperatorSkeleton = ({ baseDelay = 30 }) => {
         {/* Verification Title */}
         <div className="space-y-1.5 flex flex-col items-center">
           <SkeletonElement height="20px" className="w-48" rounded="rounded-md" delay={baseDelay + 15} />
-          <SkeletonElement height="12px" className="w-32" rounded="rounded-xs" delay={baseDelay + 25} />
+          <SkeletonElement height="12px" className="w-32" rounded="rounded-sm" delay={baseDelay + 25} />
         </div>
 
         {/* Operator Profile Block */}
@@ -26,18 +26,18 @@ export const VerifyOperatorSkeleton = ({ baseDelay = 30 }) => {
             <SkeletonElement rounded="rounded-full" className="w-10 h-10 shrink-0" delay={baseDelay + 35} />
             <div className="space-y-1 flex-1 min-w-0">
               <SkeletonElement height="14px" className="w-36" rounded="rounded-md" delay={baseDelay + 40} />
-              <SkeletonElement height="10px" className="w-24" rounded="rounded-xs" delay={baseDelay + 45} />
+              <SkeletonElement height="10px" className="w-24" rounded="rounded-sm" delay={baseDelay + 45} />
             </div>
           </div>
 
           <div className="grid grid-cols-2 gap-2 pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
             <div className="space-y-1">
-              <SkeletonElement height="9px" className="w-14" rounded="rounded-xs" delay={baseDelay + 50} />
-              <SkeletonElement height="12px" className="w-20" rounded="rounded-xs" delay={baseDelay + 55} />
+              <SkeletonElement height="9px" className="w-14" rounded="rounded-sm" delay={baseDelay + 50} />
+              <SkeletonElement height="12px" className="w-20" rounded="rounded-sm" delay={baseDelay + 55} />
             </div>
             <div className="space-y-1">
-              <SkeletonElement height="9px" className="w-14" rounded="rounded-xs" delay={baseDelay + 60} />
-              <SkeletonElement height="12px" className="w-20" rounded="rounded-xs" delay={baseDelay + 65} />
+              <SkeletonElement height="9px" className="w-14" rounded="rounded-sm" delay={baseDelay + 60} />
+              <SkeletonElement height="12px" className="w-20" rounded="rounded-sm" delay={baseDelay + 65} />
             </div>
           </div>
         </div>

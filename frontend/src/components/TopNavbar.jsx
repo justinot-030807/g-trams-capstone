@@ -226,7 +226,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
   const isDashboard = location.pathname === '/operator-dashboard';
 
   return (
-    <header className={`sticky top-0 z-30 bg-white dark:bg-[#1C1917] border-b border-[#E4E1DC] dark:border-[#2E2A27] px-4 sm:px-6 py-2.5 items-center justify-between shadow-xs transition-colors print:hidden print-hide ${
+    <header className={`sticky top-0 z-30 bg-white dark:bg-[#1C1917] border-b border-[#E4E1DC] dark:border-[#2E2A27] px-4 sm:px-6 py-2.5 items-center justify-between shadow-sm transition-colors print:hidden print-hide ${
       isOperatorOrToda && isDashboard ? 'hidden md:flex' : 'flex'
     }`}>
       
@@ -242,11 +242,11 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                   navigate('/operator-dashboard');
                 }
               }}
-              className="group flex items-center gap-1.5 pl-2 pr-3 py-1.5 rounded-lg bg-[#F6F5F3] hover:bg-[#EAE7E1] dark:bg-[#14110F] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] transition-all cursor-pointer border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs shrink-0"
+              className="group flex items-center gap-1.5 pl-2 pr-3 py-1.5 rounded-lg bg-[#F6F5F3] hover:bg-[#EAE7E1] dark:bg-[#14110F] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] transition-all cursor-pointer border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm shrink-0"
               title="Back"
               aria-label="Back"
             >
-              <div className="w-6 h-6 rounded-md bg-white dark:bg-[#1C1917] shadow-xs flex items-center justify-center group-hover:-translate-x-0.5 transition-transform">
+              <div className="w-6 h-6 rounded-md bg-white dark:bg-[#1C1917] shadow-sm flex items-center justify-center group-hover:-translate-x-0.5 transition-transform">
                 <ArrowLeft size={14} className="text-[#1F1D1B] dark:text-[#EAE7E1]" />
               </div>
               <span className="text-xs font-semibold tracking-wide uppercase hidden sm:block">Back</span>
@@ -263,7 +263,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
               onClick={cycleTextScale}
               title={`Text Size: ${scaleLabel} (Click to resize)`}
               aria-label={`Text Size: ${scaleLabel}`}
-              className="px-2.5 h-9 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center justify-center font-semibold text-xs transition-all cursor-pointer active:scale-95 shadow-xs font-mono select-none"
+              className="px-2.5 h-9 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center justify-center font-semibold text-xs transition-all cursor-pointer active:scale-95 shadow-sm font-mono select-none"
             >
               <span>{textScale === 'xlarge' ? 'A++' : textScale === 'large' ? 'A+' : 'A'}</span>
             </button>
@@ -273,7 +273,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
               type="button"
               onClick={toggleTheme}
               title={isDark ? "Theme: Dark Mode (Click for Light Mode)" : "Theme: Light Mode (Click for Dark Mode)"}
-              className="w-9 h-9 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3] flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-xs"
+              className="w-9 h-9 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3] flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-sm"
             >
               {isDark ? (
                 <Moon size={17} className="text-[#D4AF37]" />
@@ -287,7 +287,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
               <button
                 type="button"
                 onClick={() => setIsNotifOpen(!isNotifOpen)}
-                className={`relative w-9 h-9 rounded-lg border flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-xs ${
+                className={`relative w-9 h-9 rounded-lg border flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-sm ${
                   isNotifOpen 
                     ? 'bg-[#EAE7E1] dark:bg-[#2E2A27] border-[#9E2A2B] dark:border-[#D4AF37] text-[#9E2A2B] dark:text-[#D4AF37]' 
                     : 'bg-[#F6F5F3] dark:bg-[#14110F] border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3]'
@@ -295,7 +295,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
               >
                 <Bell size={17} />
                 {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#B91C1C] px-1 text-[9px] font-bold text-white shadow-xs">
+                  <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#B91C1C] px-1 text-[9px] font-bold text-white shadow-sm">
                     {unreadCount}
                   </span>
                 )}
@@ -395,8 +395,8 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
           <button
             onClick={onToggleSidebar}
             title={isSidebarOpen ? "Minimize Sidebar" : "Expand Sidebar"}
-            className={`p-2 text-[#1F1D1B] dark:text-[#EAE7E1] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] active:bg-[#EAE7E1] dark:active:bg-[#2E2A27] rounded-lg transition-colors focus:outline-none shrink-0 ${
-              isOperatorOrToda || isCashier ? 'hidden md:flex' : 'flex'
+            className={`p-2 min-w-[40px] min-h-[40px] items-center justify-center text-[#1F1D1B] dark:text-[#EAE7E1] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] active:bg-[#EAE7E1] dark:active:bg-[#2E2A27] rounded-lg transition-colors focus:outline-none shrink-0 ${
+              isOperatorOrToda ? 'hidden md:flex' : 'flex'
             }`}
             aria-label="Toggle Sidebar"
           >
@@ -441,7 +441,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
           onClick={cycleTextScale}
           title={`Text Size: ${scaleLabel} (Click to resize)`}
           aria-label={`Text Size: ${scaleLabel}`}
-          className="px-2.5 py-1.5 h-[38px] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] font-semibold text-xs transition-colors focus:outline-none shrink-0 cursor-pointer shadow-xs font-mono flex items-center justify-center active:scale-95 select-none"
+          className="px-2.5 py-1.5 h-[38px] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] font-semibold text-xs transition-colors focus:outline-none shrink-0 cursor-pointer shadow-sm font-mono flex items-center justify-center active:scale-95 select-none"
         >
           <span>{textScale === 'xlarge' ? 'A++' : textScale === 'large' ? 'A+' : 'A'}</span>
         </button>
@@ -450,7 +450,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
         <button
           onClick={toggleTheme}
           title={isDark ? "Theme: Dark Mode (Click for Light Mode)" : "Theme: Light Mode (Click for Dark Mode)"}
-          className="p-2 h-[38px] w-[38px] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3] flex items-center justify-center transition-colors focus:outline-none shrink-0 cursor-pointer shadow-xs"
+          className="p-2 h-[38px] w-[38px] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3] flex items-center justify-center transition-colors focus:outline-none shrink-0 cursor-pointer shadow-sm"
         >
           {isDark ? (
             <Moon size={18} className="text-[#D4AF37]" />
@@ -463,7 +463,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
         <div className="relative" ref={notifRef}>
           <button
             onClick={() => setIsNotifOpen(!isNotifOpen)}
-            className={`relative p-2 h-[38px] w-[38px] flex items-center justify-center rounded-lg border transition-colors shadow-xs cursor-pointer ${
+            className={`relative p-2 h-[38px] w-[38px] flex items-center justify-center rounded-lg border transition-colors shadow-sm cursor-pointer ${
               isNotifOpen 
                 ? 'bg-[#EAE7E1] dark:bg-[#2E2A27] border-[#9E2A2B] dark:border-[#D4AF37] text-[#9E2A2B] dark:text-[#D4AF37]' 
                 : 'bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3]'
@@ -471,7 +471,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
           >
             <Bell size={18} />
             {unreadCount > 0 && (
-              <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#B91C1C] px-1 text-[9px] font-bold text-white shadow-xs">
+              <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#B91C1C] px-1 text-[9px] font-bold text-white shadow-sm">
                 {unreadCount}
               </span>
             )}
@@ -552,7 +552,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                           }`}
                         >
                           <div className="mt-0.5 shrink-0">
-                            <div className={`w-7 h-7 rounded-md flex items-center justify-center shadow-xs ${visuals.iconBg}`}>
+                            <div className={`w-7 h-7 rounded-md flex items-center justify-center shadow-sm ${visuals.iconBg}`}>
                               <IconComponent size={14} />
                             </div>
                           </div>
@@ -561,7 +561,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
                               <h5 className={`text-xs ${!notif.isRead ? 'font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]' : 'font-medium text-[#6B6761] dark:text-[#A8A29E]'}`}>
                                 {notif?.title || 'Notification'}
                               </h5>
-                              {!notif.isRead && <span className="w-1.5 h-1.5 bg-[#9E2A2B] dark:bg-[#D4AF37] rounded-full shrink-0 shadow-xs" />}
+                              {!notif.isRead && <span className="w-1.5 h-1.5 bg-[#9E2A2B] dark:bg-[#D4AF37] rounded-full shrink-0 shadow-sm" />}
                             </div>
                             <p className="text-[11px] text-[#57534E] dark:text-[#D6D3D1] leading-snug break-words">
                               {notif.desc}

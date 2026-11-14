@@ -524,9 +524,9 @@ const OperatorDashboard = () => {
                 <div 
                   className={`relative z-10 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center transition-all duration-200 shrink-0 ${
                     isCompleted 
-                      ? 'bg-[#9E2A2B] dark:bg-[#D4AF37] text-white dark:text-[#14110F] shadow-xs' 
+                      ? 'bg-[#9E2A2B] dark:bg-[#D4AF37] text-white dark:text-[#14110F] shadow-sm' 
                       : isCurrent 
-                      ? 'bg-white dark:bg-[#1C1917] border-2 border-[#9E2A2B] dark:border-[#D4AF37] ring-2 ring-[#9E2A2B]/20 dark:ring-[#D4AF37]/30 shadow-xs' 
+                      ? 'bg-white dark:bg-[#1C1917] border-2 border-[#9E2A2B] dark:border-[#D4AF37] ring-2 ring-[#9E2A2B]/20 dark:ring-[#D4AF37]/30 shadow-sm' 
                       : 'bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27]'
                   }`}
                 >
@@ -580,7 +580,7 @@ const OperatorDashboard = () => {
         text: t('greeting.evening', 'Good evening'), 
         tag: portalTag,
         icon: Moon, 
-        badgeColor: 'text-indigo-200' 
+        badgeColor: 'text-[#D4AF37]' 
       };
     }
   };
@@ -615,7 +615,7 @@ const OperatorDashboard = () => {
       {/* 1. ELEVATED GOVERNMENT OPERATOR HERO CARD */}
       <div 
         id="tour-hero-banner"
-        className="bg-white dark:bg-[#1C1917] rounded-lg p-5 sm:p-6 mb-6 text-[#1F1D1B] dark:text-[#F6F5F3] shadow-xs border border-[#E4E1DC] dark:border-[#2E2A27] border-l-4 border-l-[#9E2A2B] relative transition-all"
+        className="bg-white dark:bg-[#1C1917] rounded-lg p-5 sm:p-6 mb-6 text-[#1F1D1B] dark:text-[#F6F5F3] shadow-sm border border-[#E4E1DC] dark:border-[#2E2A27] relative transition-all"
       >
         {/* Top Header Bar: Avatar (with Logout Menu) + Greeting + Micro-actions */}
         <div className="flex items-center justify-between pb-3.5 border-b border-[#E4E1DC] dark:border-[#2E2A27] gap-3">
@@ -625,7 +625,7 @@ const OperatorDashboard = () => {
               <button
                 type="button"
                 onClick={() => setIsProfileMenuOpen(prev => !prev)}
-                className="w-11 h-11 rounded-lg border-2 border-[#D4AF37] shadow-xs overflow-hidden bg-[#9E2A2B] text-white flex items-center justify-center shrink-0 active:scale-95 transition-all cursor-pointer hover:ring-2 hover:ring-[#9E2A2B]/20"
+                className="w-11 h-11 rounded-lg border-2 border-[#D4AF37] shadow-sm overflow-hidden bg-[#9E2A2B] text-white flex items-center justify-center shrink-0 active:scale-95 transition-all cursor-pointer hover:ring-2 hover:ring-[#9E2A2B]/20"
                 title="My Account & Logout"
               >
                 {profilePic ? (
@@ -650,14 +650,14 @@ const OperatorDashboard = () => {
           </div>
 
           {/* Micro Action Buttons (Text Size, Guide, Theme & Bell) */}
-          <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0">
             {/* Quick Text Size Accessibility Button */}
             <button
               type="button"
               onClick={cycleTextScale}
               title={`Text Size: ${scaleLabel} (Click to toggle A / A+ / A++)`}
               aria-label={`Text Size: ${scaleLabel}`}
-              className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] font-bold text-xs font-mono flex items-center justify-center active:scale-95 cursor-pointer shadow-xs select-none"
+              className="w-10 h-10 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] font-bold text-xs font-mono flex items-center justify-center active:scale-95 cursor-pointer shadow-sm select-none"
             >
               <span>{textScale === 'xlarge' ? 'A++' : textScale === 'large' ? 'A+' : 'A'}</span>
             </button>
@@ -667,9 +667,10 @@ const OperatorDashboard = () => {
               type="button"
               onClick={() => setIsTourOpen(true)}
               title="Operator Quick Guide & FAQs"
-              className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] flex items-center justify-center active:scale-95 transition-colors cursor-pointer shadow-xs"
+              aria-label="Operator Quick Guide & FAQs"
+              className="w-10 h-10 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] flex items-center justify-center active:scale-95 transition-colors cursor-pointer shadow-sm"
             >
-              <HelpCircle size={16} />
+              <HelpCircle size={17} />
             </button>
 
             {/* Quick Theme Toggle */}
@@ -677,12 +678,13 @@ const OperatorDashboard = () => {
               type="button"
               onClick={toggleTheme}
               title={isDark ? "Theme: Dark Mode (Click for Light Mode)" : "Theme: Light Mode (Click for Dark Mode)"}
-              className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center justify-center active:scale-95 transition-colors cursor-pointer shadow-xs"
+              aria-label={isDark ? "Switch to Light Mode" : "Switch to Dark Mode"}
+              className="w-10 h-10 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center justify-center active:scale-95 transition-colors cursor-pointer shadow-sm"
             >
               {isDark ? (
-                <Moon size={16} className="text-amber-300" />
+                <Moon size={17} className="text-amber-300" />
               ) : (
-                <Sun size={16} className="text-amber-500" />
+                <Sun size={17} className="text-amber-500" />
               )}
             </button>
 
@@ -691,11 +693,12 @@ const OperatorDashboard = () => {
               <button
                 type="button"
                 onClick={() => setIsNotifOpen(!isNotifOpen)}
-                className="relative w-8 h-8 sm:w-9 sm:h-9 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center justify-center active:scale-95 transition-colors cursor-pointer shadow-xs"
+                aria-label="Notifications"
+                className="relative w-10 h-10 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center justify-center active:scale-95 transition-colors cursor-pointer shadow-sm"
               >
-                <Bell size={16} />
+                <Bell size={17} />
                 {unreadNotifCount > 0 && (
-                  <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#B91C1C] px-1 text-[9px] font-bold text-white shadow-xs">
+                  <span className="absolute -top-1 -right-1 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-[#B91C1C] px-1 text-[9px] font-bold text-white shadow-sm">
                     {unreadNotifCount}
                   </span>
                 )}
@@ -725,7 +728,7 @@ const OperatorDashboard = () => {
               <div className="h-8 w-24 bg-[#E4E1DC] dark:bg-[#2E2A27] rounded-lg shrink-0" />
             </div>
           ) : franchises.some(f => f.status === 'For Payment') ? (
-            <div className="bg-[#FEF3C7]/50 dark:bg-[#78350F]/20 text-[#1F1D1B] dark:text-[#F6F5F3] rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-[#F59E0B]/30 shadow-xs">
+            <div className="bg-[#FEF3C7]/50 dark:bg-[#78350F]/20 text-[#1F1D1B] dark:text-[#F6F5F3] rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-[#F59E0B]/30 shadow-sm">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-10 h-10 rounded-lg bg-[#F59E0B]/15 text-[#B45309] dark:text-[#FBBF24] flex items-center justify-center shrink-0">
                   <Banknote size={20} />
@@ -747,14 +750,14 @@ const OperatorDashboard = () => {
                     setIsDetailsOpen(true);
                   }
                 }}
-                className="w-full sm:w-auto bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-xs sm:text-sm px-4 py-2.5 min-h-[44px] rounded-lg shrink-0 transition-colors active:scale-95 shadow-xs cursor-pointer flex items-center justify-center gap-1.5"
+                className="w-full sm:w-auto bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-xs sm:text-sm px-4 py-2.5 min-h-[44px] rounded-lg shrink-0 transition-colors active:scale-95 shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <Banknote size={15} />
                 <span>View Payment Details</span>
               </button>
             </div>
           ) : franchises.some(f => f.status === 'Ready for Pickup') ? (
-            <div className="bg-[#F0FDF4]/70 dark:bg-[#052E16]/30 text-[#1F1D1B] dark:text-[#F6F5F3] rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-[#BBF7D0] dark:border-[#166534] shadow-xs">
+            <div className="bg-[#F0FDF4]/70 dark:bg-[#052E16]/30 text-[#1F1D1B] dark:text-[#F6F5F3] rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-[#BBF7D0] dark:border-[#166534] shadow-sm">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-10 h-10 rounded-lg bg-[#15803D]/15 text-[#15803D] dark:text-[#4ADE80] flex items-center justify-center shrink-0">
                   <CheckCircle2 size={20} />
@@ -776,14 +779,14 @@ const OperatorDashboard = () => {
                     setIsDetailsOpen(true);
                   }
                 }}
-                className="w-full sm:w-auto bg-[#15803D] hover:bg-[#166534] text-white font-bold text-xs sm:text-sm px-4 py-2.5 min-h-[44px] rounded-lg shrink-0 transition-colors active:scale-95 shadow-xs cursor-pointer flex items-center justify-center gap-1.5"
+                className="w-full sm:w-auto bg-[#15803D] hover:bg-[#166534] text-white font-bold text-xs sm:text-sm px-4 py-2.5 min-h-[44px] rounded-lg shrink-0 transition-colors active:scale-95 shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <CheckCircle2 size={15} />
                 <span>View Pickup Details</span>
               </button>
             </div>
           ) : franchises.some(f => f.status === 'For Signing') ? (
-            <div className="bg-[#FEF3C7]/50 dark:bg-[#78350F]/20 text-[#1F1D1B] dark:text-[#F6F5F3] rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-[#F59E0B]/30 shadow-xs">
+            <div className="bg-[#FEF3C7]/50 dark:bg-[#78350F]/20 text-[#1F1D1B] dark:text-[#F6F5F3] rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-[#F59E0B]/30 shadow-sm">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-10 h-10 rounded-lg bg-[#F59E0B]/15 text-[#B45309] dark:text-[#FBBF24] flex items-center justify-center shrink-0">
                   <FileText size={20} />
@@ -800,7 +803,7 @@ const OperatorDashboard = () => {
               <StatusBadge status="For Signing" />
             </div>
           ) : franchises.some(f => f.status === 'Cancelled') ? (
-            <div className="bg-[#FEE2E2]/50 dark:bg-[#7F1D1D]/20 text-[#1F1D1B] dark:text-[#F6F5F3] rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-[#EF4444]/30 shadow-xs">
+            <div className="bg-[#FEE2E2]/50 dark:bg-[#7F1D1D]/20 text-[#1F1D1B] dark:text-[#F6F5F3] rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-[#EF4444]/30 shadow-sm">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-10 h-10 rounded-lg bg-[#EF4444]/15 text-[#B91C1C] dark:text-[#EF4444] flex items-center justify-center shrink-0">
                   <AlertCircle size={20} />
@@ -819,7 +822,7 @@ const OperatorDashboard = () => {
                   const attentionUnit = franchises.find(f => f.status === 'Cancelled');
                   handleFixIssues(attentionUnit);
                 }}
-                className="w-full sm:w-auto bg-[#B91C1C] hover:bg-[#991B1B] text-white font-bold text-xs sm:text-sm px-4 py-2.5 min-h-[44px] rounded-lg shrink-0 transition-colors active:scale-95 shadow-xs cursor-pointer flex items-center justify-center gap-1.5"
+                className="w-full sm:w-auto bg-[#B91C1C] hover:bg-[#991B1B] text-white font-bold text-xs sm:text-sm px-4 py-2.5 min-h-[44px] rounded-lg shrink-0 transition-colors active:scale-95 shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
               >
                 <RefreshCw size={15} />
                 <span>Fix Issues</span>
@@ -842,7 +845,7 @@ const OperatorDashboard = () => {
               {franchises.length < maxUnits && (
                 <button
                   onClick={() => navigate('/apply-franchise?mode=new&step=1')}
-                  className="w-full sm:w-auto bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-xs sm:text-sm px-4 py-2.5 min-h-[44px] rounded-lg shrink-0 transition-colors active:scale-95 shadow-xs cursor-pointer flex items-center justify-center gap-1.5"
+                  className="w-full sm:w-auto bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-xs sm:text-sm px-4 py-2.5 min-h-[44px] rounded-lg shrink-0 transition-colors active:scale-95 shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   <PlusCircle size={15} />
                   <span>Apply Now</span>
@@ -855,7 +858,7 @@ const OperatorDashboard = () => {
 
       {/* TODA PRESIDENT SUMMARY SECTION */}
       {isTodaPresident && !isLoading && (
-        <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4 sm:p-5 shadow-xs mb-6 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-l-4 border-l-[#D4AF37]">
+        <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4 sm:p-5 shadow-sm mb-6 transition-all flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div className="flex items-start sm:items-center gap-4">
             <div className="w-11 h-11 bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37] shrink-0 border border-[#E4E1DC] dark:border-[#2E2A27]">
               <Users size={22} />
@@ -869,7 +872,7 @@ const OperatorDashboard = () => {
           </div>
           <button
             onClick={() => navigate('/submit-members')}
-            className="w-full sm:w-auto px-5 py-2.5 min-h-[44px] bg-[#9E2A2B] hover:bg-[#7A1B22] text-white rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors active:scale-95 shadow-xs cursor-pointer shrink-0"
+            className="w-full sm:w-auto px-5 py-2.5 min-h-[44px] bg-[#9E2A2B] hover:bg-[#7A1B22] text-white rounded-lg text-xs font-bold flex items-center justify-center gap-2 transition-colors active:scale-95 shadow-sm cursor-pointer shrink-0"
           >
             <span>Open TODA Tools</span>
             <ArrowRight size={14} />
@@ -880,13 +883,13 @@ const OperatorDashboard = () => {
       {/* 2. FLEET CAPACITY SLOTS (Dynamic with Admin Settings, Clean & Minimal) */}
       <div 
         id="tour-capacity-card"
-        className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3 sm:p-4 shadow-xs mb-5 transition-all"
+        className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3 sm:p-4 shadow-sm mb-5 transition-all"
       >
         {isLoading ? (
           <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <SkeletonElement height="14px" className="w-28" rounded="rounded-xs" delay={30} />
-              <SkeletonElement height="12px" className="w-24" rounded="rounded-xs" delay={45} />
+              <SkeletonElement height="14px" className="w-28" rounded="rounded-sm" delay={30} />
+              <SkeletonElement height="12px" className="w-24" rounded="rounded-sm" delay={45} />
             </div>
             <div 
               className="grid gap-2"
@@ -971,11 +974,11 @@ const OperatorDashboard = () => {
       ) : franchises.length === 0 ? (
         <div 
           id="tour-empty-garage"
-          className="bg-white dark:bg-[#1C1917] rounded-lg border border-dashed border-[#E4E1DC] dark:border-[#2E2A27] p-8 sm:p-12 text-center text-[#6B6761] dark:text-[#A8A29E] flex flex-col items-center justify-center min-h-[260px] shadow-xs"
+          className="bg-white dark:bg-[#1C1917] rounded-lg border border-dashed border-[#E4E1DC] dark:border-[#2E2A27] p-8 sm:p-12 text-center text-[#6B6761] dark:text-[#A8A29E] flex flex-col items-center justify-center min-h-[260px] shadow-sm"
         >
           {/* Tricycle Icon Container */}
           <div className="relative mb-3">
-            <div className="relative w-16 h-16 bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-center p-2.5 shadow-xs">
+            <div className="relative w-16 h-16 bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-center p-2.5 shadow-sm">
               <TricycleIcon size={46} />
             </div>
           </div>
@@ -989,7 +992,7 @@ const OperatorDashboard = () => {
 
           <button 
             onClick={() => navigate('/apply-franchise?mode=new&step=1')} 
-            className="inline-flex items-center gap-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white px-5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors shadow-xs active:scale-95 cursor-pointer"
+            className="inline-flex items-center gap-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white px-5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors shadow-sm active:scale-95 cursor-pointer"
           >
             <PlusCircle size={16} />
             <span>{t('dashboard.applyNew', 'Apply New Franchise')}</span>
@@ -1000,7 +1003,7 @@ const OperatorDashboard = () => {
           {franchises.map((unit, unitIndex) => (
             <div 
               key={unit?._id} 
-              className="bg-white dark:bg-[#1C1917] rounded-lg p-5 sm:p-6 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs hover:border-[#9E2A2B]/40 dark:hover:border-[#D4AF37]/40 transition-colors flex flex-col justify-between relative overflow-hidden group"
+              className="bg-white dark:bg-[#1C1917] rounded-lg p-5 sm:p-6 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm hover:border-[#9E2A2B]/40 dark:hover:border-[#D4AF37]/40 transition-colors flex flex-col justify-between relative overflow-hidden group"
             >
               {/* Top Accent Strip */}
               <div className={`absolute top-0 left-0 w-full h-1 ${
@@ -1035,7 +1038,7 @@ const OperatorDashboard = () => {
                   </div>
 
                   <div className="text-right shrink-0">
-                    <span className="inline-block px-2.5 py-0.5 rounded-md bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs font-bold text-[#1F1D1B] dark:text-[#F6F5F3] uppercase tracking-tight shadow-xs">
+                    <span className="inline-block px-2.5 py-0.5 rounded-md bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs font-bold text-[#1F1D1B] dark:text-[#F6F5F3] uppercase tracking-tight shadow-sm">
                       {unit?.make || 'Tricycle'}
                     </span>
                     {unit?.made && (
@@ -1052,7 +1055,7 @@ const OperatorDashboard = () => {
                   className="grid grid-cols-2 gap-2.5 mb-3.5"
                 >
                   <div className="p-2.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-md bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37] shrink-0 shadow-xs">
+                    <div className="w-6 h-6 rounded-md bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37] shrink-0 shadow-sm">
                       <MapPin size={12} />
                     </div>
                     <div className="min-w-0">
@@ -1062,7 +1065,7 @@ const OperatorDashboard = () => {
                   </div>
 
                   <div className="p-2.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center gap-2">
-                    <div className="w-6 h-6 rounded-md bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37] shrink-0 shadow-xs">
+                    <div className="w-6 h-6 rounded-md bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37] shrink-0 shadow-sm">
                       <Hash size={12} />
                     </div>
                     <div className="min-w-0">
@@ -1133,7 +1136,7 @@ const OperatorDashboard = () => {
                                 </p>
                                 <button
                                   onClick={() => navigate(`/renew-franchise/${unit._id}`)}
-                                  className="bg-[#9E2A2B] hover:bg-[#7A1B22] text-white text-xs font-bold uppercase px-3.5 py-2.5 min-h-[44px] rounded-lg shadow-xs transition-colors shrink-0 ml-2 active:scale-95 cursor-pointer flex items-center justify-center"
+                                  className="bg-[#9E2A2B] hover:bg-[#7A1B22] text-white text-xs font-bold uppercase px-3.5 py-2.5 min-h-[44px] rounded-lg shadow-sm transition-colors shrink-0 ml-2 active:scale-95 cursor-pointer flex items-center justify-center"
                                 >
                                   Renew Now
                                 </button>
@@ -1268,12 +1271,12 @@ const OperatorDashboard = () => {
                 className="flex flex-col sm:flex-row gap-2 mt-auto pt-3 border-t border-[#E4E1DC] dark:border-[#2E2A27]"
               >
                 {unit?.status === 'Expired' ? (
-                  <button onClick={() => navigate(`/renew-franchise/${unit._id}`)} className="w-full bg-[#9E2A2B] hover:bg-[#7A1B22] text-white px-4 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-xs"><RefreshCw size={14} /> {t('dashboard.btnRenew', 'Renew Franchise')}</button>
+                  <button onClick={() => navigate(`/renew-franchise/${unit._id}`)} className="w-full bg-[#9E2A2B] hover:bg-[#7A1B22] text-white px-4 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-sm"><RefreshCw size={14} /> {t('dashboard.btnRenew', 'Renew Franchise')}</button>
                 ) : (unit?.status === 'Active' || unit?.status === 'Active - Under Warning') ? (
                   <div className="flex flex-col sm:flex-row w-full gap-2">
                     <button 
                       onClick={() => { setECopyUnit(unit); setIsECopyModalOpen(true); }} 
-                      className="flex-1 bg-[#15803D]/10 hover:bg-[#15803D]/20 text-[#15803D] dark:text-[#4ADE80] border border-[#15803D]/30 px-3.5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-xs"
+                      className="flex-1 bg-[#15803D]/10 hover:bg-[#15803D]/20 text-[#15803D] dark:text-[#4ADE80] border border-[#15803D]/30 px-3.5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-sm"
                       title="View Approved MTOP Certificate with Watermark"
                     >
                       <Award size={15} /> 
@@ -1281,13 +1284,13 @@ const OperatorDashboard = () => {
                     </button>
                     <button 
                       onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} 
-                      className="bg-[#F6F5F3] hover:bg-[#EAE7E1] dark:bg-[#14110F] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] px-3.5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors active:scale-95 cursor-pointer shadow-xs"
+                      className="bg-[#F6F5F3] hover:bg-[#EAE7E1] dark:bg-[#14110F] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] px-3.5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors active:scale-95 cursor-pointer shadow-sm"
                     >
                       {t('dashboard.btnViewDetails', 'Details')}
                     </button>
                     <button 
                       onClick={() => setVoluntaryCancelTarget(unit)} 
-                      className="bg-white hover:bg-rose-50 dark:bg-[#1C1917] dark:hover:bg-rose-950/30 text-[#B91C1C] dark:text-[#F87171] border border-rose-200 dark:border-rose-900/60 px-3 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-xs shrink-0"
+                      className="bg-white hover:bg-rose-50 dark:bg-[#1C1917] dark:hover:bg-rose-950/30 text-[#B91C1C] dark:text-[#F87171] border border-rose-200 dark:border-rose-900/60 px-3 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-sm shrink-0"
                       title="Request voluntary cancellation of this franchise"
                     >
                       <XCircle size={14} />
@@ -1296,13 +1299,13 @@ const OperatorDashboard = () => {
                   </div>
                 ) : unit?.status === 'Cancellation Requested' ? (
                   <div className="flex flex-col sm:flex-row w-full gap-2">
-                    <div className="flex-1 bg-[#FFFBEB] dark:bg-[#451A03]/40 border border-[#FDE68A] dark:border-[#92400E] text-[#B45309] dark:text-[#FBBF24] px-3.5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-xs select-none">
+                    <div className="flex-1 bg-[#FFFBEB] dark:bg-[#451A03]/40 border border-[#FDE68A] dark:border-[#92400E] text-[#B45309] dark:text-[#FBBF24] px-3.5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-sm select-none">
                       <Clock size={15} /> 
                       <span>Cancellation Under BPLO Review</span>
                     </div>
                     <button 
                       onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} 
-                      className="bg-[#F6F5F3] hover:bg-[#EAE7E1] dark:bg-[#14110F] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] px-3.5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors active:scale-95 cursor-pointer shadow-xs"
+                      className="bg-[#F6F5F3] hover:bg-[#EAE7E1] dark:bg-[#14110F] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] px-3.5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors active:scale-95 cursor-pointer shadow-sm"
                     >
                       {t('dashboard.btnViewDetails', 'Details')}
                     </button>
@@ -1311,57 +1314,57 @@ const OperatorDashboard = () => {
                   <div className="flex flex-col sm:flex-row w-full gap-2">
                     <button 
                       onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} 
-                      className="flex-1 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-xs sm:text-sm py-2.5 px-3.5 min-h-[44px] rounded-lg flex items-center justify-center gap-1.5 shadow-xs active:scale-95 cursor-pointer"
+                      className="flex-1 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-xs sm:text-sm py-2.5 px-3.5 min-h-[44px] rounded-lg flex items-center justify-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
                     >
                       <Banknote size={15} /> 
                       <span>Pay ₱{systemFranchiseFee} at Cashier</span>
                     </button>
                     <button 
                       onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} 
-                      className="bg-[#F6F5F3] hover:bg-[#EAE7E1] dark:bg-[#14110F] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] px-3.5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors active:scale-95 cursor-pointer shadow-xs"
+                      className="bg-[#F6F5F3] hover:bg-[#EAE7E1] dark:bg-[#14110F] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] px-3.5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors active:scale-95 cursor-pointer shadow-sm"
                     >
                       {t('dashboard.btnViewDetails', 'Details')}
                     </button>
                   </div>
                 ) : unit?.status === 'For Signing' ? (
                   <div className="flex flex-col sm:flex-row w-full gap-2">
-                    <div className="flex-1 bg-[#FFFBEB] dark:bg-[#451A03]/40 border border-[#FDE68A] dark:border-[#92400E] text-[#B45309] dark:text-[#FBBF24] px-3.5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-xs select-none">
+                    <div className="flex-1 bg-[#FFFBEB] dark:bg-[#451A03]/40 border border-[#FDE68A] dark:border-[#92400E] text-[#B45309] dark:text-[#FBBF24] px-3.5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-sm select-none">
                       <FileText size={15} /> 
                       <span>Paid • Routing for Signatures</span>
                     </div>
                     <button 
                       onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} 
-                      className="bg-[#F6F5F3] hover:bg-[#EAE7E1] dark:bg-[#14110F] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] px-3.5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors active:scale-95 cursor-pointer shadow-xs"
+                      className="bg-[#F6F5F3] hover:bg-[#EAE7E1] dark:bg-[#14110F] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] px-3.5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors active:scale-95 cursor-pointer shadow-sm"
                     >
                       {t('dashboard.btnViewDetails', 'Details')}
                     </button>
                   </div>
                 ) : unit?.status === 'Ready for Pickup' ? (
                   <div className="flex flex-col sm:flex-row w-full gap-2">
-                    <div className="flex-1 bg-[#F0FDF4] dark:bg-[#052E16]/40 border border-[#BBF7D0] dark:border-[#166534] text-[#15803D] dark:text-[#4ADE80] px-3.5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-xs select-none">
+                    <div className="flex-1 bg-[#F0FDF4] dark:bg-[#052E16]/40 border border-[#BBF7D0] dark:border-[#166534] text-[#15803D] dark:text-[#4ADE80] px-3.5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-sm select-none">
                       <CheckCircle2 size={15} /> 
                       <span>Signed • Claim at BPLO</span>
                     </div>
                     <button 
                       onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} 
-                      className="bg-[#F6F5F3] hover:bg-[#EAE7E1] dark:bg-[#14110F] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] px-3.5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors active:scale-95 cursor-pointer shadow-xs"
+                      className="bg-[#F6F5F3] hover:bg-[#EAE7E1] dark:bg-[#14110F] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] px-3.5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors active:scale-95 cursor-pointer shadow-sm"
                     >
                       {t('dashboard.btnViewDetails', 'Details')}
                     </button>
                   </div>
                 ) : unit?.status === 'Cancelled' ? (
                   unit?.cancellationDetails?.reason ? (
-                    <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="w-full bg-[#F6F5F3] hover:bg-[#EAE7E1] dark:bg-[#14110F] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] px-4 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors active:scale-95 cursor-pointer shadow-xs">
+                    <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="w-full bg-[#F6F5F3] hover:bg-[#EAE7E1] dark:bg-[#14110F] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] px-4 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors active:scale-95 cursor-pointer shadow-sm">
                       {t('dashboard.btnViewDetails', 'View Details')}
                     </button>
                   ) : (
-                    <button onClick={() => handleFixIssues(unit)} className="w-full bg-[#B91C1C] hover:bg-[#991B1B] text-white px-4 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-xs">
+                    <button onClick={() => handleFixIssues(unit)} className="w-full bg-[#B91C1C] hover:bg-[#991B1B] text-white px-4 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-sm">
                       <RefreshCw size={14} /> {t('dashboard.btnFixIssues', 'Fix Issues')}
                     </button>
                   )
                 ) : (
                   <div className="flex flex-col sm:flex-row items-center w-full gap-2">
-                    <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="w-full sm:flex-1 bg-[#F6F5F3] hover:bg-[#EAE7E1] dark:bg-[#14110F] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] px-4 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors active:scale-95 cursor-pointer shadow-xs">{t('dashboard.btnViewDetails', 'View Details')}</button>
+                    <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="w-full sm:flex-1 bg-[#F6F5F3] hover:bg-[#EAE7E1] dark:bg-[#14110F] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] px-4 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors active:scale-95 cursor-pointer shadow-sm">{t('dashboard.btnViewDetails', 'View Details')}</button>
                     {(unit?.status === 'Pending' || unit?.status === 'For Signing' || unit?.status === 'Ready for Pickup') && (
                       <button 
                         onClick={() => setCancelModal({
@@ -1520,7 +1523,7 @@ const OperatorDashboard = () => {
                 type="button"
                 disabled={cancelModal.isSubmitting || (cancelModal.reason === "Other reason (Please specify below)" && !cancelModal.customReason?.trim())}
                 onClick={handleConfirmCancel}
-                className="flex items-center gap-1.5 px-5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs text-white bg-[#B91C1C] hover:bg-[#991B1B] transition-colors shadow-xs active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex items-center gap-1.5 px-5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs text-white bg-[#B91C1C] hover:bg-[#991B1B] transition-colors shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {cancelModal.isSubmitting ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={14} />}
                 {cancelModal.isSubmitting ? 'Cancelling...' : 'Confirm Cancellation'}
@@ -1572,7 +1575,7 @@ const OperatorDashboard = () => {
 
             {/* Header Profile Info */}
             <div className="flex items-center gap-3.5 pb-4 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
-              <div className="w-12 h-12 rounded-lg border-2 border-[#D4AF37] shadow-xs overflow-hidden bg-[#9E2A2B] text-white flex items-center justify-center shrink-0">
+              <div className="w-12 h-12 rounded-lg border-2 border-[#D4AF37] shadow-sm overflow-hidden bg-[#9E2A2B] text-white flex items-center justify-center shrink-0">
                 {profilePic ? (
                   <img src={profilePic} alt="User" className="w-full h-full object-cover" />
                 ) : (
@@ -1671,7 +1674,7 @@ const OperatorDashboard = () => {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="w-full flex items-center justify-center gap-2 p-3 min-h-[44px] rounded-lg bg-[#FEE2E2]/60 hover:bg-[#FEE2E2] dark:bg-[#7F1D1D]/30 dark:hover:bg-[#7F1D1D]/50 text-[#B91C1C] dark:text-[#EF4444] font-bold text-sm transition-colors active:scale-98 cursor-pointer"
+                className="w-full flex items-center justify-center gap-2 p-3 min-h-[44px] rounded-lg bg-[#FEE2E2]/60 hover:bg-[#FEE2E2] dark:bg-[#7F1D1D]/30 dark:hover:bg-[#7F1D1D]/50 text-[#B91C1C] dark:text-[#EF4444] font-bold text-sm transition-colors active:scale-[0.98] cursor-pointer"
               >
                 <LogOut size={18} />
                 <span>Sign Out / Mag-logout</span>
@@ -1757,10 +1760,10 @@ const OperatorDashboard = () => {
                         if (notif.relatedFranchise) navigate('/operator-dashboard');
                         setIsNotifOpen(false);
                       }}
-                      className={`p-4 cursor-pointer transition-colors border-l-4 flex items-start gap-3.5 ${
+                      className={`p-4 cursor-pointer transition-colors border-b border-[#E4E1DC] dark:border-[#2E2A27] flex items-start gap-3.5 ${
                         notif.isRead 
-                          ? 'bg-white dark:bg-[#1C1917] border-l-transparent hover:bg-[#F6F5F3] dark:hover:bg-[#14110F]' 
-                          : 'bg-[#FEF3C7]/20 dark:bg-[#78350F]/10 ' + visuals.accentBorder + ' hover:bg-[#FEF3C7]/30 dark:hover:bg-[#78350F]/20'
+                          ? 'bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#14110F]' 
+                          : 'bg-[#FEF3C7]/20 dark:bg-[#78350F]/10 hover:bg-[#FEF3C7]/30 dark:hover:bg-[#78350F]/20'
                       }`}
                     >
                       <div className="mt-0.5 shrink-0">

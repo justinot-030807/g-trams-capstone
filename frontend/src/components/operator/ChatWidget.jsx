@@ -2,9 +2,11 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { MessageCircle, X, Send, Loader2, ChevronDown, Check, CheckCheck, Trash2, Sparkles, HelpCircle } from 'lucide-react';
 import { useSocket } from '../../context/SocketContext';
 import { renderFormattedAnnouncement } from '../admin/AdminBroadcastCenter';
+import { useConfirm } from '../ui/ConfirmContext';
 
 const ChatWidget = ({ inline = false }) => {
   const { socket } = useSocket();
+  const { confirm } = useConfirm();
   const [isOpen, setIsOpen] = useState(inline ? true : false);
   const [messages, setMessages] = useState([]);
   const [isBroadcast, setIsBroadcast] = useState(false);
@@ -100,7 +102,13 @@ const ChatWidget = ({ inline = false }) => {
   }, [API_URL, fetchThreads]);
 
   const handleDeleteMessage = async (msgId) => {
-    if (!window.confirm('Are you sure you want to delete this message?')) return;
+    const ok = await confirm({
+      title: 'Delete message?',
+      description: 'This message will be permanently removed from the conversation.',
+      confirmText: 'Delete Message',
+      variant: 'destructive',
+    });
+    if (!ok) return;
     try {
       const res = await fetch(`${API_URL}/api/v1/chat/messages/${msgId}`, {
         method: 'DELETE',
@@ -119,7 +127,13 @@ const ChatWidget = ({ inline = false }) => {
 
   const handleDeleteThread = async (e, threadId) => {
     e.stopPropagation();
-    if (!window.confirm('Delete this entire conversation? This action cannot be undone.')) return;
+    const ok = await confirm({
+      title: 'Delete conversation?',
+      description: 'This entire conversation thread and its messages will be removed. This action cannot be undone.',
+      confirmText: 'Delete Conversation',
+      variant: 'destructive',
+    });
+    if (!ok) return;
     try {
       const res = await fetch(`${API_URL}/api/v1/chat/threads/${threadId}`, {
         method: 'DELETE',
@@ -433,7 +447,7 @@ const ChatWidget = ({ inline = false }) => {
         >
           {isOpen ? <X size={24} /> : <MessageCircle size={24} />}
           {!isOpen && unreadCount > 0 && (
-            <span className="absolute -top-1 -right-1 min-w-[22px] h-5.5 bg-[#B91C1C] text-white text-xs font-bold rounded-full flex items-center justify-center px-1.5 shadow-xs">
+            <span className="absolute -top-1 -right-1 min-w-[22px] h-5.5 bg-[#B91C1C] text-white text-xs font-bold rounded-full flex items-center justify-center px-1.5 shadow-sm">
               {unreadCount > 9 ? '9+' : unreadCount}
             </span>
           )}
@@ -452,7 +466,7 @@ const ChatWidget = ({ inline = false }) => {
       {/* Chat Panel - Enlarge operator floating widget and inline container */}
       {isOpen && (
         <div className={inline 
-          ? "w-full h-full min-h-[620px] max-h-[740px] bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col overflow-hidden shadow-xs" 
+          ? "w-full h-full min-h-[620px] max-h-[740px] bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col overflow-hidden shadow-sm" 
           : "fixed z-[95] bottom-4 sm:bottom-6 md:bottom-8 left-4 right-4 sm:left-auto sm:right-6 w-auto sm:w-[500px] md:w-[540px] max-w-[560px] h-[85vh] max-h-[720px] bg-white dark:bg-[#1C1917] rounded-lg shadow-xl border border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col overflow-hidden animate-in slide-in-from-bottom duration-250 print:hidden"
         }>
           
@@ -466,7 +480,7 @@ const ChatWidget = ({ inline = false }) => {
           )}
           
           {/* Header */}
-          <div className="bg-[#9E2A2B] border-b border-[#7A1B22] text-white px-5 py-4 flex items-center justify-between shrink-0 shadow-xs">
+          <div className="bg-[#9E2A2B] border-b border-[#7A1B22] text-white px-5 py-4 flex items-center justify-between shrink-0 shadow-sm">
             <div className="min-w-0 pr-3">
               <h3 className="font-bold text-sm sm:text-base tracking-tight truncate">
                 {isBroadcast 
@@ -550,7 +564,7 @@ const ChatWidget = ({ inline = false }) => {
                       <div
                         key={t._id}
                         onClick={() => setActiveThread(t)}
-                        className="w-full text-left p-3.5 sm:p-4 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] hover:border-[#9E2A2B] dark:hover:border-[#D4AF37] transition-all flex items-center justify-between group cursor-pointer shadow-xs"
+                        className="w-full text-left p-3.5 sm:p-4 bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] hover:border-[#9E2A2B] dark:hover:border-[#D4AF37] transition-all flex items-center justify-between group cursor-pointer shadow-sm"
                       >
                         <div className="overflow-hidden pr-3">
                           <p className="font-bold text-sm text-[#1F1D1B] dark:text-white truncate">{title}</p>
@@ -598,7 +612,7 @@ const ChatWidget = ({ inline = false }) => {
                       <button
                         key={i}
                         onClick={() => { setInput(q); }}
-                        className="block w-full p-2.5 sm:p-3 text-xs sm:text-sm text-left font-medium text-[#1F1D1B] dark:text-[#EAE7E1] bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg hover:border-[#9E2A2B] dark:hover:border-[#D4AF37] transition-all cursor-pointer shadow-xs min-h-[44px]"
+                        className="block w-full p-2.5 sm:p-3 text-xs sm:text-sm text-left font-medium text-[#1F1D1B] dark:text-[#EAE7E1] bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg hover:border-[#9E2A2B] dark:hover:border-[#D4AF37] transition-all cursor-pointer shadow-sm min-h-[44px]"
                       >
                         {q}
                       </button>
@@ -614,8 +628,8 @@ const ChatWidget = ({ inline = false }) => {
                     <div key={msg._id || idx} className={`flex group ${isMine ? 'justify-end' : 'justify-start'}`}>
                       <div className={`max-w-[85%] sm:max-w-[80%] px-4 py-2.5 rounded-lg text-xs sm:text-sm leading-relaxed ${
                         isMine
-                          ? 'bg-[#9E2A2B] text-white rounded-br-xs shadow-xs'
-                          : 'bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-bl-xs shadow-xs'
+                          ? 'bg-[#9E2A2B] text-white rounded-br-sm shadow-sm'
+                          : 'bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-bl-xs shadow-sm'
                       }`}>
                         {!isMine && msg.sender && (
                           <p className={`text-xs font-bold mb-1 ${
@@ -662,11 +676,11 @@ const ChatWidget = ({ inline = false }) => {
                 
                 {isTyping && (
                   <div className="flex justify-start">
-                    <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] px-4 py-2.5 rounded-lg rounded-bl-xs shadow-xs">
+                    <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] px-4 py-2.5 rounded-lg rounded-bl-sm shadow-sm">
                       <div className="flex items-center gap-1.5">
-                        <div className="w-2 h-2 bg-[#A8A29E] rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
-                        <div className="w-2 h-2 bg-[#A8A29E] rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
-                        <div className="w-2 h-2 bg-[#A8A29E] rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+                        <div className="w-2 h-2 bg-[#A8A29E] rounded-full animate-pulse" style={{ animationDelay: '0ms' }} />
+                        <div className="w-2 h-2 bg-[#A8A29E] rounded-full animate-pulse" style={{ animationDelay: '150ms' }} />
+                        <div className="w-2 h-2 bg-[#A8A29E] rounded-full animate-pulse" style={{ animationDelay: '300ms' }} />
                       </div>
                     </div>
                   </div>
@@ -734,7 +748,7 @@ const ChatWidget = ({ inline = false }) => {
                   disabled={!input.trim() || isSending}
                   className={`shrink-0 w-11 h-11 rounded-lg flex items-center justify-center transition-all cursor-pointer min-h-[44px] min-w-[44px] ${
                     input.trim() && !isSending
-                      ? 'bg-[#9E2A2B] hover:bg-[#7A1B22] text-white shadow-xs'
+                      ? 'bg-[#9E2A2B] hover:bg-[#7A1B22] text-white shadow-sm'
                       : 'bg-[#E4E1DC] dark:bg-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] cursor-not-allowed'
                   }`}
                   title="Send message"

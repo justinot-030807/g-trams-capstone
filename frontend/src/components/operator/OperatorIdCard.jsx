@@ -89,7 +89,7 @@ const OperatorIdCard = ({ user }) => {
             <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">Scan to verify operator credentials</p>
           </div>
           
-          <div className="bg-white p-3.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-2xs mb-4">
+          <div className="bg-white p-3.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm mb-4">
             <QRCodeSVG value={qrData} size={150} level="H" includeMargin={false} />
           </div>
 

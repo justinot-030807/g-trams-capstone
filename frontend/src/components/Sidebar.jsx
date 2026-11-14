@@ -51,7 +51,7 @@ const Sidebar = ({ isOpen, onClose }) => {
   const isBploStaff = storedRole === 'bplo staff';
   const isOperatorOrToda = storedRole === 'operator' || storedRole === 'toda president';
   const isCashier = storedRole === 'cashier';
-  const hideMobileSidebar = isOperatorOrToda || isCashier;
+  const hideMobileSidebar = isOperatorOrToda;
   const role = storedRole;
 
   const fetchChatUnreadCount = useCallback(async () => {
@@ -377,7 +377,7 @@ const Sidebar = ({ isOpen, onClose }) => {
       )}
 
       <aside 
-        className={`bg-[#9E2A2B] dark:bg-[#14110F] fixed inset-y-0 left-0 flex flex-col justify-between shadow-xs z-50 transition-all duration-200 ease-in-out border-r border-[#E4E1DC]/20 dark:border-[#2E2A27] print:hidden print-hide ${
+        className={`bg-[#9E2A2B] dark:bg-[#14110F] fixed inset-y-0 left-0 flex flex-col justify-between shadow-sm z-50 transition-all duration-200 ease-in-out border-r border-[#E4E1DC]/20 dark:border-[#2E2A27] print:hidden print-hide ${
           hideMobileSidebar ? 'hidden md:flex' : 'flex'
         } ${
           isOpen 
@@ -421,10 +421,10 @@ const Sidebar = ({ isOpen, onClose }) => {
                       if (window.innerWidth < 768 && onClose) onClose();
                     }}
                     title={item.name}
-                    className={`w-full flex items-center px-3 py-2 rounded-md text-xs sm:text-sm transition-colors duration-100 ${
+                    className={`w-full flex items-center px-3 py-2.5 rounded-lg text-xs sm:text-sm transition-colors duration-100 ${
                       isActive 
-                        ? 'border-l-4 border-[#D4AF37] bg-black/25 text-white font-medium pl-2' 
-                        : 'border-l-4 border-transparent text-white/80 hover:bg-white/10 hover:text-white font-normal pl-2'
+                        ? 'bg-black/25 text-white font-semibold ring-1 ring-[#D4AF37]/40' 
+                        : 'text-white/80 hover:bg-white/10 hover:text-white font-normal'
                     } ${isOpen ? 'justify-between' : 'justify-center'}`}
                   >
                     <div className="flex items-center gap-3 min-w-0">
@@ -470,10 +470,10 @@ const Sidebar = ({ isOpen, onClose }) => {
                   <button
                     onClick={() => toggleSubMenu(item.id)}
                     title={item.name}
-                    className={`w-full flex items-center px-3 py-2 rounded-md text-xs sm:text-sm transition-colors duration-100 ${
+                    className={`w-full flex items-center px-3 py-2.5 rounded-lg text-xs sm:text-sm transition-colors duration-100 ${
                       isAnySubActive 
-                        ? 'border-l-4 border-[#D4AF37]/80 bg-black/20 text-white font-medium pl-2' 
-                        : 'border-l-4 border-transparent text-white/80 hover:bg-white/10 hover:text-white font-normal pl-2'
+                        ? 'bg-black/20 text-white font-semibold ring-1 ring-[#D4AF37]/30' 
+                        : 'text-white/80 hover:bg-white/10 hover:text-white font-normal'
                     } ${isOpen ? 'justify-between' : 'justify-center'}`}
                   >
                     <div className="flex items-center gap-3 min-w-0">

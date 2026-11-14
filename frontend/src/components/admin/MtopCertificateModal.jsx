@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { MUNICIPAL_SIGNATORY } from '../../utils/constants';
 import { Printer, X, Award, Download, Loader2, CheckCircle2, FileSpreadsheet, QrCode } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
@@ -55,7 +56,7 @@ const MtopCertificateModal = ({ isOpen, onClose, unit, isECopy = false }) => {
       });
     } catch (err) {
       console.error('Error downloading original MTOP Excel:', err);
-      alert('Could not download Excel file. Please try again.');
+      toast.error('Could not download Excel file. Please try again.');
     } finally {
       setIsDownloadingExcel(false);
     }
@@ -89,7 +90,7 @@ const MtopCertificateModal = ({ isOpen, onClose, unit, isECopy = false }) => {
       setTimeout(() => setDownloadSuccess(false), 3000);
     } catch (err) {
       console.error('Error downloading MTOP image:', err);
-      alert('Could not download image. Please use "Print / Save PDF" instead.');
+      toast.error('Could not download image. Please use "Print / Save PDF" instead.');
     } finally {
       setIsDownloading(false);
     }

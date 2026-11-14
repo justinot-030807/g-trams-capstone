@@ -61,9 +61,9 @@ const DocumentUploadCard = ({
         id={`card-${id}`}
         className={`relative border rounded-lg p-3.5 sm:p-4 transition-all flex flex-col justify-between overflow-hidden group ${
         displayError
-          ? 'bg-red-50/20 dark:bg-red-950/20 border-2 border-red-500 ring-2 ring-red-500/20 shadow-xs'
+          ? 'bg-red-50/20 dark:bg-red-950/20 border-2 border-red-500 ring-2 ring-red-500/20 shadow-sm'
           : hasFile 
-            ? 'bg-white dark:bg-[#1C1917] border-emerald-600/40 dark:border-emerald-500/40 shadow-xs' 
+            ? 'bg-white dark:bg-[#1C1917] border-emerald-600/40 dark:border-emerald-500/40 shadow-sm' 
             : 'bg-white dark:bg-[#1C1917] border-[#E4E1DC] dark:border-[#2E2A27] hover:border-[#9E2A2B]/40 dark:hover:border-[#D4AF37]/40'
       }`}>
         
@@ -145,7 +145,7 @@ const DocumentUploadCard = ({
               <button
                 type="button"
                 onClick={() => cameraInputRef.current?.click()}
-                className="flex-1 flex items-center justify-center gap-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white px-4 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-colors shadow-xs active:scale-95 cursor-pointer min-h-[44px]"
+                className="flex-1 flex items-center justify-center gap-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white px-4 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-colors shadow-sm active:scale-95 cursor-pointer min-h-[44px]"
               >
                 <Camera size={16} />
                 <span>Take Photo</span>
@@ -154,7 +154,7 @@ const DocumentUploadCard = ({
               <button
                 type="button"
                 onClick={() => galleryInputRef.current?.click()}
-                className="flex-1 flex items-center justify-center gap-1.5 bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] px-4 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-colors active:scale-95 cursor-pointer shadow-xs min-h-[44px]"
+                className="flex-1 flex items-center justify-center gap-1.5 bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] px-4 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-colors active:scale-95 cursor-pointer shadow-sm min-h-[44px]"
               >
                 <Upload size={16} />
                 <span>Upload File</span>
@@ -171,7 +171,7 @@ const DocumentUploadCard = ({
                 <button
                   type="button"
                   onClick={() => onPreviewZoom && onPreviewZoom({ url: previewUrl, title: label, isPdf: true })}
-                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] transition-colors border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs cursor-pointer active:scale-95 min-h-[44px]"
+                  className="inline-flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] transition-colors border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm cursor-pointer active:scale-95 min-h-[44px]"
                 >
                   <ZoomIn size={15} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                   <span>Preview PDF</span>
@@ -201,7 +201,7 @@ const DocumentUploadCard = ({
 
                     {/* Centered Frosted Scanner Badge */}
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-                      <div className="bg-black/80 backdrop-blur-xs px-3.5 py-1.5 rounded-full border border-[#9E2A2B]/40 dark:border-[#D4AF37]/50 shadow-md flex items-center gap-2 text-white">
+                      <div className="bg-black/80 backdrop-blur-sm px-3.5 py-1.5 rounded-full border border-[#9E2A2B]/40 dark:border-[#D4AF37]/50 shadow-md flex items-center gap-2 text-white">
                         <Loader2 size={13} className="animate-spin text-[#D4AF37]" />
                         <span className="text-xs font-semibold tracking-wide">Reading document...</span>
                       </div>

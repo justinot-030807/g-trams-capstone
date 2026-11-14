@@ -213,7 +213,29 @@ const translations = {
     'common.justNow': 'Just now',
     'common.today': 'Today',
     'common.viewAll': 'View all',
-    'common.of': 'of'
+    'common.of': 'of',
+
+    // Settings Hub (Operator / Shared)
+    'settings.editProfile': 'Edit profile',
+    'settings.changePhoto': 'Change profile photo',
+    'settings.credentialsGroup': 'Operator Credentials',
+    'settings.digitalId': 'Digital ID Card',
+    'settings.verified': 'Verified',
+    'settings.documentVault': 'Document Vault',
+    'settings.fileSingular': 'file',
+    'settings.filePlural': 'files',
+    'settings.preferencesGroup': 'Preferences',
+    'settings.notifications': 'Notifications and sounds',
+    'settings.language': 'Language',
+    'settings.theme': 'Theme',
+    'settings.light': 'Light',
+    'settings.dark': 'Dark',
+    'settings.accountGroup': 'Account',
+    'settings.password': 'Password',
+    'settings.support': 'Support',
+    'settings.clearCache': 'Clear cache',
+    'settings.termsPrivacy': 'Terms and Privacy Policy',
+    'settings.logout': 'Logout'
   },
   fil: {
     // TopNavbar & Sidebar
@@ -427,7 +449,29 @@ const translations = {
     'common.justNow': 'Kani-kanina lang',
     'common.today': 'Ngayon',
     'common.viewAll': 'Tingnan lahat',
-    'common.of': 'sa'
+    'common.of': 'sa',
+
+    // Settings Hub (Operator / Shared)
+    'settings.editProfile': 'I-edit ang profile',
+    'settings.changePhoto': 'Palitan ang larawan sa profile',
+    'settings.credentialsGroup': 'Mga Kredensyal ng Operator',
+    'settings.digitalId': 'Digital ID Card',
+    'settings.verified': 'Beripikado',
+    'settings.documentVault': 'Tagoan ng Dokumento',
+    'settings.fileSingular': 'file',
+    'settings.filePlural': 'mga file',
+    'settings.preferencesGroup': 'Mga Kagustuhan',
+    'settings.notifications': 'Mga abiso at tunog',
+    'settings.language': 'Wika',
+    'settings.theme': 'Tema',
+    'settings.light': 'Maliwanag',
+    'settings.dark': 'Madilim',
+    'settings.accountGroup': 'Account',
+    'settings.password': 'Password',
+    'settings.support': 'Suporta',
+    'settings.clearCache': 'Linisin ang cache',
+    'settings.termsPrivacy': 'Mga Tuntunin at Patakaran sa Privacy',
+    'settings.logout': 'Mag-log out'
   }
 };
 

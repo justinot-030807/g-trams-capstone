@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   X, FileText, User, Receipt, ShieldCheck, FileCheck, 
   CheckCircle2, XCircle, ExternalLink, Loader2, AlertTriangle, Check,
@@ -21,11 +21,41 @@ const AdminApplicationSummaryModal = ({
   onPrev,
   currentIndex,
   totalCount,
+  franchiseFee: franchiseFeeProp,
   isProcessing = false
 }) => {
   const [previewDoc, setPreviewDoc] = useState(null); // { label, url }
   const [isAiNoticeOpen, setIsAiNoticeOpen] = useState(false);
   const [showOfficialForm, setShowOfficialForm] = useState(false);
+  const [fetchedFee, setFetchedFee] = useState(500);
+
+  useEffect(() => {
+    if (!isOpen || franchiseFeeProp != null) return;
+    let active = true;
+    const token = localStorage.getItem('token');
+    fetch(`${import.meta.env.VITE_API_URL}/api/v1/settings`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (active && data?.franchiseFee != null && !Number.isNaN(Number(data.franchiseFee))) {
+          setFetchedFee(Number(data.franchiseFee));
+        }
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, [isOpen, franchiseFeeProp]);
+
+  const effectiveFee = Number(franchiseFeeProp ?? fetchedFee ?? 500);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose?.();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen || !franchise) return null;
 
@@ -51,6 +81,9 @@ const AdminApplicationSummaryModal = ({
 
   return (
     <div 
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="admin-summary-modal-title"
       className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200"
       onClick={onClose}
     >
@@ -66,7 +99,7 @@ const AdminApplicationSummaryModal = ({
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 className="font-semibold text-base text-[#1F1D1B] dark:text-white truncate">
+                <h3 id="admin-summary-modal-title" className="font-semibold text-base text-[#1F1D1B] dark:text-white truncate">
                   Application Summary
                 </h3>
                 <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border shrink-0 ${
@@ -86,7 +119,7 @@ const AdminApplicationSummaryModal = ({
                   </span>
                 )}
               </div>
-              <p className="text-xs text-slate-500 dark:text-slate-400 truncate mt-0.5">
+              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] truncate mt-0.5">
                 Review complete details before final decision
               </p>
             </div>
@@ -94,24 +127,24 @@ const AdminApplicationSummaryModal = ({
           
           <div className="flex items-center gap-2 shrink-0">
             {totalCount > 1 && (
-              <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 rounded-xl p-1 border border-slate-200 dark:border-slate-700">
+              <div className="flex items-center gap-1 bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg p-1 border border-[#E4E1DC] dark:border-[#2E2A27]">
                 <button
                   type="button"
                   onClick={onPrev}
                   disabled={!onPrev}
-                  className="p-1 rounded-lg hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 disabled:opacity-30 disabled:hover:bg-transparent transition-colors cursor-pointer"
+                  className="p-1 rounded-lg hover:bg-white dark:hover:bg-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] disabled:opacity-30 disabled:hover:bg-transparent transition-colors cursor-pointer"
                   title="Previous application"
                 >
                   <ChevronLeft size={16} />
                 </button>
-                <span className="text-xs font-bold px-1.5 text-slate-600 dark:text-slate-300 min-w-[42px] text-center">
+                <span className="text-xs font-bold px-1.5 text-[#1F1D1B] dark:text-[#EAE7E1] min-w-[42px] text-center">
                   {(currentIndex ?? 0) + 1} / {totalCount}
                 </span>
                 <button
                   type="button"
                   onClick={onNext}
                   disabled={!onNext}
-                  className="p-1 rounded-lg hover:bg-white dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 disabled:opacity-30 disabled:hover:bg-transparent transition-colors cursor-pointer"
+                  className="p-1 rounded-lg hover:bg-white dark:hover:bg-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] disabled:opacity-30 disabled:hover:bg-transparent transition-colors cursor-pointer"
                   title="Next application"
                 >
                   <ChevronRight size={16} />
@@ -121,7 +154,7 @@ const AdminApplicationSummaryModal = ({
             <button 
               type="button"
               onClick={onClose}
-              className="p-2 rounded-full text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+              className="p-2 rounded-full text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] transition-colors cursor-pointer"
             >
               <X size={18} />
             </button>
@@ -132,7 +165,7 @@ const AdminApplicationSummaryModal = ({
         <div className="overflow-y-auto py-4 space-y-4 flex-1 pr-1">
           {/* AI Discrepancy Banner Accordion */}
           {franchise.aiDiscrepancies && franchise.aiDiscrepancies.length > 0 && (
-            <div className="bg-amber-50/90 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 rounded-xl text-xs text-amber-900 dark:text-amber-200 overflow-hidden shadow-xs">
+            <div className="bg-amber-50/90 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 rounded-lg text-xs text-amber-900 dark:text-amber-200 overflow-hidden shadow-sm">
               <button
                 type="button"
                 onClick={() => setIsAiNoticeOpen(prev => !prev)}
@@ -145,7 +178,7 @@ const AdminApplicationSummaryModal = ({
                   </span>
                 </div>
                 <div className="flex items-center gap-1 text-[11px] font-semibold text-amber-800 dark:text-amber-300 shrink-0">
-                  <span>{isAiNoticeOpen ? 'Itago' : 'Ipakita'}</span>
+                  <span>{isAiNoticeOpen ? 'Hide' : 'Show'}</span>
                   {isAiNoticeOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                 </div>
               </button>
@@ -154,11 +187,11 @@ const AdminApplicationSummaryModal = ({
                 <div className="p-3 pt-0 border-t border-amber-200 dark:border-amber-900/40 space-y-1 mt-1">
                   {(franchise?.aiDiscrepancies || []).map((d, i) => (
                     <div key={i} className="text-[11px] flex items-center justify-between gap-2 border-b border-amber-200/60 dark:border-amber-900/40 pb-1 last:border-0 last:pb-0">
-                      <span className="font-medium text-slate-700 dark:text-slate-300">{d.label || d.field}:</span>
+                      <span className="font-medium text-[#1F1D1B] dark:text-[#EAE7E1]">{d.label || d.field}:</span>
                       <span className="text-right">
                         <span className="text-red-600 dark:text-red-400 font-mono font-bold mr-1">Image: {d.scannedValue || '—'} {d.severity === 'critical' ? '(Expired)' : ''}</span>
-                        <span className="text-slate-400">|</span>
-                        <span className="text-slate-800 dark:text-slate-200 font-mono font-bold ml-1">Entered: {d.enteredValue || '—'}</span>
+                        <span className="text-[#6B6761] dark:text-[#A8A29E]">|</span>
+                        <span className="text-[#1F1D1B] dark:text-[#F6F5F3] font-mono font-bold ml-1">Entered: {d.enteredValue || '—'}</span>
                       </span>
                     </div>
                   ))}
@@ -173,21 +206,21 @@ const AdminApplicationSummaryModal = ({
               <User size={13} /> 1. Operator Information
             </h4>
             <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Full Name</span>
-                <span className="font-bold text-slate-800 dark:text-slate-200">{franchise.fullName || '—'}</span>
+              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
+                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Full Name</span>
+                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{franchise.fullName || '—'}</span>
               </div>
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Barangay Address</span>
-                <span className="font-bold text-slate-800 dark:text-slate-200">{franchise.address || '—'}</span>
+              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
+                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Barangay Address</span>
+                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{franchise.address || '—'}</span>
               </div>
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Route Zone</span>
-                <span className="font-bold text-slate-800 dark:text-slate-200">{franchise.zone ? formatZoneLabel(franchise.zone) : '—'}</span>
+              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
+                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Route Zone</span>
+                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{franchise.zone ? formatZoneLabel(franchise.zone) : '—'}</span>
               </div>
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">TODA Association</span>
-                <span className="font-bold text-slate-800 dark:text-slate-200">{franchise.todaName || '—'}</span>
+              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
+                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">TODA Association</span>
+                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{franchise.todaName || '—'}</span>
               </div>
             </div>
           </div>
@@ -198,24 +231,24 @@ const AdminApplicationSummaryModal = ({
               <TricycleIcon size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" /> 2. Tricycle Details
             </h4>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Make &amp; Model</span>
-                <span className="font-bold text-slate-800 dark:text-slate-200">{formatVehicleMake(franchise, '—')}</span>
+              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
+                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Make &amp; Model</span>
+                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{formatVehicleMake(franchise, '—')}</span>
               </div>
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Model Year</span>
-                <span className="font-bold text-slate-800 dark:text-slate-200">{formatVehicleModelYear(franchise, '—')}</span>
+              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
+                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Model Year</span>
+                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{formatVehicleModelYear(franchise, '—')}</span>
               </div>
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Plate Number</span>
+              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
+                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Plate Number</span>
                 <span className="font-mono font-bold text-amber-600 dark:text-amber-400">{cleanText(franchise.plateNo, '—')}</span>
               </div>
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Motor Number</span>
-                <span className="font-mono font-bold text-slate-800 dark:text-slate-200 truncate block">{cleanText(franchise.motorNo, '—')}</span>
+              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
+                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Motor Number</span>
+                <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">{cleanText(franchise.motorNo, '—')}</span>
               </div>
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800 sm:col-span-2">
-                <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Chassis Number</span>
+              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] sm:col-span-2">
+                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Chassis Number</span>
                 <span className="font-mono font-bold text-[#9E2A2B] dark:text-[#D4AF37] truncate block">{franchise.chassisNo || '—'}</span>
               </div>
             </div>
@@ -227,37 +260,37 @@ const AdminApplicationSummaryModal = ({
               <Receipt size={13} /> 3. CTC / Cedula Details
             </h4>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Cedula Serial No.</span>
-                <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{franchise.cedulaSerialNo || '—'}</span>
+              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
+                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Cedula Serial No.</span>
+                <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{franchise.cedulaSerialNo || '—'}</span>
               </div>
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Tax Year</span>
-                <span className="font-bold text-slate-800 dark:text-slate-200">{franchise.cedulaYear || (franchise.cedulaDate ? new Date(franchise.cedulaDate).getFullYear() : '—')}</span>
+              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
+                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Tax Year</span>
+                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{franchise.cedulaYear || (franchise.cedulaDate ? new Date(franchise.cedulaDate).getFullYear() : '—')}</span>
               </div>
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Date Issued</span>
-                <span className="font-bold text-slate-800 dark:text-slate-200">{formatDate(franchise.cedulaDate)}</span>
+              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
+                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Date Issued</span>
+                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{formatDate(franchise.cedulaDate)}</span>
               </div>
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Place Issued</span>
-                <span className="font-bold text-slate-800 dark:text-slate-200 truncate block">{franchise.cedulaPlaceIssued || franchise.cedulaAddress || '—'}</span>
+              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
+                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Place Issued</span>
+                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">{franchise.cedulaPlaceIssued || franchise.cedulaAddress || '—'}</span>
               </div>
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Cedula Taxpayer</span>
-                <span className="font-bold text-slate-800 dark:text-slate-200 truncate block">{franchise.cedulaFullName || franchise.fullName || '—'}</span>
+              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
+                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Cedula Taxpayer</span>
+                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">{franchise.cedulaFullName || franchise.fullName || '—'}</span>
               </div>
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Civil Status / Citizenship</span>
-                <span className="font-semibold text-slate-800 dark:text-slate-200">{[franchise.cedulaCivilStatus, franchise.cedulaCitizenship || 'Filipino'].filter(Boolean).join(' • ')}</span>
+              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
+                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Civil Status / Citizenship</span>
+                <span className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{[franchise.cedulaCivilStatus, franchise.cedulaCitizenship || 'Filipino'].filter(Boolean).join(' • ')}</span>
               </div>
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Amount Paid</span>
+              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
+                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Amount Paid</span>
                 <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">{franchise.cedulaAmount ? `₱${Number(franchise.cedulaAmount).toFixed(2)}` : '₱55.00'}</span>
               </div>
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                <span className="text-slate-400 dark:text-slate-500 block text-[10px] uppercase font-bold">Date Applied</span>
-                <span className="font-bold text-slate-800 dark:text-slate-200">{formatDate(franchise.dateApplied || franchise.createdAt)}</span>
+              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
+                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Date Applied</span>
+                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{formatDate(franchise.dateApplied || franchise.createdAt)}</span>
               </div>
             </div>
           </div>
@@ -270,7 +303,7 @@ const AdminApplicationSummaryModal = ({
             
             <div className="space-y-2 text-xs">
               {/* LTO OR/CR */}
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs font-bold uppercase tracking-wider text-[#9E2A2B] dark:text-[#D4AF37]">
                     LTO OR / CR
@@ -283,18 +316,18 @@ const AdminApplicationSummaryModal = ({
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500 block text-xs uppercase font-bold">OR / CR No.</span>
-                    <span className="font-mono font-bold text-slate-800 dark:text-slate-200">{franchise.orCrNo || franchise.crNo || '—'}</span>
+                    <span className="text-[#6B6761] dark:text-[#A8A29E] block text-xs uppercase font-bold">OR / CR No.</span>
+                    <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{franchise.orCrNo || franchise.crNo || '—'}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500 block text-xs uppercase font-bold">Registration Expiry</span>
-                    <span className="font-bold text-slate-800 dark:text-slate-200">{formatDate(franchise.orCrExpiryDate)}</span>
+                    <span className="text-[#6B6761] dark:text-[#A8A29E] block text-xs uppercase font-bold">Registration Expiry</span>
+                    <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{formatDate(franchise.orCrExpiryDate)}</span>
                   </div>
                 </div>
               </div>
 
               {/* Driver & License */}
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs font-bold uppercase tracking-wider text-[#9E2A2B] dark:text-[#D4AF37]">
                     Driver &amp; License
@@ -307,27 +340,27 @@ const AdminApplicationSummaryModal = ({
                 </div>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500 block text-xs uppercase font-bold">Designation</span>
-                    <span className="font-bold text-slate-800 dark:text-slate-200 truncate block">
+                    <span className="text-[#6B6761] dark:text-[#A8A29E] block text-xs uppercase font-bold">Designation</span>
+                    <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">
                       {franchise.isOperatorDriver ? 'Operator (Self)' : 'Designated Driver'}
                     </span>
                   </div>
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500 block text-xs uppercase font-bold">License No.</span>
-                    <span className="font-mono font-bold text-slate-800 dark:text-slate-200 truncate block">{franchise.driverLicenseNo || '—'}</span>
+                    <span className="text-[#6B6761] dark:text-[#A8A29E] block text-xs uppercase font-bold">License No.</span>
+                    <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">{franchise.driverLicenseNo || '—'}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500 block text-xs uppercase font-bold">Card Serial No. (Back)</span>
-                    <span className="font-mono font-bold text-slate-800 dark:text-slate-200 truncate block">{franchise.driverLicenseSerialNo || '—'}</span>
+                    <span className="text-[#6B6761] dark:text-[#A8A29E] block text-xs uppercase font-bold">Card Serial No. (Back)</span>
+                    <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">{franchise.driverLicenseSerialNo || '—'}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500 block text-xs uppercase font-bold">License Expiry</span>
-                    <span className="font-bold text-slate-800 dark:text-slate-200 truncate block">{formatDate(franchise.driverLicenseExpiryDate)}</span>
+                    <span className="text-[#6B6761] dark:text-[#A8A29E] block text-xs uppercase font-bold">License Expiry</span>
+                    <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">{formatDate(franchise.driverLicenseExpiryDate)}</span>
                   </div>
                   {!franchise.isOperatorDriver && franchise.driverName && (
                     <div className="col-span-2 sm:col-span-4">
-                      <span className="text-slate-400 dark:text-slate-500 block text-xs uppercase font-bold">Driver Name &amp; Contact</span>
-                      <span className="font-bold text-slate-800 dark:text-slate-200">
+                      <span className="text-[#6B6761] dark:text-[#A8A29E] block text-xs uppercase font-bold">Driver Name &amp; Contact</span>
+                      <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
                         {franchise.driverName} {franchise.driverContact ? `(${franchise.driverContact})` : ''}
                       </span>
                     </div>
@@ -336,7 +369,7 @@ const AdminApplicationSummaryModal = ({
               </div>
 
               {/* Barangay Clearance Issuance */}
-              <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
                 <div className="flex items-center justify-between mb-1">
                   <span className="text-xs font-bold uppercase tracking-wider text-[#9E2A2B] dark:text-[#D4AF37]">
                     Barangay Clearance
@@ -349,12 +382,12 @@ const AdminApplicationSummaryModal = ({
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500 block text-xs uppercase font-bold">Date Issued</span>
-                    <span className="font-bold text-slate-800 dark:text-slate-200">{formatDate(franchise.brgyClearanceDate)}</span>
+                    <span className="text-[#6B6761] dark:text-[#A8A29E] block text-xs uppercase font-bold">Date Issued</span>
+                    <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{formatDate(franchise.brgyClearanceDate)}</span>
                   </div>
                   <div>
-                    <span className="text-slate-400 dark:text-slate-500 block text-xs uppercase font-bold">Issuing Official / Punong Barangay</span>
-                    <span className="font-bold text-slate-800 dark:text-slate-200 truncate block">{franchise.brgyIssuer || '—'}</span>
+                    <span className="text-[#6B6761] dark:text-[#A8A29E] block text-xs uppercase font-bold">Issuing Official / Punong Barangay</span>
+                    <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">{franchise.brgyIssuer || '—'}</span>
                   </div>
                 </div>
               </div>
@@ -375,14 +408,14 @@ const AdminApplicationSummaryModal = ({
                 { label: 'Barangay Clearance', url: franchise.brgyClearanceUrl },
                 { label: 'Cedula (CTC)', url: franchise.cedulaUrl }
               ].map((doc, idx) => (
-                <div key={idx} className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 text-xs flex items-center justify-between">
-                  <span className="font-semibold text-slate-700 dark:text-slate-300 truncate">{doc.label}</span>
+                <div key={idx} className="p-2.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs flex items-center justify-between">
+                  <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] truncate">{doc.label}</span>
                   {doc.url ? (
                     <div className="flex items-center gap-1.5 shrink-0">
                       <button
                         type="button"
                         onClick={() => setPreviewDoc(doc)}
-                        className="text-[#9E2A2B] dark:text-[#D4AF37] hover:bg-slate-200 dark:hover:bg-slate-700 px-2 py-1 rounded-md flex items-center gap-1 text-[11px] font-bold transition-colors cursor-pointer"
+                        className="text-[#9E2A2B] dark:text-[#D4AF37] hover:bg-[#E4E1DC] dark:hover:bg-[#2E2A27] px-2 py-1 rounded-md flex items-center gap-1 text-[11px] font-bold transition-colors cursor-pointer"
                         title={`Preview ${doc.label}`}
                       >
                         <Eye size={12} />
@@ -392,14 +425,14 @@ const AdminApplicationSummaryModal = ({
                         href={doc.url}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-md hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+                        className="text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3] p-1 rounded-md hover:bg-[#E4E1DC] dark:hover:bg-[#2E2A27] transition-colors"
                         title="Open in new tab"
                       >
                         <ExternalLink size={12} />
                       </a>
                     </div>
                   ) : (
-                    <span className="text-slate-400 text-[10px]">None</span>
+                    <span className="text-[#6B6761] dark:text-[#A8A29E] text-[10px]">None</span>
                   )}
                 </div>
               ))}
@@ -418,14 +451,14 @@ const AdminApplicationSummaryModal = ({
                 </span>
               ) : (
                 <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700">
-                  Awaiting Cashier Payment (₱500)
+                  Awaiting Cashier Payment (₱{effectiveFee.toLocaleString()})
                 </span>
               )}
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
               <div>
                 <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-semibold">Amount Payable</span>
-                <span className="font-mono font-semibold text-[#1F1D1B] dark:text-white">₱500.00</span>
+                <span className="font-mono font-semibold text-[#1F1D1B] dark:text-white">₱{effectiveFee.toFixed(2)}</span>
               </div>
               <div>
                 <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-semibold">Official Receipt (OR)</span>
@@ -481,7 +514,7 @@ const AdminApplicationSummaryModal = ({
             <button
               type="button"
               onClick={() => setShowOfficialForm(true)}
-              className="px-3 py-2 rounded-lg bg-[#9E2A2B]/10 hover:bg-[#9E2A2B]/15 text-[#9E2A2B] dark:bg-[#D4AF37]/15 dark:hover:bg-[#D4AF37]/25 dark:text-[#D4AF37] border border-[#9E2A2B]/25 dark:border-[#D4AF37]/35 font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer whitespace-nowrap"
+              className="px-3 py-2 rounded-lg bg-[#9E2A2B]/10 hover:bg-[#9E2A2B]/15 text-[#9E2A2B] dark:bg-[#D4AF37]/20 dark:hover:bg-[#D4AF37]/30 dark:text-[#F5E6B3] border border-[#9E2A2B]/25 dark:border-[#D4AF37]/40 font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer whitespace-nowrap"
               title="Print official MTOP application form pursuant to Ord. 48 s. 1999"
             >
               <Printer size={13} className="shrink-0" />
@@ -496,7 +529,7 @@ const AdminApplicationSummaryModal = ({
                   onReject(franchise);
                 }}
                 disabled={isProcessing}
-                className="px-3.5 py-2 rounded-lg bg-red-700 hover:bg-red-800 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-95 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                className="px-3.5 py-2 rounded-lg bg-red-700 hover:bg-red-800 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer disabled:opacity-50 whitespace-nowrap"
               >
                 <XCircle size={13} />
                 <span>Reject</span>
@@ -511,7 +544,7 @@ const AdminApplicationSummaryModal = ({
                   onApprove(franchise);
                 }}
                 disabled={isProcessing}
-                className="px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-95 cursor-pointer disabled:opacity-50 whitespace-nowrap"
+                className="px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer disabled:opacity-50 whitespace-nowrap"
               >
                 {isProcessing ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />}
                 <span>Send to Cashier</span>
@@ -541,7 +574,7 @@ const AdminApplicationSummaryModal = ({
                   href={previewDoc.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-xs text-slate-300 hover:text-white px-3 py-1.5 rounded-lg hover:bg-white/10 flex items-center gap-1.5 transition-colors"
+                  className="text-xs text-[#A8A29E] hover:text-white px-3 py-1.5 rounded-lg hover:bg-white/10 flex items-center gap-1.5 transition-colors"
                 >
                   <span>Open in New Tab</span>
                   <ExternalLink size={13} />
@@ -549,18 +582,18 @@ const AdminApplicationSummaryModal = ({
                 <button
                   type="button"
                   onClick={() => setPreviewDoc(null)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+                  className="p-1.5 rounded-lg text-[#A8A29E] hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
                 >
                   <X size={18} />
                 </button>
               </div>
             </div>
-            <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-slate-950/80 min-h-[300px]">
+            <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-[#14110F]/95 min-h-[300px]">
               {(previewDoc.url?.toLowerCase().includes('.pdf') || previewDoc.url?.toLowerCase().includes('/raw/upload') || previewDoc.type === 'application/pdf') ? (
                 <iframe
                   src={previewDoc.url}
                   title={previewDoc.label}
-                  className="w-full h-[70vh] rounded-xl border border-slate-800 bg-white"
+                  className="w-full h-[70vh] rounded-lg border border-[#2E2A27] bg-white"
                 />
               ) : (
                 <img

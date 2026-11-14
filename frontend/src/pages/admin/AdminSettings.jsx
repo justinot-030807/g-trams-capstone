@@ -9,12 +9,14 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
+import { useConfirm } from '../../components/ui/ConfirmContext';
 import { SettingsSkeleton, TableRowsSkeleton } from '../../components/skeleton';
 import PageHeader from '../../components/common/PageHeader';
 
 const AdminSettings = () => {
   const { language, setLanguage, t } = useLanguage();
   const { theme, setTheme, isDark } = useTheme();
+  const { confirm } = useConfirm();
 
   const userRole = String(localStorage.getItem('role') || '').toLowerCase().trim().replace(/_/g, ' ');
   const isSystemAdmin = userRole === 'system admin' || userRole === 'admin' || userRole === 'administrator';
@@ -298,12 +300,19 @@ const AdminSettings = () => {
     const file = e.target.files && e.target.files[0];
     if (!file) return;
 
-    if (!window.confirm(`Sigurado ka bang nais mong i-restore ang database gamit ang "${file.name}"? Ang kasalukuyang data ay mapapalitan ng laman ng backup file.`)) {
+    const ok = await confirm({
+      title: 'Restore Database Backup',
+      description: `Are you sure you want to restore the database from "${file.name}"? All current records will be overwritten by the backup file contents.`,
+      confirmLabel: 'Restore Database',
+      cancelLabel: 'Cancel',
+      variant: 'danger'
+    });
+    if (!ok) {
       e.target.value = '';
       return;
     }
 
-    showToast('Restoring database from upload... Mangyaring maghintay.', 'info', 6000);
+    showToast('Restoring database from upload... Please wait.', 'info', 6000);
     const formData = new FormData();
     formData.append('backupFile', file);
 
@@ -329,7 +338,14 @@ const AdminSettings = () => {
   };
 
   const handleDeleteBackupFile = async (filename) => {
-    if (!window.confirm(`Nais mo bang burahin ang backup file na "${filename}"?`)) return;
+    const ok = await confirm({
+      title: 'Delete Backup Archive',
+      description: `Are you sure you want to delete the backup file "${filename}"?`,
+      confirmLabel: 'Delete Archive',
+      cancelLabel: 'Cancel',
+      variant: 'danger'
+    });
+    if (!ok) return;
 
     try {
       const token = localStorage.getItem('token');
@@ -980,13 +996,13 @@ const AdminSettings = () => {
       ) : (
         <div className="space-y-6 w-full">
           {/* TAB NAVIGATION PILLS */}
-          <div className="flex items-center gap-1.5 p-1 bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg w-full sm:w-fit overflow-x-auto">
+          <div className="flex flex-wrap items-center gap-1.5 p-1 bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg w-full sm:w-fit">
             {isSystemAdmin && (
               <button
                 onClick={() => setActiveTab('system')}
                 className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-semibold text-xs sm:text-sm transition-colors whitespace-nowrap cursor-pointer ${
                   activeTab === 'system'
-                    ? 'bg-white dark:bg-[#1C1917] text-[#9E2A2B] dark:text-[#D4AF37] shadow-xs border border-[#E4E1DC] dark:border-[#2E2A27]'
+                    ? 'bg-white dark:bg-[#1C1917] text-[#9E2A2B] dark:text-[#D4AF37] shadow-sm border border-[#E4E1DC] dark:border-[#2E2A27]'
                     : 'text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3]'
                 }`}
               >
@@ -999,7 +1015,7 @@ const AdminSettings = () => {
               onClick={() => setActiveTab('account')}
               className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-semibold text-xs sm:text-sm transition-colors whitespace-nowrap cursor-pointer ${
                 activeTab === 'account'
-                  ? 'bg-white dark:bg-[#1C1917] text-[#9E2A2B] dark:text-[#D4AF37] shadow-xs border border-[#E4E1DC] dark:border-[#2E2A27]'
+                  ? 'bg-white dark:bg-[#1C1917] text-[#9E2A2B] dark:text-[#D4AF37] shadow-sm border border-[#E4E1DC] dark:border-[#2E2A27]'
                   : 'text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3]'
               }`}
             >
@@ -1011,7 +1027,7 @@ const AdminSettings = () => {
               onClick={() => setActiveTab('preferences')}
               className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-semibold text-xs sm:text-sm transition-colors whitespace-nowrap cursor-pointer ${
                 activeTab === 'preferences'
-                  ? 'bg-white dark:bg-[#1C1917] text-[#9E2A2B] dark:text-[#D4AF37] shadow-xs border border-[#E4E1DC] dark:border-[#2E2A27]'
+                  ? 'bg-white dark:bg-[#1C1917] text-[#9E2A2B] dark:text-[#D4AF37] shadow-sm border border-[#E4E1DC] dark:border-[#2E2A27]'
                   : 'text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3]'
               }`}
             >
@@ -1024,7 +1040,7 @@ const AdminSettings = () => {
                 onClick={() => { setActiveTab('backup'); fetchBackups(); }}
                 className={`flex items-center gap-2 px-3.5 py-2 rounded-lg font-semibold text-xs sm:text-sm transition-colors whitespace-nowrap cursor-pointer ${
                   activeTab === 'backup'
-                    ? 'bg-white dark:bg-[#1C1917] text-[#9E2A2B] dark:text-[#D4AF37] shadow-xs border border-[#E4E1DC] dark:border-[#2E2A27]'
+                    ? 'bg-white dark:bg-[#1C1917] text-[#9E2A2B] dark:text-[#D4AF37] shadow-sm border border-[#E4E1DC] dark:border-[#2E2A27]'
                     : 'text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3]'
                 }`}
               >
@@ -1038,7 +1054,7 @@ const AdminSettings = () => {
           {activeTab === 'system' && isSystemAdmin && (
             <div className="space-y-6">
               {/* Franchise Rules & Validity */}
-              <div className="bg-white dark:bg-[#1C1917] p-5 sm:p-6 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs transition-colors">
+              <div className="bg-white dark:bg-[#1C1917] p-5 sm:p-6 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm transition-colors">
                 <div className="flex items-center gap-3 mb-5 pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
                   <div className="p-2 bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] rounded-lg">
                     <Clock size={18} />
@@ -1064,12 +1080,12 @@ const AdminSettings = () => {
                         onChange={handleSystemConfigChange}
                         className={inputClasses}
                       />
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-600 dark:text-slate-400 font-bold">Years</span>
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-[#6B6761] dark:text-[#A8A29E] font-bold">Years</span>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider mb-1.5">
                       Renewal Validity
                     </label>
                     <div className="relative">
@@ -1082,12 +1098,12 @@ const AdminSettings = () => {
                         onChange={handleSystemConfigChange}
                         className={inputClasses}
                       />
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-600 dark:text-slate-400 font-bold">Years</span>
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-[#6B6761] dark:text-[#A8A29E] font-bold">Years</span>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-wider mb-1.5">
+                    <label className="block text-xs font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider mb-1.5">
                       Expiry Warning Alert
                     </label>
                     <div className="relative">
@@ -1100,14 +1116,14 @@ const AdminSettings = () => {
                         onChange={handleSystemConfigChange}
                         className={inputClasses}
                       />
-                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-600 dark:text-slate-400 font-bold">Days before</span>
+                      <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-[#6B6761] dark:text-[#A8A29E] font-bold">Days before</span>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Fiscal & Fare Settings */}
-              <div className="bg-white dark:bg-[#1C1917] p-5 sm:p-6 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs transition-colors">
+              <div className="bg-white dark:bg-[#1C1917] p-5 sm:p-6 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm transition-colors">
                 <div className="flex items-center gap-3 mb-5 pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
                   <div className="p-2 bg-amber-50 dark:bg-amber-950/40 rounded-lg border border-amber-200 dark:border-amber-800/60">
                     <Wallet size={18} className="text-amber-700 dark:text-amber-400" />
@@ -1209,7 +1225,7 @@ const AdminSettings = () => {
 
               {/* Requirement Checklist Builder & Maintenance Mode */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div className="bg-white dark:bg-[#1C1917] p-5 sm:p-6 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs transition-colors flex flex-col justify-between">
+                <div className="bg-white dark:bg-[#1C1917] p-5 sm:p-6 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm transition-colors flex flex-col justify-between">
                   <div>
                     <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
                       <div className="flex items-center gap-3">
@@ -1264,14 +1280,14 @@ const AdminSettings = () => {
                     <button
                       type="button"
                       onClick={handleAddRequirement}
-                      className="px-3.5 py-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white rounded-lg text-xs font-medium shrink-0 transition-colors shadow-xs cursor-pointer"
+                      className="px-3.5 py-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white rounded-lg text-xs font-medium shrink-0 transition-colors shadow-sm cursor-pointer"
                     >
                       + Add
                     </button>
                   </div>
                 </div>
 
-                <div className="bg-white dark:bg-[#1C1917] p-5 sm:p-6 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs flex flex-col justify-between transition-colors">
+                <div className="bg-white dark:bg-[#1C1917] p-5 sm:p-6 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm flex flex-col justify-between transition-colors">
                   <div>
                     <div className="flex items-center gap-3 mb-4 pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
                       <AlertTriangle size={18} className="text-amber-600 dark:text-amber-400" />
@@ -1298,7 +1314,7 @@ const AdminSettings = () => {
                       }`}
                     >
                       <span
-                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-xs transition duration-200 ease-in-out ${
+                        className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition duration-200 ease-in-out ${
                           systemConfig.maintenanceMode ? 'translate-x-6' : 'translate-x-0'
                         }`}
                       />
@@ -1308,7 +1324,7 @@ const AdminSettings = () => {
               </div>
 
               {/* PROGRESSIVE VIOLATION & PENALTY POLICY CONFIGURATION */}
-              <div className="bg-white dark:bg-[#1C1917] p-5 sm:p-6 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs transition-colors space-y-6">
+              <div className="bg-white dark:bg-[#1C1917] p-5 sm:p-6 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm transition-colors space-y-6">
                 <div className="flex items-center justify-between pb-4 border-b border-[#E4E1DC] dark:border-[#2E2A27] flex-wrap gap-3">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] rounded-lg">
@@ -1472,7 +1488,7 @@ const AdminSettings = () => {
                                     ? 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-900/40'
                                     : vt.severity === 'Medium'
                                       ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/40'
-                                      : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                                      : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E] border border-[#E4E1DC] dark:border-[#2E2A27]'
                               }`}>
                                 {vt.severity}
                               </span>
@@ -1504,7 +1520,7 @@ const AdminSettings = () => {
                                 className={`text-[10px] font-bold px-2 py-0.5 rounded cursor-pointer ${
                                   vt.isActive !== false
                                     ? 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300'
-                                    : 'bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400'
+                                    : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E] border border-[#E4E1DC] dark:border-[#2E2A27]'
                                 }`}
                               >
                                 {vt.isActive !== false ? 'Active' : 'Inactive'}
@@ -1569,7 +1585,7 @@ const AdminSettings = () => {
                         <button
                           type="button"
                           onClick={handleAddViolation}
-                          className="w-full bg-[#9E2A2B] hover:bg-[#7A1B22] text-white py-1.5 rounded-lg text-xs font-semibold shadow-xs transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                          className="w-full bg-[#9E2A2B] hover:bg-[#7A1B22] text-white py-1.5 rounded-lg text-xs font-semibold shadow-sm transition-colors flex items-center justify-center gap-1 cursor-pointer"
                         >
                           <Plus size={14} /> Add Violation
                         </button>
@@ -1584,7 +1600,7 @@ const AdminSettings = () => {
                 <button
                   type="button"
                   onClick={() => handleOpenConfirm('system')}
-                  className="flex items-center gap-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white px-5 py-2.5 rounded-lg font-medium text-xs sm:text-sm shadow-xs active:scale-95 transition-all cursor-pointer"
+                  className="flex items-center gap-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white px-5 py-2.5 rounded-lg font-medium text-xs sm:text-sm shadow-sm active:scale-95 transition-all cursor-pointer"
                 >
                   <Save size={15} /> Save System Configurations
                 </button>
@@ -1596,14 +1612,14 @@ const AdminSettings = () => {
           {activeTab === 'account' && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Profile Details */}
-              <div className="bg-white dark:bg-[#1C1917] p-5 sm:p-6 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs transition-colors">
+              <div className="bg-white dark:bg-[#1C1917] p-5 sm:p-6 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm transition-colors">
                 <div className="flex items-center gap-3 mb-5 pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
                   <User size={18} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                   <h2 className="text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">Admin Profile</h2>
                 </div>
 
                 <div className="flex flex-col items-center mb-6">
-                  <div className="w-20 h-20 rounded-full border-2 border-[#D4AF37]/50 shadow-xs overflow-hidden bg-[#F6F5F3] dark:bg-[#14110F] flex items-center justify-center relative group">
+                  <div className="w-20 h-20 rounded-full border-2 border-[#D4AF37]/50 shadow-sm overflow-hidden bg-[#F6F5F3] dark:bg-[#14110F] flex items-center justify-center relative group">
                     {profilePicPreview ? (
                       <img src={profilePicPreview} alt="Admin Avatar" className="w-full h-full object-cover" />
                     ) : (
@@ -1649,14 +1665,14 @@ const AdminSettings = () => {
                 <button
                   type="button"
                   onClick={() => handleOpenConfirm('account')}
-                  className="mt-6 w-full bg-[#9E2A2B] hover:bg-[#7A1B22] text-white py-2.5 rounded-lg font-medium text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs active:scale-95 transition-all cursor-pointer"
+                  className="mt-6 w-full bg-[#9E2A2B] hover:bg-[#7A1B22] text-white py-2.5 rounded-lg font-medium text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-all cursor-pointer"
                 >
                   <Save size={15} /> Save Profile Changes
                 </button>
               </div>
 
               {/* Password Change */}
-              <div className="bg-white dark:bg-[#1C1917] p-5 sm:p-6 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs h-fit transition-colors">
+              <div className="bg-white dark:bg-[#1C1917] p-5 sm:p-6 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm h-fit transition-colors">
                 <div className="flex items-center gap-3 mb-5 pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
                   <Lock size={18} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                   <h2 className="text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">Security & Password</h2>
@@ -1671,7 +1687,7 @@ const AdminSettings = () => {
                       type="password"
                       value={passwordData.currentPassword}
                       onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
-                      placeholder="••••••••"
+                      placeholder="Enter current password"
                       className={inputClasses}
                     />
                   </div>
@@ -1684,7 +1700,7 @@ const AdminSettings = () => {
                       type="password"
                       value={passwordData.newPassword}
                       onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
-                      placeholder="••••••••"
+                      placeholder="Enter new password"
                       className={inputClasses}
                     />
                   </div>
@@ -1697,7 +1713,7 @@ const AdminSettings = () => {
                       type="password"
                       value={passwordData.confirmPassword}
                       onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                      placeholder="••••••••"
+                      placeholder="Confirm new password"
                       className={inputClasses}
                     />
                   </div>
@@ -1706,7 +1722,7 @@ const AdminSettings = () => {
                 <button
                   type="button"
                   onClick={() => handleOpenConfirm('password')}
-                  className="mt-6 w-full bg-[#1F1D1B] dark:bg-[#2E2A27] hover:bg-[#3D3834] dark:hover:bg-[#3D3834] text-white py-2.5 rounded-lg font-medium text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs active:scale-95 transition-all cursor-pointer"
+                  className="mt-6 w-full bg-[#1F1D1B] dark:bg-[#2E2A27] hover:bg-[#3D3834] dark:hover:bg-[#3D3834] text-white py-2.5 rounded-lg font-medium text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm active:scale-95 transition-all cursor-pointer"
                 >
                   <ShieldCheck size={15} /> Update Password
                 </button>
@@ -1716,7 +1732,7 @@ const AdminSettings = () => {
 
           {/* TAB 3: PREFERENCES & APPEARANCE */}
           {activeTab === 'preferences' && (
-            <div className="w-full bg-white dark:bg-[#1C1917] p-5 sm:p-6 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs space-y-4 transition-colors">
+            <div className="w-full bg-white dark:bg-[#1C1917] p-5 sm:p-6 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm space-y-4 transition-colors">
               <div className="flex items-center gap-3 mb-4 pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
                 <Globe size={18} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                 <h2 className="text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">System Appearance & Preferences</h2>
@@ -1726,7 +1742,7 @@ const AdminSettings = () => {
               <div className="flex items-center justify-between p-3.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] transition-colors">
                 <div>
                   <p className="text-sm font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] flex items-center gap-2">
-                    {isDark ? <Moon size={15} className="text-indigo-400" /> : <Sun size={15} className="text-amber-500" />}
+                    {isDark ? <Moon size={15} className="text-[#D4AF37]" /> : <Sun size={15} className="text-amber-500" />}
                     Theme Mode
                   </p>
                   <p className="text-xs font-medium text-[#6B6761] dark:text-[#A8A29E] mt-0.5">
@@ -1744,8 +1760,8 @@ const AdminSettings = () => {
                   aria-checked={isDark}
                 >
                   <span
-                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-xs transition duration-200 ease-in-out flex items-center justify-center ${
-                      isDark ? 'translate-x-6 text-indigo-900' : 'translate-x-0 text-amber-600'
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition duration-200 ease-in-out flex items-center justify-center ${
+                      isDark ? 'translate-x-6 text-[#1F1D1B]' : 'translate-x-0 text-amber-600'
                     }`}
                   >
                     {isDark ? <Moon size={10} /> : <Sun size={10} />}
@@ -1795,7 +1811,7 @@ const AdminSettings = () => {
                   }`}
                 >
                   <span
-                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-xs transition duration-200 ease-in-out ${
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-sm transition duration-200 ease-in-out ${
                       preferences.inAppToastAlerts ? 'translate-x-6' : 'translate-x-0'
                     }`}
                   />
@@ -1804,347 +1820,12 @@ const AdminSettings = () => {
             </div>
           )}
 
-          {/* TAB 4: AUDIT TRAIL & SECURITY LOGS */}
-          {activeTab === 'audit' && isSystemAdmin && (
-            <div className="space-y-6">
-              <div className="bg-white dark:bg-[#1C1917] p-5 sm:p-6 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs transition-colors">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 rounded-lg border border-[#9E2A2B]/20 text-[#9E2A2B] dark:text-[#D4AF37]">
-                      <Shield size={18} />
-                    </div>
-                    <div>
-                      <h2 className="text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] flex items-center gap-2">
-                        System Audit Trail & Security Logs
-                        <span className="text-[10px] bg-emerald-50 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-800 px-2 py-0.5 rounded font-semibold uppercase tracking-wider">
-                          Immutable Ledger
-                        </span>
-                      </h2>
-                      <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5">
-                        Chronological record of administrative operations, approvals, revocations, and security events.
-                      </p>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => fetchAuditLogs(auditPage, auditActionFilter, auditSearchQuery)}
-                    disabled={auditLoading}
-                    className="inline-flex items-center justify-center gap-2 px-3.5 py-1.5 bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#E4E1DC] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] text-xs font-medium rounded-lg transition-colors active:scale-95 shrink-0 border border-[#E4E1DC] dark:border-[#2E2A27] cursor-pointer"
-                  >
-                    <RefreshCw size={13} className={auditLoading ? 'animate-spin' : ''} />
-                    <span>Refresh Logs</span>
-                  </button>
-                </div>
-
-                {/* Filter and Search Bar */}
-                <div className="pt-5 grid grid-cols-1 sm:grid-cols-12 gap-3">
-                  <div className="sm:col-span-8 relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B6761] dark:text-[#A8A29E]" size={15} />
-                    <input
-                      type="text"
-                      placeholder="Search by Actor Name, Action, or Record ID..."
-                      value={auditSearchQuery}
-                      onChange={(e) => {
-                        setAuditSearchQuery(e.target.value);
-                        fetchAuditLogs(1, auditActionFilter, e.target.value);
-                      }}
-                      className={inputClasses + " pl-9"}
-                    />
-                  </div>
-
-                  <div className="sm:col-span-4">
-                    <select
-                      value={auditActionFilter}
-                      onChange={(e) => {
-                        setAuditActionFilter(e.target.value);
-                        fetchAuditLogs(1, e.target.value, auditSearchQuery);
-                      }}
-                      className={inputClasses}
-                    >
-                      <option value="All">All Event Types</option>
-                      <option value="FRANCHISE_STATUS_UPDATE">Franchise Status Updates</option>
-                      <option value="FRANCHISE_REVOKED">Franchise Revocations</option>
-                      <option value="FRANCHISE_ARCHIVED">Franchise Archives</option>
-                      <option value="FRANCHISE_DELETED">Franchise Deletions</option>
-                      <option value="USER_UPDATED">User Profile Updates</option>
-                      <option value="USER_DEACTIVATED">User Deactivations</option>
-                      <option value="USER_ACTIVATED">User Activations</option>
-                      <option value="PASSWORD_CHANGED">Password Changes</option>
-                      <option value="PASSWORD_RESET">Password Resets</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Logs Table */}
-                <div className="mt-5 overflow-x-auto border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg">
-                  <table className="w-full text-left border-collapse">
-                    <thead>
-                      <tr className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] text-xs uppercase tracking-wider font-semibold">
-                        <th className="py-2.5 px-4">Timestamp & IP</th>
-                        <th className="py-2.5 px-4">Administrator / Actor</th>
-                        <th className="py-2.5 px-4">Action Event</th>
-                        <th className="py-2.5 px-4">Target & Summary</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27] text-xs">
-                      {auditLoading ? (
-                        <TableRowsSkeleton rows={6} columns={4} baseDelay={30} stepDelay={40} />
-                      ) : auditLogs.length === 0 ? (
-                        <tr>
-                          <td colSpan="4" className="py-12 text-center text-[#6B6761] dark:text-[#A8A29E]">
-                            <ShieldCheck size={28} className="mx-auto mb-2 opacity-30" />
-                            <p className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">No audit log entries recorded yet.</p>
-                            <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5">Admin operations will automatically appear here in real time.</p>
-                          </td>
-                        </tr>
-                      ) : (
-                        auditLogs.map((log) => {
-                          const isDeleteOrRevoke = log.action?.includes('REVOKE') || log.action?.includes('DELETE') || log.action?.includes('DEACTIVATE');
-                          const isSuccess = log.action?.includes('APPROVE') || log.action?.includes('ACTIVATE') || log.action?.includes('RESTORE');
-                          
-                          return (
-                            <tr key={log._id} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50 transition-colors">
-                              <td className="py-3 px-4 font-mono text-xs text-[#6B6761] dark:text-[#A8A29E] tabular-nums">
-                                <div className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
-                                  {new Date(log.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                                </div>
-                                <div className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
-                                  {new Date(log.createdAt).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })} &bull; IP: {log.ipAddress || '127.0.0.1'}
-                                </div>
-                              </td>
-
-                              <td className="py-3 px-4">
-                                <div className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] flex items-center gap-1.5">
-                                  <User size={13} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                                  {log.actorName || 'System'}
-                                </div>
-                                <span className="text-[10px] uppercase tracking-wider font-semibold text-[#6B6761] dark:text-[#A8A29E]">
-                                  {log.actorRole || 'admin'}
-                                </span>
-                              </td>
-
-                              <td className="py-3 px-4">
-                                <span className={`inline-flex px-2 py-0.5 rounded text-[11px] font-semibold uppercase tracking-wider border ${
-                                  isDeleteOrRevoke 
-                                    ? 'bg-red-50 text-red-800 dark:bg-red-950/40 dark:text-red-300 border-red-300 dark:border-red-800'
-                                    : isSuccess
-                                    ? 'bg-emerald-50 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800'
-                                    : 'bg-amber-50 text-amber-800 dark:bg-amber-950/40 dark:text-amber-300 border-amber-300 dark:border-amber-800'
-                                }`}>
-                                  {log.action?.replace(/_/g, ' ')}
-                                </span>
-                              </td>
-
-                              <td className="py-3 px-4">
-                                <div className="font-medium text-[#1F1D1B] dark:text-[#F6F5F3]">
-                                  {log.targetType}: {log.details?.plateNo || log.details?.name || log.targetId || 'N/A'}
-                                </div>
-                                {log.details?.reason && (
-                                  <p className="text-xs text-red-700 dark:text-red-400 font-medium truncate max-w-xs">
-                                    Reason: {log.details.reason}
-                                  </p>
-                                )}
-                                {log.details?.previousStatus && log.details?.newStatus && (
-                                  <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-mono">
-                                    {log.details.previousStatus} ➜ {log.details.newStatus}
-                                  </p>
-                                )}
-                              </td>
-                            </tr>
-                          );
-                        })
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Pagination Controls */}
-                {auditPagination.totalPages > 1 && (
-                  <div className="flex items-center justify-between pt-4 border-t border-[#E4E1DC] dark:border-[#2E2A27] mt-4 text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E]">
-                    <div className="font-mono tabular-nums">
-                      Page {auditPagination.currentPage} of {auditPagination.totalPages} ({auditPagination.totalRecords} records)
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <button
-                        onClick={() => fetchAuditLogs(auditPage - 1, auditActionFilter, auditSearchQuery)}
-                        disabled={!auditPagination.hasPrevPage || auditLoading}
-                        className="p-1.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] disabled:opacity-30 hover:bg-[#F6F5F3] dark:hover:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] transition-colors cursor-pointer"
-                      >
-                        <ChevronLeft size={15} />
-                      </button>
-                      <button
-                        onClick={() => fetchAuditLogs(auditPage + 1, auditActionFilter, auditSearchQuery)}
-                        disabled={!auditPagination.hasNextPage || auditLoading}
-                        className="p-1.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] disabled:opacity-30 hover:bg-[#F6F5F3] dark:hover:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] transition-colors cursor-pointer"
-                      >
-                        <ChevronRight size={15} />
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* TAB: HOMEPAGE ANNOUNCEMENTS & ADVISORIES (IT Management) */}
-          {activeTab === 'announcements' && isSystemAdmin && (
-            <div className="space-y-6">
-              <div className="bg-white dark:bg-[#1C1917] p-5 sm:p-6 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 mb-4 border-b border-[#E4E1DC] dark:border-[#2E2A27] gap-3">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <div className="p-1.5 rounded-md bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37]">
-                        <Megaphone size={16} />
-                      </div>
-                      <h2 className="text-sm sm:text-base font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
-                        Homepage Municipal Bulletin &amp; Announcements
-                      </h2>
-                    </div>
-                    <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1">
-                      Configure advisories, renewal deadlines, and public notices shown live on the G-TRAMS homepage bulletin board.
-                    </p>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={handleSaveAnnouncements}
-                    disabled={isSavingAnnouncements}
-                    className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-[#9E2A2B] hover:bg-[#7A1B22] rounded-md transition-colors shadow-xs active:scale-95 cursor-pointer disabled:opacity-50"
-                  >
-                    {isSavingAnnouncements ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
-                    <span>Publish to Homepage</span>
-                  </button>
-                </div>
-
-                {/* List of active/draft announcements */}
-                <div className="space-y-4">
-                  {announcements.map((item, idx) => (
-                    <div 
-                      key={idx} 
-                      className="p-4 rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#FAF9F7] dark:bg-[#14110F] space-y-3"
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                        <div className="flex items-center gap-2 flex-1">
-                          <span className="text-xs font-mono font-bold text-[#6B6761] dark:text-[#A8A29E]">#{idx + 1}</span>
-                          <input
-                            type="text"
-                            value={item.title}
-                            onChange={(e) => handleUpdateAnnouncement(idx, 'title', e.target.value)}
-                            placeholder="Announcement Title"
-                            className="flex-1 px-3 py-1.5 text-xs font-bold rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#F6F5F3]"
-                          />
-                        </div>
-
-                        <div className="flex items-center gap-2 shrink-0">
-                          <select
-                            value={item.type || 'info'}
-                            onChange={(e) => handleUpdateAnnouncement(idx, 'type', e.target.value)}
-                            className="px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#F6F5F3]"
-                          >
-                            <option value="alert">Alert (Red)</option>
-                            <option value="info">Portal Info (Blue)</option>
-                            <option value="event">Advisory (Amber)</option>
-                          </select>
-
-                          <input
-                            type="text"
-                            value={item.date || ''}
-                            onChange={(e) => handleUpdateAnnouncement(idx, 'date', e.target.value)}
-                            placeholder="Badge Label (e.g. Advisory)"
-                            className="w-32 px-2.5 py-1.5 text-xs rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#F6F5F3]"
-                          />
-
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteAnnouncement(idx)}
-                            className="p-1.5 text-red-600 hover:text-red-800 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 rounded-lg transition-colors cursor-pointer"
-                            title="Delete announcement"
-                          >
-                            <Trash2 size={15} />
-                          </button>
-                        </div>
-                      </div>
-
-                      <textarea
-                        rows={2}
-                        value={item.desc}
-                        onChange={(e) => handleUpdateAnnouncement(idx, 'desc', e.target.value)}
-                        placeholder="Detailed advisory message displayed on the card..."
-                        className="w-full px-3 py-2 text-xs rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#F6F5F3] resize-none"
-                      />
-
-                      <div className="flex items-center justify-between text-xs pt-1 text-[#6B6761] dark:text-[#A8A29E]">
-                        <label className="flex items-center gap-2 cursor-pointer select-none">
-                          <input
-                            type="checkbox"
-                            checked={item.isActive !== false}
-                            onChange={(e) => handleUpdateAnnouncement(idx, 'isActive', e.target.checked)}
-                            className="rounded text-[#9E2A2B] focus:ring-[#9E2A2B]"
-                          />
-                          <span>Display active on homepage</span>
-                        </label>
-                        <span className="text-[11px] font-mono">Status: {item.isActive !== false ? 'Live' : 'Hidden'}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Add New Announcement Card */}
-                <div className="mt-5 p-4 rounded-xl border border-dashed border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3]/60 dark:bg-[#14110F]/60 space-y-3">
-                  <h3 className="text-xs font-bold text-[#1F1D1B] dark:text-[#F6F5F3] flex items-center gap-1.5">
-                    <Plus size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                    <span>Create New Homepage Announcement</span>
-                  </h3>
-                  
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <input
-                      type="text"
-                      placeholder="Title (e.g. Tricycle Fare Advisory)"
-                      value={newAnnouncement.title}
-                      onChange={(e) => setNewAnnouncement(prev => ({ ...prev, title: e.target.value }))}
-                      className="sm:col-span-2 px-3 py-1.5 text-xs rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#F6F5F3]"
-                    />
-                    <select
-                      value={newAnnouncement.type}
-                      onChange={(e) => setNewAnnouncement(prev => ({ ...prev, type: e.target.value }))}
-                      className="px-2.5 py-1.5 text-xs rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#F6F5F3]"
-                    >
-                      <option value="info">Info / General Notice</option>
-                      <option value="alert">Alert / Urgent Reminder</option>
-                      <option value="event">Advisory / Event</option>
-                    </select>
-                  </div>
-
-                  <textarea
-                    rows={2}
-                    placeholder="Content / Advisory text to appear on the public card..."
-                    value={newAnnouncement.desc}
-                    onChange={(e) => setNewAnnouncement(prev => ({ ...prev, desc: e.target.value }))}
-                    className="w-full px-3 py-2 text-xs rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#F6F5F3] resize-none"
-                  />
-
-                  <div className="flex justify-end">
-                    <button
-                      type="button"
-                      onClick={handleAddAnnouncement}
-                      className="inline-flex items-center gap-1 px-3.5 py-1.5 text-xs font-semibold rounded-lg bg-[#9E2A2B] text-white hover:bg-[#7A1B22] cursor-pointer"
-                    >
-                      <Plus size={13} />
-                      <span>Add to Announcements List</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
-
-      
-          {/* TAB 5: DATABASE BACKUP & DISASTER RECOVERY */}
+          {/* TAB 4: DATABASE BACKUP & DISASTER RECOVERY */}
           {activeTab === 'backup' && isSystemAdmin && (
             <div className="space-y-6">
               {/* Status Header Cards */}
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
-                <div className="bg-white dark:bg-[#1C1917] p-4 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs flex items-center gap-3">
+                <div className="bg-white dark:bg-[#1C1917] p-4 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37] shrink-0">
                     <Database size={20} />
                   </div>
@@ -2154,7 +1835,7 @@ const AdminSettings = () => {
                   </div>
                 </div>
 
-                <div className="bg-white dark:bg-[#1C1917] p-4 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs flex items-center gap-3">
+                <div className="bg-white dark:bg-[#1C1917] p-4 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
                     <Clock size={20} />
                   </div>
@@ -2166,7 +1847,7 @@ const AdminSettings = () => {
                   </div>
                 </div>
 
-                <div className="bg-white dark:bg-[#1C1917] p-4 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs flex items-center gap-3">
+                <div className="bg-white dark:bg-[#1C1917] p-4 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
                     <CalendarDays size={20} />
                   </div>
@@ -2176,7 +1857,7 @@ const AdminSettings = () => {
                   </div>
                 </div>
 
-                <div className="bg-white dark:bg-[#1C1917] p-4 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs flex items-center gap-3">
+                <div className="bg-white dark:bg-[#1C1917] p-4 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm flex items-center gap-3">
                   <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
                     <HardDrive size={20} />
                   </div>
@@ -2188,7 +1869,7 @@ const AdminSettings = () => {
               </div>
 
               {/* Action Toolbar */}
-              <div className="bg-white dark:bg-[#1C1917] p-5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+              <div className="bg-white dark:bg-[#1C1917] p-5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
                 <div>
                   <h3 className="text-sm font-bold text-[#1F1D1B] dark:text-[#F6F5F3] flex items-center gap-2">
                     <ShieldCheck size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
@@ -2211,8 +1892,8 @@ const AdminSettings = () => {
                   <button
                     type="button"
                     onClick={() => backupUploadInputRef.current?.click()}
-                    className="px-3 py-2 rounded-lg text-xs font-bold bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-neutral-100 flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 transition-all"
-                    title="I-restore ang database gamit ang na-upload na .json.gz file"
+                    className="px-3 py-2 rounded-lg text-xs font-bold bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#E4E1DC] dark:hover:bg-[#2E2A27] flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95 transition-all"
+                    title="Restore the database using an uploaded .json.gz backup archive"
                   >
                     <UploadCloud size={14} />
                     <span>Upload &amp; Restore</span>
@@ -2221,8 +1902,8 @@ const AdminSettings = () => {
                   <button
                     type="button"
                     onClick={handleDownloadDirectSnapshot}
-                    className="px-3 py-2 rounded-lg text-xs font-bold bg-[#F6F5F3] dark:bg-[#14110F] text-[#9E2A2B] dark:text-[#D4AF37] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-neutral-100 flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 transition-all"
-                    title="Direktang i-download ang live compressed backup sa inyong laptop o USB flash drive"
+                    className="px-3 py-2 rounded-lg text-xs font-bold bg-[#F6F5F3] dark:bg-[#14110F] text-[#9E2A2B] dark:text-[#D4AF37] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#E4E1DC] dark:hover:bg-[#2E2A27] flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95 transition-all"
+                    title="Directly download a live compressed backup snapshot to your device"
                   >
                     <Download size={14} />
                     <span>Direct Offline Download</span>
@@ -2232,7 +1913,7 @@ const AdminSettings = () => {
                     type="button"
                     onClick={handleCreateManualBackup}
                     disabled={isBackingUp}
-                    className="px-3.5 py-2 rounded-lg text-xs font-bold bg-[#9E2A2B] hover:bg-[#7A1B22] text-white flex items-center gap-1.5 cursor-pointer shadow-xs active:scale-95 transition-all disabled:opacity-50"
+                    className="px-3.5 py-2 rounded-lg text-xs font-bold bg-[#9E2A2B] hover:bg-[#7A1B22] text-white flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95 transition-all disabled:opacity-50"
                   >
                     {isBackingUp ? (
                       <>
@@ -2250,7 +1931,7 @@ const AdminSettings = () => {
               </div>
 
               {/* Backup Archives Table */}
-              <div className="bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs overflow-hidden">
+              <div className="bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm overflow-hidden">
                 <div className="p-4 border-b border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-between">
                   <h3 className="text-xs font-bold text-[#1F1D1B] dark:text-[#F6F5F3] uppercase tracking-wider flex items-center gap-1.5">
                     <FileArchive size={15} className="text-[#6B6761] dark:text-[#A8A29E]" />
@@ -2269,86 +1950,138 @@ const AdminSettings = () => {
                 {isLoadingBackups ? (
                   <div className="p-8 text-center text-xs text-[#6B6761] dark:text-[#A8A29E]">
                     <Loader2 size={20} className="animate-spin mx-auto mb-2 text-[#9E2A2B] dark:text-[#D4AF37]" />
-                    <span>Kinukuha ang talaan ng mga backup archives...</span>
+                    <span>Loading backup archives...</span>
                   </div>
                 ) : backups.length === 0 ? (
                   <div className="p-10 text-center text-xs text-[#6B6761] dark:text-[#A8A29E]">
                     <Database size={28} className="mx-auto mb-2.5 opacity-30" />
-                    <p className="font-bold text-sm text-[#1F1D1B] dark:text-[#F6F5F3]">Wala pang nakaimbak na backup archive.</p>
+                    <p className="font-bold text-sm text-[#1F1D1B] dark:text-[#F6F5F3]">No backup archives stored yet.</p>
                     <p className="mt-1 max-w-sm mx-auto">
-                      Pindutin ang <strong>"Backup Database Now"</strong> o <strong>"Direct Offline Download"</strong> upang mag-save ng kopya ng buong database.
+                      Click <strong>"Backup Database Now"</strong> or <strong>"Direct Offline Download"</strong> to save a full snapshot of the database.
                     </p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse text-xs">
-                      <thead>
-                        <tr className="border-b border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E] uppercase font-bold text-[11px] tracking-wider">
-                          <th className="p-3 pl-4">Archive Filename</th>
-                          <th className="p-3">Type</th>
-                          <th className="p-3">Creation Date</th>
-                          <th className="p-3">Size</th>
-                          <th className="p-3 pr-4 text-right">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
-                        {backups.map((b, idx) => (
-                          <tr key={idx} className="hover:bg-[#F6F5F3]/60 dark:hover:bg-[#14110F]/60 transition-colors">
-                            <td className="p-3 pl-4 font-mono font-medium text-[#1F1D1B] dark:text-[#F6F5F3] truncate max-w-xs">
+                  <>
+                    {/* Mobile Backup Archive Cards */}
+                    <div className="md:hidden divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
+                      {backups.map((b, idx) => (
+                        <div key={idx} className="p-3.5 space-y-2.5">
+                          <div className="flex items-start justify-between gap-2">
+                            <span className="font-mono font-medium text-xs text-[#1F1D1B] dark:text-[#F6F5F3] break-all min-w-0">
                               {b.filename}
-                            </td>
-                            <td className="p-3">
-                              <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border ${
-                                b.isAutomated
-                                  ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900/60'
-                                  : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900/60'
-                              }`}>
-                                {b.type}
-                              </span>
-                            </td>
-                            <td className="p-3 text-[#6B6761] dark:text-[#A8A29E]">
-                              {new Date(b.createdAt).toLocaleString('en-PH')}
-                            </td>
-                            <td className="p-3 font-mono font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
-                              {b.sizeFormatted}
-                            </td>
-                            <td className="p-3 pr-4 text-right">
-                              <div className="flex items-center justify-end gap-1.5">
-                                <button
-                                  type="button"
-                                  onClick={() => handleDownloadBackupFile(b.filename)}
-                                  className="p-1.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] hover:bg-neutral-200 text-xs flex items-center gap-1 cursor-pointer"
-                                  title="Download .json.gz"
-                                >
-                                  <Download size={13} />
-                                  <span>Download</span>
-                                </button>
+                            </span>
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border shrink-0 ${
+                              b.isAutomated
+                                ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900/60'
+                                : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900/60'
+                            }`}>
+                              {b.type}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
+                            <span>{new Date(b.createdAt).toLocaleString('en-PH')}</span>
+                            <span className="font-mono font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{b.sizeFormatted}</span>
+                          </div>
+                          <div className="flex items-center justify-end gap-1.5 pt-1">
+                            <button
+                              type="button"
+                              onClick={() => handleDownloadBackupFile(b.filename)}
+                              className="p-1.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] hover:bg-[#E4E1DC] dark:hover:bg-[#2E2A27] text-xs flex items-center gap-1 cursor-pointer"
+                            >
+                              <Download size={13} />
+                              <span>Download</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => setRestoreModal({ isOpen: true, filename: b.filename, isRestoring: false, confirmText: '', error: '' })}
+                              className="p-1.5 rounded-lg border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                            >
+                              <RotateCcw size={13} />
+                              <span>Restore</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteBackupFile(b.filename)}
+                              className="p-1.5 rounded-lg border border-red-200 dark:border-red-900/60 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 text-xs cursor-pointer"
+                              title="Delete backup file"
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
 
-                                <button
-                                  type="button"
-                                  onClick={() => setRestoreModal({ isOpen: true, filename: b.filename, isRestoring: false, confirmText: '', error: '' })}
-                                  className="p-1.5 rounded-lg border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 text-xs font-semibold flex items-center gap-1 cursor-pointer"
-                                  title="Restore database from this archive"
-                                >
-                                  <RotateCcw size={13} />
-                                  <span>Restore</span>
-                                </button>
-
-                                <button
-                                  type="button"
-                                  onClick={() => handleDeleteBackupFile(b.filename)}
-                                  className="p-1.5 rounded-lg border border-red-200 dark:border-red-900/60 text-red-600 dark:text-red-400 hover:bg-red-50 text-xs cursor-pointer"
-                                  title="Delete backup file"
-                                >
-                                  <Trash2 size={13} />
-                                </button>
-                              </div>
-                            </td>
+                    <div className="hidden md:block overflow-x-auto">
+                      <table className="w-full text-left border-collapse text-xs">
+                        <thead>
+                          <tr className="border-b border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E] uppercase font-bold text-[11px] tracking-wider">
+                            <th className="p-3 pl-4">Archive Filename</th>
+                            <th className="p-3">Type</th>
+                            <th className="p-3">Creation Date</th>
+                            <th className="p-3">Size</th>
+                            <th className="p-3 pr-4 text-right">Actions</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
+                        </thead>
+                        <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
+                          {backups.map((b, idx) => (
+                            <tr key={idx} className="hover:bg-[#F6F5F3]/60 dark:hover:bg-[#14110F]/60 transition-colors">
+                              <td className="p-3 pl-4 font-mono font-medium text-[#1F1D1B] dark:text-[#F6F5F3] truncate max-w-xs">
+                                {b.filename}
+                              </td>
+                              <td className="p-3">
+                                <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border ${
+                                  b.isAutomated
+                                    ? 'bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-900/60'
+                                    : 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-900/60'
+                                }`}>
+                                  {b.type}
+                                </span>
+                              </td>
+                              <td className="p-3 text-[#6B6761] dark:text-[#A8A29E]">
+                                {new Date(b.createdAt).toLocaleString('en-PH')}
+                              </td>
+                              <td className="p-3 font-mono font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
+                                {b.sizeFormatted}
+                              </td>
+                              <td className="p-3 pr-4 text-right">
+                                <div className="flex items-center justify-end gap-1.5">
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDownloadBackupFile(b.filename)}
+                                    className="p-1.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] hover:bg-[#E4E1DC] dark:hover:bg-[#2E2A27] text-xs flex items-center gap-1 cursor-pointer"
+                                    title="Download .json.gz"
+                                  >
+                                    <Download size={13} />
+                                    <span>Download</span>
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => setRestoreModal({ isOpen: true, filename: b.filename, isRestoring: false, confirmText: '', error: '' })}
+                                    className="p-1.5 rounded-lg border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                                    title="Restore database from this archive"
+                                  >
+                                    <RotateCcw size={13} />
+                                    <span>Restore</span>
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteBackupFile(b.filename)}
+                                    className="p-1.5 rounded-lg border border-red-200 dark:border-red-900/60 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 text-xs cursor-pointer"
+                                    title="Delete backup file"
+                                  >
+                                    <Trash2 size={13} />
+                                  </button>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
                 )}
               </div>
             </div>
@@ -2358,7 +2091,7 @@ const AdminSettings = () => {
 
           {/* RESTORE CONFIRMATION SAFETY MODAL */}
           {restoreModal.isOpen && (
-            <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+            <div role="dialog" aria-modal="true" className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
               <div
                 className="absolute inset-0 bg-black/60"
                 onClick={() => !restoreModal.isRestoring && setRestoreModal({ isOpen: false, filename: null, isRestoring: false, confirmText: '', error: '' })}
@@ -2376,13 +2109,13 @@ const AdminSettings = () => {
 
                 <div className="space-y-3 text-xs text-[#1F1D1B] dark:text-[#EAE7E1]">
                   <p className="leading-relaxed">
-                    Babaguhin ng pagkilos na ito ang kasalukuyang database at ibabalik ang lahat ng datos mula sa archive:
+                    This action will overwrite the current database and restore all records from the archive:
                   </p>
                   <p className="p-2.5 rounded bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] font-mono text-[11px] font-bold text-red-700 dark:text-red-300 truncate">
                     {restoreModal.filename}
                   </p>
                   <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] leading-relaxed">
-                    * Kusa munang gagawa ang system ng emergency safety backup bago mag-restore. Upang magpatuloy, mangyaring i-type ang salitang <strong>RESTORE</strong> sa kahon:
+                    * The system will automatically create an emergency safety backup before restoring. To continue, please type <strong>RESTORE</strong> in the box below:
                   </p>
 
                   <input
@@ -2403,9 +2136,9 @@ const AdminSettings = () => {
                     type="button"
                     disabled={restoreModal.isRestoring}
                     onClick={() => setRestoreModal({ isOpen: false, filename: null, isRestoring: false, confirmText: '', error: '' })}
-                    className="flex-1 py-2 rounded-lg font-bold text-xs bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#E4E1DC] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] cursor-pointer"
+                    className="flex-1 py-2 rounded-lg font-bold text-xs bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#E4E1DC] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] cursor-pointer"
                   >
-                    Kanselahin
+                    Cancel
                   </button>
                   <button
                     type="button"
@@ -2513,7 +2246,7 @@ const AdminSettings = () => {
                 type="button"
                 onClick={executeSave}
                 disabled={isProcessing}
-                className="flex-1 py-2 rounded-lg font-medium text-white bg-[#9E2A2B] hover:bg-[#7A1B22] transition-colors text-xs shadow-xs flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
+                className="flex-1 py-2 rounded-lg font-medium text-white bg-[#9E2A2B] hover:bg-[#7A1B22] transition-colors text-xs shadow-sm flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer"
               >
                 {isProcessing ? (
                   <>

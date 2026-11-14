@@ -1,4 +1,5 @@
 import React, { useRef, useState } from 'react';
+import { toast } from 'sonner';
 import { Printer, FileText, FileSpreadsheet, Loader2 } from 'lucide-react';
 import { downloadOriginalLguTemplate } from '../../utils/downloadOriginalLguTemplate';
 import { cleanText, formatVehicleMake, formatVehicleModelYear } from '../../utils/vehicleFormatters';
@@ -133,7 +134,7 @@ const OfficialApplicationForm = ({
       });
     } catch (err) {
       console.error('Error downloading original Application Form Excel:', err);
-      alert('Could not download Excel file. Please try again.');
+      toast.error('Could not download Excel file. Please try again.');
     } finally {
       setIsDownloadingExcel(false);
     }
@@ -145,7 +146,7 @@ const OfficialApplicationForm = ({
       {showActions && (
         <div className="w-full max-w-[820px] bg-[#1F1D1B] dark:bg-[#1C1917] border border-[#E4E1DC]/20 dark:border-[#2E2A27] rounded-xl p-3 mb-4 flex flex-wrap items-center justify-between gap-2 text-white shadow-md print:hidden">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#9E2A2B] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+            <div className="w-8 h-8 rounded-lg bg-[#9E2A2B] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
               <FileText size={17} />
             </div>
             <div>

@@ -52,13 +52,15 @@ import SplashScreen from './components/common/SplashScreen';
 
 import { initServerTimeSync, recordServerTimeFromResponse } from './utils/serverTime';
 import ErrorBoundary from './components/common/ErrorBoundary';
+import { ConfirmProvider } from './components/ui/ConfirmContext';
+import { Toaster } from './components/ui/Toaster';
 
 const PageLoader = () => (
-  <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 p-4">
-    <div className="w-10 h-10 rounded-2xl bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37] mb-2.5">
+  <div className="min-h-screen flex flex-col items-center justify-center bg-[#F6F5F3] dark:bg-[#14110F] p-4">
+    <div className="w-10 h-10 rounded-xl bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37] mb-2.5">
       <div className="w-5 h-5 border-2 border-[#9E2A2B] dark:border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
     </div>
-    <span className="text-xs font-bold text-slate-500 dark:text-slate-600 dark:text-slate-400">Loading...</span>
+    <span className="text-xs font-bold text-[#6B6761] dark:text-[#A8A29E]">Loading...</span>
   </div>
 );
 
@@ -104,6 +106,7 @@ function App() {
 
   return (
     <ThemeProvider>
+      <ConfirmProvider>
       <TextSizeProvider>
         <LanguageProvider>
           <SocketProvider>
@@ -166,10 +169,12 @@ function App() {
             </ErrorBoundary>
             <PwaInstallBanner />
             <SplashScreen />
+            <Toaster />
           </NotificationProvider>
         </SocketProvider>
       </LanguageProvider>
       </TextSizeProvider>
+      </ConfirmProvider>
     </ThemeProvider>
   );
 }

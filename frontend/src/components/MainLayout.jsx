@@ -32,12 +32,26 @@ const MainLayout = ({ children, hideNav = false }) => {
     document.body.classList.remove('auth-view'); document.documentElement.style.backgroundColor = ''; document.body.style.backgroundColor = '';
   }, []);
 
-  // Ensure sidebar is closed on mobile when bottom navigation is active
+  // Synchronize sidebar state cleanly across mobile <-> desktop resizes
+  const prevIsMobileRef = useRef(typeof window !== 'undefined' ? window.innerWidth < 768 : false);
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth < 768 && showBottomNav) {
+      const mobileNow = window.innerWidth < 768;
+      if (mobileNow && showBottomNav) {
         setIsSidebarOpen(false);
+      } else if (mobileNow !== prevIsMobileRef.current) {
+        if (mobileNow) {
+          setIsSidebarOpen(false);
+        } else {
+          try {
+            const saved = localStorage.getItem('gtrams_sidebar_open');
+            setIsSidebarOpen(saved !== null ? JSON.parse(saved) : true);
+          } catch {
+            setIsSidebarOpen(true);
+          }
+        }
       }
+      prevIsMobileRef.current = mobileNow;
     };
     handleResize();
     window.addEventListener('resize', handleResize);
@@ -182,8 +196,8 @@ const MainLayout = ({ children, hideNav = false }) => {
         </main>
       </div>
 
-      {/* Floating Chat Widget (Only displayed for operators and TODA presidents; admins have a dedicated tickets page) */}
-      {!isTicketsPage && !isAdmin && <ChatWidget />}
+      {/* Floating Chat Widget (Only displayed for operators and TODA presidents; admins and cashiers do not use operator chat) */}
+      {!isTicketsPage && !isAdmin && !isCashier && <ChatWidget />}
       {/* Mobile Bottom Navigation for Operator and TODA President */}
       {showBottomNav && (
         <OperatorBottomNav role={role} />

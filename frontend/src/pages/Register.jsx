@@ -481,7 +481,7 @@ const Register = () => {
 
             {/* Bottom: Tagline */}
             <div className="relative z-10 pb-1 sm:pb-2 md:pb-4">
-              <p className="text-xs sm:text-sm md:text-base text-white font-semibold leading-snug max-w-sm drop-shadow-xs">
+              <p className="text-xs sm:text-sm md:text-base text-white font-semibold leading-snug max-w-sm drop-shadow-sm">
                 Gasan Tricycle Records &amp; Application Management System
               </p>
             </div>
@@ -491,7 +491,7 @@ const Register = () => {
           <div className="md:col-span-7 lg:col-span-7 flex flex-col items-center justify-start px-4 sm:px-8 md:px-14 lg:px-20 pt-3 sm:pt-6 md:pt-10 pb-4 sm:pb-8 bg-white dark:bg-[#1C1917] min-h-full">
             <div className="w-full max-w-xl">
               <div className="mb-4 sm:mb-5">
-                <h1 className="text-2xl sm:text-3xl font-black text-[#9E2A2B] tracking-tight leading-tight">
+                <h1 className="text-2xl sm:text-3xl font-black text-[#9E2A2B] dark:text-[#F6F5F3] tracking-tight leading-tight">
                   {step === 1 ? 'Register' : 'Verify contact'}
                 </h1>
                 <div className="w-10 h-1 bg-[#D4AF37] rounded-full mt-2" />
@@ -503,7 +503,7 @@ const Register = () => {
               </div>
 
               {error && (
-                <div className="mb-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 text-red-600 dark:text-red-400 text-xs font-bold rounded-lg p-3 text-center shadow-xs tracking-wide">
+                <div className="mb-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 text-red-600 dark:text-red-400 text-xs font-bold rounded-lg p-3 text-center shadow-sm tracking-wide">
                   <p>{error}</p>
                   {error.includes('ALREADY EXISTS') && (
                     <Link to="/login" className="inline-block mt-1 font-bold text-[#9E2A2B] dark:text-[#D4AF37] underline tracking-wider">
@@ -513,7 +513,7 @@ const Register = () => {
                 </div>
               )}
               {success && (
-                <div className="mb-3.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-400 text-xs font-bold rounded-lg p-3 text-center shadow-xs tracking-wide">
+                <div className="mb-3.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-400 text-xs font-bold rounded-lg p-3 text-center shadow-sm tracking-wide">
                   {success}
                 </div>
               )}
@@ -665,7 +665,7 @@ const Register = () => {
                     {formData.todaAssociation && formData.todaAssociation !== 'NON-TODA' && (
                       <div className="text-xs rounded-lg transition-all animate-fadeIn">
                         {isCheckingToda ? (
-                          <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 p-2.5 bg-slate-50 dark:bg-slate-900/40 rounded-lg border border-slate-200 dark:border-slate-800">
+                          <div className="flex items-center gap-2 text-[#6B6761] dark:text-[#A8A29E] p-2.5 bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
                             <Loader2 size={13} className="animate-spin shrink-0 text-[#9E2A2B] dark:text-[#D4AF37]" />
                             <span>Kinukumpirma ang kombinasyon sa opisyal na masterlist ng {formData.todaAssociation}...</span>
                           </div>
@@ -863,7 +863,7 @@ const Register = () => {
                         {/* MOBILE ONLY: Directly below Password field (Only shows when typing) */}
                         <div className="block sm:hidden mt-2">
                           {Boolean(formData.password && formData.password.length > 0) && (
-                            <div className="bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3 text-left space-y-2 shadow-xs transition-all animate-in fade-in slide-in-from-top-1 duration-150">
+                            <div className="bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3 text-left space-y-2 shadow-sm transition-all animate-in fade-in slide-in-from-top-1 duration-150">
                               <div className="flex items-center justify-between">
                                 <span className="text-xs font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
                                   Password Qualifications
@@ -939,7 +939,7 @@ const Register = () => {
                     {/* DESKTOP ONLY: Full-width below the two-column row (Only shows when typing) */}
                     {Boolean(formData.password && formData.password.length > 0) && (
                       <div className="hidden sm:block">
-                        <div className="bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3 text-left space-y-2 shadow-xs transition-all animate-in fade-in slide-in-from-top-1 duration-150">
+                        <div className="bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3 text-left space-y-2 shadow-sm transition-all animate-in fade-in slide-in-from-top-1 duration-150">
                           <div className="flex items-center justify-between">
                             <span className="text-xs font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
                               Password Qualifications
@@ -1005,7 +1005,7 @@ const Register = () => {
                       <button 
                         type="submit" 
                         disabled={isLoading}
-                        className="w-full flex items-center justify-center gap-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white py-3 rounded-lg text-base font-bold shadow-xs active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer min-h-[46px]"
+                        className="w-full flex items-center justify-center gap-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white py-3 rounded-lg text-base font-bold shadow-sm active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer min-h-[46px]"
                       >
                         {isLoading ? (
                           <>
@@ -1052,7 +1052,7 @@ const Register = () => {
                   <button 
                     type="submit" 
                     disabled={isLoading}
-                    className="w-full flex items-center justify-center gap-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white py-3 rounded-lg text-sm font-bold shadow-xs active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer min-h-[46px]"
+                    className="w-full flex items-center justify-center gap-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white py-3 rounded-lg text-sm font-bold shadow-sm active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer min-h-[46px]"
                   >
                     {isLoading ? (
                       <>

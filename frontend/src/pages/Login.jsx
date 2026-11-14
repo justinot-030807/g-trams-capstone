@@ -207,7 +207,7 @@ const Login = () => {
 
             {/* Bottom: Tagline */}
             <div className="relative z-10 pb-1 sm:pb-2 md:pb-4">
-              <p className="text-xs sm:text-sm md:text-base text-white font-semibold leading-snug max-w-sm drop-shadow-xs">
+              <p className="text-xs sm:text-sm md:text-base text-white font-semibold leading-snug max-w-sm drop-shadow-sm">
                 Gasan Tricycle Records &amp; Application Management System
               </p>
             </div>
@@ -217,7 +217,7 @@ const Login = () => {
           <div className="md:col-span-7 lg:col-span-7 flex flex-col items-center justify-start px-4 sm:px-8 md:px-14 lg:px-20 pt-5 sm:pt-8 md:pt-12 pb-6 sm:pb-10 bg-white dark:bg-[#1C1917] min-h-full">
             <div className="w-full max-w-md">
               <div className="mb-5 sm:mb-6">
-                <h1 className="text-2xl sm:text-3xl font-black text-[#9E2A2B] tracking-tight leading-tight">
+                <h1 className="text-2xl sm:text-3xl font-black text-[#9E2A2B] dark:text-[#F6F5F3] tracking-tight leading-tight">
                   Welcome back
                 </h1>
                 <div className="w-10 h-1 bg-[#D4AF37] rounded-full mt-2" />
@@ -227,7 +227,7 @@ const Login = () => {
               </div>
 
               {error && (
-                <div className={`mb-4 text-xs font-bold rounded-lg p-3 text-center shadow-xs animate-shake tracking-wide ${
+                <div className={`mb-4 text-xs font-bold rounded-lg p-3 text-center shadow-sm animate-shake tracking-wide ${
                   error.toLowerCase().includes('google')
                     ? 'bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/60 text-amber-900 dark:text-amber-300 leading-relaxed'
                     : 'bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 text-red-600 dark:text-red-400'
@@ -310,7 +310,7 @@ const Login = () => {
                   <button
                     type="submit"
                     disabled={isLoading || lockoutSeconds > 0}
-                    className="w-full flex items-center justify-center gap-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white py-2.5 sm:py-3 rounded-lg text-base font-bold shadow-xs active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer min-h-[46px] sm:min-h-[48px]"
+                    className="w-full flex items-center justify-center gap-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white py-2.5 sm:py-3 rounded-lg text-base font-bold shadow-sm active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer min-h-[46px] sm:min-h-[48px]"
                   >
                     {isLoading ? (
                       <>

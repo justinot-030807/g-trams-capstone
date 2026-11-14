@@ -148,7 +148,7 @@ export const TableSkeleton = ({
   baseDelay = 30
 }) => {
   return (
-    <div className="w-full bg-white dark:bg-[#1C1917] rounded-lg shadow-xs border border-[#E4E1DC] dark:border-[#2E2A27] overflow-hidden">
+    <div className="w-full bg-white dark:bg-[#1C1917] rounded-lg shadow-sm border border-[#E4E1DC] dark:border-[#2E2A27] overflow-hidden">
       <div className="overflow-x-auto min-h-[300px]">
         <table className="w-full text-left border-collapse min-w-[760px]">
           <thead>

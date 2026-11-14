@@ -4,6 +4,7 @@ import {
   AlertCircle, Users, Clock, Bold, List, AlertTriangle, Eye, EyeOff, Filter
 } from 'lucide-react';
 import { useSocket } from '../../context/SocketContext';
+import { useConfirm } from '../ui/ConfirmContext';
 import { TODA_LIST } from '../../utils/constants';
 
 const STATUS_OPTIONS = [
@@ -26,7 +27,7 @@ export const renderFormattedAnnouncement = (text) => {
     return parts.map((part, i) => {
       if (part.startsWith('**') && part.endsWith('**')) {
         return (
-          <strong key={i} className="font-bold text-slate-900 dark:text-white">
+          <strong key={i} className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
             {part.slice(2, -2)}
           </strong>
         );
@@ -51,7 +52,7 @@ export const renderFormattedAnnouncement = (text) => {
           return (
             <div 
               key={idx} 
-              className="my-1.5 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 text-amber-900 dark:text-amber-200 font-bold flex items-start gap-2 shadow-xs"
+              className="my-1.5 p-3 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-700/60 text-amber-900 dark:text-amber-200 font-bold flex items-start gap-2 shadow-sm"
             >
               <span className="text-base shrink-0 mt-0.5">🚨</span>
               <span className="flex-1">{trimmed.replace(/^🚨\s*/, '')}</span>
@@ -65,13 +66,13 @@ export const renderFormattedAnnouncement = (text) => {
           return (
             <div key={idx} className="flex items-start gap-2 pl-2">
               <span className="text-[#9E2A2B] dark:text-[#D4AF37] font-black text-sm shrink-0 leading-none mt-0.5">•</span>
-              <span className="flex-1 text-slate-800 dark:text-slate-200">{parseBoldText(content)}</span>
+              <span className="flex-1 text-[#1F1D1B] dark:text-[#EAE7E1]">{parseBoldText(content)}</span>
             </div>
           );
         }
 
         return (
-          <p key={idx} className="text-slate-800 dark:text-slate-200">
+          <p key={idx} className="text-[#1F1D1B] dark:text-[#EAE7E1]">
             {parseBoldText(line)}
           </p>
         );
@@ -82,6 +83,7 @@ export const renderFormattedAnnouncement = (text) => {
 
 const AdminBroadcastCenter = () => {
   const { socket } = useSocket();
+  const { confirm } = useConfirm();
   const [broadcastMessage, setBroadcastMessage] = useState('');
   const [isBroadcasting, setIsBroadcasting] = useState(false);
   const [announcements, setAnnouncements] = useState([]);
@@ -193,7 +195,13 @@ const AdminBroadcastCenter = () => {
       ? 'all registered operators and TODA presidents'
       : `${targetToda === 'ALL' ? 'All TODAs' : `TODA: ${targetToda}`}${targetStatus === 'ALL' ? '' : ` (${targetStatus} status)`}`;
 
-    if (!window.confirm(`Are you sure you want to broadcast this announcement to ${audienceDesc}?`)) {
+    const ok = await confirm({
+      title: 'Send Broadcast Announcement',
+      description: `Are you sure you want to broadcast this announcement to ${audienceDesc}?`,
+      confirmLabel: 'Broadcast Now',
+      cancelLabel: 'Cancel'
+    });
+    if (!ok) {
       return;
     }
 
@@ -227,7 +235,14 @@ const AdminBroadcastCenter = () => {
   };
 
   const handleDeleteBroadcast = async (msgId) => {
-    if (!window.confirm('Delete this broadcast announcement from history?')) return;
+    const ok = await confirm({
+      title: 'Delete Broadcast Announcement',
+      description: 'Delete this broadcast announcement from history?',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      variant: 'danger'
+    });
+    if (!ok) return;
     try {
       const res = await fetch(`${API_URL}/api/v1/chat/messages/${msgId}`, {
         method: 'DELETE',
@@ -279,7 +294,7 @@ const AdminBroadcastCenter = () => {
       )}
 
       {/* Broadcast Composer Section */}
-      <div className="bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] p-4 sm:p-6 shadow-xs">
+      <div className="bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] p-4 sm:p-6 shadow-sm">
         <div className="flex items-center gap-3 mb-3">
           <div className="w-9 h-9 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0 border border-[#9E2A2B]/20 dark:border-[#D4AF37]/30">
             <Megaphone size={18} />
@@ -442,7 +457,7 @@ const AdminBroadcastCenter = () => {
             <button
               type="submit"
               disabled={!broadcastMessage.trim() || isBroadcasting}
-              className="w-full sm:w-auto px-5 py-2 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-medium text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-xs active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer order-1 sm:order-2"
+              className="w-full sm:w-auto px-5 py-2 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-medium text-xs sm:text-sm flex items-center justify-center gap-2 transition-all shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer order-1 sm:order-2"
             >
               {isBroadcasting ? (
                 <>
@@ -461,7 +476,7 @@ const AdminBroadcastCenter = () => {
       </div>
 
       {/* Broadcast History Section */}
-      <div className="bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] p-4 sm:p-6 shadow-xs">
+      <div className="bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] p-4 sm:p-6 shadow-sm">
         <div className="flex items-center justify-between mb-4 pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
           <div className="flex items-center gap-2">
             <Clock size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />

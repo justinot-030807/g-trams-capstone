@@ -323,7 +323,7 @@ const TermsPolicyModal = ({
                 if (onAccept) onAccept();
                 onClose();
               }}
-              className="px-6 py-2.5 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-xs uppercase tracking-wider shadow-xs transition-colors cursor-pointer min-h-[44px]"
+              className="px-6 py-2.5 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-xs uppercase tracking-wider shadow-sm transition-colors cursor-pointer min-h-[44px]"
             >
               {current.acceptBtn}
             </button>

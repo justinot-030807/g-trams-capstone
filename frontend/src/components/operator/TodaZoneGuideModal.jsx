@@ -105,7 +105,7 @@ const TodaZoneGuideModal = ({ isOpen, onClose }) => {
               onClick={() => setActiveTab('zones')}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
                 activeTab === 'zones'
-                  ? 'bg-[#9E2A2B] text-white shadow-xs'
+                  ? 'bg-[#9E2A2B] text-white shadow-sm'
                   : 'bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1]'
               }`}
             >
@@ -117,7 +117,7 @@ const TodaZoneGuideModal = ({ isOpen, onClose }) => {
               onClick={() => setActiveTab('toda')}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${
                 activeTab === 'toda'
-                  ? 'bg-[#9E2A2B] text-white shadow-xs'
+                  ? 'bg-[#9E2A2B] text-white shadow-sm'
                   : 'bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1]'
               }`}
             >

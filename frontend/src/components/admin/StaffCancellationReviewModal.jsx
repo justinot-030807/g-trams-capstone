@@ -69,7 +69,7 @@ const StaffCancellationReviewModal = ({
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
       {/* Backdrop */}
       <div 
-        className="fixed inset-0 bg-black/70 backdrop-blur-xs animate-in fade-in duration-200" 
+        className="fixed inset-0 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200" 
         onClick={() => !isProcessing && onClose()} 
       />
 
@@ -221,7 +221,7 @@ const StaffCancellationReviewModal = ({
                     href={letterUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold rounded bg-[#9E2A2B] hover:bg-[#7A1B22] text-white transition-colors ml-2 shadow-2xs"
+                    className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold rounded bg-[#9E2A2B] hover:bg-[#7A1B22] text-white transition-colors ml-2 shadow-sm"
                     title="Open document in a new window"
                   >
                     <ExternalLink size={12} />
@@ -303,7 +303,7 @@ const StaffCancellationReviewModal = ({
                   type="button"
                   disabled={isProcessing || !rejectionReason.trim()}
                   onClick={handleConfirmReject}
-                  className="px-4 py-1.5 text-xs font-bold rounded-lg bg-red-600 hover:bg-red-700 text-white shadow-xs disabled:opacity-50 flex items-center gap-1.5"
+                  className="px-4 py-1.5 text-xs font-bold rounded-lg bg-red-600 hover:bg-red-700 text-white shadow-sm disabled:opacity-50 flex items-center gap-1.5"
                 >
                   {isProcessing ? <Loader2 size={13} className="animate-spin" /> : <XCircle size={13} />}
                   <span>Confirm Reject Request</span>
@@ -336,7 +336,7 @@ const StaffCancellationReviewModal = ({
                 type="button"
                 disabled={isProcessing}
                 onClick={handleConfirmFinalize}
-                className="px-5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs text-white bg-[#B91C1C] hover:bg-[#991B1B] transition-all shadow-xs active:scale-95 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                className="px-5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs text-white bg-[#B91C1C] hover:bg-[#991B1B] transition-all shadow-sm active:scale-95 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
               >
                 {isProcessing ? (
                   <>

@@ -526,12 +526,12 @@ const PhilippineAddressAutocomplete = ({
                   </div>
                   <div className="flex items-center gap-1.5 shrink-0">
                     {item.isAutoCorrect && (
-                      <span className="px-1.5 py-0.2 rounded text-[10px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
                         Auto-Correct
                       </span>
                     )}
                     {item.isGasan && (
-                      <span className="px-1.5 py-0.2 rounded text-[10px] font-semibold bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37]">
+                      <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37]">
                         Gasan LGU
                       </span>
                     )}

@@ -24,10 +24,15 @@ const CashierDashboard = () => {
   const [payFormData, setPayFormData] = useState({
     officialReceiptNo: '',
     payerName: '',
-    amountPaid: 500,
+    amountPaid: Number(localStorage.getItem('franchise_fee')) || 500,
     paymentMethod: 'Cash',
     remarks: ''
   });
+
+  const standardFranchiseFee = useMemo(() => {
+    const val = Number(localStorage.getItem('franchise_fee'));
+    return Number.isFinite(val) && val > 0 ? val : 500;
+  }, []);
 
   // Daily Treasury Remittance Modal State
   const [isRemittanceModalOpen, setIsRemittanceModalOpen] = useState(false);
@@ -149,9 +154,9 @@ const CashierDashboard = () => {
     setPayFormData({
       officialReceiptNo: '',
       payerName: franchise.fullName || '',
-      amountPaid: franchise.amountPaid || 500,
-      paymentMethod: localStorage.getItem('cashier_default_payment') || 'Cash',
-      remarks: 'Payment settled at Municipal Treasury Window'
+      amountPaid: franchise.amountPaid || standardFranchiseFee,
+      paymentMethod: 'Cash',
+      remarks: 'Payment settled over the counter at Municipal Treasury Window'
     });
     setIsPayModalOpen(true);
   };
@@ -177,8 +182,8 @@ const CashierDashboard = () => {
         body: JSON.stringify({
           officialReceiptNo: (payFormData.officialReceiptNo || '').trim().toUpperCase(),
           payerName: (payFormData.payerName || '').trim() || selectedFranchise.fullName,
-          amountPaid: Number(payFormData.amountPaid) || 500,
-          paymentMethod: payFormData.paymentMethod,
+          amountPaid: Number(payFormData.amountPaid) || standardFranchiseFee,
+          paymentMethod: 'Cash',
           paymentRemarks: payFormData.remarks
         })
       });
@@ -193,8 +198,8 @@ const CashierDashboard = () => {
           ...data.franchise,
           officialReceiptNo: (payFormData.officialReceiptNo || '').trim().toUpperCase(),
           payerName: (payFormData.payerName || '').trim() || selectedFranchise.fullName,
-          amountPaid: Number(payFormData.amountPaid) || 500,
-          paymentMethod: payFormData.paymentMethod,
+          amountPaid: Number(payFormData.amountPaid) || standardFranchiseFee,
+          paymentMethod: 'Cash',
           paymentDate: new Date(),
           cashierName: currentCashierName
         });
@@ -265,10 +270,10 @@ const CashierDashboard = () => {
         )}
 
         {/* Municipal Cashier Header Ribbon */}
-        <div className="bg-[#9E2A2B] border-b border-[#7A1B22] text-white rounded-lg p-5 sm:p-6 shadow-xs relative overflow-hidden">
+        <div className="bg-[#9E2A2B] border-b border-[#7A1B22] text-white rounded-lg p-5 sm:p-6 shadow-sm relative overflow-hidden">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
             <div className="space-y-1.5">
-              <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-md bg-black/20 border border-white/20 text-xs font-semibold uppercase tracking-wider text-[#D4AF37]">
+              <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-md bg-black/25 border border-white/20 text-xs font-semibold uppercase tracking-wider text-[#F5E6B3]">
                 <Receipt size={14} />
                 <span>Municipal Treasury &bull; Cashier Collection Terminal</span>
               </div>
@@ -295,7 +300,7 @@ const CashierDashboard = () => {
               <button
                 type="button"
                 onClick={() => navigate('/cashier-settings')}
-                className="inline-flex items-center gap-1.5 px-3.5 py-3 rounded-lg bg-black/25 hover:bg-black/40 text-white text-xs font-bold transition-all border border-white/20 cursor-pointer shadow-xs active:scale-95"
+                className="inline-flex items-center gap-1.5 px-3.5 py-3 rounded-lg bg-black/25 hover:bg-black/40 text-white text-xs font-bold transition-all border border-white/20 cursor-pointer shadow-sm active:scale-95"
                 title="Open Cashier Settings & Archive"
               >
                 <Settings size={15} />
@@ -310,7 +315,7 @@ const CashierDashboard = () => {
           <StatsCardsSkeleton count={3} gridClassName="grid grid-cols-1 sm:grid-cols-3 gap-4" baseDelay={30} stepDelay={40} />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4 sm:p-5 shadow-xs">
+            <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4 sm:p-5 shadow-sm">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">Awaiting Collection</span>
                 <div className="w-8 h-8 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-400 flex items-center justify-center">
@@ -323,32 +328,23 @@ const CashierDashboard = () => {
               <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1">Ready for pickup & fee settlement</p>
             </div>
 
-            <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4 sm:p-5 shadow-xs">
-              <div className="flex items-center justify-between">
+            <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4 sm:p-5 shadow-sm">
+              <div className="flex items-center justify-between gap-2">
                 <span className="text-xs font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">Today's Collections</span>
-                <div className="w-8 h-8 rounded-md bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 flex items-center justify-center">
-                  <Banknote size={16} />
-                </div>
-              </div>
-              <p className="text-2xl sm:text-3xl font-bold text-emerald-700 dark:text-emerald-400 mt-2 font-mono">
-                ₱{Number(totalTodayCollected || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
-              </p>
-              <div className="flex items-center justify-between mt-1">
-                <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">Official Municipal Treasury receipts</p>
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-2 shrink-0">
                   <button
                     type="button"
                     onClick={() => setIsRemittanceModalOpen(true)}
-                    className="text-[11px] font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer flex items-center gap-0.5"
+                    className="text-[11px] font-bold text-[#9E2A2B] dark:text-[#F5E6B3] hover:underline cursor-pointer"
                     title="View Remittance Sheet"
                   >
-                    <span>Sheet</span>
+                    Sheet
                   </button>
                   <span className="text-[#E4E1DC] dark:text-[#2E2A27]">&bull;</span>
                   <button
                     type="button"
                     onClick={handleExportRemittanceCSV}
-                    className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer flex items-center gap-0.5"
+                    className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 hover:underline cursor-pointer inline-flex items-center gap-0.5"
                     title="Export CSV"
                   >
                     <Download size={11} />
@@ -356,9 +352,13 @@ const CashierDashboard = () => {
                   </button>
                 </div>
               </div>
+              <p className="text-2xl sm:text-3xl font-bold text-emerald-700 dark:text-emerald-400 mt-2 font-mono tabular-nums">
+                ₱{Number(totalTodayCollected || 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+              </p>
+              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1">Official Municipal Treasury receipts</p>
             </div>
 
-            <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4 sm:p-5 shadow-xs">
+            <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4 sm:p-5 shadow-sm">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">Total Processed</span>
                 <div className="w-8 h-8 rounded-md bg-[#9E2A2B]/10 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center">
@@ -374,7 +374,7 @@ const CashierDashboard = () => {
         )}
 
         {/* Search Bar & Tabs */}
-        <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4 sm:p-5 shadow-xs space-y-4">
+        <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4 sm:p-5 shadow-sm space-y-4">
           <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
             {/* Tab Switcher */}
             <div className="flex items-center bg-[#F6F5F3] dark:bg-[#14110F] p-1 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shrink-0">
@@ -383,7 +383,7 @@ const CashierDashboard = () => {
                 onClick={() => setActiveTab('pending')}
                 className={`px-3.5 py-2 rounded-md text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 min-h-[44px] ${
                   activeTab === 'pending'
-                    ? 'bg-white dark:bg-[#1C1917] text-[#9E2A2B] dark:text-[#D4AF37] shadow-xs'
+                    ? 'bg-white dark:bg-[#1C1917] text-[#9E2A2B] dark:text-[#D4AF37] shadow-sm'
                     : 'text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-white'
                 }`}
               >
@@ -395,7 +395,7 @@ const CashierDashboard = () => {
                 onClick={() => setActiveTab('completed')}
                 className={`px-3.5 py-2 rounded-md text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 min-h-[44px] ${
                   activeTab === 'completed'
-                    ? 'bg-white dark:bg-[#1C1917] text-[#9E2A2B] dark:text-[#D4AF37] shadow-xs'
+                    ? 'bg-white dark:bg-[#1C1917] text-[#9E2A2B] dark:text-[#D4AF37] shadow-sm'
                     : 'text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-white'
                 }`}
               >
@@ -434,36 +434,38 @@ const CashierDashboard = () => {
             </button>
           </div>
 
-          {/* Table Container */}
-          <div className="overflow-x-auto rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
+          {/* Table / Mobile Cards Container */}
+          <div className="rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] overflow-hidden">
             {isLoading && queue.length === 0 ? (
-              <table className="w-full text-left text-xs sm:text-sm">
-                <thead className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] uppercase text-[10px] sm:text-xs font-bold tracking-wider">
-                  {activeTab === 'pending' ? (
-                    <tr>
-                      <th className="py-3 px-4">Plate No. &amp; MTOP</th>
-                      <th className="py-3 px-4">Operator Details</th>
-                      <th className="py-3 px-4">TODA &amp; Zone</th>
-                      <th className="py-3 px-4">Amount Due</th>
-                      <th className="py-3 px-4 text-right">Action</th>
-                    </tr>
-                  ) : (
-                    <tr>
-                      <th className="py-3 px-4">Official Receipt (OR#)</th>
-                      <th className="py-3 px-4">Operator &amp; Plate</th>
-                      <th className="py-3 px-4">TODA &amp; Zone</th>
-                      <th className="py-3 px-4">Amount Paid</th>
-                      <th className="py-3 px-4">Exact Date &amp; Time Paid</th>
-                      <th className="py-3 px-4 text-right">Receipt</th>
-                    </tr>
-                  )}
-                </thead>
-                <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
-                  <TableRowsSkeleton rows={5} columns={activeTab === 'pending' ? 5 : 6} baseDelay={30} stepDelay={40} />
-                </tbody>
-              </table>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-xs sm:text-sm">
+                  <thead className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] uppercase text-[10px] sm:text-xs font-bold tracking-wider">
+                    {activeTab === 'pending' ? (
+                      <tr>
+                        <th className="py-3 px-4">Plate No. &amp; MTOP</th>
+                        <th className="py-3 px-4">Operator Details</th>
+                        <th className="py-3 px-4">TODA &amp; Zone</th>
+                        <th className="py-3 px-4">Amount Due</th>
+                        <th className="py-3 px-4 text-right">Action</th>
+                      </tr>
+                    ) : (
+                      <tr>
+                        <th className="py-3 px-4">Official Receipt (OR#)</th>
+                        <th className="py-3 px-4">Operator &amp; Plate</th>
+                        <th className="py-3 px-4">TODA &amp; Zone</th>
+                        <th className="py-3 px-4">Amount Paid</th>
+                        <th className="py-3 px-4">Exact Date &amp; Time Paid</th>
+                        <th className="py-3 px-4 text-right">Receipt</th>
+                      </tr>
+                    )}
+                  </thead>
+                  <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
+                    <TableRowsSkeleton rows={5} columns={activeTab === 'pending' ? 5 : 6} baseDelay={30} stepDelay={40} />
+                  </tbody>
+                </table>
+              </div>
             ) : filteredQueue.length === 0 ? (
-              <div className="py-16 text-center space-y-2">
+              <div className="py-16 text-center space-y-2 px-4">
                 <Receipt size={36} className="mx-auto text-[#6B6761] dark:text-[#A8A29E]" />
                 <h4 className="text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
                   {searchQuery ? 'No matching records found' : activeTab === 'pending' ? 'No applications awaiting payment' : 'No payment history records found'}
@@ -473,154 +475,234 @@ const CashierDashboard = () => {
                 </p>
               </div>
             ) : (
-              <table className="w-full text-left text-xs sm:text-sm">
-                <thead className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] uppercase text-[10px] sm:text-xs font-bold tracking-wider">
-                  {activeTab === 'pending' ? (
-                    <tr>
-                      <th className="py-3 px-4">Plate No. &amp; MTOP</th>
-                      <th className="py-3 px-4">Operator Details</th>
-                      <th className="py-3 px-4">TODA &amp; Zone</th>
-                      <th className="py-3 px-4">Amount Due</th>
-                      <th className="py-3 px-4 text-right">Action</th>
-                    </tr>
-                  ) : (
-                    <tr>
-                      <th className="py-3 px-4">Official Receipt (OR#)</th>
-                      <th className="py-3 px-4">Operator &amp; Plate</th>
-                      <th className="py-3 px-4">TODA &amp; Zone</th>
-                      <th className="py-3 px-4">Amount Paid</th>
-                      <th className="py-3 px-4">Exact Date &amp; Time Paid</th>
-                      <th className="py-3 px-4 text-right">Receipt</th>
-                    </tr>
-                  )}
-                </thead>
-                <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] font-medium">
+              <>
+                {/* Mobile Stacked Cards (Zero horizontal table overflow) */}
+                <div className="md:hidden divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
                   {filteredQueue.map((item) => {
                     if (activeTab === 'pending') {
                       return (
-                        <tr key={item._id} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50 transition-colors">
-                          <td className="py-3.5 px-4">
-                            <div className="space-y-0.5">
-                              <span className="font-mono font-bold text-sm px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-900 dark:text-amber-200 border border-amber-600/30 inline-block">
+                        <div key={item._id} className="p-4 space-y-3 bg-white dark:bg-[#1C1917]">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <span className="font-mono font-bold text-xs px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-900 dark:text-amber-200 border border-amber-600/30 inline-block">
                                 {item.plateNo || 'PENDING'}
                               </span>
-                              <div className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] font-mono mt-0.5">
-                                MTOP: <strong className="text-[#1F1D1B] dark:text-white">{item.mtopNo || 'Pending'}</strong>
-                              </div>
+                              <p className="font-bold text-sm text-[#1F1D1B] dark:text-white mt-1.5 truncate">
+                                {item.fullName || item.operator?.name}
+                              </p>
+                              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                                MTOP: <strong className="font-mono">{item.mtopNo || 'Pending'}</strong> &bull; {item.todaName || 'Non-TODA'}
+                              </p>
                             </div>
-                          </td>
-
-                          <td className="py-3.5 px-4">
-                            <div>
-                              <p className="font-bold text-[#1F1D1B] dark:text-white">{item.fullName || item.operator?.name}</p>
-                              <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">{item.contact || item.operator?.contact || item.address || 'Gasan, Marinduque'}</p>
-                            </div>
-                          </td>
-
-                          <td className="py-3.5 px-4">
-                            <div>
-                              <p className="font-semibold text-[#1F1D1B] dark:text-white">{item.todaName || 'Non-TODA'}</p>
-                              <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] font-medium">{item.zone ? formatZoneLabel(item.zone) : 'N/A'}</p>
-                            </div>
-                          </td>
-
-                          <td className="py-3.5 px-4">
-                            <div>
-                              <span className="font-bold text-emerald-700 dark:text-emerald-400 text-sm font-mono">
-                                ₱{(item.amountPaid || 500).toFixed(2)}
+                            <div className="text-right shrink-0">
+                              <span className="font-bold text-emerald-700 dark:text-emerald-400 text-sm font-mono tabular-nums">
+                                ₱{(item.amountPaid || standardFranchiseFee).toFixed(2)}
                               </span>
-                              <span className="block text-[10px] text-[#6B6761] dark:text-[#A8A29E] uppercase font-bold tracking-tight">Standard LGU Fee</span>
+                              <span className="block text-[10px] text-[#6B6761] dark:text-[#A8A29E] uppercase font-bold">Cash OTC</span>
                             </div>
-                          </td>
-
-                          <td className="py-3.5 px-4 text-right">
-                            <button
-                              onClick={() => handleOpenPayment(item)}
-                              className="px-3.5 py-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white rounded-lg text-xs font-bold transition-all shadow-xs cursor-pointer inline-flex items-center gap-1.5 min-h-[44px]"
-                            >
-                              <Receipt size={14} />
-                              <span>Process Payment</span>
-                            </button>
-                          </td>
-                        </tr>
+                          </div>
+                          <button
+                            onClick={() => handleOpenPayment(item)}
+                            className="w-full px-3.5 py-2.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white rounded-lg text-xs font-bold transition-colors shadow-sm cursor-pointer flex items-center justify-center gap-1.5 min-h-[44px]"
+                          >
+                            <Receipt size={14} />
+                            <span>Process Over-the-Counter Payment</span>
+                          </button>
+                        </div>
                       );
                     }
-
-                    // Completed Tab: Payment History with EXACT Date and EXACT Time
                     const dt = formatExactDateTime(item.paymentDate);
                     return (
-                      <tr key={item._id} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50 transition-colors">
-                        <td className="py-3.5 px-4">
-                          <div className="space-y-0.5">
+                      <div key={item._id} className="p-4 space-y-2.5 bg-white dark:bg-[#1C1917]">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
                             <span className="font-mono font-bold text-xs px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 border border-emerald-600/30 inline-block">
                               {item.officialReceiptNo || 'OR-PAID'}
                             </span>
-                            <div className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] uppercase font-semibold">
-                              Cashier: {item.cashierName || 'Municipal Treasury'}
-                            </div>
-                          </div>
-                        </td>
-
-                        <td className="py-3.5 px-4">
-                          <div>
-                            <p className="font-bold text-[#1F1D1B] dark:text-white">{item.fullName || item.operator?.name}</p>
-                            <p className="font-mono text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E]">
-                              Plate: <span className="font-bold text-amber-700 dark:text-amber-400">{item.plateNo || 'PENDING'}</span>
+                            <p className="font-bold text-sm text-[#1F1D1B] dark:text-white mt-1.5 truncate">
+                              {item.fullName || item.operator?.name}
+                            </p>
+                            <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-mono">
+                              {item.plateNo || 'PENDING'} &bull; {item.todaName || 'Non-TODA'}
                             </p>
                           </div>
-                        </td>
-
-                        <td className="py-3.5 px-4">
-                          <div>
-                            <p className="font-semibold text-[#1F1D1B] dark:text-white">{item.todaName || 'Non-TODA'}</p>
-                            <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] font-medium">{item.zone ? formatZoneLabel(item.zone) : 'N/A'}</p>
-                          </div>
-                        </td>
-
-                        <td className="py-3.5 px-4">
-                          <div>
-                            <span className="font-bold text-[#1F1D1B] dark:text-white text-sm font-mono">
-                              ₱{(item.amountPaid || 500).toFixed(2)}
+                          <div className="text-right shrink-0">
+                            <span className="font-bold text-sm font-mono tabular-nums text-[#1F1D1B] dark:text-white">
+                              ₱{(item.amountPaid || standardFranchiseFee).toFixed(2)}
                             </span>
-                            <span className="block text-[10px] text-emerald-700 dark:text-emerald-400 font-bold uppercase tracking-tight">
-                              Paid via {item.paymentMethod || 'Cash'}
-                            </span>
+                            <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">{dt.dateFormatted}</p>
                           </div>
-                        </td>
-
-                        <td className="py-3.5 px-4 whitespace-nowrap">
-                          <div className="space-y-0.5">
-                            <div className="flex items-center gap-1.5 font-bold text-[#1F1D1B] dark:text-white text-xs">
-                              <Calendar size={13} className="text-[#6B6761] dark:text-[#A8A29E] shrink-0" />
-                              <span>{dt.dateFormatted}</span>
-                            </div>
-                            <div className="flex items-center gap-1.5 font-mono text-[11px] text-emerald-700 dark:text-emerald-400 font-bold">
-                              <Clock size={12} className="shrink-0" />
-                              <span>{dt.timeFormatted}</span>
-                            </div>
-                          </div>
-                        </td>
-
-                        <td className="py-3.5 px-4 text-right">
-                          <button
-                            onClick={() => {
-                              setReceiptData(item);
-                              setIsReceiptOpen(true);
-        if (localStorage.getItem('cashier_auto_print') === 'true') {
-          setTimeout(() => window.print(), 300);
-        }
-                            }}
-                            className="px-3.5 py-2 bg-[#F6F5F3] hover:bg-[#E4E1DC] dark:bg-[#2E2A27] dark:hover:bg-[#3E3834] text-[#1F1D1B] dark:text-[#EAE7E1] rounded-lg text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 min-h-[44px] border border-[#E4E1DC] dark:border-[#3E3834]"
-                          >
-                            <Printer size={13} />
-                            <span>Print Receipt</span>
-                          </button>
-                        </td>
-                      </tr>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setReceiptData(item);
+                            setIsReceiptOpen(true);
+                            if (localStorage.getItem('cashier_auto_print') === 'true') {
+                              setTimeout(() => window.print(), 300);
+                            }
+                          }}
+                          className="w-full px-3.5 py-2.5 bg-[#F6F5F3] hover:bg-[#E4E1DC] dark:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] rounded-lg text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-1.5 min-h-[44px] border border-[#E4E1DC] dark:border-[#3E3834]"
+                        >
+                          <Printer size={13} />
+                          <span>Print E-Resibo</span>
+                        </button>
+                      </div>
                     );
                   })}
-                </tbody>
-              </table>
+                </div>
+
+                {/* Desktop Table */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-left text-xs sm:text-sm">
+                    <thead className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] uppercase text-[10px] sm:text-xs font-bold tracking-wider">
+                      {activeTab === 'pending' ? (
+                        <tr>
+                          <th className="py-3 px-4">Plate No. &amp; MTOP</th>
+                          <th className="py-3 px-4">Operator Details</th>
+                          <th className="py-3 px-4">TODA &amp; Zone</th>
+                          <th className="py-3 px-4">Amount Due</th>
+                          <th className="py-3 px-4 text-right">Action</th>
+                        </tr>
+                      ) : (
+                        <tr>
+                          <th className="py-3 px-4">Official Receipt (OR#)</th>
+                          <th className="py-3 px-4">Operator &amp; Plate</th>
+                          <th className="py-3 px-4">TODA &amp; Zone</th>
+                          <th className="py-3 px-4">Amount Paid</th>
+                          <th className="py-3 px-4">Exact Date &amp; Time Paid</th>
+                          <th className="py-3 px-4 text-right">Receipt</th>
+                        </tr>
+                      )}
+                    </thead>
+                    <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] font-medium">
+                      {filteredQueue.map((item) => {
+                        if (activeTab === 'pending') {
+                          return (
+                            <tr key={item._id} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50 transition-colors">
+                              <td className="py-3.5 px-4">
+                                <div className="space-y-0.5">
+                                  <span className="font-mono font-bold text-sm px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-900 dark:text-amber-200 border border-amber-600/30 inline-block">
+                                    {item.plateNo || 'PENDING'}
+                                  </span>
+                                  <div className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] font-mono mt-0.5">
+                                    MTOP: <strong className="text-[#1F1D1B] dark:text-white">{item.mtopNo || 'Pending'}</strong>
+                                  </div>
+                                </div>
+                              </td>
+
+                              <td className="py-3.5 px-4">
+                                <div>
+                                  <p className="font-bold text-[#1F1D1B] dark:text-white">{item.fullName || item.operator?.name}</p>
+                                  <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">{item.contact || item.operator?.contact || item.address || 'Gasan, Marinduque'}</p>
+                                </div>
+                              </td>
+
+                              <td className="py-3.5 px-4">
+                                <div>
+                                  <p className="font-semibold text-[#1F1D1B] dark:text-white">{item.todaName || 'Non-TODA'}</p>
+                                  <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] font-medium">{item.zone ? formatZoneLabel(item.zone) : 'N/A'}</p>
+                                </div>
+                              </td>
+
+                              <td className="py-3.5 px-4">
+                                <div>
+                                  <span className="font-bold text-emerald-700 dark:text-emerald-400 text-sm font-mono tabular-nums">
+                                    ₱{(item.amountPaid || standardFranchiseFee).toFixed(2)}
+                                  </span>
+                                  <span className="block text-[10px] text-[#6B6761] dark:text-[#A8A29E] uppercase font-bold tracking-tight">Standard LGU Fee</span>
+                                </div>
+                              </td>
+
+                              <td className="py-3.5 px-4 text-right">
+                                <button
+                                  onClick={() => handleOpenPayment(item)}
+                                  className="px-3.5 py-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer inline-flex items-center gap-1.5 min-h-[44px]"
+                                >
+                                  <Receipt size={14} />
+                                  <span>Process Payment</span>
+                                </button>
+                              </td>
+                            </tr>
+                          );
+                        }
+
+                        // Completed Tab: Payment History with EXACT Date and EXACT Time
+                        const dt = formatExactDateTime(item.paymentDate);
+                        return (
+                          <tr key={item._id} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50 transition-colors">
+                            <td className="py-3.5 px-4">
+                              <div className="space-y-0.5">
+                                <span className="font-mono font-bold text-xs px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 border border-emerald-600/30 inline-block">
+                                  {item.officialReceiptNo || 'OR-PAID'}
+                                </span>
+                                <div className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] uppercase font-semibold">
+                                  Cashier: {item.cashierName || 'Municipal Treasury'}
+                                </div>
+                              </div>
+                            </td>
+
+                            <td className="py-3.5 px-4">
+                              <div>
+                                <p className="font-bold text-[#1F1D1B] dark:text-white">{item.fullName || item.operator?.name}</p>
+                                <p className="font-mono text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E]">
+                                  Plate: <span className="font-bold text-amber-700 dark:text-amber-400">{item.plateNo || 'PENDING'}</span>
+                                </p>
+                              </div>
+                            </td>
+
+                            <td className="py-3.5 px-4">
+                              <div>
+                                <p className="font-semibold text-[#1F1D1B] dark:text-white">{item.todaName || 'Non-TODA'}</p>
+                                <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] font-medium">{item.zone ? formatZoneLabel(item.zone) : 'N/A'}</p>
+                              </div>
+                            </td>
+
+                            <td className="py-3.5 px-4">
+                              <div>
+                                <span className="font-bold text-[#1F1D1B] dark:text-white text-sm font-mono tabular-nums">
+                                  ₱{(item.amountPaid || standardFranchiseFee).toFixed(2)}
+                                </span>
+                                <span className="block text-[10px] text-emerald-700 dark:text-emerald-400 font-bold uppercase tracking-tight">
+                                  Paid via {item.paymentMethod || 'Cash'}
+                                </span>
+                              </div>
+                            </td>
+
+                            <td className="py-3.5 px-4 whitespace-nowrap">
+                              <div className="space-y-0.5">
+                                <div className="flex items-center gap-1.5 font-bold text-[#1F1D1B] dark:text-white text-xs">
+                                  <Calendar size={13} className="text-[#6B6761] dark:text-[#A8A29E] shrink-0" />
+                                  <span>{dt.dateFormatted}</span>
+                                </div>
+                                <div className="flex items-center gap-1.5 font-mono text-[11px] text-emerald-700 dark:text-emerald-400 font-bold">
+                                  <Clock size={12} className="shrink-0" />
+                                  <span>{dt.timeFormatted}</span>
+                                </div>
+                              </div>
+                            </td>
+
+                            <td className="py-3.5 px-4 text-right">
+                              <button
+                                onClick={() => {
+                                  setReceiptData(item);
+                                  setIsReceiptOpen(true);
+                                  if (localStorage.getItem('cashier_auto_print') === 'true') {
+                                    setTimeout(() => window.print(), 300);
+                                  }
+                                }}
+                                className="px-3.5 py-2 bg-[#F6F5F3] hover:bg-[#E4E1DC] dark:bg-[#2E2A27] dark:hover:bg-[#3E3834] text-[#1F1D1B] dark:text-[#EAE7E1] rounded-lg text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5 min-h-[44px] border border-[#E4E1DC] dark:border-[#3E3834]"
+                              >
+                                <Printer size={13} />
+                                <span>Print Receipt</span>
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </div>
         </div>
@@ -673,7 +755,9 @@ const CashierDashboard = () => {
               </div>
               <div className="flex justify-between items-center pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
                 <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">Total Amount Payable:</span>
-                <span className="font-bold text-sm text-emerald-700 dark:text-emerald-400 font-mono">₱500.00</span>
+                <span className="font-bold text-sm text-emerald-700 dark:text-emerald-400 font-mono">
+                  ₱{Number(standardFranchiseFee || 500).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
               </div>
             </div>
 
@@ -711,20 +795,17 @@ const CashierDashboard = () => {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider mb-1.5">
                     Payment Method
                   </label>
-                  <select
-                    value={payFormData.paymentMethod}
-                    onChange={(e) => setPayFormData(prev => ({ ...prev, paymentMethod: e.target.value }))}
-                    className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3 py-2 text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-white outline-none focus:border-[#9E2A2B] min-h-[44px]"
-                  >
-                    <option value="Cash">Cash (Over-the-Counter)</option>
-                    <option value="GCash / Maya">GCash / Maya (Digital Wallet)</option>
-                    <option value="Treasury Check">Treasury Check</option>
-                  </select>
+                  <div className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3 py-2 text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-white min-h-[44px] flex items-center justify-between gap-2">
+                    <span>Cash (Over-the-Counter)</span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-400">
+                      OTC Only
+                    </span>
+                  </div>
                 </div>
 
                 <div>
@@ -768,7 +849,7 @@ const CashierDashboard = () => {
                 <button
                   type="submit"
                   disabled={isProcessing}
-                  className="flex-1 px-4 py-2.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-xs rounded-lg transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer min-h-[44px]"
+                  className="flex-1 px-4 py-2.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-xs rounded-lg transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer min-h-[44px]"
                 >
                   {isProcessing ? <Loader2 size={15} className="animate-spin" /> : <ShieldCheck size={15} />}
                   <span>{isProcessing ? 'Recording...' : 'Confirm & Release'}</span>
@@ -860,24 +941,34 @@ const CashierDashboard = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#E4E1DC] font-medium text-[#1F1D1B]">
-                  <tr>
-                    <td className="py-2 px-3">Franchise Filing &amp; Inspection Fee</td>
-                    <td className="py-2 px-3 text-right font-mono">₱300.00</td>
-                  </tr>
-                  <tr>
-                    <td className="py-2 px-3">Mayor's Permit &amp; Supervision Fee</td>
-                    <td className="py-2 px-3 text-right font-mono">₱150.00</td>
-                  </tr>
-                  <tr>
-                    <td className="py-2 px-3">Official Regulatory Sticker &amp; Seal</td>
-                    <td className="py-2 px-3 text-right font-mono">₱50.00</td>
-                  </tr>
+                  {(() => {
+                    const paidTotal = Number(receiptData.amountPaid || standardFranchiseFee || 500);
+                    const filingFee = paidTotal === 500 ? 300 : Number((paidTotal * 0.6).toFixed(2));
+                    const permitFee = paidTotal === 500 ? 150 : Number((paidTotal * 0.3).toFixed(2));
+                    const stickerFee = Number((paidTotal - filingFee - permitFee).toFixed(2));
+                    return (
+                      <>
+                        <tr>
+                          <td className="py-2 px-3">Franchise Filing &amp; Inspection Fee</td>
+                          <td className="py-2 px-3 text-right font-mono">₱{filingFee.toFixed(2)}</td>
+                        </tr>
+                        <tr>
+                          <td className="py-2 px-3">Mayor's Permit &amp; Supervision Fee</td>
+                          <td className="py-2 px-3 text-right font-mono">₱{permitFee.toFixed(2)}</td>
+                        </tr>
+                        <tr>
+                          <td className="py-2 px-3">Official Regulatory Sticker &amp; Seal</td>
+                          <td className="py-2 px-3 text-right font-mono">₱{stickerFee.toFixed(2)}</td>
+                        </tr>
+                      </>
+                    );
+                  })()}
                 </tbody>
                 <tfoot className="bg-[#F6F5F3] border-t-2 border-[#1F1D1B] font-bold">
                   <tr>
                     <td className="py-2.5 px-3 uppercase text-[#1F1D1B]">Total Amount Paid:</td>
                     <td className="py-2.5 px-3 text-right text-sm text-[#9E2A2B] font-mono">
-                      ₱{(receiptData.amountPaid || 500).toFixed(2)}
+                      ₱{Number(receiptData.amountPaid || standardFranchiseFee || 500).toFixed(2)}
                     </td>
                   </tr>
                 </tfoot>
@@ -888,7 +979,7 @@ const CashierDashboard = () => {
             <div className="flex items-center justify-between text-xs pt-2">
               <div>
                 <p className="text-[#6B6761] text-[10px] uppercase font-bold">Payment Method</p>
-                <p className="font-bold text-[#1F1D1B]">{receiptData.paymentMethod || 'Cash'}</p>
+                <p className="font-bold text-[#1F1D1B]">Cash (Over-the-Counter)</p>
               </div>
               <div className="text-right">
                 <p className="text-[#6B6761] text-[10px] uppercase font-bold">Collecting Officer</p>
@@ -911,7 +1002,7 @@ const CashierDashboard = () => {
               <button
                 type="button"
                 onClick={handlePrintReceipt}
-                className="flex-1 px-4 py-2.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-xs rounded-lg transition-all shadow-xs flex items-center justify-center gap-1.5 cursor-pointer min-h-[44px]"
+                className="flex-1 px-4 py-2.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-xs rounded-lg transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer min-h-[44px]"
               >
                 <Printer size={15} />
                 <span>Print Official Receipt</span>
@@ -958,7 +1049,7 @@ const CashierDashboard = () => {
               <div className="p-3 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27]">
                 <p className="text-[10px] font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">Total Collection Remitted</p>
                 <p className="text-lg font-mono font-bold text-emerald-700 dark:text-emerald-400 mt-0.5">
-                  ₱{todayPaidRecords.reduce((sum, r) => sum + (r.amountPaid || 500), 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                  ₱{todayPaidRecords.reduce((sum, r) => sum + Number(r.amountPaid || standardFranchiseFee || 500), 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
                 </p>
               </div>
               <div className="p-3 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27]">
@@ -970,7 +1061,7 @@ const CashierDashboard = () => {
             </div>
 
             {/* Transactions Table */}
-            <div className="border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg overflow-hidden mb-5">
+            <div className="border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg overflow-x-auto mb-5">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E] uppercase font-bold text-[10px] tracking-wider border-b border-[#E4E1DC] dark:border-[#2E2A27]">
@@ -983,7 +1074,7 @@ const CashierDashboard = () => {
                 </thead>
                 <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
                   {todayPaidRecords.map((item, idx) => (
-                    <tr key={idx} className="hover:bg-neutral-50 dark:hover:bg-neutral-900/50">
+                    <tr key={idx} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50">
                       <td className="p-2.5 pl-3 font-mono font-bold text-[#9E2A2B] dark:text-[#D4AF37]">{item.officialReceiptNo || 'N/A'}</td>
                       <td className="p-2.5 font-medium text-[#1F1D1B] dark:text-[#F6F5F3]">{item.fullName || item.payerName || 'Operator'}</td>
                       <td className="p-2.5 font-mono text-[#6B6761] dark:text-[#A8A29E]">{item.plateNo || '—'}</td>
@@ -991,7 +1082,7 @@ const CashierDashboard = () => {
                         {item.paymentDate ? new Date(item.paymentDate).toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' }) : '—'}
                       </td>
                       <td className="p-2.5 pr-3 text-right font-mono font-bold text-emerald-700 dark:text-emerald-400">
-                        ₱{(item.amountPaid || 500).toFixed(2)}
+                        ₱{Number(item.amountPaid || standardFranchiseFee || 500).toFixed(2)}
                       </td>
                     </tr>
                   ))}
@@ -1025,7 +1116,7 @@ const CashierDashboard = () => {
               <button
                 type="button"
                 onClick={handleExportRemittanceCSV}
-                className="flex-1 py-2 rounded-lg font-bold text-xs bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                className="flex-1 py-2 rounded-lg font-bold text-xs bg-emerald-600 hover:bg-emerald-700 text-white flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
               >
                 <Download size={14} />
                 <span>Export to CSV</span>
@@ -1033,7 +1124,7 @@ const CashierDashboard = () => {
               <button
                 type="button"
                 onClick={() => window.print()}
-                className="flex-1 py-2 rounded-lg font-bold text-xs bg-[#9E2A2B] hover:bg-[#7A1B22] text-white flex items-center justify-center gap-1.5 cursor-pointer shadow-xs"
+                className="flex-1 py-2 rounded-lg font-bold text-xs bg-[#9E2A2B] hover:bg-[#7A1B22] text-white flex items-center justify-center gap-1.5 cursor-pointer shadow-sm"
               >
                 <Printer size={14} />
                 <span>Print Remittance</span>

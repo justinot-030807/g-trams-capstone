@@ -1,4 +1,5 @@
 import React, { useRef, useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import { X, Printer, FileText, Loader2, Download } from 'lucide-react';
 import { downloadOriginalLguTemplate } from '../../utils/downloadOriginalLguTemplate';
 import { cleanText, formatVehicleMake, formatVehicleModelYear } from '../../utils/vehicleFormatters';
@@ -111,7 +112,7 @@ const OfficialCancellationLetterModal = ({
       });
     } catch (err) {
       console.error('Error downloading original Cancellation Word (.docx):', err);
-      alert('Could not download Word (.docx) file. Please try again.');
+      toast.error('Could not download Word (.docx) file. Please try again.');
     } finally {
       setIsDownloadingDocx(false);
     }

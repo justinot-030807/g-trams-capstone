@@ -97,7 +97,7 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
                 type="button"
                 onClick={onApprove}
                 disabled={isProcessing}
-                className="px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer disabled:opacity-50"
+                className="px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer disabled:opacity-50"
               >
                 <CheckCircle2 size={14} />
                 <span>Approve for Signing</span>
@@ -109,7 +109,7 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
                 type="button"
                 onClick={onReject}
                 disabled={isProcessing}
-                className="px-3 py-1.5 bg-red-700 hover:bg-red-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer disabled:opacity-50"
+                className="px-3 py-1.5 bg-red-700 hover:bg-red-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer disabled:opacity-50"
               >
                 <span>Reject</span>
               </button>
@@ -367,11 +367,11 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
                     <span className="text-xs font-semibold text-slate-800">{formatDate(franchise.driverLicenseExpiryDate)}</span>
                     {franchise.driverLicenseExpiryDate && (
                       isDateExpired(franchise.driverLicenseExpiryDate) ? (
-                        <span className="text-[10px] font-bold text-red-600 bg-red-100 border border-red-300 px-1.5 py-0.2 rounded">
+                        <span className="text-[10px] font-bold text-red-600 bg-red-100 border border-red-300 px-1.5 py-0.5 rounded">
                           EXPIRED
                         </span>
                       ) : (
-                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 border border-emerald-300 px-1.5 py-0.2 rounded">
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 border border-emerald-300 px-1.5 py-0.5 rounded">
                           VALID
                         </span>
                       )
@@ -437,11 +437,11 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
                     <span className="text-xs font-semibold text-slate-800">{formatDate(franchise.orCrExpiryDate)}</span>
                     {franchise.orCrExpiryDate && (
                       isDateExpired(franchise.orCrExpiryDate) ? (
-                        <span className="text-[10px] font-bold text-red-600 bg-red-100 border border-red-300 px-1.5 py-0.2 rounded">
+                        <span className="text-[10px] font-bold text-red-600 bg-red-100 border border-red-300 px-1.5 py-0.5 rounded">
                           EXPIRED
                         </span>
                       ) : (
-                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 border border-emerald-300 px-1.5 py-0.2 rounded">
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 border border-emerald-300 px-1.5 py-0.5 rounded">
                           VALID
                         </span>
                       )

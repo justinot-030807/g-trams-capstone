@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { GASAN_BARANGAYS, TODA_LIST } from '../../utils/constants';
 import MainLayout from '../../components/MainLayout';
-import { Printer, Filter, Download } from 'lucide-react';
+import { Printer, Filter, Download, ChevronDown } from 'lucide-react';
 import { StatsCardsSkeleton, TableRowsSkeleton } from '../../components/skeleton';
 import PageHeader from '../../components/common/PageHeader';
 import StatusBadge from '../../components/common/StatusBadge';
@@ -105,7 +105,7 @@ const AdminReports = () => {
     URL.revokeObjectURL(url);
   };
 
-  const inputClasses = "w-full bg-white dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3 py-1.5 text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] transition-colors";
+  const inputClasses = "w-full min-h-[42px] bg-white dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3 py-2 text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] transition-colors";
 
   return (
     <MainLayout>
@@ -194,7 +194,7 @@ const AdminReports = () => {
             <div className="flex items-center gap-2 w-full sm:w-auto">
               <button 
                 onClick={handleExportCSV}
-                className="flex-1 sm:flex-initial bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] px-3.5 py-1.5 rounded-lg font-medium text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer"
+                className="flex-1 sm:flex-initial bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] px-3.5 py-1.5 rounded-lg font-medium text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition-colors cursor-pointer"
                 title="Export filtered reports to CSV"
               >
                 <Download size={15} />
@@ -202,7 +202,7 @@ const AdminReports = () => {
               </button>
               <button 
                 onClick={handlePrint}
-                className="flex-1 sm:flex-initial bg-[#9E2A2B] hover:bg-[#7A1B22] text-white px-3.5 py-1.5 rounded-lg font-medium text-xs sm:text-sm flex items-center justify-center gap-2 shadow-xs transition-colors cursor-pointer"
+                className="flex-1 sm:flex-initial bg-[#9E2A2B] hover:bg-[#7A1B22] text-white px-3.5 py-1.5 rounded-lg font-medium text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition-colors cursor-pointer"
               >
                 <Printer size={15} />
                 <span>Print Report</span>
@@ -213,43 +213,52 @@ const AdminReports = () => {
       </div>
 
       {/* Filter Criteria */}
-      <div className="bg-white dark:bg-[#1C1917] p-4 sm:p-5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs mb-6 print:hidden print-hide transition-colors">
+      <div className="bg-white dark:bg-[#1C1917] p-4 sm:p-5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm mb-6 print:hidden print-hide transition-colors">
         <h2 className="text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider mb-3 flex items-center gap-2">
           <Filter size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" /> Filter Criteria
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
           <div>
             <label className="block text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase mb-1">Date From</label>
-            <input type="date" name="startDate" value={filters.startDate} onChange={handleFilterChange} className={inputClasses} />
+            <input type="date" name="startDate" value={filters.startDate} onChange={handleFilterChange} className={`${inputClasses} block`} />
           </div>
           <div>
             <label className="block text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase mb-1">Date To</label>
-            <input type="date" name="endDate" value={filters.endDate} onChange={handleFilterChange} className={inputClasses} />
+            <input type="date" name="endDate" value={filters.endDate} onChange={handleFilterChange} className={`${inputClasses} block`} />
           </div>
           <div>
             <label className="block text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase mb-1">Status</label>
-            <select name="status" value={filters.status} onChange={handleFilterChange} className={inputClasses}>
-              <option value="">All Status</option>
-              <option value="Active">Active</option>
-              <option value="Pending">Pending</option>
-              <option value="Expired">Expired</option>
-              <option value="Cancelled">Cancelled</option>
-              <option value="Revoked">Revoked</option>
-            </select>
+            <div className="relative">
+              <select name="status" value={filters.status} onChange={handleFilterChange} className={`${inputClasses} appearance-none pr-9 cursor-pointer`}>
+                <option value="">All Status</option>
+                <option value="Active">Active</option>
+                <option value="Pending">Pending</option>
+                <option value="Expired">Expired</option>
+                <option value="Cancelled">Cancelled</option>
+                <option value="Revoked">Revoked</option>
+              </select>
+              <ChevronDown size={15} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#6B6761] dark:text-[#A8A29E]" />
+            </div>
           </div>
           <div>
             <label className="block text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase mb-1">TODA</label>
-            <select name="todaName" value={filters.todaName} onChange={handleFilterChange} className={inputClasses}>
-              <option value="">All TODA</option>
-              {TODA_LIST.map((toda, i) => <option key={i} value={toda}>{toda}</option>)}
-            </select>
+            <div className="relative">
+              <select name="todaName" value={filters.todaName} onChange={handleFilterChange} className={`${inputClasses} appearance-none pr-9 cursor-pointer`}>
+                <option value="">All TODA</option>
+                {TODA_LIST.map((toda, i) => <option key={i} value={toda}>{toda}</option>)}
+              </select>
+              <ChevronDown size={15} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#6B6761] dark:text-[#A8A29E]" />
+            </div>
           </div>
           <div className="sm:col-span-2 lg:col-span-1">
             <label className="block text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase mb-1">Barangay</label>
-            <select name="barangay" value={filters.barangay} onChange={handleFilterChange} className={inputClasses}>
-              <option value="">All Barangays</option>
-              {GASAN_BARANGAYS.map((brgy, i) => <option key={i} value={brgy}>{brgy}</option>)}
-            </select>
+            <div className="relative">
+              <select name="barangay" value={filters.barangay} onChange={handleFilterChange} className={`${inputClasses} appearance-none pr-9 cursor-pointer`}>
+                <option value="">All Barangays</option>
+                {GASAN_BARANGAYS.map((brgy, i) => <option key={i} value={brgy}>{brgy}</option>)}
+              </select>
+              <ChevronDown size={15} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#6B6761] dark:text-[#A8A29E]" />
+            </div>
           </div>
         </div>
       </div>
@@ -302,27 +311,27 @@ const AdminReports = () => {
           <StatsCardsSkeleton count={6} gridClassName="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6 print-hide" baseDelay={40} stepDelay={40} />
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-6 print:grid-cols-6 print:gap-2 print:mb-4">
-            <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] p-3 sm:p-4 rounded-lg text-center shadow-xs transition-colors print:border-slate-300 print:p-2 print:shadow-none">
+            <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] p-3 sm:p-4 rounded-lg text-center shadow-sm transition-colors print:border-slate-300 print:p-2 print:shadow-none">
               <p className="text-xl sm:text-2xl font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] font-mono tabular-nums print:text-lg">{summary.total}</p>
               <p className="text-[11px] font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wide print:text-[8px] print:text-slate-600">Total Records</p>
             </div>
-            <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] p-3 sm:p-4 rounded-lg text-center shadow-xs transition-colors print:border-slate-300 print:p-2 print:shadow-none">
+            <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] p-3 sm:p-4 rounded-lg text-center shadow-sm transition-colors print:border-slate-300 print:p-2 print:shadow-none">
               <p className="text-xl sm:text-2xl font-semibold text-emerald-700 dark:text-emerald-400 font-mono tabular-nums print:text-slate-900 print:text-lg">{summary.active}</p>
               <p className="text-[11px] font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wide print:text-[8px] print:text-slate-600">Active</p>
             </div>
-            <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] p-3 sm:p-4 rounded-lg text-center shadow-xs transition-colors print:border-slate-300 print:p-2 print:shadow-none">
+            <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] p-3 sm:p-4 rounded-lg text-center shadow-sm transition-colors print:border-slate-300 print:p-2 print:shadow-none">
               <p className="text-xl sm:text-2xl font-semibold text-amber-700 dark:text-amber-400 font-mono tabular-nums print:text-slate-900 print:text-lg">{summary.pending}</p>
               <p className="text-[11px] font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wide print:text-[8px] print:text-slate-600">Pending</p>
             </div>
-            <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] p-3 sm:p-4 rounded-lg text-center shadow-xs transition-colors print:border-slate-300 print:p-2 print:shadow-none">
+            <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] p-3 sm:p-4 rounded-lg text-center shadow-sm transition-colors print:border-slate-300 print:p-2 print:shadow-none">
               <p className="text-xl sm:text-2xl font-semibold text-red-700 dark:text-red-400 font-mono tabular-nums print:text-slate-900 print:text-lg">{summary.expired}</p>
               <p className="text-[11px] font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wide print:text-[8px] print:text-slate-600">Expired</p>
             </div>
-            <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] p-3 sm:p-4 rounded-lg text-center shadow-xs transition-colors print:border-slate-300 print:p-2 print:shadow-none">
+            <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] p-3 sm:p-4 rounded-lg text-center shadow-sm transition-colors print:border-slate-300 print:p-2 print:shadow-none">
               <p className="text-xl sm:text-2xl font-semibold text-[#6B6761] dark:text-[#A8A29E] font-mono tabular-nums print:text-slate-900 print:text-lg">{summary.cancelled}</p>
               <p className="text-[11px] font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wide print:text-[8px] print:text-slate-600">Cancelled</p>
             </div>
-            <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] p-3 sm:p-4 rounded-lg text-center shadow-xs transition-colors print:border-slate-300 print:p-2 print:shadow-none">
+            <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] p-3 sm:p-4 rounded-lg text-center shadow-sm transition-colors print:border-slate-300 print:p-2 print:shadow-none">
               <p className="text-xl sm:text-2xl font-semibold text-red-700 dark:text-red-400 font-mono tabular-nums print:text-slate-900 print:text-lg">{summary.revoked}</p>
               <p className="text-[11px] font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wide print:text-[8px] print:text-slate-600">Revoked</p>
             </div>
@@ -330,7 +339,7 @@ const AdminReports = () => {
         )}
 
         {/* Responsive Data Table */}
-        <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg shadow-xs overflow-hidden transition-colors print:border-none print:shadow-none print:rounded-none">
+        <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg shadow-sm overflow-hidden transition-colors print:border-none print:shadow-none print:rounded-none">
           <div className="overflow-x-auto print:overflow-visible">
             <table className="w-full text-left text-xs sm:text-sm print:text-xs print:table">
               <thead className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] font-semibold uppercase text-xs tracking-wider whitespace-nowrap print:bg-slate-100 print:text-slate-900 print:border-b-2 print:border-slate-400">

@@ -250,7 +250,7 @@ const GoogleAuthButton = ({ onSuccess, onNewUser, onError, text = 'CONTINUE WITH
         type="button"
         onClick={handleButtonClick}
         disabled={isLoading}
-        className={`w-full flex items-center justify-center gap-3 bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] py-2.5 sm:py-3 rounded-lg text-xs sm:text-sm font-bold shadow-xs transition-colors active:scale-[0.98] disabled:opacity-50 min-h-[44px] cursor-pointer ${className}`}
+        className={`w-full flex items-center justify-center gap-3 bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] py-2.5 sm:py-3 rounded-lg text-xs sm:text-sm font-bold shadow-sm transition-colors active:scale-[0.98] disabled:opacity-50 min-h-[44px] cursor-pointer ${className}`}
       >
         {isLoading ? (
           <Loader2 size={18} className="animate-spin text-[#6B6761]" />
@@ -320,7 +320,7 @@ const GoogleAuthButton = ({ onSuccess, onNewUser, onError, text = 'CONTINUE WITH
               <button
                 type="button"
                 onClick={() => setShowConfigModal(false)}
-                className="bg-[#9E2A2B] hover:bg-[#7A1B22] text-white px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors shadow-xs min-h-[44px] cursor-pointer"
+                className="bg-[#9E2A2B] hover:bg-[#7A1B22] text-white px-5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-wider transition-colors shadow-sm min-h-[44px] cursor-pointer"
               >
                 Understood
               </button>

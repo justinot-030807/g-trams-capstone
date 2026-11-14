@@ -125,20 +125,20 @@ const LandingGuideCarousel = () => {
     if (diff === -1 || (currentIndex === 0 && index === steps.length - 1)) {
       return {
         x: isMobile ? '-76%' : '-60%',
-        scale: isMobile ? 0.85 : 0.82,
+        scale: isMobile ? 0.85 : 0.86,
         zIndex: 5,
-        opacity: 0.55,
-        filter: 'blur(5px)',
+        opacity: 0.78,
+        filter: 'blur(1.5px)',
       };
     }
     // Right Card - Peeks in halved ("hati") on mobile screen edges
     if (diff === 1 || (currentIndex === steps.length - 1 && index === 0)) {
       return {
         x: isMobile ? '76%' : '60%',
-        scale: isMobile ? 0.85 : 0.82,
+        scale: isMobile ? 0.85 : 0.86,
         zIndex: 5,
-        opacity: 0.55,
-        filter: 'blur(5px)',
+        opacity: 0.78,
+        filter: 'blur(1.5px)',
       };
     }
     // Hidden Cards
@@ -147,21 +147,21 @@ const LandingGuideCarousel = () => {
       scale: 0.5,
       zIndex: 1,
       opacity: 0,
-      filter: 'blur(12px)',
+      filter: 'blur(4px)',
     };
   };
 
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 40 }}
+      initial={{ opacity: 1, y: 12 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, amount: 0.2 }}
-      transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+      viewport={{ once: true, amount: 0.1 }}
+      transition={{ duration: 0.4, ease: [0.16, 1, 0.3, 1] }}
       className="w-full max-w-6xl mx-auto px-2 sm:px-6 lg:px-8 py-16 sm:py-24 border-t border-[#E4E1DC] dark:border-[#2E2A27] relative z-10 overflow-hidden"
     >
       <div className="text-center mb-10 sm:mb-16 px-4">
         <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-[#1F1D1B] dark:text-[#F6F5F3] tracking-tight uppercase mb-3">
-          Citizen's <span className="text-[#9E2A2B]">Charter</span>
+          Citizen's <span className="text-[#9E2A2B] dark:text-[#F5E6B3]">Charter</span>
         </h2>
         <p className="text-[#6B6761] dark:text-[#A8A29E] text-xs sm:text-base max-w-2xl mx-auto font-medium">
           Simplifying the motorized tricycle franchise application process in Gasan. Follow this 5-step digital flow.
@@ -224,7 +224,7 @@ const LandingGuideCarousel = () => {
           type="button"
           onClick={handlePrev}
           aria-label="Previous Slide"
-          className="absolute left-1 sm:left-6 z-20 w-11 h-11 flex items-center justify-center rounded-lg bg-white dark:bg-[#1C1917] hover:bg-[#9E2A2B] text-[#1F1D1B] dark:text-[#F6F5F3] hover:text-white transition-colors border border-[#E4E1DC] dark:border-[#2E2A27] hover:border-[#9E2A2B] shadow-xs cursor-pointer min-h-[44px] min-w-[44px]"
+          className="absolute left-1 sm:left-6 z-20 w-11 h-11 flex items-center justify-center rounded-lg bg-white dark:bg-[#1C1917] hover:bg-[#9E2A2B] text-[#1F1D1B] dark:text-[#F6F5F3] hover:text-white transition-colors border border-[#E4E1DC] dark:border-[#2E2A27] hover:border-[#9E2A2B] shadow-sm cursor-pointer min-h-[44px] min-w-[44px]"
         >
           <ChevronLeft size={20} />
         </button>
@@ -232,7 +232,7 @@ const LandingGuideCarousel = () => {
           type="button"
           onClick={handleNext}
           aria-label="Next Slide"
-          className="absolute right-1 sm:right-6 z-20 w-11 h-11 flex items-center justify-center rounded-lg bg-white dark:bg-[#1C1917] hover:bg-[#9E2A2B] text-[#1F1D1B] dark:text-[#F6F5F3] hover:text-white transition-colors border border-[#E4E1DC] dark:border-[#2E2A27] hover:border-[#9E2A2B] shadow-xs cursor-pointer min-h-[44px] min-w-[44px]"
+          className="absolute right-1 sm:right-6 z-20 w-11 h-11 flex items-center justify-center rounded-lg bg-white dark:bg-[#1C1917] hover:bg-[#9E2A2B] text-[#1F1D1B] dark:text-[#F6F5F3] hover:text-white transition-colors border border-[#E4E1DC] dark:border-[#2E2A27] hover:border-[#9E2A2B] shadow-sm cursor-pointer min-h-[44px] min-w-[44px]"
         >
           <ChevronRight size={20} />
         </button>
@@ -252,7 +252,7 @@ const LandingGuideCarousel = () => {
             }}
             className={`transition-all duration-300 rounded-full cursor-pointer ${
               currentIndex === idx 
-                ? 'w-8 h-2.5 bg-[#9E2A2B] shadow-xs' 
+                ? 'w-8 h-2.5 bg-[#9E2A2B] shadow-sm' 
                 : 'w-2.5 h-2.5 bg-[#E4E1DC] dark:bg-[#2E2A27] hover:bg-[#D4AF37]'
             }`}
           />

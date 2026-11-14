@@ -21,7 +21,7 @@ const StatsCardsSkeleton = ({
         return (
           <div
             key={index}
-            className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4 shadow-xs flex flex-col justify-between"
+            className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4 shadow-sm flex flex-col justify-between"
             style={{ animationDelay: `${cardDelay}ms` }}
           >
             <div className="space-y-2">

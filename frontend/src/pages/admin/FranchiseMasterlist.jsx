@@ -653,11 +653,11 @@ const FranchiseMasterlist = () => {
                             {isSelected ? (
                               <CheckSquare size={15} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                             ) : (
-                              <Square size={15} className="text-[#E4E1DC] dark:text-[#2E2A27]" />
+                              <Square size={15} className="text-[#6B6761]/60 dark:text-[#A8A29E]/60" />
                             )}
                             <span>{opt.label}</span>
                           </div>
-                          <span className={`text-[10px] px-1.5 py-0.2 rounded border ${opt.color}`}>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded border ${opt.color}`}>
                             {opt.label}
                           </span>
                         </div>
@@ -770,7 +770,7 @@ const FranchiseMasterlist = () => {
                 onClick={() => setSelectedArchiveYear('ALL')}
                 className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer font-mono tabular-nums ${
                   selectedArchiveYear === 'ALL'
-                    ? 'bg-[#9E2A2B] text-white shadow-xs'
+                    ? 'bg-[#9E2A2B] text-white shadow-sm'
                     : 'bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#E4E1DC]/40'
                 }`}
               >
@@ -783,12 +783,12 @@ const FranchiseMasterlist = () => {
                   onClick={() => setSelectedArchiveYear(yg.year)}
                   className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer font-mono tabular-nums flex items-center gap-1.5 ${
                     selectedArchiveYear === yg.year
-                      ? 'bg-[#9E2A2B] text-white shadow-xs'
+                      ? 'bg-[#9E2A2B] text-white shadow-sm'
                       : 'bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#E4E1DC]/40'
                   }`}
                 >
                   <span>FY {yg.year}</span>
-                  <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
+                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
                     selectedArchiveYear === yg.year
                       ? 'bg-white/20 text-white'
                       : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E]'
@@ -835,7 +835,7 @@ const FranchiseMasterlist = () => {
                       {activeTab === 'archived' ? (
                         <Archive size={36} className="text-[#6B6761] dark:text-[#A8A29E] mb-2 opacity-50"/>
                       ) : (
-                        <div className="w-14 h-14 bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-center p-2 mb-2 shadow-xs">
+                        <div className="w-14 h-14 bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-center p-2 mb-2 shadow-sm">
                           <TricycleIcon size={40} />
                         </div>
                       )}
@@ -858,7 +858,7 @@ const FranchiseMasterlist = () => {
                         <td colSpan="5" className="px-5 py-3">
                           <div className="flex flex-wrap items-center justify-between gap-2">
                             <div className="flex items-center gap-2.5">
-                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#9E2A2B] text-white font-mono font-bold text-xs shadow-xs">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#9E2A2B] text-white font-mono font-bold text-xs shadow-sm">
                                 <CalendarDays size={13} />
                                 <span>FY {yearGroup.year} Archive</span>
                               </span>
@@ -874,7 +874,7 @@ const FranchiseMasterlist = () => {
                                 </span>
                               )}
                               {yearGroup.cancelledCount > 0 && (
-                                <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-300 border border-neutral-300 dark:border-neutral-700 font-mono tabular-nums">
+                                <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E] border border-[#E4E1DC] dark:border-[#2E2A27] font-mono tabular-nums">
                                   Cancelled: {yearGroup.cancelledCount}
                                 </span>
                               )}
@@ -905,7 +905,7 @@ const FranchiseMasterlist = () => {
                                 <p className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
                                   {displayName}
                                 </p>
-                                <span className="px-1.5 py-0.2 rounded text-[10px] font-mono font-semibold bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E] border border-[#E4E1DC] dark:border-[#2E2A27]">
                                   FY {yearGroup.year}
                                 </span>
                               </div>
@@ -1141,7 +1141,7 @@ const FranchiseMasterlist = () => {
               <button 
                 disabled={isProcessing}
                 onClick={confirmAction}
-                className="flex-1 py-2 rounded-lg font-semibold text-white transition-all text-xs shadow-xs flex justify-center items-center gap-2 bg-[#9E2A2B] hover:bg-[#7A1B22] disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
+                className="flex-1 py-2 rounded-lg font-semibold text-white transition-all text-xs shadow-sm flex justify-center items-center gap-2 bg-[#9E2A2B] hover:bg-[#7A1B22] disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
               >
                 {isProcessing && <Loader2 size={13} className="animate-spin" />}
                 {isProcessing ? 'Processing...' : `Yes, ${confirmModal.data.action}`}
