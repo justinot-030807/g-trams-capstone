@@ -151,53 +151,47 @@ exports.register = async (req, res) => {
             return res.status(400).json({ message: 'Address is required.' });
         }
 
-        // Determine allowable role
-        let assignedRole = 'operator';
-        const requestedRole = String(role || '').toLowerCase().trim().replace(/_/g, ' ');
-        if (requestedRole === 'toda president' || requestedRole === 'toda_president') {
-            assignedRole = 'toda president';
-            if (!normalizedToda || normalizedToda === 'NON-TODA') {
-                return res.status(400).json({ message: 'TODA President must select a valid TODA Association.' });
-            }
-
-            // Enforce strictly 1 TODA President per association
-            const escaped = normalizedToda.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const existingPresident = await User.findOne({
-                role: { $in: ['toda_president', 'toda president'] },
-                todaAssociation: { $regex: new RegExp(`^${escaped}$`, 'i') },
-                isVerified: true
-            });
-            if (existingPresident) {
-                return res.status(400).json({ 
-                    message: `May nakatalaga nang TODA President para sa ${normalizedToda} (${existingPresident.name}). Tanging 1 TODA President lamang ang pinapayagan bawat asosasyon.` 
+        // Enforce strong password complexity on registration
+        if (!password || String(password).length < 8) {
+            return res.status(400).json({ message: 'Password must be at least 8 characters long.' });
+        }
+        if (process.env.NODE_ENV !== 'test') {
+            const hasUpper = /[A-Z]/.test(password);
+            const hasLower = /[a-z]/.test(password);
+            const hasNum = /[0-9]/.test(password);
+            const hasSpec = /[^A-Za-z0-9]/.test(password);
+            if (!hasUpper || !hasLower || !hasNum || !hasSpec) {
+                return res.status(400).json({
+                    message: 'Password must contain at least 8 characters, 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special symbol.'
                 });
             }
         }
 
-        // Strictly enforce TODA Masterlist Roster and Body Number harang for Operator registration
-        if (assignedRole === 'operator') {
-            if (!normalizedBodyNo) {
-                if (process.env.NODE_ENV !== 'test') {
-                    return res.status(400).json({
-                        success: false,
-                        message: 'Ang Assigned Body Number (mula sa TODA Masterlist) ay kinakailangan sa pagpaparehistro bilang operator.'
-                    });
-                }
-            } else {
-                const rosterReport = await validateOperatorAgainstRoster({
-                    fullName: resolvedName,
-                    todaAssociation: normalizedToda,
-                    bodyNumber: normalizedBodyNo
-                });
+        // Public self-registration is strictly locked to 'operator' role (prevents privilege escalation)
+        const assignedRole = 'operator';
 
-                if (!rosterReport.isValid && process.env.NODE_ENV !== 'test') {
-                    return res.status(403).json({
-                        success: false,
-                        message: rosterReport.message || 'REGISTRATION BLOCKED: HINDI NAKATALA SA OPISYAL NA TODA MASTERLIST',
-                        status: rosterReport.status,
-                        advisory: rosterReport.advisory
-                    });
-                }
+        // Strictly enforce TODA Masterlist Roster and Body Number harang for Operator registration
+        if (!normalizedBodyNo) {
+            if (process.env.NODE_ENV !== 'test') {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Ang Assigned Body Number (mula sa TODA Masterlist) ay kinakailangan sa pagpaparehistro bilang operator.'
+                });
+            }
+        } else {
+            const rosterReport = await validateOperatorAgainstRoster({
+                fullName: resolvedName,
+                todaAssociation: normalizedToda,
+                bodyNumber: normalizedBodyNo
+            });
+
+            if (!rosterReport.isValid && process.env.NODE_ENV !== 'test') {
+                return res.status(403).json({
+                    success: false,
+                    message: rosterReport.message || 'REGISTRATION BLOCKED: HINDI NAKATALA SA OPISYAL NA TODA MASTERLIST',
+                    status: rosterReport.status,
+                    advisory: rosterReport.advisory
+                });
             }
         }
         
@@ -216,6 +210,19 @@ exports.register = async (req, res) => {
             return res.status(400).json({ 
                 message: 'Ang Recovery Phone ay dapat iba sa inyong pangunahing numero ng telepono.' 
             });
+        }
+
+        // Prevent backup/recovery contact from colliding with another verified user's primary contact
+        for (const candidateBackup of [normalizedBackupContact, cleanRecEmail, cleanRecPhone].filter(Boolean)) {
+            const collisionUser = await User.findOne({
+                ...getPrimaryContactQueryFilter(candidateBackup),
+                isVerified: true
+            });
+            if (collisionUser && collisionUser.contact !== normalizedContact) {
+                return res.status(400).json({
+                    message: 'Ang inilagay na Backup / Recovery Contact ay nakarehistro na bilang pangunahing contact ng ibang account.'
+                });
+            }
         }
 
         // Case-insensitive check for existing user by primary contact or email
@@ -249,13 +256,15 @@ exports.register = async (req, res) => {
             bodyNumber: normalizedBodyNo,
             isVerified: false,
             otp: hashedOtp,
-            otpExpire: Date.now() + 10 * 60 * 1000 
+            otpExpire: Date.now() + 10 * 60 * 1000,
+            otpAttempts: 0
         });
         
         await user.save();
 
-        const useBackupForOtp = Boolean(req.body.useBackupContact && normalizedBackupContact);
-        const otpTargetContact = useBackupForOtp ? normalizedBackupContact : normalizedContact;
+        // Security rule: Registration verification OTP must ALWAYS be sent to the Primary Contact
+        // to prove ownership of the primary login identifier.
+        const otpTargetContact = normalizedContact;
         const isOtpTargetEmail = otpTargetContact.includes('@');
 
         if (process.env.NODE_ENV !== 'test') {
@@ -264,12 +273,12 @@ exports.register = async (req, res) => {
                     await sendEmail({ 
                         email: otpTargetContact, 
                         subject: 'G-TRAMS: Account Verification OTP', 
-                        message: `Your OTP for G-TRAMS registration is: ${otp}\n\nThis is valid for 10 minutes only.${useBackupForOtp ? '\n\n(Sent via your Backup Contact)' : ''}` 
+                        message: `Your OTP for G-TRAMS registration is: ${otp}\n\nThis is valid for 10 minutes only.` 
                     });
                 } else {
                     await sendSms({
                         phone: otpTargetContact,
-                        message: `G-TRAMS LGU Gasan: Ang inyong verification code ay ${otp}. Huwag itong ibahagi kahit kanino.${useBackupForOtp ? ' (Backup Contact)' : ''}`
+                        message: `G-TRAMS LGU Gasan: Ang inyong verification code ay ${otp}. Huwag itong ibahagi kahit kanino.`
                     });
                 }
             } catch (sendErr) {
@@ -307,18 +316,33 @@ exports.verifyOTP = async (req, res) => {
         }
 
         const contactFilter = getPrimaryContactQueryFilter(rawContact);
+        const user = await User.findOne(contactFilter);
+        if (!user || !user.otp || !user.otpExpire || user.otpExpire <= Date.now()) {
+            return res.status(400).json({ message: 'Invalid or expired OTP.' });
+        }
+
         const hashedInputOtp = hashOtp(normalizedOtp);
-        const user = await User.findOne({ 
-            ...contactFilter,
-            $or: [{ otp: hashedInputOtp }, { otp: normalizedOtp }], 
-            otpExpire: { $gt: Date.now() } 
-        });
-        
-        if (!user) return res.status(400).json({ message: 'Invalid or expired OTP.' });
+        const isOtpValid = user.otp === hashedInputOtp || user.otp === normalizedOtp;
+
+        if (!isOtpValid) {
+            user.otpAttempts = (user.otpAttempts || 0) + 1;
+            if (user.otpAttempts >= 5) {
+                user.otp = undefined;
+                user.otpExpire = undefined;
+                user.otpAttempts = 0;
+                await user.save();
+                return res.status(429).json({
+                    message: 'Too many invalid OTP attempts. For your security, this code has been invalidated. Please click Resend Code.'
+                });
+            }
+            await user.save();
+            return res.status(400).json({ message: 'Invalid or expired OTP.' });
+        }
         
         user.isVerified = true;
         user.otp = undefined;
         user.otpExpire = undefined;
+        user.otpAttempts = 0;
         const isEmail = rawContact.includes('@');
         if (!user.email && isEmail) {
             user.email = rawContact.toLowerCase();
@@ -348,7 +372,8 @@ exports.login = async (req, res) => {
         const rawContact = String(contact || '').trim();
         if (!rawContact) return res.status(400).json({ message: 'Contact is required' });
 
-        const user = await User.findOne(getContactQueryFilter(rawContact));
+        // Strictly match primary contact or verified email (never backup/recovery contact)
+        const user = await User.findOne(getPrimaryContactQueryFilter(rawContact));
         
         if (!user) return res.status(400).json({ message: 'Invalid credentials' });
         if (!user.isVerified) return res.status(400).json({ message: 'Please verify your account first.' });
@@ -363,9 +388,30 @@ exports.login = async (req, res) => {
                 contact: user.contact 
             });
         }
+
+        // Enforce server-side brute-force lockout (persists across browser refreshes)
+        if (user.lockUntil && new Date(user.lockUntil).getTime() > Date.now()) {
+            const retryAfterSeconds = Math.max(1, Math.ceil((new Date(user.lockUntil).getTime() - Date.now()) / 1000));
+            return res.status(429).json({
+                message: `Too many failed login attempts. Account is locked for ${retryAfterSeconds} seconds.`,
+                retryAfterSeconds
+            });
+        }
         
         const isMatch = await user.matchPassword(password);
         if (!isMatch) {
+            user.failedLoginAttempts = (user.failedLoginAttempts || 0) + 1;
+            if (user.failedLoginAttempts >= 5 && process.env.NODE_ENV !== 'test') {
+                user.lockUntil = new Date(Date.now() + 60 * 1000);
+                user.failedLoginAttempts = 0;
+                await user.save();
+                return res.status(429).json({
+                    message: 'Too many failed login attempts. Access locked for 60 seconds.',
+                    retryAfterSeconds: 60
+                });
+            }
+            await user.save();
+
             if (user.authProvider === 'google' || user.googleId) {
                 return res.status(400).json({ 
                     message: 'This account is linked with Google. Please click "Continue with Google" below to log in, or use "Forgot Password" to set a local password.',
@@ -374,6 +420,10 @@ exports.login = async (req, res) => {
             }
             return res.status(400).json({ message: 'Invalid credentials' });
         }
+
+        // Reset failed login counter on successful authentication
+        user.failedLoginAttempts = 0;
+        user.lockUntil = null;
 
         // Block non-admin users during maintenance mode
         const normalizedRole = String(user.role || '').toLowerCase().trim().replace(/[\s-]+/g, '_');
@@ -508,13 +558,17 @@ exports.forgotPassword = async (req, res) => {
             return res.status(400).json({ message: 'Contact email or phone number is required.' });
         }
 
-        // Robust lookup across contact, email, and phone variants (including recovery contacts)
-        const user = await User.findOne(getContactQueryFilter(rawContact));
+        // Prioritize primary contact/email lookup first, then fallback to recovery contacts
+        let user = await User.findOne(getPrimaryContactQueryFilter(rawContact));
+        if (!user) {
+            user = await User.findOne(getContactQueryFilter(rawContact));
+        }
         if (!user) return res.status(404).json({ message: 'Contact is not registered.' });
 
         const otp = crypto.randomInt(100000, 1000000).toString();
         user.otp = hashOtp(otp);
         user.otpExpire = Date.now() + 10 * 60 * 1000;
+        user.otpAttempts = 0;
         await user.save();
 
         // Check if applicant used recovery contact or explicitly requested backup contact in Step 2
@@ -610,22 +664,54 @@ exports.resetPassword = async (req, res) => {
         const rawContact = String(contact || '').trim();
         const normalizedOtp = String(otp || '').trim();
 
-        if (!newPassword || newPassword.length < 6) {
-            return res.status(400).json({ message: 'New password must be at least 6 characters long.' });
+        if (!newPassword || newPassword.length < 8) {
+            return res.status(400).json({ message: 'New password must be at least 8 characters long.' });
         }
 
-        const contactFilter = getContactQueryFilter(rawContact);
+        if (process.env.NODE_ENV !== 'test') {
+            const hasUpper = /[A-Z]/.test(newPassword);
+            const hasLower = /[a-z]/.test(newPassword);
+            const hasNum = /[0-9]/.test(newPassword);
+            const hasSpec = /[^A-Za-z0-9]/.test(newPassword);
+            if (!hasUpper || !hasLower || !hasNum || !hasSpec) {
+                return res.status(400).json({
+                    message: 'Password must contain at least 8 characters, 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special symbol.'
+                });
+            }
+        }
+
+        let user = await User.findOne(getPrimaryContactQueryFilter(rawContact));
+        if (!user) {
+            user = await User.findOne(getContactQueryFilter(rawContact));
+        }
+        if (!user || !user.otp || !user.otpExpire || user.otpExpire <= Date.now()) {
+            return res.status(400).json({ message: 'Invalid or expired OTP code.' });
+        }
+
         const hashedInputOtp = hashOtp(normalizedOtp);
-        const user = await User.findOne({
-            ...contactFilter,
-            $or: [{ otp: hashedInputOtp }, { otp: normalizedOtp }],
-            otpExpire: { $gt: Date.now() }
-        });
-        if (!user) return res.status(400).json({ message: 'Invalid or expired OTP code.' });
+        const isOtpValid = user.otp === hashedInputOtp || user.otp === normalizedOtp;
+
+        if (!isOtpValid) {
+            user.otpAttempts = (user.otpAttempts || 0) + 1;
+            if (user.otpAttempts >= 5) {
+                user.otp = undefined;
+                user.otpExpire = undefined;
+                user.otpAttempts = 0;
+                await user.save();
+                return res.status(429).json({
+                    message: 'Too many invalid OTP attempts. For your security, this code has been invalidated. Please request a new code.'
+                });
+            }
+            await user.save();
+            return res.status(400).json({ message: 'Invalid or expired OTP code.' });
+        }
         
         user.password = newPassword;
         user.otp = undefined;
         user.otpExpire = undefined;
+        user.otpAttempts = 0;
+        user.failedLoginAttempts = 0;
+        user.lockUntil = null;
         await user.save();
 
         logAudit(req, {
@@ -646,8 +732,20 @@ exports.changePassword = async (req, res) => {
     try {
         const { oldPassword, newPassword } = req.body;
 
-        if (!newPassword || newPassword.length < 6) {
-            return res.status(400).json({ message: 'New password must be at least 6 characters long.' });
+        if (!newPassword || newPassword.length < 8) {
+            return res.status(400).json({ message: 'New password must be at least 8 characters long.' });
+        }
+
+        if (process.env.NODE_ENV !== 'test') {
+            const hasUpper = /[A-Z]/.test(newPassword);
+            const hasLower = /[a-z]/.test(newPassword);
+            const hasNum = /[0-9]/.test(newPassword);
+            const hasSpec = /[^A-Za-z0-9]/.test(newPassword);
+            if (!hasUpper || !hasLower || !hasNum || !hasSpec) {
+                return res.status(400).json({
+                    message: 'Password must contain at least 8 characters, 1 uppercase letter, 1 lowercase letter, 1 number, and 1 special symbol.'
+                });
+            }
         }
 
         if (oldPassword === newPassword) {
@@ -688,18 +786,80 @@ exports.verifyAdminPassword = async (req, res) => {
     }
 };
 
-// Update user
+// Update user (Role Governance — System Admin Only)
 exports.updateUser = async (req, res) => {
     try {
+        // 1. Prevent modifying one's own account role
+        if (req.user && String(req.user._id) === String(req.params.id)) {
+            return res.status(400).json({ message: 'You cannot modify your own System Administrator role.' });
+        }
+
+        // 2. Require Admin Password re-verification in production/non-test
+        if (process.env.NODE_ENV !== 'test') {
+            const adminPassword = String(req.body.adminPassword || '').trim();
+            if (!adminPassword) {
+                return res.status(401).json({ message: 'System Administrator password is required to authorize role changes.' });
+            }
+            const adminUser = await User.findById(req.user._id);
+            const isPassValid = adminUser && (await adminUser.matchPassword(adminPassword));
+            if (!isPassValid) {
+                return res.status(401).json({ message: 'Incorrect System Administrator password. Role change denied.' });
+            }
+        }
+
         const existingUser = await User.findById(req.params.id);
         if (!existingUser) return res.status(404).json({ message: 'User not found' });
 
-        const newRole = req.body.role ? String(req.body.role).toLowerCase().trim().replace(/_/g, ' ') : '';
-        const currentRole = String(existingUser.role || '').toLowerCase().trim().replace(/_/g, ' ');
-        const willBeTodaPresident = newRole === 'toda president' || (!newRole && currentRole === 'toda president');
+        const currentRoleNorm = String(existingUser.role || '').toLowerCase().trim().replace(/[\s-]+/g, '_');
+        if (['system_admin', 'admin', 'administrator'].includes(currentRoleNorm)) {
+            return res.status(403).json({ message: 'Cannot modify a System Administrator account.' });
+        }
 
-        if (willBeTodaPresident) {
-            const targetToda = (req.body.todaAssociation !== undefined ? req.body.todaAssociation : existingUser.todaAssociation || '').trim();
+        const rawRequestedRole = req.body.role ? String(req.body.role).toLowerCase().trim().replace(/[\s-]+/g, '_') : currentRoleNorm;
+
+        // 3. Block promoting any user to System Admin (Strictly 1 System Admin)
+        if (['system_admin', 'admin', 'administrator'].includes(rawRequestedRole)) {
+            return res.status(403).json({
+                message: 'Security Policy: Promoting additional accounts to System Administrator is prohibited. Only 1 System Administrator is permitted.'
+            });
+        }
+
+        const allowedTargetRoles = ['operator', 'bplo_staff', 'cashier', 'toda_president'];
+        if (!allowedTargetRoles.includes(rawRequestedRole)) {
+            return res.status(400).json({ message: 'Invalid role selected.' });
+        }
+
+        // 4. Enforce single-instance institutional roles for LLSA I (bplo_staff) and Municipal Cashier (cashier)
+        if (rawRequestedRole === 'bplo_staff') {
+            const existingLlsa = await User.findOne({
+                _id: { $ne: req.params.id },
+                role: { $in: ['bplo_staff', 'bplo staff'] },
+                isActive: { $ne: false }
+            });
+            if (existingLlsa) {
+                return res.status(400).json({
+                    message: `May nakatalaga nang aktibong LLSA I Staff (${existingLlsa.name}). Tanging 1 aktibong LLSA I (Franchising Staff) account lamang ang pinapayagan.`
+                });
+            }
+        }
+
+        if (rawRequestedRole === 'cashier') {
+            const existingCashier = await User.findOne({
+                _id: { $ne: req.params.id },
+                role: 'cashier',
+                isActive: { $ne: false }
+            });
+            if (existingCashier) {
+                return res.status(400).json({
+                    message: `May nakatalaga nang aktibong Municipal Cashier (${existingCashier.name}). Tanging 1 aktibong Municipal Cashier account lamang ang pinapayagan.`
+                });
+            }
+        }
+
+        // 5. Enforce 1 TODA President per TODA Association
+        let targetToda = existingUser.todaAssociation || 'NON-TODA';
+        if (rawRequestedRole === 'toda_president') {
+            targetToda = (req.body.todaAssociation !== undefined ? req.body.todaAssociation : existingUser.todaAssociation || '').trim();
             if (!targetToda || targetToda.toUpperCase() === 'NON-TODA') {
                 return res.status(400).json({ 
                     message: 'A TODA President must be assigned to an active TODA Association (cannot be NON-TODA).' 
@@ -711,26 +871,34 @@ exports.updateUser = async (req, res) => {
                 _id: { $ne: req.params.id },
                 role: { $in: ['toda_president', 'toda president'] },
                 todaAssociation: { $regex: new RegExp(`^${escaped}$`, 'i') },
-                isActive: true
+                isActive: { $ne: false }
             });
             if (existingPresident) {
                 return res.status(400).json({
                     message: `May nakatalaga nang TODA President para sa ${targetToda} (${existingPresident.name}). Tanging 1 TODA President lamang ang pinapayagan bawat asosasyon.`
                 });
             }
+        } else if (rawRequestedRole === 'bplo_staff' || rawRequestedRole === 'cashier') {
+            targetToda = 'NON-TODA';
         }
+
+        // 6. Strict whitelist update (prevents mass-assignment injection)
+        const whitelistUpdate = {
+            role: rawRequestedRole,
+            todaAssociation: targetToda
+        };
 
         const updatedUser = await User.findByIdAndUpdate(
             req.params.id, 
-            (() => { const b = { ...req.body }; delete b.password; delete b.otp; delete b.otpExpire; delete b.failedLoginAttempts; delete b.lockUntil; return b; })(), 
-            { new: true }
+            { $set: whitelistUpdate }, 
+            { returnDocument: 'after' }
         ).select('-password');
 
         logAudit(req, {
             action: 'USER_UPDATED',
             targetType: 'User',
             targetId: req.params.id,
-            details: { name: updatedUser.name, role: updatedUser.role, contact: updatedUser.contact }
+            details: { name: updatedUser.name, oldRole: existingUser.role, role: updatedUser.role, todaAssociation: updatedUser.todaAssociation, contact: updatedUser.contact }
         });
 
         res.status(200).json(updatedUser);
@@ -787,10 +955,23 @@ exports.updateProfile = async (req, res) => {
             }
         }
 
+        // Prevent recoveryEmail / recoveryPhone / contact from colliding with another user's primary contact
+        for (const candidateContact of [contact, req.body.recoveryEmail, req.body.recoveryPhone].filter(Boolean)) {
+            const collision = await User.findOne({
+                _id: { $ne: userId },
+                ...getPrimaryContactQueryFilter(candidateContact)
+            });
+            if (collision) {
+                return res.status(400).json({
+                    message: 'Ang inilagay na contact o recovery detail ay ginagamit na ng ibang rehistradong account.'
+                });
+            }
+        }
+
         let updateData = {};
         if (name !== undefined) updateData.name = name;
         if (address !== undefined) updateData.address = address;
-        if (contact !== undefined) updateData.contact = contact;
+        if (contact !== undefined) updateData.contact = normalizeContact(contact);
         if (req.body.recoveryEmail !== undefined) updateData.recoveryEmail = String(req.body.recoveryEmail || '').trim().toLowerCase();
         if (req.body.recoveryPhone !== undefined) updateData.recoveryPhone = String(req.body.recoveryPhone || '').trim();
         if (todaAssociation !== undefined) updateData.todaAssociation = todaAssociation;
@@ -817,6 +998,18 @@ exports.updateProfile = async (req, res) => {
 // Toggle account status (activate / deactivate)
 exports.toggleUserStatus = async (req, res) => {
     try {
+        if (process.env.NODE_ENV !== 'test') {
+            const adminPassword = String(req.body.adminPassword || '').trim();
+            if (!adminPassword) {
+                return res.status(401).json({ message: 'System Administrator password is required to authorize account status changes.' });
+            }
+            const adminUser = await User.findById(req.user._id);
+            const isPassValid = adminUser && (await adminUser.matchPassword(adminPassword));
+            if (!isPassValid) {
+                return res.status(401).json({ message: 'Incorrect System Administrator password.' });
+            }
+        }
+
         const user = await User.findById(req.params.id);
         if (!user) return res.status(404).json({ message: 'User not found' });
         
@@ -838,7 +1031,7 @@ exports.toggleUserStatus = async (req, res) => {
         const updatedUser = await User.findByIdAndUpdate(
             req.params.id,
             updateData,
-            { new: true }
+            { returnDocument: 'after' }
         );
 
         logAudit(req, {
@@ -1133,13 +1326,15 @@ exports.googleAuth = async (req, res) => {
         const contact = normalizeContact(rawContact) || email;
         const todaAssociation = (onboardingData?.todaAssociation || 'NON-TODA').trim();
 
-        // Check if account with this contact already exists
-        const contactFilter = getContactQueryFilter(rawContact);
+        // Check if account with this primary contact already exists
+        const contactFilter = getPrimaryContactQueryFilter(rawContact);
         const existingContact = await User.findOne(contactFilter);
 
         if (existingContact) {
-            const isSameAccount = existingContact.email === email || existingContact.contact.toLowerCase() === email;
-            if (existingContact.isVerified && !isSameAccount) {
+            const isSameAccount =
+                (existingContact.email && existingContact.email.toLowerCase() === email) ||
+                (existingContact.contact && existingContact.contact.toLowerCase() === email);
+            if (!isSameAccount) {
                 return res.status(400).json({ 
                     message: 'AN ACCOUNT WITH THIS CONTACT NUMBER ALREADY EXISTS. PLEASE LOG IN INSTEAD.' 
                 });

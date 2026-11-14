@@ -208,13 +208,16 @@ const UserManagement = () => {
     };
   }, []);
 
-  // Role management
+  //Role management
+  const [adminPasswordInput, setAdminPasswordInput] = useState('');
+
   const initiateRoleChange = (user, newRole) => {
     if (user.role === newRole) return; 
     const defaultToda = (user.todaAssociation && user.todaAssociation !== 'NON-TODA') 
       ? user.todaAssociation 
       : 'GASAN CENTRAL TODA';
 
+    setAdminPasswordInput('');
     setPendingRoleChange({ 
       userId: user._id, 
       userName: user.name, 
@@ -228,9 +231,13 @@ const UserManagement = () => {
 
   const confirmAndSaveRole = async () => {
     if (!pendingRoleChange) return;
+    if (!adminPasswordInput.trim()) {
+      alert('Please enter your System Administrator password to authorize this role change.');
+      return;
+    }
     const { userId, newRole, todaAssociation } = pendingRoleChange;
 
-    const payload = { role: newRole };
+    const payload = { role: newRole, adminPassword: adminPasswordInput.trim() };
     if (newRole === 'toda_president') {
       if (!todaAssociation || todaAssociation === 'NON-TODA') {
         alert('Please assign an accredited TODA association for this TODA President.');
@@ -252,10 +259,11 @@ const UserManagement = () => {
         setUsers(users.map(u => u._id === userId ? { 
           ...u, 
           role: newRole,
-          ...(newRole === 'toda_president' ? { todaAssociation } : {})
+          ...(newRole === 'toda_president' ? { todaAssociation } : (newRole === 'bplo_staff' || newRole === 'cashier' ? { todaAssociation: 'NON-TODA' } : {}))
         } : u));
         setIsConfirmOpen(false); 
         setPendingRoleChange(null);
+        setAdminPasswordInput('');
       } else {
         alert(data.message || 'Failed to update role. Try logging in again.');
       }
@@ -277,8 +285,14 @@ const UserManagement = () => {
         alert('Please provide a reason for deactivation.');
         return;
       }
+      if (!adminPasswordInput.trim()) {
+        alert('Please enter your System Administrator password to confirm.');
+        return;
+      }
       
-      const bodyData = isDeactivating ? { reason: deactivateReason } : {};
+      const bodyData = isDeactivating
+        ? { reason: deactivateReason, adminPassword: adminPasswordInput.trim() }
+        : { adminPassword: adminPasswordInput.trim() };
       
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/${statusModal.user._id}/toggle-status`, {
         method: 'PUT',
@@ -304,16 +318,16 @@ const UserManagement = () => {
         setUsers(users.map(u => u._id === statusModal.user._id ? { ...u, ...updateFields } : u));
         setStatusModal({ isOpen: false, user: null });
         setDeactivateReason('');
+        setAdminPasswordInput('');
       } else {
         const errorData = await response.json();
         alert(`Failed: ${errorData.message}`);
-        setStatusModal({ isOpen: false, user: null });
-        setDeactivateReason('');
       }
     } catch (error) {
       alert('Network Error.');
       setStatusModal({ isOpen: false, user: null });
       setDeactivateReason('');
+      setAdminPasswordInput('');
     }
   };
 
@@ -649,7 +663,7 @@ const UserManagement = () => {
                             </span>
                           ) : (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#F0FDF4] text-[#15803D] border-[#BBF7D0] dark:bg-[#052E16]/60 dark:text-[#4ADE80] dark:border-[#166534] text-xs font-medium uppercase tracking-wider">
-                              <ShieldCheck size={12} /> Verified (SMS)
+                              <ShieldCheck size={12} /> {String(user.contact || '').includes('@') ? 'Verified (Email)' : 'Verified (SMS)'}
                             </span>
                           )
                         ) : (
@@ -661,9 +675,9 @@ const UserManagement = () => {
 
                       {/* Manage Role */}
                       <td className="py-3.5 px-3 text-center whitespace-nowrap">
-                        {isSelf ? (
+                        {isSelf || isAdminUser ? (
                           <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 text-[#9E2A2B] dark:text-[#D4AF37] border border-[#9E2A2B]/20 dark:border-[#9E2A2B]/30">
-                            System Admin (You)
+                            {isSelf ? 'System Admin (You)' : 'System Admin (Locked)'}
                           </span>
                         ) : (
                           <select
@@ -671,7 +685,6 @@ const UserManagement = () => {
                               const r = String(user.role || '').toLowerCase().trim();
                               if (r === 'toda president' || r === 'toda_president') return 'toda_president';
                               if (r === 'bplo staff' || r === 'bplo_staff') return 'bplo_staff';
-                              if (r === 'system admin' || r === 'system_admin' || r === 'admin' || r === 'administrator') return 'system_admin';
                               if (r === 'cashier') return 'cashier';
                               return 'operator';
                             })()}
@@ -681,7 +694,6 @@ const UserManagement = () => {
                           >
                             <option value="operator">Operator</option>
                             <option value="bplo_staff">LLSA I (Franchising Staff)</option>
-                            <option value="system_admin">System Admin</option>
                             <option value="cashier">Municipal Cashier</option>
                             <option value="toda_president">TODA President</option>
                           </select>
@@ -698,13 +710,13 @@ const UserManagement = () => {
                           <Info size={14} />
                         </button>
 
-                        {isSelf ? (
+                        {isSelf || isAdminUser ? (
                           <span className="inline-flex items-center px-2 py-1 text-xs font-medium text-[#6B6761] dark:text-[#A8A29E]">
                             Protected
                           </span>
                         ) : (
                           <button 
-                            onClick={() => setStatusModal({ isOpen: true, user: user })}
+                            onClick={() => { setAdminPasswordInput(''); setStatusModal({ isOpen: true, user: user }); }}
                             className={`inline-flex items-center justify-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-colors border cursor-pointer ${
                               user.isActive === false 
                               ? 'bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800' 
@@ -843,7 +855,7 @@ const UserManagement = () => {
             </p>
 
             {statusModal.user.isActive !== false && (
-              <div className="mb-4 text-left">
+              <div className="mb-3 text-left">
                 <label className="block text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] uppercase mb-1">
                   Reason for Deactivation
                 </label>
@@ -857,16 +869,31 @@ const UserManagement = () => {
               </div>
             )}
 
+            <div className="mb-4 text-left">
+              <label className="block text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] uppercase mb-1">
+                Confirm System Admin Password
+              </label>
+              <input
+                type="password"
+                value={adminPasswordInput}
+                onChange={(e) => setAdminPasswordInput(e.target.value)}
+                placeholder="Enter your admin password..."
+                className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3 py-2 text-xs text-[#1F1D1B] dark:text-[#F6F5F3] placeholder-[#6B6761] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37]"
+                required
+              />
+            </div>
+
             <div className="flex gap-2">
               <button 
-                onClick={() => { setStatusModal({ isOpen: false, user: null }); setDeactivateReason(''); }}
+                onClick={() => { setStatusModal({ isOpen: false, user: null }); setDeactivateReason(''); setAdminPasswordInput(''); }}
                 className="flex-1 py-2 rounded-lg font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] bg-[#F6F5F3] dark:bg-[#2E2A27] hover:bg-[#E4E1DC] dark:hover:bg-[#3E3834] transition-colors text-xs cursor-pointer"
               >
                 Cancel
               </button>
               <button 
                 onClick={handleToggleStatus}
-                className={`flex-1 py-2 rounded-lg font-semibold text-white transition-colors text-xs shadow-xs cursor-pointer ${
+                disabled={!adminPasswordInput.trim()}
+                className={`flex-1 py-2 rounded-lg font-semibold text-white transition-colors text-xs shadow-xs cursor-pointer disabled:opacity-50 ${
                   statusModal.user.isActive === false ? 'bg-emerald-700 hover:bg-emerald-800' : 'bg-red-700 hover:bg-red-800'
                 }`}
               >
@@ -880,11 +907,29 @@ const UserManagement = () => {
       {/* Role change confirmation modal */}
       {isConfirmOpen && pendingRoleChange && (() => {
         const isPromotingToTodaPres = pendingRoleChange.newRole === 'toda_president';
+        const isPromotingToLlsa = pendingRoleChange.newRole === 'bplo_staff';
+        const isPromotingToCashier = pendingRoleChange.newRole === 'cashier';
+
         const conflictingPres = isPromotingToTodaPres ? users.find(u => 
           u._id !== pendingRoleChange.userId &&
+          u.isActive !== false &&
           (u.role === 'toda_president' || u.role === 'toda president') &&
           u.todaAssociation?.toUpperCase() === pendingRoleChange.todaAssociation?.toUpperCase()
         ) : null;
+
+        const conflictingLlsa = isPromotingToLlsa ? users.find(u =>
+          u._id !== pendingRoleChange.userId &&
+          u.isActive !== false &&
+          (u.role === 'bplo_staff' || u.role === 'bplo staff')
+        ) : null;
+
+        const conflictingCashier = isPromotingToCashier ? users.find(u =>
+          u._id !== pendingRoleChange.userId &&
+          u.isActive !== false &&
+          u.role === 'cashier'
+        ) : null;
+
+        const hasRoleConflict = Boolean(conflictingPres || conflictingLlsa || conflictingCashier);
 
         return (
           <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
@@ -898,11 +943,23 @@ const UserManagement = () => {
                 Are you sure you want to change <strong className="text-[#1F1D1B] dark:text-[#F6F5F3] font-semibold">{pendingRoleChange.userName}</strong>'s role from <br/>
                 <span className="inline-block mt-1.5 px-2 py-0.5 bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] font-semibold text-xs rounded border border-[#E4E1DC] dark:border-[#2E2A27] uppercase tracking-wider">{pendingRoleChange.oldRole}</span> 
                 <span className="mx-2 text-[#6B6761]">➔</span> 
-                <span className="inline-block px-2 py-0.5 bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 text-[#9E2A2B] dark:text-[#D4AF37] font-semibold text-xs rounded border border-[#9E2A2B]/20 dark:border-[#9E2A2B]/30 uppercase tracking-wider">{pendingRoleChange.newRole}</span> ?
+                <span className="inline-block px-2 py-0.5 bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 text-[#9E2A2B] dark:text-[#D4AF37] font-semibold text-xs rounded border border-[#9E2A2B]/20 dark:border-[#9E2A2B]/30 uppercase tracking-wider">{pendingRoleChange.newRole === 'bplo_staff' ? 'LLSA I (Franchising Staff)' : pendingRoleChange.newRole}</span> ?
               </p>
 
+              {conflictingLlsa && (
+                <div className="mb-3 p-2.5 rounded bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 text-red-700 dark:text-red-400 text-[11px] text-left leading-tight">
+                  <strong>Bawal:</strong> May aktibo nang LLSA I Staff (<strong>{conflictingLlsa.name}</strong>). Tanging 1 aktibong LLSA I account lamang ang pinapayagan.
+                </div>
+              )}
+
+              {conflictingCashier && (
+                <div className="mb-3 p-2.5 rounded bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 text-red-700 dark:text-red-400 text-[11px] text-left leading-tight">
+                  <strong>Bawal:</strong> May aktibo nang Municipal Cashier (<strong>{conflictingCashier.name}</strong>). Tanging 1 aktibong Cashier account lamang ang pinapayagan.
+                </div>
+              )}
+
               {isPromotingToTodaPres && (
-                <div className="mb-4 text-left p-3 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] space-y-2">
+                <div className="mb-3 text-left p-3 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] space-y-2">
                   <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
                     Assign TODA Association:
                   </label>
@@ -928,13 +985,27 @@ const UserManagement = () => {
                 </div>
               )}
 
+              <div className="mb-4 text-left">
+                <label className="block text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] uppercase mb-1">
+                  Confirm System Admin Password
+                </label>
+                <input
+                  type="password"
+                  value={adminPasswordInput}
+                  onChange={(e) => setAdminPasswordInput(e.target.value)}
+                  placeholder="Enter your admin password..."
+                  className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3 py-2 text-xs text-[#1F1D1B] dark:text-[#F6F5F3] placeholder-[#6B6761] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37]"
+                  required
+                />
+              </div>
+
               <div className="flex gap-2">
-                <button onClick={() => setIsConfirmOpen(false)} className="flex-1 py-2 rounded-lg font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] bg-[#F6F5F3] dark:bg-[#2E2A27] hover:bg-[#E4E1DC] dark:hover:bg-[#3E3834] transition-colors text-xs cursor-pointer">Cancel</button>
+                <button onClick={() => { setIsConfirmOpen(false); setAdminPasswordInput(''); }} className="flex-1 py-2 rounded-lg font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] bg-[#F6F5F3] dark:bg-[#2E2A27] hover:bg-[#E4E1DC] dark:hover:bg-[#3E3834] transition-colors text-xs cursor-pointer">Cancel</button>
                 <button 
                   onClick={confirmAndSaveRole} 
-                  disabled={Boolean(conflictingPres)}
+                  disabled={hasRoleConflict || !adminPasswordInput.trim()}
                   className={`flex-1 py-2 rounded-lg font-semibold text-white transition-colors text-xs shadow-xs cursor-pointer ${
-                    conflictingPres ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#9E2A2B] hover:bg-[#7A1B22]'
+                    hasRoleConflict || !adminPasswordInput.trim() ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#9E2A2B] hover:bg-[#7A1B22]'
                   }`}
                 >
                   Yes, Change It
@@ -1049,7 +1120,7 @@ const UserManagement = () => {
                       </span>
                     ) : selectedUser.isVerified ? (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#F0FDF4] text-[#15803D] border-[#BBF7D0] dark:bg-[#052E16]/60 dark:text-[#4ADE80] dark:border-[#166534] text-xs font-medium">
-                        <ShieldCheck size={13} /> Verified (SMS / Local OTP)
+                        <ShieldCheck size={13} /> {String(selectedUser.contact || '').includes('@') ? 'Verified (Email OTP)' : 'Verified (SMS OTP)'}
                       </span>
                     ) : (
                       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#F3F4F6] text-[#4B5563] border-[#E5E7EB] dark:bg-[#1F2937]/60 dark:text-[#9CA3AF] dark:border-[#374151] text-xs font-medium">

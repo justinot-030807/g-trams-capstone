@@ -1084,27 +1084,12 @@ const Register = () => {
                     </button>
                   </div>
 
-                  {/* Backup Contact OTP Switcher: Only during OTP verification if primary contact doesn't receive it */}
+                  {/* Primary Contact Ownership Notice */}
                   {Boolean(formData.backupContact || formData.recoveryPhone || formData.recoveryEmail) && (
                     <div className="mt-3 p-3.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3]/80 dark:bg-[#14110F]/80">
                       <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-medium leading-relaxed">
-                        {otpChannel === 'backup'
-                          ? `Kasalukuyang ipinapadala ang OTP sa inyong Backup Contact (${formData.backupContact || formData.recoveryPhone || formData.recoveryEmail}).`
-                          : 'Di gumagana o walang natanggap na OTP sa inyong primary contact?'}
+                        Ang verification code ay ipinadala sa inyong Primary Contact (<strong className="text-[#1F1D1B] dark:text-[#F6F5F3]">{formData.contact}</strong>) upang kumpirmahin ang pagmamay-ari nito. Ang inyong Backup Contact (<strong className="text-[#1F1D1B] dark:text-[#F6F5F3]">{formData.backupContact || formData.recoveryPhone || formData.recoveryEmail}</strong>) ay naka-save para sa Account Recovery (Forgot Password).
                       </p>
-                      <button
-                        type="button"
-                        onClick={() => handleResendOTP(otpChannel === 'backup' ? 'primary' : 'backup')}
-                        disabled={isLoading}
-                        className="mt-2 inline-flex items-center gap-1.5 text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline disabled:opacity-50 cursor-pointer"
-                      >
-                        <Phone size={13} />
-                        <span>
-                          {otpChannel === 'backup'
-                            ? `Ibalik sa Primary Contact (${formData.contact})`
-                            : `Ipadala ang OTP sa Backup Contact (${formData.backupContact || formData.recoveryPhone || formData.recoveryEmail})`}
-                        </span>
-                      </button>
                     </div>
                   )}
                 </form>
