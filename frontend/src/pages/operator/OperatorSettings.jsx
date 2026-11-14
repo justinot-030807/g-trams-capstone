@@ -279,16 +279,64 @@ const OperatorSettings = () => {
               type: 'orCr'
             });
           }
+          if (unit.crUrl && unit.crUrl !== unit.orCrUrl) {
+            docs.push({
+              id: `${unit._id}_cr`,
+              title: 'Certificate of Registration (LTO CR)',
+              category: 'Vehicle Document',
+              plate: unitPlate,
+              unitDesc,
+              url: unit.crUrl,
+              status: unit.status,
+              type: 'cr'
+            });
+          }
+          if (unit.orUrl && unit.orUrl !== unit.orCrUrl) {
+            docs.push({
+              id: `${unit._id}_or`,
+              title: 'Official Receipt (LTO OR)',
+              category: 'Vehicle Document',
+              plate: unitPlate,
+              unitDesc,
+              url: unit.orUrl,
+              status: unit.status,
+              type: 'or'
+            });
+          }
           if (unit.licenseUrl) {
             docs.push({
               id: `${unit._id}_license`,
-              title: "Professional Driver's License",
+              title: "Professional Driver's License (Front)",
               category: "Driver's Credential",
               plate: unitPlate,
               unitDesc,
               url: unit.licenseUrl,
               status: unit.status,
               type: 'license'
+            });
+          }
+          if (unit.licenseBackUrl) {
+            docs.push({
+              id: `${unit._id}_license_back`,
+              title: "Professional Driver's License (Back)",
+              category: "Driver's Credential",
+              plate: unitPlate,
+              unitDesc,
+              url: unit.licenseBackUrl,
+              status: unit.status,
+              type: 'licenseBack'
+            });
+          }
+          if (unit.cedulaUrl) {
+            docs.push({
+              id: `${unit._id}_cedula`,
+              title: 'Community Tax Certificate (Cedula / CTC)',
+              category: 'LGU Clearance',
+              plate: unitPlate,
+              unitDesc,
+              url: unit.cedulaUrl,
+              status: unit.status,
+              type: 'cedula'
             });
           }
           if (unit.brgyClearanceUrl) {
@@ -444,8 +492,9 @@ const OperatorSettings = () => {
       showToast(t('profile.passMismatch', 'New passwords do not match!'), 'error');
       return;
     }
-    if (passwordData.newPassword.length < 6) {
-      showToast(t('profile.passTooShort', 'Password must be at least 6 characters.'), 'error');
+    const strongPassRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^A-Za-z\d]).{8,}$/;
+    if (!strongPassRegex.test(passwordData.newPassword)) {
+      showToast(t('profile.passTooWeak', 'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.'), 'error');
       return;
     }
     if (passwordData.currentPassword === passwordData.newPassword) {
@@ -640,7 +689,7 @@ const OperatorSettings = () => {
     navigate('/login');
   };
 
-  const inputClasses = "w-full bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3.5 py-2.5 text-xs sm:text-sm font-medium text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] transition-colors shadow-2xs";
+  const inputClasses = "w-full bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3.5 py-2.5 text-xs sm:text-sm font-medium text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] transition-colors shadow-sm";
   const lockedClasses = "w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3.5 py-2.5 text-xs sm:text-sm font-medium text-[#6B6761] dark:text-[#A8A29E] outline-none cursor-not-allowed select-none";
 
   const isEmailContact = (profileData.contact || '').includes('@');
@@ -681,7 +730,7 @@ const OperatorSettings = () => {
         ) : (
           <div className="space-y-5 animate-in fade-in duration-200">
             {/* PROFILE HEADER CARD */}
-            <div className="bg-white dark:bg-[#1C1917] rounded-lg p-5 sm:p-6 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs transition-colors">
+            <div className="bg-white dark:bg-[#1C1917] rounded-lg p-5 sm:p-6 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm transition-colors">
               <div className="flex items-center gap-4 sm:gap-5">
                 {/* Avatar with Camera Trigger */}
                 <div className="relative shrink-0">
@@ -694,10 +743,10 @@ const OperatorSettings = () => {
                   </div>
                   <label
                     htmlFor="avatar-upload-header"
-                    className="absolute -bottom-1 -right-1 w-7 h-7 rounded-full bg-[#9E2A2B] dark:bg-[#D4AF37] text-white dark:text-[#14110F] flex items-center justify-center shadow-md cursor-pointer hover:scale-105 active:scale-95 transition-all"
-                    title="Change Profile Photo"
+                    className="absolute -bottom-1 -right-1 w-9 h-9 rounded-full bg-[#9E2A2B] dark:bg-[#D4AF37] text-white dark:text-[#14110F] flex items-center justify-center shadow-md cursor-pointer hover:scale-105 active:scale-95 transition-all"
+                    title={t('settings.changePhoto', 'Change profile photo')}
                   >
-                    <Camera size={13} />
+                    <Camera size={15} />
                     <input
                       id="avatar-upload-header"
                       type="file"
@@ -728,10 +777,10 @@ const OperatorSettings = () => {
                     <button
                       type="button"
                       onClick={() => setIsEditProfileModalOpen(true)}
-                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-[#14110F] transition-colors active:scale-95 shadow-2xs cursor-pointer min-h-[44px]"
+                      className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-[#14110F] transition-colors active:scale-95 shadow-sm cursor-pointer min-h-[44px]"
                     >
                       <Edit3 size={13} />
-                      <span>Edit profile</span>
+                      <span>{t('settings.editProfile', 'Edit profile')}</span>
                     </button>
                   </div>
                 </div>
@@ -741,9 +790,9 @@ const OperatorSettings = () => {
             {/* GROUP 1: OPERATOR CREDENTIALS */}
             <div>
               <h3 className="text-xs font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider px-2 mb-2">
-                Operator Credentials
+                {t('settings.credentialsGroup', 'Operator Credentials')}
               </h3>
-              <div className="bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs overflow-hidden divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
+              <div className="bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm overflow-hidden divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
                 {/* Digital ID Card */}
                 <button
                   type="button"
@@ -755,12 +804,12 @@ const OperatorSettings = () => {
                       <ShieldCheck size={20} />
                     </div>
                     <span className="text-sm font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
-                      Digital ID Card
+                      {t('settings.digitalId', 'Digital ID Card')}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-[11px] font-bold text-[#15803D] dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/60 hidden sm:inline-flex items-center gap-1">
-                      <CheckCircle2 size={11} /> Verified
+                      <CheckCircle2 size={11} /> {t('settings.verified', 'Verified')}
                     </span>
                     <ChevronRight size={18} className="text-[#6B6761] dark:text-[#A8A29E] group-hover:translate-x-0.5 transition-transform" />
                   </div>
@@ -777,12 +826,12 @@ const OperatorSettings = () => {
                       <FileText size={20} />
                     </div>
                     <span className="text-sm font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
-                      Document Vault
+                      {t('settings.documentVault', 'Document Vault')}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] bg-[#F6F5F3] dark:bg-[#2E2A27] px-2.5 py-0.5 rounded-full">
-                      {vaultDocuments.length} {vaultDocuments.length === 1 ? 'file' : 'files'}
+                      {vaultDocuments.length} {vaultDocuments.length === 1 ? t('settings.fileSingular', 'file') : t('settings.filePlural', 'files')}
                     </span>
                     <ChevronRight size={18} className="text-[#6B6761] dark:text-[#A8A29E] group-hover:translate-x-0.5 transition-transform" />
                   </div>
@@ -793,9 +842,9 @@ const OperatorSettings = () => {
             {/* GROUP 2: PREFERENCES */}
             <div>
               <h3 className="text-xs font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider px-2 mb-2">
-                Preferences
+                {t('settings.preferencesGroup', 'Preferences')}
               </h3>
-              <div className="bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs overflow-hidden divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
+              <div className="bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm overflow-hidden divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
                 {/* Notifications & Sounds */}
                 <div className="w-full flex items-center justify-between p-4 hover:bg-[#F6F5F3] dark:hover:bg-[#25211E] transition-colors min-h-[48px]">
                   <button
@@ -807,7 +856,7 @@ const OperatorSettings = () => {
                       <Bell size={20} />
                     </div>
                     <span className="text-sm font-bold text-[#1F1D1B] dark:text-[#F6F5F3] group-hover:text-[#9E2A2B] dark:group-hover:text-[#D4AF37] transition-colors">
-                      Notifications and sounds
+                      {t('settings.notifications', 'Notifications and sounds')}
                     </span>
                   </button>
 
@@ -842,7 +891,7 @@ const OperatorSettings = () => {
                       <Globe size={20} />
                     </div>
                     <span className="text-sm font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
-                      Language
+                      {t('settings.language', 'Language')}
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5">
@@ -864,12 +913,12 @@ const OperatorSettings = () => {
                       {isDark ? <Moon size={20} /> : <Sun size={20} />}
                     </div>
                     <span className="text-sm font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
-                      Theme
+                      {t('settings.theme', 'Theme')}
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className="text-xs sm:text-sm font-medium text-[#6B6761] dark:text-[#A8A29E] capitalize">
-                      {isDark ? 'Dark' : 'Light'}
+                      {isDark ? t('settings.dark', 'Dark') : t('settings.light', 'Light')}
                     </span>
                     <ChevronRight size={18} className="text-[#6B6761] dark:text-[#A8A29E] group-hover:translate-x-0.5 transition-transform" />
                   </div>
@@ -880,9 +929,9 @@ const OperatorSettings = () => {
             {/* GROUP 3: ACCOUNT & SECURITY */}
             <div>
               <h3 className="text-xs font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider px-2 mb-2">
-                Account
+                {t('settings.accountGroup', 'Account')}
               </h3>
-              <div className="bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs overflow-hidden divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
+              <div className="bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm overflow-hidden divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
                 {/* Password Row */}
                 <button
                   type="button"
@@ -894,7 +943,7 @@ const OperatorSettings = () => {
                       <Lock size={20} />
                     </div>
                     <span className="text-sm font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
-                      Password
+                      {t('settings.password', 'Password')}
                     </span>
                   </div>
                   <ChevronRight size={18} className="text-[#6B6761] dark:text-[#A8A29E] group-hover:translate-x-0.5 transition-transform" />
@@ -911,7 +960,7 @@ const OperatorSettings = () => {
                       <HelpCircle size={20} />
                     </div>
                     <span className="text-sm font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
-                      Support
+                      {t('settings.support', 'Support')}
                     </span>
                   </div>
                   <ChevronRight size={18} className="text-[#6B6761] dark:text-[#A8A29E] group-hover:translate-x-0.5 transition-transform" />
@@ -928,7 +977,7 @@ const OperatorSettings = () => {
                       <RefreshCw size={20} />
                     </div>
                     <span className="text-sm font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
-                      Clear cache
+                      {t('settings.clearCache', 'Clear cache')}
                     </span>
                   </div>
                   <ChevronRight size={18} className="text-[#6B6761] dark:text-[#A8A29E] group-hover:translate-x-0.5 transition-transform" />
@@ -945,7 +994,7 @@ const OperatorSettings = () => {
                       <Shield size={20} />
                     </div>
                     <span className="text-sm font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
-                      Terms and Privacy Policy
+                      {t('settings.termsPrivacy', 'Terms and Privacy Policy')}
                     </span>
                   </div>
                   <ChevronRight size={18} className="text-[#6B6761] dark:text-[#A8A29E] group-hover:translate-x-0.5 transition-transform" />
@@ -962,7 +1011,7 @@ const OperatorSettings = () => {
                       <LogOut size={20} />
                     </div>
                     <span className="text-sm font-bold text-[#B91C1C] dark:text-red-400">
-                      Logout
+                      {t('settings.logout', 'Logout')}
                     </span>
                   </div>
                   <ChevronRight size={18} className="text-red-400/80 dark:text-red-500 group-hover:translate-x-0.5 transition-transform" />
@@ -1017,7 +1066,7 @@ const OperatorSettings = () => {
                     <User size={36} className="text-[#6B6761] dark:text-[#A8A29E]" />
                   )}
                 </div>
-                <label className="mt-3 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#25211E] text-[#1F1D1B] dark:text-[#F6F5F3] font-bold text-xs cursor-pointer active:scale-95 transition-all border border-[#E4E1DC] dark:border-[#2E2A27] shadow-2xs">
+                <label className="mt-3 inline-flex items-center gap-2 px-3.5 py-1.5 rounded-lg bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#25211E] text-[#1F1D1B] dark:text-[#F6F5F3] font-bold text-xs cursor-pointer active:scale-95 transition-all border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm">
                   <Camera size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                   <span>Choose Photo</span>
                   <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
@@ -1163,7 +1212,7 @@ const OperatorSettings = () => {
                 <button
                   type="submit"
                   disabled={isProcessing}
-                  className="px-5 py-2.5 rounded-lg font-bold text-white bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-[#14110F] text-xs shadow-xs flex items-center gap-2 cursor-pointer active:scale-95 transition-all min-h-[44px]"
+                  className="px-5 py-2.5 rounded-lg font-bold text-white bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-[#14110F] text-xs shadow-sm flex items-center gap-2 cursor-pointer active:scale-95 transition-all min-h-[44px]"
                 >
                   {isProcessing ? (
                     <>
@@ -1206,7 +1255,7 @@ const OperatorSettings = () => {
                 <button
                   type="button"
                   onClick={() => window.print()}
-                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-[#14110F] transition-all shadow-xs cursor-pointer min-h-[36px]"
+                  className="flex items-center gap-1 px-3 py-1.5 rounded-lg text-xs font-bold bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-[#14110F] transition-all shadow-sm cursor-pointer min-h-[36px]"
                   title="Print ID Card"
                 >
                   <Printer size={13} />
@@ -1301,7 +1350,7 @@ const OperatorSettings = () => {
                       setIsVaultModalOpen(false);
                       navigate('/apply-franchise');
                     }}
-                    className="px-4 py-2 rounded-lg font-bold text-xs bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-[#14110F] transition-all shadow-xs active:scale-95 cursor-pointer flex items-center gap-1.5 min-h-[44px]"
+                    className="px-4 py-2 rounded-lg font-bold text-xs bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-[#14110F] transition-all shadow-sm active:scale-95 cursor-pointer flex items-center gap-1.5 min-h-[44px]"
                   >
                     <FileText size={14} />
                     <span>Apply / Upload Documents</span>
@@ -1426,7 +1475,7 @@ const OperatorSettings = () => {
                 target="_blank"
                 rel="noreferrer"
                 download
-                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-[#14110F] transition-all shadow-xs cursor-pointer min-h-[44px]"
+                className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-xs font-bold bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-[#14110F] transition-all shadow-sm cursor-pointer min-h-[44px]"
               >
                 <Download size={14} />
                 <span>Download Document</span>
@@ -1531,7 +1580,7 @@ const OperatorSettings = () => {
                   type="button"
                   disabled={!isPushSubscribed || isTestingPush}
                   onClick={handleSendTestPush}
-                  className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer shadow-2xs active:scale-95 min-h-[44px] ${
+                  className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold transition-all shrink-0 cursor-pointer shadow-sm active:scale-95 min-h-[44px] ${
                     isPushSubscribed
                       ? 'bg-[#9E2A2B] hover:bg-[#7A1B22] text-white dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-[#14110F]'
                       : 'bg-[#F6F5F3] dark:bg-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] cursor-not-allowed border border-[#E4E1DC] dark:border-[#2E2A27]'
@@ -1868,7 +1917,7 @@ const OperatorSettings = () => {
                     {showNewPass ? <EyeOff size={16} /> : <Eye size={16} />}
                   </button>
                 </div>
-                <p className="text-[11px] font-medium text-[#6B6761] dark:text-[#A8A29E] mt-1">Must be at least 6 characters.</p>
+                <p className="text-[11px] font-medium text-[#6B6761] dark:text-[#A8A29E] mt-1">Must be at least 8 characters with uppercase, lowercase, number, and special character.</p>
               </div>
 
               <div>
@@ -1907,7 +1956,7 @@ const OperatorSettings = () => {
                 <button
                   type="submit"
                   disabled={isProcessing}
-                  className="px-5 py-2.5 rounded-lg font-bold text-white bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-[#14110F] text-xs shadow-xs flex items-center gap-2 cursor-pointer active:scale-95 transition-all min-h-[44px]"
+                  className="px-5 py-2.5 rounded-lg font-bold text-white bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-[#14110F] text-xs shadow-sm flex items-center gap-2 cursor-pointer active:scale-95 transition-all min-h-[44px]"
                 >
                   {isProcessing ? (
                     <>
@@ -1963,7 +2012,7 @@ const OperatorSettings = () => {
                 onClick={() => setSupportTab('hotlines')}
                 className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer min-h-[38px] ${
                   supportTab === 'hotlines'
-                    ? 'bg-white dark:bg-[#1C1917] text-[#9E2A2B] dark:text-[#D4AF37] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs'
+                    ? 'bg-white dark:bg-[#1C1917] text-[#9E2A2B] dark:text-[#D4AF37] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm'
                     : 'text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3]'
                 }`}
               >
@@ -1975,7 +2024,7 @@ const OperatorSettings = () => {
                 onClick={() => setSupportTab('ticket')}
                 className={`flex-1 py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 cursor-pointer min-h-[38px] ${
                   supportTab === 'ticket'
-                    ? 'bg-white dark:bg-[#1C1917] text-[#9E2A2B] dark:text-[#D4AF37] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs'
+                    ? 'bg-white dark:bg-[#1C1917] text-[#9E2A2B] dark:text-[#D4AF37] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm'
                     : 'text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3]'
                 }`}
               >
@@ -2037,7 +2086,7 @@ const OperatorSettings = () => {
                       setIsSupportModalOpen(false);
                       navigate('/help-support');
                     }}
-                    className="w-full py-2.5 px-4 rounded-lg font-bold text-xs bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-[#14110F] transition-all shadow-xs flex items-center justify-center gap-2 cursor-pointer min-h-[44px]"
+                    className="w-full py-2.5 px-4 rounded-lg font-bold text-xs bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-[#14110F] transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer min-h-[44px]"
                   >
                     <ExternalLink size={14} />
                     <span>Browse Help &amp; Support FAQs</span>
@@ -2087,7 +2136,7 @@ const OperatorSettings = () => {
                     placeholder="Please explain your question or issue in detail..."
                     value={ticketMessage}
                     onChange={(e) => setTicketMessage(e.target.value)}
-                    className="w-full bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3.5 py-2.5 text-xs sm:text-sm font-medium text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] transition-colors shadow-2xs resize-none"
+                    className="w-full bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3.5 py-2.5 text-xs sm:text-sm font-medium text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] transition-colors shadow-sm resize-none"
                   />
                 </div>
 
@@ -2102,7 +2151,7 @@ const OperatorSettings = () => {
                   <button
                     type="submit"
                     disabled={isSubmittingTicket}
-                    className="px-5 py-2 rounded-lg font-bold text-white bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-[#14110F] text-xs shadow-xs flex items-center gap-2 cursor-pointer active:scale-95 transition-all min-h-[44px]"
+                    className="px-5 py-2 rounded-lg font-bold text-white bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-[#14110F] text-xs shadow-sm flex items-center gap-2 cursor-pointer active:scale-95 transition-all min-h-[44px]"
                   >
                     {isSubmittingTicket ? (
                       <>
@@ -2131,7 +2180,7 @@ const OperatorSettings = () => {
             onClick={() => !isClearingCache && setIsClearCacheModalOpen(false)}
           />
           <div className="relative z-10 w-full max-w-sm bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg shadow-xl p-6 text-center animate-in zoom-in-95 duration-150">
-            <div className="w-12 h-12 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-3.5 border border-amber-200 dark:border-amber-800/60 shadow-xs">
+            <div className="w-12 h-12 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-3.5 border border-amber-200 dark:border-amber-800/60 shadow-sm">
               <RefreshCw size={22} className={isClearingCache ? "animate-spin" : ""} />
             </div>
 
@@ -2153,7 +2202,7 @@ const OperatorSettings = () => {
                 type="button"
                 disabled={isClearingCache}
                 onClick={handleClearCache}
-                className="flex-1 py-2.5 px-4 rounded-lg font-bold text-white bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-[#14110F] text-xs shadow-xs flex items-center justify-center gap-2 cursor-pointer active:scale-95 transition-all min-h-[44px]"
+                className="flex-1 py-2.5 px-4 rounded-lg font-bold text-white bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-[#14110F] text-xs shadow-sm flex items-center justify-center gap-2 cursor-pointer active:scale-95 transition-all min-h-[44px]"
               >
                 {isClearingCache ? (
                   <>
@@ -2185,7 +2234,7 @@ const OperatorSettings = () => {
             onClick={() => setIsLogoutConfirmOpen(false)}
           />
           <div className="relative z-10 w-full max-w-sm bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg shadow-xl p-6 text-center animate-in zoom-in-95 duration-150">
-            <div className="w-12 h-12 rounded-lg bg-red-50 dark:bg-red-950/40 text-[#B91C1C] dark:text-red-400 flex items-center justify-center mx-auto mb-3.5 border border-red-200 dark:border-red-900/60 shadow-xs">
+            <div className="w-12 h-12 rounded-lg bg-red-50 dark:bg-red-950/40 text-[#B91C1C] dark:text-red-400 flex items-center justify-center mx-auto mb-3.5 border border-red-200 dark:border-red-900/60 shadow-sm">
               <LogOut size={22} />
             </div>
 
@@ -2205,7 +2254,7 @@ const OperatorSettings = () => {
               <button
                 type="button"
                 onClick={handleLogout}
-                className="flex-1 py-2.5 px-4 rounded-lg font-bold text-white bg-[#B91C1C] hover:bg-[#991B1B] text-xs shadow-xs flex items-center justify-center gap-2 cursor-pointer active:scale-95 transition-all min-h-[44px]"
+                className="flex-1 py-2.5 px-4 rounded-lg font-bold text-white bg-[#B91C1C] hover:bg-[#991B1B] text-xs shadow-sm flex items-center justify-center gap-2 cursor-pointer active:scale-95 transition-all min-h-[44px]"
               >
                 <LogOut size={14} />
                 <span>Log Out</span>

@@ -167,17 +167,43 @@
     outline-offset: 2px;
   }
 
-  /* Prevent nested double outlines on date and file inputs inside custom pickers */
-  input[type="date"],
-  input[type="date"]:focus,
-  input[type="date"]:focus-visible,
-  input[type="file"],
-  input[type="file"]:focus,
-  input[type="file"]:focus-visible {
+  /* Enforce clean custom chevrons on appearance-none selects across Chromium/Windows */
+  select.appearance-none {
+    -webkit-appearance: none !important;
+    -moz-appearance: none !important;
+    appearance: none !important;
+    background-image: none !important;
+  }
+
+  /* Browser surface theming: text selection highlights match G-TRAMS heritage palette */
+  ::selection {
+    background-color: #9E2A2B;
+    color: #FFFFFF;
+  }
+
+  .dark ::selection {
+    background-color: #D4AF37;
+    color: #14110F;
+  }
+
+  /* Prevent nested double outlines ONLY inside SimpleDatePicker wrapper */
+  input.simple-date-picker-input,
+  input.simple-date-picker-input:focus,
+  input.simple-date-picker-input:focus-visible {
     outline: none !important;
     outline-offset: 0 !important;
     border: none !important;
     box-shadow: none !important;
+  }
+
+  /* Respect user motion preferences globally */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
   }
 }
 

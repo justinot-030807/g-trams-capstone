@@ -12,7 +12,7 @@ import SkeletonElement from './SkeletonElement';
 export const QueueCardSkeleton = ({ delay = 40 }) => {
   return (
     <div
-      className="stagger-reveal bg-white dark:bg-[#1C1917] rounded-lg p-3.5 sm:p-4 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs flex flex-col md:flex-row md:items-center justify-between gap-3 transition-colors"
+      className="stagger-reveal bg-white dark:bg-[#1C1917] rounded-lg p-3.5 sm:p-4 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-3 transition-colors"
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -27,7 +27,7 @@ export const QueueCardSkeleton = ({ delay = 40 }) => {
         <SkeletonElement
           height="12px"
           className="w-4 shrink-0"
-          rounded="rounded-xs"
+          rounded="rounded-sm"
           delay={delay + 10}
         />
 
@@ -43,7 +43,7 @@ export const QueueCardSkeleton = ({ delay = 40 }) => {
             <SkeletonElement
               height="14px"
               className="w-16"
-              rounded="rounded-xs"
+              rounded="rounded-sm"
               delay={delay + 25}
             />
           </div>
@@ -53,19 +53,19 @@ export const QueueCardSkeleton = ({ delay = 40 }) => {
             <SkeletonElement
               height="11px"
               className="w-20"
-              rounded="rounded-xs"
+              rounded="rounded-sm"
               delay={delay + 30}
             />
             <SkeletonElement
               height="11px"
               className="w-24"
-              rounded="rounded-xs"
+              rounded="rounded-sm"
               delay={delay + 40}
             />
             <SkeletonElement
               height="11px"
               className="w-16 hidden sm:block"
-              rounded="rounded-xs"
+              rounded="rounded-sm"
               delay={delay + 50}
             />
           </div>

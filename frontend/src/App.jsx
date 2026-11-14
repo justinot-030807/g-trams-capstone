@@ -1,5 +1,5 @@
 import React, { useEffect, Suspense } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
 import { lazyRetry } from './utils/lazyRetry';
@@ -27,7 +27,7 @@ const HelpSupport = lazyRetry(() => import('./pages/operator/HelpSupport'), 'Hel
 
 // Admin Pages (Code-split to isolate large administrative bundles from operator devices)
 const AdminDashboard = lazyRetry(() => import('./pages/admin/AdminDashboard'), 'AdminDashboard');
-const BploDashboard = lazyRetry(() => import('./pages/admin/BploDashboard'), 'BploDashboard');
+const LlsaDashboard = lazyRetry(() => import('./pages/admin/LlsaDashboard'), 'LlsaDashboard');
 const FranchiseMasterlist = lazyRetry(() => import('./pages/admin/FranchiseMasterlist'), 'FranchiseMasterlist');
 const UserManagement = lazyRetry(() => import('./pages/admin/UserManagement'), 'UserManagement');
 const AdminSettings = lazyRetry(() => import('./pages/admin/AdminSettings'), 'AdminSettings');
@@ -52,15 +52,22 @@ import SplashScreen from './components/common/SplashScreen';
 
 import { initServerTimeSync, recordServerTimeFromResponse } from './utils/serverTime';
 import ErrorBoundary from './components/common/ErrorBoundary';
+import { ConfirmProvider } from './components/ui/ConfirmContext';
+import { Toaster } from './components/ui/Toaster';
 
 const PageLoader = () => (
-  <div className="min-h-screen flex flex-col items-center justify-center bg-slate-50 dark:bg-slate-950 p-4">
-    <div className="w-10 h-10 rounded-2xl bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37] mb-2.5">
+  <div className="min-h-screen flex flex-col items-center justify-center bg-[#F6F5F3] dark:bg-[#14110F] p-4">
+    <div className="w-10 h-10 rounded-xl bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37] mb-2.5">
       <div className="w-5 h-5 border-2 border-[#9E2A2B] dark:border-[#D4AF37] border-t-transparent rounded-full animate-spin" />
     </div>
-    <span className="text-xs font-bold text-slate-500 dark:text-slate-600 dark:text-slate-400">Loading...</span>
+    <span className="text-xs font-bold text-[#6B6761] dark:text-[#A8A29E]">Loading...</span>
   </div>
 );
+
+const BploDashboardRedirect = () => {
+  const { search } = useLocation();
+  return <Navigate to={`/llsa-dashboard${search || ''}`} replace />;
+};
 
 const ProfileRedirect = () => {
   const role = String(localStorage.getItem('role') || '').toLowerCase().trim().replace(/_/g, ' ');
@@ -104,6 +111,7 @@ function App() {
 
   return (
     <ThemeProvider>
+      <ConfirmProvider>
       <TextSizeProvider>
         <LanguageProvider>
           <SocketProvider>
@@ -128,13 +136,14 @@ function App() {
                   <Route path="/system-settings" element={<Navigate to="/admin/settings" replace />} />
                   <Route path="/admin/tickets" element={<ProtectedRoute allowedRoles={['system_admin', 'admin', 'bplo_staff']}><AdminTickets /></ProtectedRoute>} />
 
-                  {/* BPLO STAFF SECURE ROUTES (Franchise Operations, Queues, Verification, Issuance) */}
-                  <Route path="/bplo-dashboard" element={<ProtectedRoute allowedRoles={['bplo_staff']}><BploDashboard /></ProtectedRoute>} />
+                  {/* LLSA I (SB FRANCHISING STAFF) SECURE ROUTES (Franchise Operations, Queues, Verification, Issuance) */}
+                  <Route path="/llsa-dashboard" element={<ProtectedRoute allowedRoles={['bplo_staff']}><LlsaDashboard /></ProtectedRoute>} />
+                  <Route path="/bplo-dashboard" element={<BploDashboardRedirect />} />
                   <Route path="/franchise-masterlist" element={<ProtectedRoute allowedRoles={['bplo_staff']}><FranchiseMasterlist /></ProtectedRoute>} />
                   <Route path="/franchise-approval" element={<ProtectedRoute allowedRoles={['bplo_staff']}><FranchiseApproval /></ProtectedRoute>} />
                   <Route path="/franchise-approval/review/:id" element={<ProtectedRoute allowedRoles={['bplo_staff']}><FranchiseReviewPage /></ProtectedRoute>} />
                   <Route path="/manage-revocations" element={<ProtectedRoute allowedRoles={['bplo_staff']}><ManageRevocations /></ProtectedRoute>} />
-                  <Route path="/admin/violations" element={<ProtectedRoute allowedRoles={['bplo_staff', 'admin']}><ManageRevocations /></ProtectedRoute>} />
+                  <Route path="/admin/violations" element={<ProtectedRoute allowedRoles={['bplo_staff']}><ManageRevocations /></ProtectedRoute>} />
                   <Route path="/validate-toda" element={<ProtectedRoute allowedRoles={['bplo_staff']}><ValidateTODA /></ProtectedRoute>} />
                   <Route path="/system-reports" element={<ProtectedRoute allowedRoles={['bplo_staff']}><AdminReports /></ProtectedRoute>} />
 
@@ -165,10 +174,12 @@ function App() {
             </ErrorBoundary>
             <PwaInstallBanner />
             <SplashScreen />
+            <Toaster />
           </NotificationProvider>
         </SocketProvider>
       </LanguageProvider>
       </TextSizeProvider>
+      </ConfirmProvider>
     </ThemeProvider>
   );
 }

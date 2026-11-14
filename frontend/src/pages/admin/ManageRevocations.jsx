@@ -9,6 +9,7 @@ import { TableRowsSkeleton } from '../../components/skeleton';
 import PageHeader from '../../components/common/PageHeader';
 import StatusBadge from '../../components/common/StatusBadge';
 import OfficialCancellationLetterModal from '../../components/common/OfficialCancellationLetterModal';
+import { cleanText, formatVehicleMakeAndModel } from '../../utils/vehicleFormatters';
 
 const ManageRevocations = () => {
   const [franchises, setFranchises] = useState([]);
@@ -392,7 +393,7 @@ const ManageRevocations = () => {
 
       {/* PROGRESSIVE ENGINE SUMMARY METRICS */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-5">
-        <div className="p-4 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-2xs">
+        <div className="p-4 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm">
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E]">Active Units</span>
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
@@ -401,7 +402,7 @@ const ManageRevocations = () => {
           <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mt-0.5">Good Standing</p>
         </div>
 
-        <div className="p-4 rounded-lg bg-white dark:bg-[#1C1917] border border-amber-200 dark:border-amber-900/40 shadow-2xs">
+        <div className="p-4 rounded-lg bg-white dark:bg-[#1C1917] border border-amber-200 dark:border-amber-900/40 shadow-sm">
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-xs font-semibold text-amber-800 dark:text-amber-300">Under Warning</span>
             <span className="w-2 h-2 rounded-full bg-amber-500" />
@@ -410,7 +411,7 @@ const ManageRevocations = () => {
           <p className="text-[11px] text-amber-700 dark:text-amber-400 font-medium mt-0.5">1st Offense Notice</p>
         </div>
 
-        <div className="p-4 rounded-lg bg-white dark:bg-[#1C1917] border border-orange-200 dark:border-orange-900/40 shadow-2xs">
+        <div className="p-4 rounded-lg bg-white dark:bg-[#1C1917] border border-orange-200 dark:border-orange-900/40 shadow-sm">
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-xs font-semibold text-orange-800 dark:text-orange-300">Suspended</span>
             <span className="w-2 h-2 rounded-full bg-orange-500" />
@@ -419,7 +420,7 @@ const ManageRevocations = () => {
           <p className="text-[11px] text-orange-700 dark:text-orange-400 font-medium mt-0.5">2nd Offense Penalty</p>
         </div>
 
-        <div className="p-4 rounded-lg bg-white dark:bg-[#1C1917] border border-red-200 dark:border-red-900/40 shadow-2xs">
+        <div className="p-4 rounded-lg bg-white dark:bg-[#1C1917] border border-red-200 dark:border-red-900/40 shadow-sm">
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-xs font-semibold text-red-800 dark:text-red-300">Revoked</span>
             <span className="w-2 h-2 rounded-full bg-red-500" />
@@ -430,7 +431,7 @@ const ManageRevocations = () => {
       </div>
 
       {/* MAIN CONTAINER */}
-      <div className="bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] overflow-hidden transition-colors shadow-xs">
+      <div className="bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] overflow-hidden transition-colors shadow-sm">
         {/* TABS */}
         <div className="flex border-b border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F]">
           <button 
@@ -625,17 +626,18 @@ const ManageRevocations = () => {
                   paginatedItems.map((f) => (
                     <tr key={f._id} className="hover:bg-[#F6F5F3]/70 dark:hover:bg-[#14110F]/70 transition-colors">
                       <td className="p-3.5 pl-5">
-                        <p className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] text-sm">{f.fullName}</p>
-                        <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5 flex items-center gap-1.5">
+                        <p className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] text-sm">{cleanText(f.fullName, 'Operator')}</p>
+                        <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5 flex items-center gap-1.5 flex-wrap">
                           <span>Plate:</span>
-                          <span className="font-mono font-medium px-1.5 py-0.2 rounded bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3]">{f.plateNo || 'N/A'}</span>
-                          {f.motorNo && <span>&bull; Eng: {f.motorNo}</span>}
+                          <span className="font-mono font-medium px-1.5 py-0.5 rounded bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3]">{cleanText(f.plateNo, 'N/A')}</span>
+                          <span>&bull; {formatVehicleMakeAndModel(f, 'Tricycle Unit')}</span>
+                          {cleanText(f.motorNo) && <span>&bull; Eng: {cleanText(f.motorNo)}</span>}
                         </p>
                       </td>
 
                       <td className="p-3.5">
-                        <p className="font-medium text-[#1F1D1B] dark:text-[#F6F5F3]">{f.todaName || 'NON-TODA'}</p>
-                        <span className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">{f.zone || 'Gasan'}</span>
+                        <p className="font-medium text-[#1F1D1B] dark:text-[#F6F5F3]">{cleanText(f.todaName, 'NON-TODA')}</p>
+                        <span className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">{cleanText(f.zone, 'Gasan')}</span>
                       </td>
 
                       <td className="p-3.5 text-center">
@@ -645,7 +647,9 @@ const ManageRevocations = () => {
                       <td className="p-3.5">
                         {f.status === 'Revoked' ? (
                           <div>
-                            <p className="font-semibold text-red-700 dark:text-red-400">{f.cancelReason || 'Revoked by BPLO'}</p>
+                            <p className="font-semibold text-red-700 dark:text-red-400">
+                              {cleanText(f.cancelReason, 'Revoked by SB Franchising (LLSA I)').replace(/Revoked by BPLO/gi, 'Revoked by SB Franchising (LLSA I)')}
+                            </p>
                             <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">Date: {new Date(f.updatedAt).toLocaleDateString()}</p>
                           </div>
                         ) : f.status === 'Suspended' ? (
@@ -670,7 +674,7 @@ const ManageRevocations = () => {
                           <div className="flex items-center justify-center gap-1.5 flex-wrap">
                             <button
                               onClick={() => setSelectedCancellation(f)}
-                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 text-red-700 dark:text-red-300 text-xs font-semibold cursor-pointer shadow-2xs"
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 text-red-700 dark:text-red-300 text-xs font-semibold cursor-pointer shadow-sm"
                               title="Print Official Franchise Cancellation Letter (Office of the Vice Mayor)"
                             >
                               <Printer size={13} /> Letter
@@ -687,7 +691,7 @@ const ManageRevocations = () => {
                         ) : (
                           <button
                             onClick={() => handleSelectFranchiseForViolation(f)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold border bg-red-50 dark:bg-red-950/40 hover:bg-red-100 text-red-700 dark:text-red-400 border-red-200 dark:border-red-900/60 cursor-pointer shadow-2xs transition-colors"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold border bg-red-50 dark:bg-red-950/40 hover:bg-red-100 text-red-700 dark:text-red-400 border-red-200 dark:border-red-900/60 cursor-pointer shadow-sm transition-colors"
                           >
                             <ShieldAlert size={13} /> Record Violation
                           </button>
@@ -792,7 +796,7 @@ const ManageRevocations = () => {
                     <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-bold uppercase tracking-wider">Target Operator</span>
                     <p className="font-semibold text-sm text-[#1F1D1B] dark:text-[#F6F5F3]">{selectedFranchise.fullName}</p>
                     <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5">
-                      Plate: <span className="font-mono font-semibold px-1 py-0.2 rounded bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27]">{selectedFranchise.plateNo}</span>
+                      Plate: <span className="font-mono font-semibold px-1 py-0.5 rounded bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27]">{selectedFranchise.plateNo}</span>
                       &bull; TODA: {selectedFranchise.todaName || 'NON-TODA'}
                     </p>
                   </div>
@@ -982,7 +986,7 @@ const ManageRevocations = () => {
                 <button 
                   type="submit" 
                   disabled={isSubmitting} 
-                  className={`flex-1 py-2 rounded-lg font-semibold text-white transition-colors text-xs shadow-xs flex items-center justify-center gap-1.5 cursor-pointer ${
+                  className={`flex-1 py-2 rounded-lg font-semibold text-white transition-colors text-xs shadow-sm flex items-center justify-center gap-1.5 cursor-pointer ${
                     isGraveViolation || operatorHistory?.activeViolationsCount >= 2
                       ? 'bg-red-700 hover:bg-red-800'
                       : operatorHistory?.activeViolationsCount === 1
@@ -1067,7 +1071,7 @@ const ManageRevocations = () => {
                 <button
                   type="submit"
                   disabled={settleModal.isSubmitting}
-                  className="flex-1 py-2 rounded-lg font-semibold bg-emerald-700 hover:bg-emerald-800 text-white text-xs shadow-xs cursor-pointer flex items-center justify-center gap-1.5"
+                  className="flex-1 py-2 rounded-lg font-semibold bg-emerald-700 hover:bg-emerald-800 text-white text-xs shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
                 >
                   {settleModal.isSubmitting ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
                   Mark as Settled

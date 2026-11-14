@@ -55,7 +55,7 @@ const OperatorIdCard = ({ user }) => {
             <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#D4AF37]/15 border border-[#D4AF37]/40 relative z-10">
               <Award size={12} className="text-[#D4AF37]" />
               <span className="text-[11px] font-bold text-[#D4AF37] uppercase tracking-wider">
-                {safeUser.role === 'toda president' ? 'TODA President' : 'Registered Operator'}
+                {String(safeUser.role || '').toLowerCase().replace(/_/g, ' ') === 'toda president' ? 'TODA President' : 'Registered Operator'}
               </span>
             </div>
           </div>
@@ -89,7 +89,7 @@ const OperatorIdCard = ({ user }) => {
             <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">Scan to verify operator credentials</p>
           </div>
           
-          <div className="bg-white p-3.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-2xs mb-4">
+          <div className="bg-white p-3.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm mb-4">
             <QRCodeSVG value={qrData} size={150} level="H" includeMargin={false} />
           </div>
 

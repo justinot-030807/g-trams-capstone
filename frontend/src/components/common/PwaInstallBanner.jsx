@@ -1,5 +1,6 @@
 ﻿import React, { useState, useEffect } from 'react';
 import { Download, X, Smartphone, Share2, PlusSquare, Check } from 'lucide-react';
+import { toast } from 'sonner';
 
 const PwaInstallBanner = () => {
   const [deferredPrompt, setDeferredPrompt] = useState(null);
@@ -67,7 +68,9 @@ const PwaInstallBanner = () => {
 
     if (!deferredPrompt) {
       // Fallback instruction for Android if prompt not available
-      alert('To install G-TRAMS: tap the 3 dots (menu) in your browser and select "Install app" or "Add to Home screen".');
+      toast.info('To install G-TRAMS: tap the browser menu (3 dots) and select "Install app" or "Add to Home screen".', {
+        duration: 6000,
+      });
       return;
     }
 
@@ -88,12 +91,9 @@ const PwaInstallBanner = () => {
 
   return (
     <>
-      {/* Floating PWA Install Banner */}
+      {/* Floating PWA Install Banner (anchored bottom-left on desktop so it never collides with bottom-right widgets) */}
       <div 
-        className="fixed bottom-20 md:bottom-6 left-4 right-4 md:left-auto md:right-6 md:max-w-sm z-[999] bg-gradient-to-r from-[#9E2A2B] via-[#8E2028] to-[#7A1B22] text-white p-4 rounded-2xl shadow-2xl border-2 border-[#D4AF37]/50 animate-bounce-short transition-all"
-        style={{
-          boxShadow: '0 20px 35px -10px rgba(122, 27, 34, 0.65)'
-        }}
+        className="fixed bottom-24 md:bottom-6 left-4 right-4 md:left-6 md:right-auto md:max-w-sm z-[999] bg-gradient-to-r from-[#9E2A2B] via-[#8E2028] to-[#7A1B22] text-white p-4 rounded-xl shadow-xl border border-[#D4AF37]/50 transition-all"
       >
         <div className="flex items-start gap-3">
           <div className="w-11 h-11 bg-white rounded-xl p-1 shadow-md flex items-center justify-center shrink-0 border border-white/20">
@@ -102,19 +102,19 @@ const PwaInstallBanner = () => {
 
           <div className="flex-1 min-w-0 pr-1">
             <div className="flex items-center gap-1.5 mb-0.5">
-              <span className="text-[9px] font-black tracking-widest text-[#D4AF37] uppercase bg-black/25 px-2 py-0.5 rounded-full">
+              <span className="text-[10px] font-bold tracking-wider text-[#F5E6B3] uppercase bg-black/30 px-2 py-0.5 rounded-full">
                 LGU Mobile App
               </span>
             </div>
             <h4 className="text-sm font-black text-white leading-tight">Install G-TRAMS App</h4>
-            <p className="text-xs text-white/80 font-medium leading-tight mt-1">
+            <p className="text-xs text-white/85 font-medium leading-tight mt-1">
               Add to your phone for quick offline access and franchise notifications.
             </p>
 
             <div className="flex items-center gap-2 mt-3">
               <button
                 onClick={handleInstallClick}
-                className="bg-[#D4AF37] hover:bg-[#c29e2f] active:scale-95 text-slate-950 px-3.5 py-1.5 rounded-xl font-black text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+                className="bg-[#D4AF37] hover:bg-[#c29e2f] active:scale-[0.98] text-[#14110F] px-3.5 py-2 min-h-[38px] rounded-lg font-bold text-xs shadow-sm transition-all flex items-center gap-1.5 cursor-pointer"
               >
                 <Download size={13} className="stroke-[2.5]" />
                 <span>Install Now</span>

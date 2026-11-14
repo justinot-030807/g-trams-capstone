@@ -356,7 +356,7 @@ const DocumentScannerModal = ({
                 <button
                   type="button"
                   onClick={() => galleryInputRef.current?.click()}
-                  className="px-4 py-2.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white rounded-lg text-xs font-bold flex items-center gap-2 shadow-xs cursor-pointer min-h-[44px]"
+                  className="px-4 py-2.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white rounded-lg text-xs font-bold flex items-center gap-2 shadow-sm cursor-pointer min-h-[44px]"
                 >
                   <Upload size={15} /> Upload from Gallery / Files
                 </button>
@@ -379,10 +379,10 @@ const DocumentScannerModal = ({
                 <div className="relative w-full max-w-[420px] aspect-[3/4] max-h-[64vh] rounded-lg border-2 border-white/50 shadow-[0_0_0_9999px_rgba(0,0,0,0.55)] flex flex-col justify-between overflow-hidden">
                   
                   {/* Corner Target Brackets */}
-                  <div className="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-[#D4AF37] rounded-tl-sm" />
-                  <div className="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-[#D4AF37] rounded-tr-sm" />
-                  <div className="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-[#D4AF37] rounded-bl-sm" />
-                  <div className="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-[#D4AF37] rounded-br-sm" />
+                  <div className="absolute top-0 left-0 w-8 h-8 border-t-2 border-l-2 border-[#D4AF37]" />
+                  <div className="absolute top-0 right-0 w-8 h-8 border-t-2 border-r-2 border-[#D4AF37]" />
+                  <div className="absolute bottom-0 left-0 w-8 h-8 border-b-2 border-l-2 border-[#D4AF37]" />
+                  <div className="absolute bottom-0 right-0 w-8 h-8 border-b-2 border-r-2 border-[#D4AF37]" />
 
                   {/* 3x3 Rule-of-Thirds Grid Lines */}
                   <div className="absolute inset-0 grid grid-cols-3 pointer-events-none opacity-25">
@@ -494,7 +494,7 @@ const DocumentScannerModal = ({
                 <button
                   type="button"
                   onClick={() => setIsEnhanced(prev => !prev)}
-                  className={`flex-1 py-2.5 px-3.5 rounded-lg text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs border active:scale-95 min-h-[44px] ${
+                  className={`flex-1 py-2.5 px-3.5 rounded-lg text-xs sm:text-sm font-bold flex items-center justify-center gap-2 transition-all cursor-pointer shadow-sm border active:scale-95 min-h-[44px] ${
                     isEnhanced
                       ? 'bg-[#9E2A2B] text-white border-[#D4AF37]'
                       : 'bg-[#2E2A27] text-[#EAE7E1] border-[#3E3834] hover:bg-[#3E3834]'
@@ -521,7 +521,7 @@ const DocumentScannerModal = ({
               <button
                 type="button"
                 onClick={handleApplyAndAttach}
-                className="w-full py-3 px-4 bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white rounded-lg text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-xs transition-all cursor-pointer border border-emerald-600 min-h-[44px]"
+                className="w-full py-3 px-4 bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white rounded-lg text-xs sm:text-sm font-bold flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer border border-emerald-600 min-h-[44px]"
               >
                 <Check size={18} />
                 <span>Hakbang 2: I-confirm ang Upload</span>

@@ -159,7 +159,7 @@ const AccountDeactivated = () => {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="flex-1 flex justify-center items-center gap-2 py-2.5 px-4 rounded-lg font-bold text-xs uppercase tracking-wider text-white bg-[#9E2A2B] hover:bg-[#7A1B22] disabled:opacity-50 transition-colors shadow-xs min-h-[44px] cursor-pointer"
+                  className="flex-1 flex justify-center items-center gap-2 py-2.5 px-4 rounded-lg font-bold text-xs uppercase tracking-wider text-white bg-[#9E2A2B] hover:bg-[#7A1B22] disabled:opacity-50 transition-colors shadow-sm min-h-[44px] cursor-pointer"
                 >
                   {isLoading ? <Loader2 size={16} className="animate-spin" /> : 'Ipasa ang Apela'}
                 </button>

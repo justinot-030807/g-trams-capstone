@@ -433,7 +433,7 @@ const SubmitMembers = () => {
   const handleSubmitIndividualMember = async (e) => {
     e.preventDefault();
     if (!individualModal.operatorName.trim()) {
-      setIndividualModal(prev => ({ ...prev, error: 'Pakilagay ang buong legal na pangalan ng operator/miyembro.' }));
+      setIndividualModal(prev => ({ ...prev, error: 'Please enter the full legal name of the operator/member.' }));
       return;
     }
 
@@ -458,7 +458,7 @@ const SubmitMembers = () => {
 
       const data = await res.json();
       if (res.ok) {
-        showToast(data.message || `Matagumpay na naidagdag si "${individualModal.operatorName}"!`, 'success');
+        showToast(data.message || `Successfully added "${individualModal.operatorName}" to roster!`, 'success');
         setIndividualModal({
           isOpen: false,
           operatorName: '',
@@ -472,11 +472,11 @@ const SubmitMembers = () => {
         });
         fetchMyMembers();
       } else {
-        setIndividualModal(prev => ({ ...prev, isSubmitting: false, error: data.message || 'Nabigong idagdag ang miyembro.' }));
+        setIndividualModal(prev => ({ ...prev, isSubmitting: false, error: data.message || 'Failed to add member.' }));
       }
     } catch (err) {
       console.error('Error adding individual member:', err);
-      setIndividualModal(prev => ({ ...prev, isSubmitting: false, error: 'Hindi makakonekta sa server.' }));
+      setIndividualModal(prev => ({ ...prev, isSubmitting: false, error: 'Unable to connect to the server.' }));
     }
   };
 
@@ -552,35 +552,26 @@ const SubmitMembers = () => {
 
       <div id="print-roster-area" className="pb-28 sm:pb-24 animate-in fade-in duration-300">
         {/* Top Header Card */}
-        <header className="mb-6 bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] border-l-4 border-l-[#9E2A2B] rounded-lg p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div className="flex items-center gap-3">
-            <button 
-              onClick={() => navigate('/operator-dashboard')}
-              className="print:hidden w-9 h-9 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-center text-[#1F1D1B] dark:text-[#EAE7E1] hover:bg-[#E4E1DC] dark:hover:bg-[#252220] shadow-xs active:scale-95 cursor-pointer shrink-0 transition-colors"
-              title="Back to Dashboard"
-            >
-              <ArrowLeft size={18} />
-            </button>
-            <div>
-              <div className="flex items-center gap-2 mb-1">
-                <span className="text-xs font-bold uppercase tracking-wider text-[#9E2A2B] dark:text-[#D4AF37] bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 px-2.5 py-0.5 rounded-md border border-[#9E2A2B]/20 dark:border-[#D4AF37]/30">
-                  {todaData.todaName || 'TODA Association'}
-                </span>
-              </div>
-              <h1 className="text-lg sm:text-xl font-bold text-[#1F1D1B] dark:text-[#EAE7E1] tracking-tight">
-                TODA Association &amp; Member Roster
-              </h1>
-              <p className="print:hidden text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] mt-0.5 font-medium">
-                Manage your official association members, review tricycle units, file disaffiliation requests, or submit signed masterlists.
-              </p>
+        <header className="mb-6 bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4 sm:p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <span className="text-xs font-bold uppercase tracking-wider text-[#9E2A2B] dark:text-[#D4AF37] bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 px-2.5 py-0.5 rounded-md border border-[#9E2A2B]/20 dark:border-[#D4AF37]/30">
+                {todaData.todaName || 'TODA Association'}
+              </span>
             </div>
+            <h1 className="text-lg sm:text-xl font-bold text-[#1F1D1B] dark:text-[#EAE7E1] tracking-tight">
+              TODA Association &amp; Member Roster
+            </h1>
+            <p className="print:hidden text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] mt-0.5 font-medium">
+              Manage your official association members, review tricycle units, file disaffiliation requests, or submit signed masterlists.
+            </p>
           </div>
 
           {/* Refresh & Print buttons */}
           <div className="print:hidden flex items-center gap-2 self-start sm:self-auto flex-wrap">
             <button
               onClick={() => { fetchMyMembers(); fetchMySubmissions(); fetchRemovalRequests(); }}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] hover:bg-[#E4E1DC] dark:hover:bg-[#252220] shadow-xs active:scale-95 cursor-pointer min-h-[40px] transition-colors"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] hover:bg-[#E4E1DC] dark:hover:bg-[#252220] shadow-sm active:scale-95 cursor-pointer min-h-[40px] transition-colors"
               title="Refresh Data"
             >
               <RefreshCw size={14} className={isLoadingMembers ? "animate-spin" : ""} />
@@ -588,7 +579,7 @@ const SubmitMembers = () => {
             </button>
             <button
               onClick={() => window.print()}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] hover:bg-[#E4E1DC] dark:hover:bg-[#252220] shadow-xs active:scale-95 cursor-pointer min-h-[40px] transition-colors"
+              className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] hover:bg-[#E4E1DC] dark:hover:bg-[#252220] shadow-sm active:scale-95 cursor-pointer min-h-[40px] transition-colors"
               title="Print Roster"
             >
               <Printer size={14} />
@@ -602,15 +593,15 @@ const SubmitMembers = () => {
           <button
             type="button"
             onClick={() => setActiveTab('roster')}
-            className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer min-h-[44px] active:scale-95 ${
+            className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-xs lg:text-sm font-bold whitespace-nowrap transition-all cursor-pointer min-h-[44px] active:scale-95 ${
               activeTab === 'roster'
-                ? 'bg-[#9E2A2B] text-white shadow-xs'
+                ? 'bg-[#9E2A2B] text-white shadow-sm'
                 : 'bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#EAE7E1] hover:bg-[#F6F5F3] dark:hover:bg-[#252220] border border-[#E4E1DC] dark:border-[#2E2A27]'
             }`}
           >
-            <Users size={16} />
+            <Users size={16} className="shrink-0" />
             <span>Member Roster</span>
-            <span className={`px-2 py-0.5 rounded-md text-xs font-bold ${
+            <span className={`px-2 py-0.5 rounded-md text-xs font-bold shrink-0 ${
               activeTab === 'roster'
                 ? 'bg-white/20 text-white'
                 : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1]'
@@ -622,15 +613,15 @@ const SubmitMembers = () => {
           <button
             type="button"
             onClick={() => setActiveTab('upload')}
-            className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer min-h-[44px] active:scale-95 ${
+            className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-xs lg:text-sm font-bold whitespace-nowrap transition-all cursor-pointer min-h-[44px] active:scale-95 ${
               activeTab === 'upload'
-                ? 'bg-[#9E2A2B] text-white shadow-xs'
+                ? 'bg-[#9E2A2B] text-white shadow-sm'
                 : 'bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#EAE7E1] hover:bg-[#F6F5F3] dark:hover:bg-[#252220] border border-[#E4E1DC] dark:border-[#2E2A27]'
             }`}
           >
-            <UploadCloud size={16} />
-            <span>Upload Roster Document</span>
-            <span className={`px-2 py-0.5 rounded-md text-xs font-bold ${
+            <UploadCloud size={16} className="shrink-0" />
+            <span>Upload Masterlist</span>
+            <span className={`px-2 py-0.5 rounded-md text-xs font-bold shrink-0 ${
               activeTab === 'upload'
                 ? 'bg-white/20 text-white'
                 : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1]'
@@ -642,14 +633,14 @@ const SubmitMembers = () => {
           <button
             type="button"
             onClick={() => setActiveTab('removals')}
-            className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all cursor-pointer min-h-[44px] active:scale-95 ${
+            className={`flex items-center justify-center gap-2 px-3 py-2.5 rounded-lg text-xs lg:text-sm font-bold whitespace-nowrap transition-all cursor-pointer min-h-[44px] active:scale-95 ${
               activeTab === 'removals'
-                ? 'bg-[#9E2A2B] text-white shadow-xs'
+                ? 'bg-[#9E2A2B] text-white shadow-sm'
                 : 'bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#EAE7E1] hover:bg-[#F6F5F3] dark:hover:bg-[#252220] border border-[#E4E1DC] dark:border-[#2E2A27]'
             }`}
           >
-            <UserMinus size={16} />
-            <span>Removal Requests</span>
+            <UserMinus size={16} className="shrink-0" />
+            <span>Disaffiliation Requests</span>
             {pendingRemovalCount > 0 ? (
               <span className="px-2 py-0.5 rounded-md text-xs font-bold bg-amber-500 text-white">
                 {pendingRemovalCount} Pending
@@ -671,7 +662,7 @@ const SubmitMembers = () => {
           <div className="space-y-4">
             {/* KPI Stats Strip */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
-              <div className="p-3.5 sm:p-4 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs flex items-center gap-3">
+              <div className="p-3.5 sm:p-4 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-[#9E2A2B]/10 flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37] shrink-0">
                   <Users size={18} />
                 </div>
@@ -685,7 +676,7 @@ const SubmitMembers = () => {
                 </div>
               </div>
 
-              <div className="p-3.5 sm:p-4 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs flex items-center gap-3">
+              <div className="p-3.5 sm:p-4 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0">
                   <CheckCircle2 size={18} />
                 </div>
@@ -699,7 +690,7 @@ const SubmitMembers = () => {
                 </div>
               </div>
 
-              <div className="p-3.5 sm:p-4 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs flex items-center gap-3">
+              <div className="p-3.5 sm:p-4 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-amber-500/10 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0">
                   <Clock3 size={18} />
                 </div>
@@ -713,7 +704,7 @@ const SubmitMembers = () => {
                 </div>
               </div>
 
-              <div className="p-3.5 sm:p-4 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs flex items-center gap-3">
+              <div className="p-3.5 sm:p-4 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0">
                   <ShieldCheck size={18} />
                 </div>
@@ -729,7 +720,7 @@ const SubmitMembers = () => {
             </div>
 
             {/* Search & Filter Controls */}
-            <div className="print:hidden bg-white dark:bg-[#1C1917] rounded-lg p-3.5 sm:p-4 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+            <div className="print:hidden bg-white dark:bg-[#1C1917] rounded-lg p-3.5 sm:p-4 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
               <div className="relative flex-1">
                 <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6B6761] dark:text-[#A8A29E]" />
                 <input
@@ -737,7 +728,7 @@ const SubmitMembers = () => {
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   placeholder="Search by member name, plate #, contact, or address..."
-                  className="w-full pl-9 pr-9 py-2.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs sm:text-sm font-medium text-[#1F1D1B] dark:text-[#EAE7E1] placeholder:text-[#6B6761] dark:placeholder:text-[#A8A29E] focus:outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] shadow-xs min-h-[44px]"
+                  className="w-full pl-9 pr-9 py-2.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs sm:text-sm font-medium text-[#1F1D1B] dark:text-[#EAE7E1] placeholder:text-[#6B6761] dark:placeholder:text-[#A8A29E] focus:outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] shadow-sm min-h-[44px]"
                 />
                 {searchTerm && (
                   <button 
@@ -750,14 +741,14 @@ const SubmitMembers = () => {
               </div>
 
               {/* Status Filter Pills */}
-              <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none shrink-0 py-0.5">
+              <div className="flex items-center gap-1.5 flex-wrap shrink-0 py-0.5">
                 <button
                   type="button"
                   onClick={() => setStatusFilter('all')}
                   className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer min-h-[38px] flex items-center justify-center active:scale-95 ${
                     statusFilter === 'all'
-                      ? 'bg-[#1C1917] text-white dark:bg-[#EAE7E1] dark:text-[#14110F] shadow-xs'
-                      : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-neutral-100'
+                      ? 'bg-[#1C1917] text-white dark:bg-[#EAE7E1] dark:text-[#14110F] shadow-sm'
+                      : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#EAE7E1] dark:hover:bg-[#252220]'
                   }`}
                 >
                   All ({todaData.members?.length || 0})
@@ -767,8 +758,8 @@ const SubmitMembers = () => {
                   onClick={() => setStatusFilter('active')}
                   className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer min-h-[38px] flex items-center justify-center active:scale-95 ${
                     statusFilter === 'active'
-                      ? 'bg-emerald-600 text-white shadow-xs'
-                      : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-neutral-100'
+                      ? 'bg-emerald-600 text-white shadow-sm'
+                      : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#EAE7E1] dark:hover:bg-[#252220]'
                   }`}
                 >
                   Active
@@ -778,8 +769,8 @@ const SubmitMembers = () => {
                   onClick={() => setStatusFilter('pending')}
                   className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer min-h-[38px] flex items-center justify-center active:scale-95 ${
                     statusFilter === 'pending'
-                      ? 'bg-amber-600 text-white shadow-xs'
-                      : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-neutral-100'
+                      ? 'bg-amber-600 text-white shadow-sm'
+                      : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#EAE7E1] dark:hover:bg-[#252220]'
                   }`}
                 >
                   Pending
@@ -789,8 +780,8 @@ const SubmitMembers = () => {
                   onClick={() => setStatusFilter('expired')}
                   className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer min-h-[38px] flex items-center justify-center active:scale-95 ${
                     statusFilter === 'expired'
-                      ? 'bg-red-600 text-white shadow-xs'
-                      : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-neutral-100'
+                      ? 'bg-red-600 text-white shadow-sm'
+                      : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#EAE7E1] dark:hover:bg-[#252220]'
                   }`}
                 >
                   Expired
@@ -801,16 +792,16 @@ const SubmitMembers = () => {
                 <button
                   type="button"
                   onClick={handleOpenAddMemberModal}
-                  className="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer min-h-[38px] flex items-center justify-center gap-1.5 bg-[#9E2A2B] hover:bg-[#801B24] text-white shadow-xs active:scale-95 shrink-0"
-                  title="Magdagdag ng isang bagong miyembro sa TODA (Auto-Generated Body Number)"
+                  className="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer min-h-[38px] flex items-center justify-center gap-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white shadow-sm active:scale-95 shrink-0"
+                  title="Add a new member to the TODA roster (auto-generated Body No.)"
                 >
                   <UserPlus size={15} />
-                  <span>Magdagdag ng Miyembro</span>
+                  <span>Add Member</span>
                 </button>
               </div>
             </div>
 
-            {/* MEMBER ROSTER: HIGH-DENSITY ROW TABLE */}
+            {/* MEMBER ROSTER: MOBILE CARDS & DESKTOP TABLE */}
             {isLoadingMembers ? (
               <div className="space-y-4">
                 <SubmissionCardsSkeleton count={5} baseDelay={30} stepDelay={45} />
@@ -832,165 +823,260 @@ const SubmitMembers = () => {
                   <button
                     type="button"
                     onClick={() => { setSearchTerm(''); setStatusFilter('all'); }}
-                    className="px-4 py-2 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] hover:bg-neutral-200 cursor-pointer"
+                    className="px-4 py-2 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] hover:bg-[#EAE7E1] dark:hover:bg-[#252220] cursor-pointer"
                   >
                     Clear Search
                   </button>
                 )}
               </div>
             ) : (
-              <div className="bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse min-w-[760px]">
-                    <thead>
-                      <tr className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] text-xs uppercase tracking-wider font-bold">
-                        <th className="p-3.5 pl-4 sm:pl-5">Operator / Member</th>
-                        <th className="p-3.5">Residence &amp; Contact</th>
-                        <th className="p-3.5">Units &amp; Plate Numbers</th>
-                        <th className="p-3.5 text-center">Units</th>
-                        <th className="p-3.5 pr-4 sm:pr-5 text-right print:hidden">Action</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27] text-xs">
-                      {filteredMembers.map((member, mIdx) => (
-                        <tr 
-                          key={member._id || mIdx}
-                          className="hover:bg-[#F6F5F3]/60 dark:hover:bg-[#14110F]/60 transition-colors"
-                        >
-                          {/* Member Identity */}
-                          <td className="p-3.5 pl-4 sm:pl-5">
-                            <div className="flex items-center gap-3">
-                              {member.profilePic ? (
-                                <img
-                                  src={member.profilePic}
-                                  alt={member.name}
-                                  className="w-9 h-9 rounded-lg object-cover border border-[#E4E1DC] dark:border-[#2E2A27] shrink-0 shadow-xs"
-                                />
+              <>
+                {/* Mobile Stacked Cards */}
+                <div className="md:hidden space-y-3 print:hidden">
+                  {filteredMembers.map((member, mIdx) => (
+                    <div
+                      key={member._id || mIdx}
+                      className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4 shadow-sm space-y-3"
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div className="flex items-center gap-3 min-w-0">
+                          {member.profilePic ? (
+                            <img
+                              src={member.profilePic}
+                              alt={member.name}
+                              className="w-10 h-10 rounded-lg object-cover border border-[#E4E1DC] dark:border-[#2E2A27] shrink-0"
+                            />
+                          ) : (
+                            <div className="w-10 h-10 rounded-lg bg-[#9E2A2B]/10 border border-[#9E2A2B]/20 flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37] font-bold text-sm shrink-0">
+                              {(member.name || member.operatorName || '?').charAt(0).toUpperCase()}
+                            </div>
+                          )}
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-1.5 flex-wrap">
+                              <p className="font-bold text-sm text-[#1F1D1B] dark:text-[#EAE7E1] break-words">
+                                {member.name}
+                              </p>
+                              {member.bodyNumber && (
+                                <span className="inline-flex items-center gap-1 font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-[#9E2A2B]/10 text-[#9E2A2B] dark:text-[#D4AF37] border border-[#9E2A2B]/20 dark:border-[#D4AF37]/30">
+                                  <Hash size={10} /> Body No. {member.bodyNumber}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] font-medium text-[#6B6761] dark:text-[#A8A29E] mt-0.5">
+                              {member.isPresident
+                                ? 'TODA President'
+                                : member.registeredInApp === false
+                                ? 'Masterlist Member (Not in App)'
+                                : 'Registered App Operator'}
+                            </p>
+                          </div>
+                        </div>
+                        <span className="px-2.5 py-1 rounded-md bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] font-bold text-xs text-[#1F1D1B] dark:text-[#EAE7E1] shrink-0">
+                          {member.units?.length || 0} {member.units?.length === 1 ? 'Unit' : 'Units'}
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-1 gap-1.5 text-xs pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
+                        <div className="flex items-center gap-1.5 text-[#1F1D1B] dark:text-[#EAE7E1]">
+                          <MapPin size={12} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" />
+                          <span>{member.address || 'Address not listed'}</span>
+                        </div>
+                        <div className="flex items-center gap-1.5 text-[#6B6761] dark:text-[#A8A29E]">
+                          <Phone size={12} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" />
+                          {member.contact && member.contact !== 'N/A' ? (
+                            <a href={`tel:${member.contact}`} className="font-mono font-semibold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline">
+                              {member.contact}
+                            </a>
+                          ) : (
+                            <span className="italic">No contact</span>
+                          )}
+                        </div>
+                      </div>
+
+                      {member.units && member.units.length > 0 && (
+                        <div className="flex flex-wrap gap-1.5 pt-1">
+                          {member.units.map((unit, uIdx) => (
+                            <div
+                              key={unit._id || uIdx}
+                              className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs"
+                            >
+                              <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{unit.plateNo || 'NO PLATE'}</span>
+                              <StatusBadge status={unit.status} />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {!member.isPresident && !member.isCurrentUser && (
+                        <div className="pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27] flex justify-end">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenKickModal(member)}
+                            className="inline-flex items-center gap-1.5 px-3 py-2 min-h-[38px] rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 hover:bg-red-100 text-xs font-bold transition-colors cursor-pointer"
+                          >
+                            <UserMinus size={13} />
+                            <span>Disaffiliate</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop Table */}
+                <div className="hidden md:block print:block bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left border-collapse min-w-[760px]">
+                      <thead>
+                        <tr className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] text-xs uppercase tracking-wider font-bold">
+                          <th className="p-3.5 pl-4 sm:pl-5">Operator / Member</th>
+                          <th className="p-3.5">Residence &amp; Contact</th>
+                          <th className="p-3.5">Units &amp; Plate Numbers</th>
+                          <th className="p-3.5 text-center">Units</th>
+                          <th className="p-3.5 pr-4 sm:pr-5 text-right print:hidden">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27] text-xs">
+                        {filteredMembers.map((member, mIdx) => (
+                          <tr 
+                            key={member._id || mIdx}
+                            className="hover:bg-[#F6F5F3]/60 dark:hover:bg-[#14110F]/60 transition-colors"
+                          >
+                            {/* Member Identity */}
+                            <td className="p-3.5 pl-4 sm:pl-5">
+                              <div className="flex items-center gap-3">
+                                {member.profilePic ? (
+                                  <img
+                                    src={member.profilePic}
+                                    alt={member.name}
+                                    className="w-9 h-9 rounded-lg object-cover border border-[#E4E1DC] dark:border-[#2E2A27] shrink-0 shadow-sm"
+                                  />
+                                ) : (
+                                  <div className="w-9 h-9 rounded-lg bg-[#9E2A2B]/10 border border-[#9E2A2B]/20 flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37] font-bold text-xs shrink-0 shadow-sm">
+                                    {(member.name || member.operatorName || '?').charAt(0).toUpperCase()}
+                                  </div>
+                                )}
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <p className="font-bold text-sm text-[#1F1D1B] dark:text-[#EAE7E1] truncate">
+                                      {member.name}
+                                    </p>
+                                    {member.bodyNumber && (
+                                      <span className="inline-flex items-center gap-1 font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-[#9E2A2B]/10 text-[#9E2A2B] dark:text-[#D4AF37] dark:bg-[#D4AF37]/10 border border-[#9E2A2B]/20 dark:border-[#D4AF37]/30 shadow-sm">
+                                        <Hash size={10} />
+                                        Body No. {member.bodyNumber}
+                                      </span>
+                                    )}
+                                    {member.isCurrentUser && (
+                                      <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                                        You
+                                      </span>
+                                    )}
+                                  </div>
+                                  <div className="mt-0.5">
+                                    {member.isPresident ? (
+                                      <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#D4AF37]/15 text-amber-800 dark:text-[#D4AF37] border border-[#D4AF37]/30">
+                                        <Sparkles size={9} />
+                                        TODA President
+                                      </span>
+                                    ) : member.registeredInApp === false ? (
+                                      <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
+                                        <FileText size={9} />
+                                        Masterlist Member (Not in App)
+                                      </span>
+                                    ) : (
+                                      <span className="text-[10px] font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">
+                                        Registered App Operator
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+
+                            {/* Residence & Contact */}
+                            <td className="p-3.5">
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-1.5 text-[#1F1D1B] dark:text-[#EAE7E1]">
+                                  <MapPin size={12} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" />
+                                  <span className="font-medium text-xs truncate max-w-[180px]">
+                                    {member.address || 'Address not listed'}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-1.5 text-[#6B6761] dark:text-[#A8A29E]">
+                                  <Phone size={12} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" />
+                                  {member.contact && member.contact !== 'N/A' ? (
+                                    <a 
+                                      href={`tel:${member.contact}`} 
+                                      className="font-mono font-semibold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline"
+                                    >
+                                      {member.contact}
+                                    </a>
+                                  ) : (
+                                    <span className="italic text-[11px]">No contact</span>
+                                  )}
+                                </div>
+                              </div>
+                            </td>
+
+                            {/* Units & Plate Numbers */}
+                            <td className="p-3.5">
+                              {(!member.units || member.units.length === 0) ? (
+                                <span className="text-xs text-[#6B6761] dark:text-[#A8A29E] italic">
+                                  No registered units
+                                </span>
                               ) : (
-                                <div className="w-9 h-9 rounded-lg bg-[#9E2A2B]/10 border border-[#9E2A2B]/20 flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37] font-bold text-xs shrink-0 shadow-xs">
-                                  {(member.name || member.operatorName || '?').charAt(0).toUpperCase()}
+                                <div className="flex flex-wrap gap-1.5">
+                                  {member.units.map((unit, uIdx) => (
+                                    <div 
+                                      key={unit._id || uIdx}
+                                      className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs"
+                                    >
+                                      <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                                        {unit.plateNo || 'NO PLATE'}
+                                      </span>
+                                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E]">
+                                        {unit.make || 'Unit'}
+                                      </span>
+                                      <StatusBadge status={unit.status} />
+                                    </div>
+                                  ))}
                                 </div>
                               )}
-                              <div className="min-w-0">
-                                <div className="flex items-center gap-1.5 flex-wrap">
-                                  <p className="font-bold text-sm text-[#1F1D1B] dark:text-[#EAE7E1] truncate">
-                                    {member.name}
-                                  </p>
-                                  {member.bodyNumber && (
-                                    <span className="inline-flex items-center gap-1 font-mono text-[10px] font-bold px-2 py-0.5 rounded bg-[#9E2A2B]/10 text-[#9E2A2B] dark:text-[#D4AF37] dark:bg-[#D4AF37]/10 border border-[#9E2A2B]/20 dark:border-[#D4AF37]/30 shadow-2xs">
-                                      <Hash size={10} />
-                                      Body No. {member.bodyNumber}
-                                    </span>
-                                  )}
-                                  {member.isCurrentUser && (
-                                    <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E] border border-[#E4E1DC] dark:border-[#2E2A27]">
-                                      You
-                                    </span>
-                                  )}
-                                </div>
-                                <div className="mt-0.5">
-                                  {member.isPresident ? (
-                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-[#D4AF37]/15 text-amber-800 dark:text-[#D4AF37] border border-[#D4AF37]/30">
-                                      <Sparkles size={9} />
-                                      TODA President
-                                    </span>
-                                  ) : member.registeredInApp === false ? (
-                                    <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                                      <FileText size={9} />
-                                      Masterlist Member (Not in App)
-                                    </span>
-                                  ) : (
-                                    <span className="text-[10px] font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">
-                                      Registered App Operator
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </td>
+                            </td>
 
-                          {/* Residence & Contact */}
-                          <td className="p-3.5">
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-1.5 text-[#1F1D1B] dark:text-[#EAE7E1]">
-                                <MapPin size={12} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" />
-                                <span className="font-medium text-xs truncate max-w-[180px]">
-                                  {member.address || 'Address not listed'}
+                            {/* Total Units Count */}
+                            <td className="p-3.5 text-center">
+                              <span className="inline-block px-2.5 py-1 rounded-md bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] font-bold text-xs text-[#1F1D1B] dark:text-[#EAE7E1]">
+                                {member.units?.length || 0}
+                              </span>
+                            </td>
+
+                            {/* Actions: Disaffiliate */}
+                            <td className="p-3.5 pr-4 sm:pr-5 text-right print:hidden">
+                              {!member.isPresident && !member.isCurrentUser ? (
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenKickModal(member)}
+                                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/50 text-xs font-bold transition-all cursor-pointer shadow-sm active:scale-95"
+                                  title="Request disaffiliation of this member from the TODA roster"
+                                >
+                                  <UserMinus size={13} className="shrink-0" />
+                                  <span>Disaffiliate</span>
+                                </button>
+                              ) : (
+                                <span className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] italic">
+                                  Association Officer
                                 </span>
-                              </div>
-                              <div className="flex items-center gap-1.5 text-[#6B6761] dark:text-[#A8A29E]">
-                                <Phone size={12} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" />
-                                {member.contact && member.contact !== 'N/A' ? (
-                                  <a 
-                                    href={`tel:${member.contact}`} 
-                                    className="font-mono font-semibold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline"
-                                  >
-                                    {member.contact}
-                                  </a>
-                                ) : (
-                                  <span className="italic text-[11px]">No contact</span>
-                                )}
-                              </div>
-                            </div>
-                          </td>
-
-                          {/* Units & Plate Numbers */}
-                          <td className="p-3.5">
-                            {(!member.units || member.units.length === 0) ? (
-                              <span className="text-xs text-[#6B6761] dark:text-[#A8A29E] italic">
-                                No registered units
-                              </span>
-                            ) : (
-                              <div className="flex flex-wrap gap-1.5">
-                                {member.units.map((unit, uIdx) => (
-                                  <div 
-                                    key={unit._id || uIdx}
-                                    className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs"
-                                  >
-                                    <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                                      {unit.plateNo || 'NO PLATE'}
-                                    </span>
-                                    <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E]">
-                                      {unit.make || 'Unit'}
-                                    </span>
-                                    <StatusBadge status={unit.status} />
-                                  </div>
-                                ))}
-                              </div>
-                            )}
-                          </td>
-
-                          {/* Total Units Count */}
-                          <td className="p-3.5 text-center">
-                            <span className="inline-block px-2.5 py-1 rounded-md bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] font-bold text-xs text-[#1F1D1B] dark:text-[#EAE7E1]">
-                              {member.units?.length || 0}
-                            </span>
-                          </td>
-
-                          {/* Actions: Report / Kick */}
-                          <td className="p-3.5 pr-4 sm:pr-5 text-right print:hidden">
-                            {!member.isPresident && !member.isCurrentUser ? (
-                              <button
-                                type="button"
-                                onClick={() => handleOpenKickModal(member)}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 hover:bg-red-100 dark:hover:bg-red-900/50 text-xs font-bold transition-all cursor-pointer shadow-xs active:scale-95"
-                                title="Report or request removal of this member from the TODA list"
-                              >
-                                <UserMinus size={13} className="shrink-0" />
-                                <span>Report / Kick</span>
-                              </button>
-                            ) : (
-                              <span className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] italic">
-                                Association Officer
-                              </span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
                 </div>
-              </div>
+              </>
             )}
           </div>
         )}
@@ -1000,7 +1086,7 @@ const SubmitMembers = () => {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
             {/* Upload Card */}
             <div className="lg:col-span-2">
-              <div className="bg-white dark:bg-[#1C1917] rounded-lg shadow-xs border border-[#E4E1DC] dark:border-[#2E2A27] p-5 sm:p-6 transition-colors">
+              <div className="bg-white dark:bg-[#1C1917] rounded-lg shadow-sm border border-[#E4E1DC] dark:border-[#2E2A27] p-5 sm:p-6 transition-colors">
                 <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
                   <div>
                     <h2 className="text-sm sm:text-base font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
@@ -1027,7 +1113,7 @@ const SubmitMembers = () => {
                     onDragLeave={handleDragLeave}
                     onDrop={handleDrop}
                   >
-                    <div className="w-12 h-12 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 flex items-center justify-center mx-auto mb-2.5 text-[#9E2A2B] dark:text-[#D4AF37] shadow-xs">
+                    <div className="w-12 h-12 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 flex items-center justify-center mx-auto mb-2.5 text-[#9E2A2B] dark:text-[#D4AF37] shadow-sm">
                       <UploadCloud size={24} />
                     </div>
                     <p className="text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] mb-0.5">
@@ -1047,7 +1133,7 @@ const SubmitMembers = () => {
                     <div className="flex items-center justify-center gap-2 flex-wrap">
                       <label 
                         htmlFor="file-upload"
-                        className="inline-flex items-center justify-center bg-[#1C1917] hover:bg-[#2E2A27] dark:bg-[#F6F5F3] dark:text-[#14110F] text-white px-5 py-2.5 rounded-lg font-bold text-xs sm:text-sm cursor-pointer transition-colors shadow-xs active:scale-95 min-h-[42px]"
+                        className="inline-flex items-center justify-center bg-[#1C1917] hover:bg-[#2E2A27] dark:bg-[#F6F5F3] dark:text-[#14110F] text-white px-5 py-2.5 rounded-lg font-bold text-xs sm:text-sm cursor-pointer transition-colors shadow-sm active:scale-95 min-h-[42px]"
                       >
                         Browse Files on Device
                       </label>
@@ -1101,7 +1187,7 @@ const SubmitMembers = () => {
 
                     {/* Digitized Members Live Preview */}
                     {extractedRoster.length > 0 && !isScanning && (
-                      <div className="mt-5 border border-[#9E2A2B]/20 dark:border-[#9E2A2B]/30 bg-gradient-to-br from-[#9E2A2B]/5 via-amber-500/5 to-transparent dark:from-[#9E2A2B]/10 dark:via-[#1A1816] dark:to-transparent rounded-xl p-3.5 sm:p-4 text-left space-y-3 shadow-xs">
+                      <div className="mt-5 border border-[#9E2A2B]/20 dark:border-[#9E2A2B]/30 bg-gradient-to-br from-[#9E2A2B]/5 via-amber-500/5 to-transparent dark:from-[#9E2A2B]/10 dark:via-[#1A1816] dark:to-transparent rounded-xl p-3.5 sm:p-4 text-left space-y-3 shadow-sm">
                         <div className="flex items-center justify-between flex-wrap gap-2">
                           <div className="flex items-center gap-2">
                             <div className="w-7 h-7 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 text-[#9E2A2B] dark:text-[#E07A5F] flex items-center justify-center border border-[#9E2A2B]/20">
@@ -1156,7 +1242,7 @@ const SubmitMembers = () => {
                                     </td>
                                     <td className="p-2.5 font-mono font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
                                       {displayBodyNo ? (
-                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-xs text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#F6F5F3] dark:bg-[#14110F] text-xs text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27]">
                                           <Hash size={11} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                                           {displayBodyNo}
                                         </span>
@@ -1217,7 +1303,7 @@ const SubmitMembers = () => {
                             <button
                               type="button"
                               onClick={handleAddExtractedMember}
-                              className="px-3.5 py-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white rounded-lg text-xs font-bold cursor-pointer transition-colors shadow-xs"
+                              className="px-3.5 py-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white rounded-lg text-xs font-bold cursor-pointer transition-colors shadow-sm"
                             >
                               Add to List
                             </button>
@@ -1230,7 +1316,7 @@ const SubmitMembers = () => {
                   <button 
                     type="submit" 
                     disabled={!file || isUploading || isScanning}
-                    className={`w-full mt-4 py-2.5 rounded-lg font-bold text-xs sm:text-sm text-white transition-all shadow-xs flex items-center justify-center gap-1.5 min-h-[44px] active:scale-95 ${
+                    className={`w-full mt-4 py-2.5 rounded-lg font-bold text-xs sm:text-sm text-white transition-all shadow-sm flex items-center justify-center gap-1.5 min-h-[44px] active:scale-95 ${
                       !file || isUploading || isScanning
                       ? 'bg-[#6B7280] cursor-not-allowed' 
                       : 'bg-[#9E2A2B] hover:bg-[#7A1B22] cursor-pointer'
@@ -1258,7 +1344,7 @@ const SubmitMembers = () => {
 
             {/* History Card */}
             <div className="lg:col-span-1">
-              <div className="bg-white dark:bg-[#1C1917] rounded-lg shadow-xs border border-[#E4E1DC] dark:border-[#2E2A27] p-4 sm:p-5 transition-colors">
+              <div className="bg-white dark:bg-[#1C1917] rounded-lg shadow-sm border border-[#E4E1DC] dark:border-[#2E2A27] p-4 sm:p-5 transition-colors">
                 <h2 className="text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] mb-3">
                   Submission History
                 </h2>
@@ -1274,7 +1360,7 @@ const SubmitMembers = () => {
                     submissions.map((sub, sIdx) => (
                       <div 
                         key={sub._id || sIdx} 
-                        className="p-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] flex flex-col gap-1.5 shadow-xs"
+                        className="p-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] flex flex-col gap-1.5 shadow-sm"
                       >
                         <div className="flex items-start justify-between gap-2">
                           <div className="flex items-center gap-1.5 text-xs font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] min-w-0">
@@ -1328,20 +1414,20 @@ const SubmitMembers = () => {
 
         {/* TAB 3: REMOVAL REQUESTS TRACKER */}
         {activeTab === 'removals' && (
-          <div className="bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs p-4 sm:p-5 space-y-4">
+          <div className="bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm p-4 sm:p-5 space-y-4">
             <div className="flex items-center justify-between flex-wrap gap-2 pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
               <div>
                 <h2 className="text-sm sm:text-base font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
                   Member Disaffiliation &amp; Removal Requests
                 </h2>
                 <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5">
-                  Track all removal/kick requests filed to the Municipal Administrator.
+                  Track all disaffiliation requests filed with the Municipal Administrator.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={fetchRemovalRequests}
-                className="px-3 py-1.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] hover:bg-neutral-200 cursor-pointer flex items-center gap-1.5"
+                className="px-3 py-1.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] hover:bg-[#E4E1DC]/70 dark:hover:bg-[#2E2A27] cursor-pointer flex items-center gap-1.5"
               >
                 <RefreshCw size={12} className={isLoadingRemovals ? "animate-spin" : ""} />
                 <span>Refresh Requests</span>
@@ -1349,15 +1435,15 @@ const SubmitMembers = () => {
             </div>
 
             {isLoadingRemovals ? (
-              <div className="py-8 text-center text-xs text-[#6B6761]">
-                <Loader2 size={20} className="animate-spin mx-auto mb-2 text-[#9E2A2B]" />
-                Loading removal requests...
+              <div className="py-8 text-center text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                <Loader2 size={20} className="animate-spin mx-auto mb-2 text-[#9E2A2B] dark:text-[#D4AF37]" />
+                Loading disaffiliation requests...
               </div>
             ) : removalRequests.length === 0 ? (
               <div className="p-8 text-center border border-dashed border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg text-xs text-[#6B6761] dark:text-[#A8A29E]">
                 <UserMinus size={28} className="mx-auto mb-2 opacity-40" />
-                <p className="font-semibold text-sm text-[#1F1D1B] dark:text-[#EAE7E1]">No removal requests filed</p>
-                <p className="text-xs mt-1">If an operator is no longer part of your association, use the "Report / Kick" button on the Member Roster tab.</p>
+                <p className="font-semibold text-sm text-[#1F1D1B] dark:text-[#EAE7E1]">No disaffiliation requests filed</p>
+                <p className="text-xs mt-1">If an operator is no longer part of your association, use the "Disaffiliate" action on the Member Roster tab.</p>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -1390,7 +1476,7 @@ const SubmitMembers = () => {
                         <td className="p-3">
                           <StatusBadge 
                             status={req.status === 'Approved' ? 'Active' : (req.status === 'Rejected' ? 'Expired' : 'Pending')} 
-                            label={req.status} 
+                            customLabel={req.status} 
                           />
                         </td>
                         <td className="p-3 pr-4 text-[#6B6761] dark:text-[#A8A29E] italic">
@@ -1408,7 +1494,7 @@ const SubmitMembers = () => {
 
       {/* REPORT / KICK MEMBER MODAL */}
       {kickModal.isOpen && kickModal.member && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xl rounded-xl max-w-md w-full p-5 space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
               <div className="flex items-center gap-2 text-red-600 dark:text-red-400 font-bold text-sm sm:text-base">
@@ -1470,14 +1556,14 @@ const SubmitMembers = () => {
                 <button
                   type="button"
                   onClick={() => setKickModal(prev => ({ ...prev, isOpen: false }))}
-                  className="px-4 py-2 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] text-xs font-bold text-[#6B6761] dark:text-[#A8A29E] hover:bg-neutral-100 cursor-pointer"
+                  className="px-4 py-2 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] text-xs font-bold text-[#6B6761] dark:text-[#A8A29E] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={kickModal.isSubmitting}
-                  className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-xs cursor-pointer transition-all active:scale-95 disabled:opacity-50"
+                  className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-all active:scale-95 disabled:opacity-50"
                 >
                   {kickModal.isSubmitting ? (
                     <>
@@ -1487,7 +1573,7 @@ const SubmitMembers = () => {
                   ) : (
                     <>
                       <UserMinus size={13} />
-                      <span>Submit Removal Request</span>
+                      <span>Submit Disaffiliation Request</span>
                     </>
                   )}
                 </button>
@@ -1499,7 +1585,7 @@ const SubmitMembers = () => {
 
       {/* DIGITIZED MEMBERS HISTORY VIEWER MODAL */}
       {selectedHistoryOCR && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white dark:bg-[#1A1816] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-2xl rounded-2xl max-w-xl w-full p-4 sm:p-5 space-y-4 overflow-hidden">
             <div className="flex items-center justify-between pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
               <div className="flex items-center gap-2.5">
@@ -1520,6 +1606,7 @@ const SubmitMembers = () => {
                 onClick={() => setSelectedHistoryOCR(null)}
                 className="w-8 h-8 rounded-lg flex items-center justify-center text-[#6B6761] hover:text-[#1F1D1B] dark:text-[#A8A29E] dark:hover:text-white hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] transition-colors cursor-pointer"
                 title="Close modal"
+                aria-label="Close modal"
               >
                 <X size={16} />
               </button>
@@ -1571,7 +1658,7 @@ const SubmitMembers = () => {
                         </td>
                         <td className="p-2.5 font-mono font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
                           {displayBodyNo ? (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-xs text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#F6F5F3] dark:bg-[#14110F] text-xs text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27]">
                               <Hash size={11} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                               {displayBodyNo}
                             </span>
@@ -1601,7 +1688,7 @@ const SubmitMembers = () => {
               <button
                 type="button"
                 onClick={() => setSelectedHistoryOCR(null)}
-                className="px-4 py-1.5 rounded-lg bg-[#1C1917] hover:bg-[#2E2A27] dark:bg-[#F6F5F3] dark:hover:bg-white dark:text-[#14110F] text-white text-xs font-bold cursor-pointer transition-colors shadow-xs"
+                className="px-4 py-1.5 rounded-lg bg-[#1C1917] hover:bg-[#2E2A27] dark:bg-[#F6F5F3] dark:hover:bg-white dark:text-[#14110F] text-white text-xs font-bold cursor-pointer transition-colors shadow-sm"
               >
                 Close Viewer
               </button>
@@ -1613,7 +1700,7 @@ const SubmitMembers = () => {
 
       {/* ADD INDIVIDUAL MEMBER MODAL */}
       {individualModal.isOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white dark:bg-[#1A1816] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-2xl rounded-2xl max-w-lg w-full p-5 sm:p-6 space-y-4 overflow-hidden">
             <div className="flex items-center justify-between pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
               <div className="flex items-center gap-2.5">
@@ -1622,10 +1709,10 @@ const SubmitMembers = () => {
                 </div>
                 <div>
                   <h3 className="font-bold text-sm sm:text-base text-[#1F1D1B] dark:text-[#EAE7E1] leading-tight">
-                    Magdagdag ng Isahang Miyembro
+                    Add Individual Member
                   </h3>
                   <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
-                    Opisyal na pagtatala ng bagong miyembro sa {todaData.todaName || 'TODA'}
+                    Official roster registration for a new member in {todaData.todaName || 'TODA'}
                   </p>
                 </div>
               </div>
@@ -1634,13 +1721,14 @@ const SubmitMembers = () => {
                 onClick={() => setIndividualModal(prev => ({ ...prev, isOpen: false }))}
                 className="w-8 h-8 rounded-lg flex items-center justify-center text-[#6B6761] hover:text-[#1F1D1B] dark:text-[#A8A29E] dark:hover:text-white hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] transition-colors cursor-pointer"
                 title="Close modal"
+                aria-label="Close modal"
               >
                 <X size={16} />
               </button>
             </div>
 
             {individualModal.error && (
-              <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-xs font-bold rounded-lg p-3 text-center shadow-xs">
+              <div className="bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 text-xs font-bold rounded-lg p-3 text-center shadow-sm">
                 {individualModal.error}
               </div>
             )}
@@ -1649,7 +1737,7 @@ const SubmitMembers = () => {
               {/* Operator Full Legal Name */}
               <div>
                 <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider mb-1">
-                  Pangalan ng Miyembro / Operator <span className="text-red-500">*</span>
+                  Member / Operator Name <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-[#6B6761] dark:text-[#A8A29E]">
@@ -1660,7 +1748,7 @@ const SubmitMembers = () => {
                     required
                     value={individualModal.operatorName}
                     onChange={(e) => setIndividualModal(prev => ({ ...prev, operatorName: e.target.value, error: '' }))}
-                    placeholder="hal. Juan M. Dela Cruz"
+                    placeholder="e.g. Juan M. Dela Cruz"
                     className="w-full pl-9 pr-3 py-2.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs sm:text-sm font-medium text-[#1F1D1B] dark:text-[#EAE7E1] focus:outline-none focus:border-[#9E2A2B] focus:ring-1 focus:ring-[#9E2A2B] min-h-[44px]"
                   />
                 </div>
@@ -1686,7 +1774,7 @@ const SubmitMembers = () => {
                     Assigned Body Number <span className="text-red-500">*</span>
                   </label>
                   <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
-                    <CheckCircle2 size={12} /> Auto-Generated & Walang Duplicate
+                    <CheckCircle2 size={12} /> Auto-Generated &amp; Duplicate-Free
                   </span>
                 </div>
                 <div className="relative flex items-center gap-2">
@@ -1699,7 +1787,7 @@ const SubmitMembers = () => {
                       required
                       value={individualModal.bodyNumber}
                       onChange={(e) => setIndividualModal(prev => ({ ...prev, bodyNumber: e.target.value.toUpperCase(), error: '' }))}
-                      placeholder="hal. 01, 042, GAS-001"
+                      placeholder="e.g. 01, 042, GAS-001"
                       className="w-full pl-9 pr-3 py-2.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] font-mono text-sm font-black text-[#1F1D1B] dark:text-[#EAE7E1] focus:outline-none focus:border-[#9E2A2B] focus:ring-1 focus:ring-[#9E2A2B] min-h-[44px] tracking-wider uppercase"
                     />
                   </div>
@@ -1708,14 +1796,14 @@ const SubmitMembers = () => {
                     onClick={handleRefreshNextBodyNumber}
                     disabled={individualModal.isLoadingNumber}
                     className="h-[44px] px-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] hover:bg-[#E4E1DC] flex items-center gap-1.5 text-xs font-bold transition-colors cursor-pointer shrink-0 disabled:opacity-50"
-                    title="Bumuo ng bagong Body Number"
+                    title="Generate next Body Number"
                   >
                     <RefreshCw size={14} className={individualModal.isLoadingNumber ? 'animate-spin' : ''} />
                     <span className="hidden sm:inline">Regenerate</span>
                   </button>
                 </div>
                 <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1 leading-tight">
-                  Awtomatikong sinusuri ng system ang lahat ng umiiral na prangkisa at talaan upang masigurong walang kapareho.
+                  The system checks all active franchises and association records to prevent duplicate numbers.
                 </p>
               </div>
 
@@ -1723,25 +1811,25 @@ const SubmitMembers = () => {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider mb-1">
-                    Plate Number <span className="text-[10px] text-[#6B6761] font-normal">(Opsyonal)</span>
+                    Plate Number <span className="text-[10px] text-[#6B6761] font-normal">(Optional)</span>
                   </label>
                   <input
                     type="text"
                     value={individualModal.plateNo}
                     onChange={(e) => setIndividualModal(prev => ({ ...prev, plateNo: e.target.value.toUpperCase() }))}
-                    placeholder="hal. 1234-TC"
+                    placeholder="e.g. 1234-TC"
                     className="w-full px-3 py-2 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] font-mono text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] focus:outline-none focus:border-[#9E2A2B] min-h-[40px] uppercase"
                   />
                 </div>
                 <div>
                   <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider mb-1">
-                    Contact Number <span className="text-[10px] text-[#6B6761] font-normal">(Opsyonal)</span>
+                    Contact Number <span className="text-[10px] text-[#6B6761] font-normal">(Optional)</span>
                   </label>
                   <input
                     type="text"
                     value={individualModal.contact}
                     onChange={(e) => setIndividualModal(prev => ({ ...prev, contact: e.target.value }))}
-                    placeholder="hal. 09123456789"
+                    placeholder="e.g. 09123456789"
                     className="w-full px-3 py-2 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs font-medium text-[#1F1D1B] dark:text-[#EAE7E1] focus:outline-none focus:border-[#9E2A2B] min-h-[40px]"
                   />
                 </div>
@@ -1750,13 +1838,13 @@ const SubmitMembers = () => {
               {/* Remarks */}
               <div>
                 <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider mb-1">
-                  Remarks / Tala <span className="text-[10px] text-[#6B6761] font-normal">(Opsyonal)</span>
+                  Remarks <span className="text-[10px] text-[#6B6761] font-normal">(Optional)</span>
                 </label>
                 <input
                   type="text"
                   value={individualModal.remarks}
                   onChange={(e) => setIndividualModal(prev => ({ ...prev, remarks: e.target.value }))}
-                  placeholder="hal. Bagong miyembro mula sa Brgy. II"
+                  placeholder="e.g. New member from Brgy. II"
                   className="w-full px-3 py-2 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs font-medium text-[#1F1D1B] dark:text-[#EAE7E1] focus:outline-none focus:border-[#9E2A2B] min-h-[40px]"
                 />
               </div>
@@ -1767,24 +1855,24 @@ const SubmitMembers = () => {
                   type="button"
                   onClick={() => setIndividualModal(prev => ({ ...prev, isOpen: false }))}
                   disabled={individualModal.isSubmitting}
-                  className="px-4 py-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#E4E1DC] text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] transition-colors cursor-pointer"
+                  className="px-4 py-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#E4E1DC] dark:hover:bg-[#2E2A27] text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] transition-colors cursor-pointer"
                 >
-                  Kanselahin
+                  Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={individualModal.isSubmitting}
-                  className="px-5 py-2.5 rounded-lg bg-[#9E2A2B] hover:bg-[#801B24] text-white text-xs font-bold shadow-xs flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                  className="px-5 py-2.5 rounded-lg bg-[#9E2A2B] hover:bg-[#801B24] text-white text-xs font-bold shadow-sm flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
                 >
                   {individualModal.isSubmitting ? (
                     <>
                       <Loader2 size={14} className="animate-spin" />
-                      <span>Itinatala...</span>
+                      <span>Registering...</span>
                     </>
                   ) : (
                     <>
                       <Check size={14} />
-                      <span>I-rehistro ang Miyembro</span>
+                      <span>Register Member</span>
                     </>
                   )}
                 </button>

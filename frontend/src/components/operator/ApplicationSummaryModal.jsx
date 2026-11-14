@@ -248,7 +248,7 @@ const ApplicationSummaryModal = ({
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   <div>
                     <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Serial No.</span>
-                    <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{data?.cedulaSerialNo || '—'}</span>
+                    <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{data?.cedulaSerialNo || data?.cedulaNo || data?.ctcNo || '—'}</span>
                   </div>
                   <div>
                     <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Tax Year</span>
@@ -388,7 +388,7 @@ const ApplicationSummaryModal = ({
             <button
               type="button"
               onClick={() => setShowOfficialForm(true)}
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-2 min-h-[40px] rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-900 dark:text-amber-200 border border-amber-300 dark:border-amber-700 font-bold text-xs sm:text-sm hover:bg-amber-100 dark:hover:bg-amber-950/70 transition-colors cursor-pointer shadow-2xs"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-3.5 py-2 min-h-[40px] rounded-lg bg-[#9E2A2B]/10 hover:bg-[#9E2A2B]/15 text-[#9E2A2B] dark:bg-[#D4AF37]/20 dark:hover:bg-[#D4AF37]/30 dark:text-[#F5E6B3] border border-[#9E2A2B]/30 dark:border-[#D4AF37]/40 font-bold text-xs sm:text-sm transition-colors cursor-pointer shadow-sm"
               title="Print official MTOP application form pursuant to Ord. 48 s. 1999"
             >
               <Printer size={15} />
@@ -402,7 +402,7 @@ const ApplicationSummaryModal = ({
                   handleClose();
                   onViewECopy(data);
                 }}
-                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 min-h-[40px] rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-xs transition-colors cursor-pointer"
+                className="w-full sm:w-auto inline-flex items-center justify-center gap-1.5 px-4 py-2 min-h-[40px] rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs sm:text-sm shadow-sm transition-colors cursor-pointer"
               >
                 <Award size={15} />
                 <span>View E-Copy</span>
@@ -414,7 +414,7 @@ const ApplicationSummaryModal = ({
             <button
               type="button"
               onClick={handleClose}
-              className="w-full sm:w-auto px-5 py-2 min-h-[40px] rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-xs sm:text-sm shadow-xs transition-colors cursor-pointer"
+              className="w-full sm:w-auto px-5 py-2 min-h-[40px] rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-xs sm:text-sm shadow-sm transition-colors cursor-pointer"
             >
               Close
             </button>

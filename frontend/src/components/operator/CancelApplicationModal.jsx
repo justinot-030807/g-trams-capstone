@@ -103,7 +103,7 @@ const CancelApplicationModal = ({
             type="button"
             disabled={cancelModal.isSubmitting || (cancelModal.reason === "Other reason (Please specify below)" && !cancelModal.customReason?.trim())}
             onClick={handleConfirmCancel}
-            className="flex items-center gap-1.5 px-5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs text-white bg-[#B91C1C] hover:bg-[#991B1B] transition-colors shadow-xs active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+            className="flex items-center gap-1.5 px-5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs text-white bg-[#B91C1C] hover:bg-[#991B1B] transition-colors shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {cancelModal.isSubmitting ? <Loader2 size={14} className="animate-spin" /> : <XCircle size={14} />}
             {cancelModal.isSubmitting ? 'Cancelling...' : 'Confirm Cancellation'}

@@ -38,7 +38,7 @@ const BarList = ({
   const hasMore = sortedData.length > initialLimit;
 
   return (
-    <div className={`bg-white dark:bg-[#1C1917] p-5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs ${className}`}>
+    <div className={`bg-white dark:bg-[#1C1917] p-5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm ${className}`}>
       {/* Header */}
       <div className="flex items-center justify-between mb-4 pb-2 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
         <div>

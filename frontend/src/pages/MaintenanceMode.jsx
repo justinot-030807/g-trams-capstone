@@ -22,12 +22,18 @@ const MaintenanceMode = () => {
           setStatusMessage('Maintenance mode has ended! Redirecting...');
           setTimeout(() => {
             const role = (localStorage.getItem('role') || '').toLowerCase();
-            if (role.includes('admin')) { navigate('/admin-dashboard'); } else if (role.includes('bplo')) { navigate('/bplo-dashboard'); } else if (role.includes('cashier')) { navigate('/cashier-dashboard'); return; } if (role.includes('admin')) {
-              navigate('/admin-dashboard');
-            } else if (localStorage.getItem('token')) {
-              navigate('/operator-dashboard');
-            } else {
+            if (!localStorage.getItem('token')) {
               navigate('/login');
+            } else if (role === 'system_admin' || role === 'admin' || role.includes('admin')) {
+              navigate('/admin-dashboard');
+            } else if (role === 'bplo_staff' || role.includes('bplo') || role.includes('llsa')) {
+              navigate('/llsa-dashboard');
+            } else if (role === 'toda_president' || role.includes('toda')) {
+              navigate('/toda-dashboard');
+            } else if (role === 'cashier' || role.includes('cashier')) {
+              navigate('/cashier-dashboard');
+            } else {
+              navigate('/operator-dashboard');
             }
           }, 1200);
         } else {
@@ -48,7 +54,7 @@ const MaintenanceMode = () => {
       
       {/* Top Header */}
       <header className="flex items-center gap-3">
-        <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center p-1 shadow-xs border border-[#D4AF37] shrink-0">
+        <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center p-1 shadow-sm border border-[#D4AF37] shrink-0">
           <img src="/gasan-logo.png" alt="Gasan Seal" className="w-full h-full object-contain" />
         </div>
         <div>
@@ -65,7 +71,7 @@ const MaintenanceMode = () => {
           <Wrench size={32} />
         </div>
 
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-amber-500/10 text-amber-300 text-xs font-bold uppercase tracking-wider border border-amber-500/20 mb-3 shadow-xs">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-amber-500/10 text-amber-300 text-xs font-bold uppercase tracking-wider border border-amber-500/20 mb-3 shadow-sm">
           <ShieldAlert size={13} /> Naka-iskedyul na Maintenance
         </span>
 
@@ -99,7 +105,7 @@ const MaintenanceMode = () => {
           <button
             onClick={checkStatus}
             disabled={isChecking}
-            className="flex-1 flex items-center justify-center gap-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white py-2.5 px-4 rounded-lg text-xs font-bold transition-all shadow-xs min-h-[44px] cursor-pointer"
+            className="flex-1 flex items-center justify-center gap-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white py-2.5 px-4 rounded-lg text-xs font-bold transition-all shadow-sm min-h-[44px] cursor-pointer"
           >
             <RefreshCw size={15} className={isChecking ? 'animate-spin' : ''} />
             {isChecking ? 'Sinusuri ang Server...' : 'Suriin ang Status'}

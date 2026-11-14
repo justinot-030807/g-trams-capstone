@@ -22,3 +22,6 @@ remotion/out/
 .agents/
 
 *.zip
+
+# local agent CLI hooks
+.gemini/

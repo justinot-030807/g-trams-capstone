@@ -73,7 +73,7 @@ export const getNotificationVisuals = (notif) => {
       badgeText: 'Ready for Pickup',
       badgeClass: 'bg-emerald-100 dark:bg-emerald-950/70 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700/80',
       iconBg: 'bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400',
-      accentBorder: 'border-l-4 border-l-emerald-600'
+      accentBorder: 'border-emerald-200 dark:border-emerald-800/60'
     };
   }
 
@@ -95,7 +95,7 @@ export const getNotificationVisuals = (notif) => {
       badgeText: text.includes('expired') ? 'Expired' : 'Action Required',
       badgeClass: 'bg-rose-100 dark:bg-rose-950/70 text-rose-800 dark:text-rose-300 border-rose-300 dark:border-rose-700/80',
       iconBg: 'bg-rose-100 dark:bg-rose-900/40 text-rose-600 dark:text-rose-400',
-      accentBorder: 'border-l-4 border-l-rose-600'
+      accentBorder: 'border-rose-200 dark:border-rose-800/60'
     };
   }
 
@@ -113,7 +113,7 @@ export const getNotificationVisuals = (notif) => {
       badgeText: text.includes('for signing') ? 'For Signing' : 'In Review',
       badgeClass: 'bg-amber-100 dark:bg-amber-950/70 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-700/80',
       iconBg: 'bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400',
-      accentBorder: 'border-l-4 border-l-amber-500'
+      accentBorder: 'border-amber-200 dark:border-amber-800/60'
     };
   }
 
@@ -129,7 +129,7 @@ export const getNotificationVisuals = (notif) => {
       badgeText: 'Active Permit',
       badgeClass: 'bg-blue-100 dark:bg-blue-950/70 text-blue-800 dark:text-blue-300 border-blue-300 dark:border-blue-700/80',
       iconBg: 'bg-blue-100 dark:bg-blue-900/40 text-blue-600 dark:text-blue-400',
-      accentBorder: 'border-l-4 border-l-blue-600'
+      accentBorder: 'border-blue-200 dark:border-blue-800/60'
     };
   }
 
@@ -138,9 +138,9 @@ export const getNotificationVisuals = (notif) => {
     return {
       icon: CreditCard,
       badgeText: 'Treasury / Fee',
-      badgeClass: 'bg-purple-100 dark:bg-purple-950/70 text-purple-800 dark:text-purple-300 border-purple-300 dark:border-purple-700/80',
-      iconBg: 'bg-purple-100 dark:bg-purple-900/40 text-purple-600 dark:text-purple-400',
-      accentBorder: 'border-l-4 border-l-purple-600'
+      badgeClass: 'bg-amber-100 dark:bg-amber-950/70 text-amber-900 dark:text-amber-300 border-amber-300 dark:border-amber-700/80',
+      iconBg: 'bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400',
+      accentBorder: 'border-amber-200 dark:border-amber-800/60'
     };
   }
 
@@ -148,9 +148,9 @@ export const getNotificationVisuals = (notif) => {
   return {
     icon: Bell,
     badgeText: 'Update',
-    badgeClass: 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700',
+    badgeClass: 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] border-[#E4E1DC] dark:border-[#2E2A27]',
     iconBg: 'bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37]',
-    accentBorder: 'border-l-4 border-l-[#9E2A2B] dark:border-l-[#D4AF37]'
+    accentBorder: 'border-[#E4E1DC] dark:border-[#2E2A27]'
   };
 };
 
@@ -168,7 +168,7 @@ export const renderRichNotificationMessage = (text) => {
   return parts.map((part, index) => {
     if (part.startsWith('**') && part.endsWith('**')) {
       return (
-        <strong key={index} className="font-bold text-slate-900 dark:text-white">
+        <strong key={index} className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
           {part.slice(2, -2)}
         </strong>
       );
@@ -188,7 +188,7 @@ export const renderRichNotificationMessage = (text) => {
         {subParts.map((sub, subIdx) => {
           if (/^(\bApproved\b|\bReady for Pickup\b|\bFor Signing\b|\bIn Review\b|\bActive Permit\b|\bAction Required\b|\bExpired\b|\bCancelled\b|\bReturned\b|LGU Note:|Remarks:)$/i.test(sub)) {
             return (
-              <strong key={subIdx} className="font-bold text-slate-900 dark:text-white">
+              <strong key={subIdx} className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
                 {sub}
               </strong>
             );

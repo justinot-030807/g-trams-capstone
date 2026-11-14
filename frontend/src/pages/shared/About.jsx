@@ -13,7 +13,7 @@ const About = () => {
     { name: "Jane Smith", role: "Frontend Developer", icon: <Code size={20} className="text-emerald-500" /> },
     { name: "Juan Dela Cruz", role: "Backend / Database", icon: <Server size={20} className="text-amber-500" /> },
     { name: "Maria Clara", role: "UI/UX Designer", icon: <Heart size={20} className="text-rose-500" /> },
-    { name: "Pedro Penduko", role: "QA / Security", icon: <ShieldCheck size={20} className="text-indigo-500" /> },
+    { name: "Pedro Penduko", role: "QA / Security", icon: <ShieldCheck size={20} className="text-[#9E2A2B] dark:text-[#D4AF37]" /> },
   ];
 
   return (
@@ -21,13 +21,13 @@ const About = () => {
       <div className="max-w-4xl mx-auto pb-16">
         <button 
           onClick={() => navigate(-1)}
-          className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[#F6F5F3] hover:bg-[#E4E1DC] dark:bg-[#1C1917] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] transition-all cursor-pointer border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs w-fit mb-5 min-h-[44px]"
+          className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-[#F6F5F3] hover:bg-[#E4E1DC] dark:bg-[#1C1917] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] transition-all cursor-pointer border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm w-fit mb-5 min-h-[44px]"
         >
           <ArrowLeft size={16} className="text-[#6B6761] dark:text-[#A8A29E]" />
           <span className="text-xs font-bold tracking-wider uppercase">Bumalik (Back)</span>
         </button>
 
-        <div className="bg-white dark:bg-[#1C1917] rounded-lg shadow-xs border border-[#E4E1DC] dark:border-[#2E2A27] overflow-hidden">
+        <div className="bg-white dark:bg-[#1C1917] rounded-lg shadow-sm border border-[#E4E1DC] dark:border-[#2E2A27] overflow-hidden">
           <div className="bg-[#9E2A2B] border-b border-[#7A1B22] text-white p-6 sm:p-8 text-center relative overflow-hidden">
             <GraduationCap size={100} className="absolute -right-4 -top-4 text-white/10 rotate-12 pointer-events-none" />
             <div className="relative z-10">
@@ -51,7 +51,7 @@ const About = () => {
               </h2>
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
                 {developers.map((dev, idx) => (
-                  <div key={idx} className="p-3.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center gap-3.5 shadow-xs">
+                  <div key={idx} className="p-3.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center gap-3.5 shadow-sm">
                     <div className="w-10 h-10 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-center shrink-0">
                       {dev.icon}
                     </div>

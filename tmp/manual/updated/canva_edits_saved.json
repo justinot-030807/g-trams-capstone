@@ -1,0 +1,39 @@
+{
+  "transaction_id": "5335035717386805142",
+  "design_id": "DAHatm9FzI4",
+  "draft_edit_url": "https://www.canva.com/d/wxKKq7eEwyEH29r",
+  "table_source": "DAHatweRAlU",
+  "cashier_source": "DAHat77fKhY",
+  "status": "saved_and_replaced",
+  "native_table": "editable equal-column cells/shapes accepted by user",
+  "backup": {
+    "design": {
+      "id": "DAHatxflVUs",
+      "title": "G-TRAMS | Group 4 | Deliverable 7 User's Manual — 10-page Draft",
+      "owner": {
+        "user_id": "oUZb1v8Tb9tHS4rPJ2zHyY",
+        "team_id": "oBZcL3nZEGvIrU7-SdGOTI"
+      },
+      "urls": {
+        "edit_url": "https://www.canva.com/d/viz_Kq1b9xYY0wa",
+        "view_url": "https://www.canva.com/d/Quc1sbpiHo6DRd7"
+      },
+      "created_at": 1794498598,
+      "updated_at": 1794498598,
+      "page_count": 10,
+      "design_types": [
+        "unknown"
+      ]
+    }
+  },
+  "assets": {
+    "3": "MAHaty0ZPsE",
+    "4": "MAHatzgybSQ",
+    "6": "MAHat7ceW3Q",
+    "7": "MAHat7bF-6s",
+    "9": "MAHatzfmdWo",
+    "10": "MAHat0wRg3E",
+    "13": "MAHat8xikUU"
+  },
+  "transaction_status": "committed"
+}

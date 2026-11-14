@@ -23,18 +23,11 @@ const registerSchema = z.object({
         ).optional(),
         todaAssociation: z.string().trim().optional(),
         bodyNumber: z.string().trim().optional(),
-        password: z.string().min(6, 'Password must be at least 6 characters'),
+        password: z.string().min(8, 'Password must be at least 8 characters'),
         confirmPassword: z.string().optional(),
         role: z.preprocess(
-            (val) => {
-                if (!val) return 'operator';
-                if (typeof val === 'string') {
-                    const clean = val.toLowerCase().trim().replace(/_/g, ' ');
-                    return (clean === 'toda president' || clean === 'toda_president') ? 'toda president' : 'operator';
-                }
-                return 'operator';
-            },
-            z.enum(['operator', 'toda president']).default('operator')
+            () => 'operator',
+            z.literal('operator').default('operator')
         ).optional(),
         authProvider: z.enum(['local', 'google']).default('local'),
         googleId: z.string().optional(),

@@ -95,7 +95,7 @@ const ProtectedRoute = ({ children, allowedRoles = [] }) => {
     if (isUserSystemAdmin) {
       return <Navigate to="/admin-dashboard" replace />;
     } else if (safeUserRole === 'bplo staff') {
-      return <Navigate to="/bplo-dashboard" replace />;
+      return <Navigate to="/llsa-dashboard" replace />;
     } else if (safeUserRole === 'cashier') {
       return <Navigate to="/cashier-dashboard" replace />;
     } else if (isUserOperatorOrToda) {

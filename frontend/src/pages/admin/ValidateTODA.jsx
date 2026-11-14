@@ -10,19 +10,26 @@ import { AccordionListSkeleton, TableRowsSkeleton } from '../../components/skele
 import PageHeader from '../../components/common/PageHeader';
 import StatusBadge from '../../components/common/StatusBadge';
 import { isNameMatch } from '../../utils/nameMatcher';
+import { formatVehicleMakeAndModel } from '../../utils/vehicleFormatters';
+import { useConfirm } from '../../components/ui/ConfirmContext';
 
 const ValidateTODA = () => {
+  const { confirm, prompt } = useConfirm();
   const [activeTab, setActiveTab] = useState('directory'); // 'directory' | 'validations' | 'removals'
   const [isLoading, setIsLoading] = useState(true);
   
   // States
   const [searchQuery, setSearchQuery] = useState('');
   const [submissions, setSubmissions] = useState([]);
+  const [rosters, setRosters] = useState([]);
   const [users, setUsers] = useState([]);
   const [franchises, setFranchises] = useState([]);
   const [removals, setRemovals] = useState([]);
   const [selectedSubmissionOCR, setSelectedSubmissionOCR] = useState(null);
   const [ocrModalSearch, setOcrModalSearch] = useState('');
+  const [selectedTodaModal, setSelectedTodaModal] = useState(null);
+  const [todaModalSearch, setTodaModalSearch] = useState('');
+  const [todaModalFilter, setTodaModalFilter] = useState('all'); // 'all' | 'active_mtop' | 'registered' | 'roster'
   const [todaActiveSubTabs, setTodaActiveSubTabs] = useState({}); // key: todaName -> 'roster' | 'drivers'
   const [isRescanning, setIsRescanning] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
@@ -97,11 +104,26 @@ const ValidateTODA = () => {
     }
   };
 
+  const fetchRosters = async () => {
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/toda/rosters`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      if (response.ok) {
+        const d = await response.json();
+        setRosters(Array.isArray(d) ? d : (d.data || []));
+      }
+    } catch (err) {
+      console.error('Error fetching TODA rosters:', err);
+    }
+  };
+
   const fetchAllData = async () => {
     setIsLoading(true);
     try {
       await Promise.allSettled([
         fetchSubmissions(),
+        fetchRosters(),
         fetchUsers(),
         fetchFranchises(),
         fetchRemovals()
@@ -122,6 +144,7 @@ const ValidateTODA = () => {
       });
       if (response.ok) {
         setSubmissions(submissions.map(sub => sub._id === id ? { ...sub, status: 'Approved' } : sub));
+        fetchRosters();
         showToast('TODA member list approved successfully! Active OCR roster ingested.', 'success');
       } else { 
         showToast('Failed to approve list.', 'error'); 
@@ -157,7 +180,14 @@ const ValidateTODA = () => {
   };
 
   const handleApproveRemoval = async (id, memberName, todaName) => {
-    if (!window.confirm(`Are you sure you want to approve the disaffiliation of ${memberName} from ${todaName}? This operator will be reset to NON-TODA.`)) return;
+    const ok = await confirm({
+      title: 'Approve TODA Disaffiliation',
+      description: `Are you sure you want to approve the disaffiliation of ${memberName} from ${todaName}? This operator will be reset to NON-TODA.`,
+      confirmLabel: 'Approve Disaffiliation',
+      cancelLabel: 'Cancel',
+      variant: 'danger'
+    });
+    if (!ok) return;
 
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/toda/removal-requests/${id}/approve`, {
@@ -183,7 +213,14 @@ const ValidateTODA = () => {
   };
 
   const handleRejectRemoval = async (id) => {
-    const remarks = window.prompt('Enter reason for rejecting this removal request (optional):', 'Disapproved by Administrator');
+    const remarks = await prompt({
+      title: 'Disapprove Disaffiliation Request',
+      description: 'Enter a reason for rejecting this disaffiliation request (optional):',
+      defaultValue: 'Disapproved by Administrator',
+      placeholder: 'Reason for disapproval...',
+      confirmLabel: 'Reject Request',
+      cancelLabel: 'Cancel'
+    });
     if (remarks === null) return;
 
     try {
@@ -233,17 +270,114 @@ const ValidateTODA = () => {
 
   const groupedToda = useMemo(() => {
     return TODA_LIST.map(todaName => {
+      const todaUpper = todaName.toUpperCase();
       const todaMatchesQuery = isSearching && todaName.toLowerCase().includes(query);
       
-      const allMembersInToda = users.filter(u => (u.todaAssociation || 'NON-TODA').trim().toUpperCase() === todaName.toUpperCase());
+      const allMembersInToda = users.filter(u => (u.todaAssociation || 'NON-TODA').trim().toUpperCase() === todaUpper);
+      const todaFranchises = franchises.filter(f => (f.todaName || 'NON-TODA').trim().toUpperCase() === todaUpper);
+      const todaRosterDoc = rosters.find(r => (r.todaName || '').trim().toUpperCase() === todaUpper) || null;
+      const officialRosterMembers = todaRosterDoc?.members || [];
 
       // Find all submissions associated with this TODA (sorted by latest first)
       const todaSubmissions = submissions.filter(s => 
-        (s.todaAssociation || '').trim().toUpperCase() === todaName.toUpperCase() ||
-        (s.fileName || '').toUpperCase().includes(todaName.toUpperCase())
+        (s.todaAssociation || '').trim().toUpperCase() === todaUpper ||
+        (s.fileName || '').toUpperCase().includes(todaUpper)
       );
       const latestSubmission = todaSubmissions[0] || null;
       const extractedMasterlist = latestSubmission?.extractedMembers || [];
+
+      // Build unified deduplicated member list for this TODA
+      const unifiedMap = [];
+      const findOrAddUnified = (rawName) => {
+        const cleanName = String(rawName || '').trim();
+        if (!cleanName) return null;
+        let existing = unifiedMap.find(item => isNameMatch(item.name, cleanName));
+        if (!existing) {
+          existing = {
+            id: `${todaUpper}-${unifiedMap.length + 1}`,
+            name: cleanName,
+            bodyNumber: '',
+            contact: '',
+            address: '',
+            plateNo: '',
+            makeModel: '',
+            motorNo: '',
+            chassisNo: '',
+            mtopNumber: '',
+            franchiseStatus: null,
+            isRegisteredUser: false,
+            isPresident: false,
+            inOfficialRoster: false,
+            inOcrSubmission: false,
+            sources: []
+          };
+          unifiedMap.push(existing);
+        }
+        return existing;
+      };
+
+      // 1. Official TodaRoster entries
+      officialRosterMembers.forEach((rm) => {
+        const entry = findOrAddUnified(rm.operatorName || rm.name);
+        if (!entry) return;
+        entry.inOfficialRoster = true;
+        if (!entry.sources.includes('Official Roster')) entry.sources.push('Official Roster');
+        if (rm.bodyNumber && !entry.bodyNumber) entry.bodyNumber = rm.bodyNumber;
+        if (rm.plateNo && !entry.plateNo) entry.plateNo = rm.plateNo;
+        if (rm.contactNumber && !entry.contact) entry.contact = rm.contactNumber;
+      });
+
+      // 2. Extracted OCR submission members
+      extractedMasterlist.forEach((em) => {
+        const entry = findOrAddUnified(em.operatorName || em.name);
+        if (!entry) return;
+        entry.inOcrSubmission = true;
+        if (!entry.sources.includes('OCR Masterlist')) entry.sources.push('OCR Masterlist');
+        const bNo = em.bodyNumber || em.unitNo || '';
+        if (bNo && !entry.bodyNumber) entry.bodyNumber = bNo;
+        if (em.plateNo && !entry.plateNo) entry.plateNo = em.plateNo;
+      });
+
+      // 3. Registered App Users in this TODA
+      allMembersInToda.forEach((u) => {
+        const entry = findOrAddUnified(u.name);
+        if (!entry) return;
+        entry.isRegisteredUser = true;
+        entry.userId = u._id;
+        if (String(u.role || '').toLowerCase() === 'toda_president') entry.isPresident = true;
+        if (!entry.sources.includes('App Account')) entry.sources.push('App Account');
+        if (u.contact && !entry.contact) entry.contact = u.contact;
+        if (u.address && !entry.address) entry.address = u.address;
+        const f = getMemberFranchise(u);
+        if (f) {
+          entry.franchiseStatus = f.status;
+          entry.plateNo = f.plateNo || entry.plateNo;
+          entry.makeModel = formatVehicleMakeAndModel(f, '');
+          entry.motorNo = f.motorNo || entry.motorNo;
+          entry.chassisNo = f.chassisNo || entry.chassisNo;
+          entry.mtopNumber = f.mtopNumber || entry.mtopNumber;
+          if (!entry.address && f.address) entry.address = f.address;
+          if (!entry.sources.includes('MTOP Record')) entry.sources.push('MTOP Record');
+        }
+      });
+
+      // 4. Franchise applications explicitly under this TODA
+      todaFranchises.forEach((f) => {
+        const fName = f.fullName || f.operator?.name || '';
+        const entry = findOrAddUnified(fName);
+        if (!entry) return;
+        if (!entry.sources.includes('MTOP Record')) entry.sources.push('MTOP Record');
+        if (!entry.franchiseStatus || f.status === 'Active') {
+          entry.franchiseStatus = f.status;
+        }
+        if (f.plateNo && !entry.plateNo) entry.plateNo = f.plateNo;
+        if (!entry.makeModel) entry.makeModel = formatVehicleMakeAndModel(f, '');
+        if (f.motorNo && !entry.motorNo) entry.motorNo = f.motorNo;
+        if (f.chassisNo && !entry.chassisNo) entry.chassisNo = f.chassisNo;
+        if (f.mtopNumber && !entry.mtopNumber) entry.mtopNumber = f.mtopNumber;
+        if (f.address && !entry.address) entry.address = f.address;
+        if (f.contact && !entry.contact) entry.contact = f.contact;
+      });
       
       const matchingMembers = allMembersInToda.filter(member => {
         if (!isSearching) return true;
@@ -261,33 +395,43 @@ const ValidateTODA = () => {
         return nameMatch || contactMatch || addressMatch || plateMatch || motorMatch || chassisMatch;
       });
 
-      const masterlistMatchesQuery = isSearching && extractedMasterlist.some(m => 
-        (m.name || '').toLowerCase().includes(query) ||
-        (m.unitNo || '').toLowerCase().includes(query) ||
-        (m.plateNo || '').toLowerCase().includes(query)
-      );
+      const matchingCombinedMembers = unifiedMap.filter(m => {
+        if (!isSearching || todaMatchesQuery) return true;
+        return (
+          (m.name || '').toLowerCase().includes(query) ||
+          (m.bodyNumber || '').toLowerCase().includes(query) ||
+          (m.plateNo || '').toLowerCase().includes(query) ||
+          (m.address || '').toLowerCase().includes(query) ||
+          (m.contact || '').toLowerCase().includes(query) ||
+          (m.motorNo || '').toLowerCase().includes(query)
+        );
+      });
 
-      const compliantCount = allMembersInToda.filter(m => {
-        const f = getMemberFranchise(m);
-        return f && f.status === 'Active';
-      }).length;
-
-      const totalCount = allMembersInToda.length;
+      const compliantCount = unifiedMap.filter(m => m.franchiseStatus === 'Active').length;
+      const totalCount = unifiedMap.length;
+      const registeredCount = unifiedMap.filter(m => m.isRegisteredUser).length;
+      const rosterCount = unifiedMap.filter(m => m.inOfficialRoster || m.inOcrSubmission).length;
       const complianceRate = totalCount > 0 ? Math.round((compliantCount / totalCount) * 100) : 0;
-      const colorumCount = totalCount - compliantCount;
+      const colorumCount = Math.max(0, totalCount - compliantCount);
 
       return {
         name: todaName,
         members: matchingMembers,
+        combinedMembers: unifiedMap,
+        matchingCombinedMembers,
         totalCount,
+        compliantCount,
+        registeredCount,
+        rosterCount,
         complianceRate,
         colorumCount,
         latestSubmission,
         todaSubmissions,
-        extractedMasterlist
+        extractedMasterlist,
+        todaRosterDoc
       };
-    }).filter(toda => !isSearching || toda.members.length > 0 || toda.todaSubmissions.length > 0 || toda.extractedMasterlist.length > 0);
-  }, [users, franchises, submissions, searchQuery, isSearching]);
+    }).filter(toda => !isSearching || toda.matchingCombinedMembers.length > 0 || toda.members.length > 0 || toda.todaSubmissions.length > 0 || toda.extractedMasterlist.length > 0);
+  }, [users, franchises, submissions, rosters, searchQuery, isSearching]);
 
   const filteredSubmissions = useMemo(() => {
     return submissions.filter(sub => {
@@ -323,7 +467,7 @@ const ValidateTODA = () => {
         {/* Analytics & Metrics Strip */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {/* Recognized TODAs */}
-          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3.5 sm:p-4 shadow-xs flex items-center gap-3">
+          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3.5 sm:p-4 shadow-sm flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37] shrink-0 border border-[#9E2A2B]/20 dark:border-[#D4AF37]/30">
               <Building2 size={18} />
             </div>
@@ -337,7 +481,7 @@ const ValidateTODA = () => {
           </div>
 
           {/* Registered Operators */}
-          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3.5 sm:p-4 shadow-xs flex items-center gap-3">
+          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3.5 sm:p-4 shadow-sm flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-blue-50 dark:bg-blue-950/40 flex items-center justify-center text-blue-700 dark:text-blue-400 shrink-0 border border-blue-200 dark:border-blue-800/40">
               <Users size={18} />
             </div>
@@ -351,7 +495,7 @@ const ValidateTODA = () => {
           </div>
 
           {/* Active MTOP */}
-          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3.5 sm:p-4 shadow-xs flex items-center gap-3">
+          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3.5 sm:p-4 shadow-sm flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 flex items-center justify-center text-emerald-700 dark:text-emerald-400 shrink-0 border border-emerald-200 dark:border-emerald-800/40">
               <ShieldCheck size={18} />
             </div>
@@ -365,7 +509,7 @@ const ValidateTODA = () => {
           </div>
 
           {/* Pending Actions */}
-          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3.5 sm:p-4 shadow-xs flex items-center gap-3">
+          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3.5 sm:p-4 shadow-sm flex items-center gap-3">
             <div className="w-9 h-9 rounded-lg bg-amber-50 dark:bg-amber-950/40 flex items-center justify-center text-amber-700 dark:text-amber-400 shrink-0 border border-amber-200 dark:border-amber-800/40">
               <Clock size={18} />
             </div>
@@ -380,7 +524,7 @@ const ValidateTODA = () => {
         </div>
 
         {/* Content Tabs & Main Card */}
-        <div className="bg-white dark:bg-[#1C1917] rounded-lg shadow-xs border border-[#E4E1DC] dark:border-[#2E2A27] overflow-hidden transition-colors">
+        <div className="bg-white dark:bg-[#1C1917] rounded-lg shadow-sm border border-[#E4E1DC] dark:border-[#2E2A27] overflow-hidden transition-colors">
           {/* 3-Tab Header */}
           <div className="flex border-b border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F]">
             <button 
@@ -404,7 +548,7 @@ const ValidateTODA = () => {
             >
               <FileText size={16} /> Document Validations &amp; OCR
               {submissions.filter(s => s.status !== 'Approved').length > 0 && (
-                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-amber-500 text-white">
+                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-500 text-white">
                   {submissions.filter(s => s.status !== 'Approved').length}
                 </span>
               )}
@@ -420,7 +564,7 @@ const ValidateTODA = () => {
             >
               <UserMinus size={16} /> Disaffiliation Requests
               {pendingRemovalsCount > 0 && (
-                <span className="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-red-600 text-white animate-pulse">
+                <span className="px-1.5 py-0.5 rounded-full text-[10px] font-bold bg-red-600 text-white animate-pulse">
                   {pendingRemovalsCount}
                 </span>
               )}
@@ -431,11 +575,11 @@ const ValidateTODA = () => {
           {activeTab === 'directory' && (
             <div className="p-4 sm:p-5 space-y-4">
               <div className="flex flex-col sm:flex-row justify-between items-center gap-3">
-                <div className="relative w-full sm:w-96">
+                <div className="relative w-full md:max-w-md">
                   <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6B6761] dark:text-[#A8A29E]" size={15} />
                   <input 
                     type="text" 
-                    placeholder="Search by driver name, plate no., barangay, motor no., or TODA..." 
+                    placeholder="Search driver, plate no., barangay, or TODA..." 
                     value={searchQuery} 
                     onChange={(e) => setSearchQuery(e.target.value)} 
                     className="w-full bg-white dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg pl-9 pr-9 py-2 text-xs sm:text-sm font-medium text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] transition-colors" 
@@ -470,337 +614,77 @@ const ValidateTODA = () => {
                   )}
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {groupedToda.map((toda) => {
-                    const isOpen = isSearching || expandedToda === toda.name;
-
-                    return (
-                      <div 
-                        key={toda.name} 
-                        className={`border rounded-lg overflow-hidden transition-colors ${
-                          isOpen 
-                            ? 'border-[#9E2A2B] dark:border-[#D4AF37]' 
-                            : 'border-[#E4E1DC] dark:border-[#2E2A27] hover:border-[#9E2A2B]/40'
-                        }`}
-                      >
-                        <button 
-                          onClick={() => setExpandedToda(expandedToda === toda.name ? null : toda.name)}
-                          className={`w-full p-3.5 sm:p-4 flex justify-between items-center transition-colors text-left cursor-pointer ${
-                            isOpen 
-                              ? 'bg-[#F6F5F3] dark:bg-[#2E2A27]/30' 
-                              : 'bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3]/60 dark:hover:bg-[#14110F]/60'
-                          }`}
-                        >
-                          <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-8 h-8 bg-[#9E2A2B] text-white font-semibold rounded-lg flex items-center justify-center text-xs shrink-0">
-                              {(toda.name || '').substring(0, 3)}
-                            </div>
-                            <div className="min-w-0">
-                              <h3 className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] text-sm sm:text-base truncate">
-                                {toda.name}
-                              </h3>
-                              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
-                                {(toda.members || []).length} {(toda.members || []).length === 1 ? 'Driver' : 'Drivers'} 
-                                {toda.totalCount !== (toda.members || []).length && ` (filtered from ${toda.totalCount})`}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-2 sm:gap-3 shrink-0 flex-wrap justify-end">
-                            <span className={`text-[11px] font-semibold px-2 py-0.5 rounded border ${
-                              toda.complianceRate >= 80 
-                                ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800' 
-                                : toda.complianceRate >= 50 
-                                  ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800' 
-                                  : 'bg-red-50 dark:bg-red-950/40 text-red-800 dark:text-red-300 border-red-300 dark:border-red-800'
-                            }`}>
-                              {toda.complianceRate}% Compliant
+                <div className="grid grid-cols-1 gap-2.5">
+                  {groupedToda.map((toda) => (
+                    <div 
+                      key={toda.name} 
+                      onClick={() => {
+                        setSelectedTodaModal(toda);
+                        setTodaModalSearch('');
+                        setTodaModalFilter('all');
+                      }}
+                      className="group border border-[#E4E1DC] dark:border-[#2E2A27] hover:border-[#9E2A2B]/50 dark:hover:border-[#D4AF37]/50 rounded-xl bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3]/60 dark:hover:bg-[#14110F]/60 p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 transition-all shadow-sm cursor-pointer"
+                    >
+                      <div className="flex items-center gap-3.5 min-w-0">
+                        <div className="w-10 h-10 bg-[#9E2A2B] text-white font-bold rounded-xl flex items-center justify-center text-xs shrink-0 shadow-sm tracking-wider">
+                          {(toda.name || '').substring(0, 3)}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] text-sm sm:text-base truncate group-hover:text-[#9E2A2B] dark:group-hover:text-[#D4AF37] transition-colors">
+                              {toda.name}
+                            </h3>
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] border border-[#9E2A2B]/20 dark:border-[#D4AF37]/30 font-mono tabular-nums">
+                              <Users size={11} />
+                              <span>{toda.totalCount} {toda.totalCount === 1 ? 'Member' : 'Members'}</span>
                             </span>
-                            {toda.colorumCount > 0 && (
-                              <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800/60" title={`${toda.colorumCount} driver(s) without active MTOP`}>
-                                <AlertTriangle size={11} /> {toda.colorumCount} At-Risk
-                              </span>
-                            )}
-                            <span className="text-xs font-semibold bg-white dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] px-2.5 py-0.5 rounded-lg text-[#1F1D1B] dark:text-[#F6F5F3] font-mono tabular-nums">
-                              {(toda.members || []).length}
-                            </span>
-                            <div className={`p-1 text-[#6B6761] dark:text-[#A8A29E] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
-                              <ChevronDown size={16} />
-                            </div>
                           </div>
-                        </button>
-                        
-                        {/* Sub-tab Navigation and Content inside opened TODA card */}
-                        {isOpen && (
-                          <div className="bg-white dark:bg-[#1C1917] border-t border-[#E4E1DC] dark:border-[#2E2A27]">
-                            {/* Sub-Tab Header */}
-                            <div className="flex items-center gap-2 px-4 py-2 bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] overflow-x-auto">
-                              <button
-                                type="button"
-                                onClick={() => setTodaActiveSubTabs(prev => ({ ...prev, [toda.name]: 'roster' }))}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer min-h-[34px] ${
-                                  (todaActiveSubTabs[toda.name] || 'roster') === 'roster'
-                                    ? 'bg-[#9E2A2B] text-white shadow-xs'
-                                    : 'bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-neutral-100'
-                                }`}
-                              >
-                                <Sparkles size={13} />
-                                <span>Official Scanned Roster</span>
-                                <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
-                                  (todaActiveSubTabs[toda.name] || 'roster') === 'roster' 
-                                    ? 'bg-white/20 text-white' 
-                                    : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1]'
-                                }`}>
-                                  {toda.latestSubmission ? (toda.latestSubmission.extractedCount || toda.latestSubmission.extractedMembers?.length || 0) : 0}
-                                </span>
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => setTodaActiveSubTabs(prev => ({ ...prev, [toda.name]: 'drivers' }))}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer min-h-[34px] ${
-                                  todaActiveSubTabs[toda.name] === 'drivers'
-                                    ? 'bg-[#9E2A2B] text-white shadow-xs'
-                                    : 'bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-neutral-100'
-                                }`}
-                              >
-                                <Users size={13} />
-                                <span>Registered App Drivers</span>
-                                <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
-                                  todaActiveSubTabs[toda.name] === 'drivers' 
-                                    ? 'bg-white/20 text-white' 
-                                    : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1]'
-                                }`}>
-                                  {toda.members?.length || 0}
-                                </span>
-                              </button>
-                            </div>
-
-                            {/* SUB-TAB 1: OFFICIAL EXTRACTED MASTERLIST ROSTER */}
-                            {(todaActiveSubTabs[toda.name] || 'roster') === 'roster' && (
-                              <div className="p-3.5 sm:p-4 space-y-3">
-                                {toda.latestSubmission ? (
-                                  <>
-                                    {/* Submission Info Bar */}
-                                    <div className="p-3 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                                      <div className="space-y-1">
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                          <div className="flex items-center gap-1 text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                                            <FileText size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                                            <span>{toda.latestSubmission.fileName}</span>
-                                          </div>
-                                          <StatusBadge 
-                                            status={toda.latestSubmission.status === 'Approved' ? 'Active' : 'Pending'} 
-                                            label={toda.latestSubmission.status} 
-                                          />
-                                          <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
-                                            <Sparkles size={11} />
-                                            <span>{toda.latestSubmission.extractedCount || toda.latestSubmission.extractedMembers?.length || 0} Members Digitized</span>
-                                          </span>
-                                        </div>
-                                        <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
-                                          Submitted by TODA President: <strong className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{toda.latestSubmission.presidentName}</strong> on {new Date(toda.latestSubmission.createdAt).toLocaleDateString()}
-                                        </p>
-                                      </div>
-
-                                      <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                                        {toda.latestSubmission.filePath && (
-                                          <a
-                                            href={toda.latestSubmission.filePath.startsWith('http') ? toda.latestSubmission.filePath : `${import.meta.env.VITE_API_URL}/${toda.latestSubmission.filePath}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] hover:bg-neutral-100 transition-colors shadow-xs"
-                                          >
-                                            <Eye size={12} />
-                                            <span>View Document</span>
-                                          </a>
-                                        )}
-                                        {toda.latestSubmission.status !== 'Approved' && (
-                                          <button
-                                            type="button"
-                                            onClick={() => handleApprove(toda.latestSubmission._id)}
-                                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-colors shadow-xs cursor-pointer"
-                                          >
-                                            <CheckCircle size={12} />
-                                            <span>Approve Masterlist</span>
-                                          </button>
-                                        )}
-                                        {(toda.latestSubmission.extractedCount === 0 || !toda.latestSubmission.extractedMembers?.length) && (
-                                          <button
-                                            type="button"
-                                            onClick={() => handleRescan(toda.latestSubmission._id)}
-                                            disabled={isRescanning}
-                                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white text-xs font-bold transition-colors shadow-xs cursor-pointer"
-                                          >
-                                            <RefreshCw size={12} className={isRescanning ? 'animate-spin' : ''} />
-                                            <span>Re-scan with AI OCR</span>
-                                          </button>
-                                        )}
-                                      </div>
-                                    </div>
-
-                                    {/* Extracted Members Table */}
-                                    <div className="overflow-x-auto rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
-                                      <table className="w-full text-left border-collapse text-xs min-w-[620px]">
-                                        <thead>
-                                          <tr className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] font-semibold text-[11px] uppercase tracking-wider">
-                                            <th className="p-2.5 pl-4 w-12 text-center">#</th>
-                                            <th className="p-2.5">Certified Member Name</th>
-                                            <th className="p-2.5 w-28">Body No.</th>
-                                            <th className="p-2.5 pr-4 text-right">App Registration Status</th>
-                                          </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
-                                          {(!toda.latestSubmission.extractedMembers || toda.latestSubmission.extractedMembers.length === 0) ? (
-                                            <tr>
-                                              <td colSpan="4" className="p-6 text-center text-xs text-[#6B6761] dark:text-[#A8A29E]">
-                                                <p className="font-semibold text-sm mb-1 text-[#1F1D1B] dark:text-[#EAE7E1]">0 member records digitized from this file.</p>
-                                                <p className="text-[11px] mb-3">This file was uploaded as a document attachment without digitized rows.</p>
-                                                <button
-                                                  type="button"
-                                                  onClick={() => handleRescan(toda.latestSubmission._id)}
-                                                  disabled={isRescanning}
-                                                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white text-xs font-bold cursor-pointer transition-all shadow-xs"
-                                                >
-                                                  <Sparkles size={13} />
-                                                  <span>Run AI OCR Re-scan on Document</span>
-                                                </button>
-                                              </td>
-                                            </tr>
-                                          ) : (
-                                            (toda.latestSubmission?.extractedMembers || []).filter(Boolean).map((m, idx) => {
-                                              const todaUsers = users.filter(u => (u.todaAssociation || '').trim().toUpperCase() === (toda.name || '').toUpperCase());
-                                              const matchedUser = todaUsers.find(u => isNameMatch(u.name, m?.name)) ||
-                                                                  users.find(u => isNameMatch(u.name, m?.name));
-                                              const displayName = m?.operatorName || m?.name || '';
-                                              const displayBodyNo = m?.bodyNumber || m?.unitNo || '';
-                                              const franchise = matchedUser ? getMemberFranchise(matchedUser) : null;
-
-                                              return (
-                                                <tr key={idx} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50 transition-colors">
-                                                  <td className="p-2.5 pl-4 font-mono text-[#6B6761]">{idx + 1}</td>
-                                                  <td className="p-2.5 font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                                                    <div className="flex items-center gap-2">
-                                                      <span className="w-6 h-6 rounded-full bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/25 text-[#9E2A2B] dark:text-[#EAE7E1] flex items-center justify-center text-[10px] font-bold shrink-0">
-                                                        {(displayName || 'M').split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()}
-                                                      </span>
-                                                      <span>{displayName}</span>
-                                                    </div>
-                                                  </td>
-                                                  <td className="p-2.5 font-mono font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                                                    {displayBodyNo ? (
-                                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-xs text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27]">
-                                                        <Hash size={11} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                                                        {displayBodyNo}
-                                                      </span>
-                                                    ) : (
-                                                      <span className="text-[#6B6761] dark:text-[#A8A29E] text-[11px] italic">Not set</span>
-                                                    )}
-                                                  </td>
-                                                  <td className="p-2.5 pr-4 text-right">
-                                                    {matchedUser ? (
-                                                      <div className="inline-flex items-center gap-1.5 flex-wrap justify-end">
-                                                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
-                                                          <CheckCircle2 size={11} />
-                                                          <span>Registered User</span>
-                                                        </span>
-                                                        {franchise && <StatusBadge status={franchise.status} />}
-                                                      </div>
-                                                    ) : (
-                                                      <span className="inline-flex items-center text-[11px] font-semibold text-neutral-500 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded">
-                                                        Not Registered in App
-                                                      </span>
-                                                    )}
-                                                  </td>
-                                                </tr>
-                                              );
-                                            })
-                                          )}
-                                        </tbody>
-                                      </table>
-                                    </div>
-                                  </>
-                                ) : (
-                                  <div className="text-center py-8 bg-[#F6F5F3]/50 dark:bg-[#14110F]/50 rounded-lg border border-dashed border-[#E4E1DC] dark:border-[#2E2A27]">
-                                    <FileText size={26} className="mx-auto mb-2 opacity-40 text-[#6B6761]" />
-                                    <p className="font-bold text-xs sm:text-sm text-[#1F1D1B] dark:text-[#EAE7E1]">
-                                      No Official Masterlist Document Submitted Yet
-                                    </p>
-                                    <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5 max-w-sm mx-auto">
-                                      The association officer of {toda.name} has not submitted a signed endorsement roster masterlist yet.
-                                    </p>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-
-                            {/* SUB-TAB 2: REGISTERED APP DRIVERS */}
-                            {todaActiveSubTabs[toda.name] === 'drivers' && (
-                              <div className="overflow-x-auto">
-                                <table className="w-full text-left border-collapse min-w-[650px]">
-                                  <thead>
-                                    <tr className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] text-xs uppercase tracking-wider font-semibold">
-                                      <th className="p-3 pl-5">Operator Name</th>
-                                      <th className="p-3">Barangay Residence</th>
-                                      <th className="p-3">Plate No</th>
-                                      <th className="p-3">Motor / Chassis No</th>
-                                      <th className="p-3 pr-5">Compliance Status</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27] text-xs">
-                                    {(toda.members || []).length === 0 ? (
-                                      <tr>
-                                        <td colSpan="5" className="p-6 text-center text-[#6B6761] dark:text-[#A8A29E]">
-                                          No registered user accounts found for this association.
-                                        </td>
-                                      </tr>
-                                    ) : (
-                                      (toda.members || []).map((member) => {
-                                        const franchise = getMemberFranchise(member);
-                                        const isCompliant = franchise && franchise.status === 'Active';
-
-                                        return (
-                                          <tr key={member._id} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50 transition-colors">
-                                            <td className="p-3 pl-5 font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
-                                              {member.name}
-                                              {member.contact && (
-                                                <span className="block text-[11px] font-normal text-[#6B6761] dark:text-[#A8A29E]">
-                                                  {member.contact}
-                                                </span>
-                                              )}
-                                            </td>
-                                            <td className="p-3 text-[#6B6761] dark:text-[#A8A29E]">
-                                              {member.address || 'N/A'}
-                                            </td>
-                                            <td className="p-3 font-mono text-[#1F1D1B] dark:text-[#F6F5F3]">
-                                              {franchise?.plateNo || 'NO RECORD'}
-                                            </td>
-                                            <td className="p-3 text-[#6B6761] dark:text-[#A8A29E] font-mono text-[11px]">
-                                              <div>{franchise?.motorNo ? `M: ${franchise.motorNo}` : '—'}</div>
-                                              <div>{franchise?.chassisNo ? `C: ${franchise.chassisNo}` : '—'}</div>
-                                            </td>
-                                            <td className="p-3 pr-5">
-                                              {franchise ? (
-                                                <StatusBadge status={franchise.status} />
-                                              ) : (
-                                                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-neutral-500 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded">
-                                                  No Franchise Application
-                                                </span>
-                                              )}
-                                            </td>
-                                          </tr>
-                                        );
-                                      })
-                                    )}
-                                  </tbody>
-                                </table>
-                              </div>
+                          <div className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1 flex items-center gap-2 flex-wrap">
+                            <span className="font-medium">{toda.registeredCount} App Account{toda.registeredCount === 1 ? '' : 's'}</span>
+                            <span className="text-[#E4E1DC] dark:text-[#2E2A27]">•</span>
+                            <span className="font-medium text-emerald-700 dark:text-emerald-400">{toda.compliantCount} Active MTOP</span>
+                            {toda.rosterCount > 0 && (
+                              <>
+                                <span className="text-[#E4E1DC] dark:text-[#2E2A27]">•</span>
+                                <span className="font-medium">{toda.rosterCount} Official Roster</span>
+                              </>
                             )}
                           </div>
-                        )}
+                        </div>
                       </div>
-                    );
-                  })}
+
+                      <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 flex-wrap sm:justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-[#E4E1DC]/70 dark:border-[#2E2A27]">
+                        <span className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border tabular-nums ${
+                          toda.complianceRate >= 80 
+                            ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60' 
+                            : toda.complianceRate >= 50 
+                              ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800/60' 
+                              : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E] border-[#E4E1DC] dark:border-[#2E2A27]'
+                        }`}>
+                          {toda.complianceRate}% Compliant
+                        </span>
+                        {toda.colorumCount > 0 && (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60" title={`${toda.colorumCount} member(s) without active MTOP`}>
+                            <AlertTriangle size={11} /> {toda.colorumCount} Pending MTOP
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedTodaModal(toda);
+                            setTodaModalSearch('');
+                            setTodaModalFilter('all');
+                          }}
+                          className="ml-auto sm:ml-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white text-xs font-semibold transition-all shadow-sm active:scale-95 cursor-pointer whitespace-nowrap"
+                          title={`Open full member list modal for ${toda.name}`}
+                        >
+                          <Users size={13} />
+                          <span>See Members ({toda.totalCount})</span>
+                        </button>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -809,28 +693,36 @@ const ValidateTODA = () => {
           {/* TAB 2: DOCUMENT VALIDATIONS & OCR */}
           {activeTab === 'validations' && (
             <>
-              <div className="p-4 sm:p-5 border-b border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col sm:flex-row gap-4 justify-between items-center bg-[#F6F5F3] dark:bg-[#14110F]">
+              <div className="p-4 sm:p-5 border-b border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center bg-[#F6F5F3]/70 dark:bg-[#14110F]">
+                <div>
+                  <h3 className="text-sm font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
+                    Submitted TODA Masterlists &amp; AI OCR Digitization
+                  </h3>
+                  <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                    Verify official roster documents uploaded by TODA Presidents and inspect AI-extracted member records.
+                  </p>
+                </div>
                 <div className="relative w-full sm:w-80">
                   <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6B6761] dark:text-[#A8A29E]" size={15} />
                   <input 
                     type="text" 
-                    placeholder="Search by TODA President or filename..." 
+                    placeholder="Search by TODA, President, or filename..." 
                     value={searchQuery} 
                     onChange={(e) => setSearchQuery(e.target.value)} 
-                    className="w-full bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg pl-9 pr-3.5 py-1.5 text-xs sm:text-sm font-medium text-[#1F1D1B] dark:text-[#F6F5F3] placeholder-[#6B6761] dark:placeholder-[#A8A29E] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] transition-colors" 
+                    className="w-full bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg pl-9 pr-3.5 py-2 text-xs sm:text-sm font-medium text-[#1F1D1B] dark:text-[#F6F5F3] placeholder-[#6B6761] dark:placeholder-[#A8A29E] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] transition-colors" 
                   />
                 </div>
               </div>
               
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full text-left border-collapse min-w-[780px]">
                   <thead>
-                    <tr className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] text-xs uppercase tracking-wider font-semibold">
-                      <th className="p-3.5 pl-5">Submitted By</th>
-                      <th className="p-3.5">Document &amp; AI OCR Scan</th>
-                      <th className="p-3.5">Date Submitted</th>
-                      <th className="p-3.5">Status</th>
-                      <th className="p-3.5 text-center pr-5">Action</th>
+                    <tr className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] text-[11px] uppercase tracking-wider font-semibold">
+                      <th className="py-3 pl-5 pr-3">TODA &amp; Submitted By</th>
+                      <th className="py-3 px-3">Roster File &amp; AI Extraction</th>
+                      <th className="py-3 px-3 whitespace-nowrap">Date Submitted</th>
+                      <th className="py-3 px-3">Status</th>
+                      <th className="py-3 pl-3 pr-5 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27] text-xs">
@@ -842,85 +734,98 @@ const ValidateTODA = () => {
                       filteredSubmissions.map((sub) => (
                         <tr 
                           key={sub._id} 
-                          className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50 transition-colors"
+                          className="hover:bg-[#F6F5F3]/60 dark:hover:bg-[#14110F]/60 transition-colors"
                         >
-                          <td className="p-3.5 pl-5">
-                            <p className="font-semibold text-sm text-[#1F1D1B] dark:text-[#F6F5F3]">{sub.presidentName}</p>
-                            {sub.todaAssociation && (
-                              <span className="text-[10px] font-bold text-[#9E2A2B] dark:text-[#D4AF37]">
-                                {sub.todaAssociation}
-                              </span>
-                            )}
-                          </td>
-                          <td className="p-3.5">
-                            <div className="flex items-center gap-2 text-xs sm:text-sm font-medium text-[#1F1D1B] dark:text-[#F6F5F3]">
-                              <FileText size={15} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" /> 
-                              <span className="truncate max-w-xs">{sub.fileName}</span>
+                          <td className="py-3.5 pl-5 pr-3">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-8 h-8 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] font-bold text-[11px] flex items-center justify-center shrink-0 border border-[#9E2A2B]/20 dark:border-[#D4AF37]/30">
+                                {(sub.todaAssociation || 'TOD').substring(0, 3)}
+                              </div>
+                              <div className="min-w-0">
+                                {sub.todaAssociation && (
+                                  <span className="inline-block text-[11px] font-bold uppercase tracking-wider text-[#9E2A2B] dark:text-[#D4AF37]">
+                                    {sub.todaAssociation}
+                                  </span>
+                                )}
+                                <p className="font-semibold text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3] truncate max-w-[220px]" title={sub.presidentName}>
+                                  {sub.presidentName}
+                                </p>
+                              </div>
                             </div>
-                            {sub.extractedCount > 0 ? (
-                              <button
-                                type="button"
-                                onClick={() => setSelectedSubmissionOCR(sub)}
-                                className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 cursor-pointer transition-colors"
-                              >
-                                <Sparkles size={11} />
-                                <span>{sub.extractedCount} members extracted via OCR • View List</span>
-                              </button>
-                            ) : (
-                              <div className="mt-1 flex items-center gap-2 flex-wrap">
-                                <span className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] italic">
-                                  0 members digitized
-                                </span>
+                          </td>
+                          <td className="py-3.5 px-3">
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
+                                <FileText size={14} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" /> 
+                                <span className="truncate max-w-[240px]" title={sub.fileName}>{sub.fileName}</span>
+                              </div>
+                              {sub.extractedCount > 0 ? (
+                                <div className="flex items-center gap-1.5">
+                                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800/60">
+                                    <Sparkles size={11} />
+                                    <span>{sub.extractedCount} {sub.extractedCount === 1 ? 'member' : 'members'} digitized via AI OCR</span>
+                                  </span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] italic">
+                                    0 members digitized
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRescan(sub._id)}
+                                    disabled={isRescanning}
+                                    className="inline-flex items-center gap-1 text-[11px] font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer"
+                                  >
+                                    <RefreshCw size={11} className={isRescanning ? 'animate-spin' : ''} />
+                                    <span>Re-scan</span>
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-3.5 px-3 text-xs text-[#6B6761] dark:text-[#A8A29E] font-mono tabular-nums whitespace-nowrap">
+                            {new Date(sub.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </td>
+                          <td className="py-3.5 px-3 whitespace-nowrap">
+                            <StatusBadge status={sub.status === 'Approved' ? 'Active' : 'Pending'} customLabel={sub.status === 'Approved' ? 'Approved' : sub.status} />
+                          </td>
+                          <td className="py-3.5 pl-3 pr-5 text-right whitespace-nowrap">
+                            <div className="inline-flex items-center justify-end gap-1.5">
+                              {(() => {
+                                const fileUrl = sub.filePath?.startsWith('http') ? sub.filePath : `${import.meta.env.VITE_API_URL}/${sub.filePath}`;
+                                return (
+                                  <a 
+                                    href={fileUrl} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] text-xs font-semibold rounded-lg transition-colors border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm"
+                                  >
+                                    <Eye size={13} />
+                                    <span>View File</span>
+                                  </a>
+                                );
+                              })()}
+                              {sub.extractedCount > 0 && (
                                 <button
                                   type="button"
-                                  onClick={() => handleRescan(sub._id)}
-                                  disabled={isRescanning}
-                                  className="inline-flex items-center gap-1 text-[11px] font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer"
+                                  onClick={() => setSelectedSubmissionOCR(sub)}
+                                  className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-[#9E2A2B]/10 hover:bg-[#9E2A2B]/15 dark:bg-[#D4AF37]/15 dark:hover:bg-[#D4AF37]/25 text-[#9E2A2B] dark:text-[#D4AF37] border border-[#9E2A2B]/25 dark:border-[#D4AF37]/30 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
                                 >
-                                  <RefreshCw size={11} className={isRescanning ? 'animate-spin' : ''} />
-                                  <span>Re-scan with AI OCR</span>
+                                  <Users size={13} />
+                                  <span>View Roster ({sub.extractedCount})</span>
                                 </button>
-                              </div>
-                            )}
-                          </td>
-                          <td className="p-3.5 text-xs text-[#6B6761] dark:text-[#A8A29E] font-mono tabular-nums">{new Date(sub.createdAt).toLocaleDateString()}</td>
-                          <td className="p-3.5">
-                            <StatusBadge status={sub.status === 'Approved' ? 'Active' : 'Pending'} label={sub.status} />
-                          </td>
-                          <td className="p-3.5 pr-5 text-center space-x-2 flex justify-center flex-wrap gap-1">
-                            {(() => {
-                              const fileUrl = sub.filePath?.startsWith('http') ? sub.filePath : `${import.meta.env.VITE_API_URL}/${sub.filePath}`;
-                              return (
-                                <a 
-                                  href={fileUrl} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer" 
-                                  className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] text-xs font-medium rounded-lg transition-colors border border-[#E4E1DC] dark:border-[#2E2A27]"
+                              )}
+                              {sub.status !== 'Approved' && (
+                                <button 
+                                  onClick={() => handleApprove(sub._id)} 
+                                  className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors bg-emerald-700 hover:bg-emerald-800 text-white border border-emerald-700 shadow-sm cursor-pointer"
                                 >
-                                  <Eye size={13} /> View File
-                                </a>
-                              );
-                            })()}
-                            {sub.extractedCount > 0 && (
-                              <button
-                                type="button"
-                                onClick={() => setSelectedSubmissionOCR(sub)}
-                                className="inline-flex items-center justify-center gap-1 px-2.5 py-1.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 rounded-lg text-xs font-semibold hover:bg-emerald-100 transition-colors cursor-pointer"
-                              >
-                                <Sparkles size={12} /> View Roster
-                              </button>
-                            )}
-                            <button 
-                              onClick={() => handleApprove(sub._id)} 
-                              disabled={sub.status === 'Approved'} 
-                              className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors border ${
-                                sub.status === 'Approved' 
-                                  ? 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E] border-[#E4E1DC] dark:border-[#2E2A27] cursor-not-allowed' 
-                                  : 'bg-emerald-700 hover:bg-emerald-800 text-white border-emerald-700 cursor-pointer'
-                              }`}
-                            >
-                              <CheckCircle size={13} /> {sub.status === 'Approved' ? 'Approved' : 'Approve & Ingest'}
-                            </button>
+                                  <CheckCircle size={13} />
+                                  <span>Approve</span>
+                                </button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       ))
@@ -955,7 +860,75 @@ const ValidateTODA = () => {
                 </div>
               </div>
 
-              <div className="overflow-x-auto">
+              {/* Mobile Disaffiliation Request Cards */}
+              <div className="md:hidden divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
+                {filteredRemovals.length === 0 ? (
+                  <div className="p-8 text-center text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                    No member disaffiliation requests filed yet.
+                  </div>
+                ) : (
+                  filteredRemovals.map((rem) => (
+                    <div key={rem._id} className="p-4 space-y-2.5 bg-white dark:bg-[#1C1917]">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <span className="font-bold text-xs text-[#9E2A2B] dark:text-[#D4AF37] block">
+                            {rem.todaName}
+                          </span>
+                          <p className="font-bold text-sm text-[#1F1D1B] dark:text-[#F6F5F3] truncate mt-0.5">
+                            {rem.memberName}
+                          </p>
+                          <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
+                            Pres: {rem.presidentName} • {new Date(rem.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <StatusBadge
+                          status={rem.status === 'Approved' ? 'Active' : (rem.status === 'Rejected' ? 'Expired' : 'Pending')}
+                          customLabel={rem.status}
+                        />
+                      </div>
+
+                      <div className="p-2.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs space-y-0.5">
+                        <span className="font-semibold text-red-700 dark:text-red-400 block">
+                          {rem.reason}
+                        </span>
+                        {rem.details && (
+                          <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] break-words">
+                            {rem.details}
+                          </p>
+                        )}
+                      </div>
+
+                      {rem.status === 'Pending' ? (
+                        <div className="flex items-center gap-2 pt-1">
+                          <button
+                            type="button"
+                            onClick={() => handleApproveRemoval(rem._id, rem.memberName, rem.todaName)}
+                            className="flex-1 min-h-[38px] px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-colors shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
+                          >
+                            <Check size={13} />
+                            <span>Approve Disaffiliation</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleRejectRemoval(rem._id)}
+                            className="min-h-[38px] px-3 py-1.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E] hover:text-red-600 text-xs font-bold transition-colors cursor-pointer flex items-center justify-center gap-1"
+                          >
+                            <X size={13} />
+                            <span>Reject</span>
+                          </button>
+                        </div>
+                      ) : (
+                        <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] italic">
+                          {rem.adminRemarks || `Request ${rem.status}`}
+                        </p>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* Desktop Disaffiliation Request Table */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-left border-collapse min-w-[760px]">
                   <thead>
                     <tr className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] text-xs uppercase tracking-wider font-semibold">
@@ -971,7 +944,7 @@ const ValidateTODA = () => {
                     {filteredRemovals.length === 0 ? (
                       <tr>
                         <td colSpan="6" className="p-12 text-center text-xs text-[#6B6761] dark:text-[#A8A29E]">
-                          No member removal requests filed yet.
+                          No member disaffiliation requests filed yet.
                         </td>
                       </tr>
                     ) : (
@@ -1007,7 +980,7 @@ const ValidateTODA = () => {
                           <td className="p-3.5">
                             <StatusBadge 
                               status={rem.status === 'Approved' ? 'Active' : (rem.status === 'Rejected' ? 'Expired' : 'Pending')} 
-                              label={rem.status} 
+                              customLabel={rem.status} 
                             />
                           </td>
                           <td className="p-3.5 pr-5 text-center">
@@ -1016,10 +989,10 @@ const ValidateTODA = () => {
                                 <button
                                   type="button"
                                   onClick={() => handleApproveRemoval(rem._id, rem.memberName, rem.todaName)}
-                                  className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer flex items-center gap-1"
+                                  className="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-sm cursor-pointer flex items-center gap-1 whitespace-nowrap"
                                 >
                                   <Check size={12} />
-                                  <span>Approve Kick</span>
+                                  <span>Approve Disaffiliation</span>
                                 </button>
                                 <button
                                   type="button"
@@ -1057,7 +1030,7 @@ const ValidateTODA = () => {
         });
 
         return (
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
             <div className="bg-white dark:bg-[#1A1816] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-2xl rounded-2xl max-w-2xl w-full p-4 sm:p-5 space-y-4 overflow-hidden">
               {/* Header */}
               <div className="flex items-center justify-between pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
@@ -1097,7 +1070,7 @@ const ValidateTODA = () => {
                     <span className="text-[10px] sm:text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#9E2A2B]/10 text-[#9E2A2B] dark:bg-[#9E2A2B]/25 dark:text-[#EAE7E1] border border-[#9E2A2B]/20">
                       {selectedSubmissionOCR.todaAssociation || 'TODA'}
                     </span>
-                    <StatusBadge status={selectedSubmissionOCR.status === 'Approved' ? 'Active' : 'Pending'} label={selectedSubmissionOCR.status} />
+                    <StatusBadge status={selectedSubmissionOCR.status === 'Approved' ? 'Active' : 'Pending'} customLabel={selectedSubmissionOCR.status} />
                   </div>
                 </div>
 
@@ -1184,7 +1157,7 @@ const ValidateTODA = () => {
                             </td>
                             <td className="p-2.5 font-mono font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
                               {displayBodyNo ? (
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-xs text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#F6F5F3] dark:bg-[#14110F] text-xs text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27]">
                                   <Hash size={11} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                                   {displayBodyNo}
                                 </span>
@@ -1202,7 +1175,7 @@ const ValidateTODA = () => {
                                   {franchise && <StatusBadge status={franchise.status} />}
                                 </div>
                               ) : (
-                                <span className="inline-flex items-center text-[11px] font-semibold text-neutral-500 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded">
+                                <span className="inline-flex items-center text-[11px] font-semibold text-[#6B6761] dark:text-[#A8A29E] bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] px-2 py-0.5 rounded">
                                   Not Registered in App
                                 </span>
                               )}
@@ -1248,7 +1221,7 @@ const ValidateTODA = () => {
                         handleApprove(selectedSubmissionOCR._id);
                         setSelectedSubmissionOCR(prev => ({ ...prev, status: 'Approved' }));
                       }}
-                      className="px-3.5 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold cursor-pointer transition-colors shadow-xs"
+                      className="px-3.5 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold cursor-pointer transition-colors shadow-sm"
                     >
                       Approve &amp; Ingest
                     </button>
@@ -1256,9 +1229,379 @@ const ValidateTODA = () => {
                   <button
                     type="button"
                     onClick={() => { setSelectedSubmissionOCR(null); setOcrModalSearch(''); }}
-                    className="px-4 py-1.5 rounded-lg bg-[#1C1917] hover:bg-[#2E2A27] dark:bg-[#F6F5F3] dark:hover:bg-white dark:text-[#14110F] text-white text-xs font-bold cursor-pointer transition-colors shadow-xs"
+                    className="px-4 py-1.5 rounded-lg bg-[#1C1917] hover:bg-[#2E2A27] dark:bg-[#F6F5F3] dark:hover:bg-white dark:text-[#14110F] text-white text-xs font-bold cursor-pointer transition-colors shadow-sm"
                   >
                     Close Viewer
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
+      {/* UNIFIED TODA DIRECTORY MEMBER LIST MODAL */}
+      {selectedTodaModal && (() => {
+        const liveToda = groupedToda.find(t => t.name === selectedTodaModal.name) || selectedTodaModal;
+        const allTodaMembers = liveToda.combinedMembers || [];
+        const modalQuery = todaModalSearch.trim().toLowerCase();
+
+        const filteredTodaMembers = allTodaMembers.filter((m) => {
+          if (todaModalFilter === 'active_mtop' && m.franchiseStatus !== 'Active') return false;
+          if (todaModalFilter === 'registered' && !m.isRegisteredUser) return false;
+          if (todaModalFilter === 'roster' && !m.inOfficialRoster && !m.inOcrSubmission) return false;
+
+          if (!modalQuery) return true;
+          return (
+            (m.name || '').toLowerCase().includes(modalQuery) ||
+            (m.bodyNumber || '').toLowerCase().includes(modalQuery) ||
+            (m.plateNo || '').toLowerCase().includes(modalQuery) ||
+            (m.address || '').toLowerCase().includes(modalQuery) ||
+            (m.contact || '').toLowerCase().includes(modalQuery) ||
+            (m.motorNo || '').toLowerCase().includes(modalQuery)
+          );
+        });
+
+        return (
+          <div className="fixed inset-0 z-[9998] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div 
+              className="fixed inset-0"
+              onClick={() => { setSelectedTodaModal(null); setTodaModalSearch(''); setTodaModalFilter('all'); }}
+            />
+            <div className="relative z-10 bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-2xl rounded-xl max-w-4xl w-full overflow-hidden flex flex-col max-h-[90vh]">
+              {/* Modal Header */}
+              <div className="px-5 py-4 border-b border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 rounded-lg bg-[#9E2A2B] text-white font-bold flex items-center justify-center text-xs shrink-0 shadow-sm">
+                    {(liveToda.name || '').substring(0, 3)}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <h3 className="font-bold text-base sm:text-lg text-[#1F1D1B] dark:text-[#F6F5F3] truncate">
+                        {liveToda.name} — Member Directory
+                      </h3>
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] border border-[#9E2A2B]/25 dark:border-[#D4AF37]/30 font-mono tabular-nums">
+                        {allTodaMembers.length} {allTodaMembers.length === 1 ? 'Member' : 'Members'}
+                      </span>
+                    </div>
+                    <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                      Consolidated directory combining registered app operators, active MTOP franchises, and certified TODA rosters.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => { setSelectedTodaModal(null); setTodaModalSearch(''); setTodaModalFilter('all'); }}
+                  className="p-2 rounded-lg text-[#6B6761] hover:text-[#1F1D1B] dark:text-[#A8A29E] dark:hover:text-[#F6F5F3] hover:bg-[#E4E1DC]/50 dark:hover:bg-[#2E2A27] transition-colors cursor-pointer"
+                  title="Close member list modal"
+                >
+                  <X size={18} />
+                </button>
+              </div>
+
+              {/* Summary Strip & Filter Bar */}
+              <div className="p-4 sm:p-5 border-b border-[#E4E1DC] dark:border-[#2E2A27] space-y-3 bg-white dark:bg-[#1C1917]">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  <div className="p-2.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E] block">Total Members</span>
+                    <span className="text-lg font-bold font-mono tabular-nums text-[#1F1D1B] dark:text-[#F6F5F3]">{allTodaMembers.length}</span>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800/50">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-emerald-800 dark:text-emerald-300 block">Active MTOP</span>
+                    <span className="text-lg font-bold font-mono tabular-nums text-emerald-700 dark:text-emerald-400">{liveToda.compliantCount || 0}</span>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-blue-50/70 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/50">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-blue-800 dark:text-blue-300 block">App Accounts</span>
+                    <span className="text-lg font-bold font-mono tabular-nums text-blue-700 dark:text-blue-400">{liveToda.registeredCount || 0}</span>
+                  </div>
+                  <div className="p-2.5 rounded-lg bg-amber-50/70 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/50">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300 block">Official Roster</span>
+                    <span className="text-lg font-bold font-mono tabular-nums text-amber-700 dark:text-amber-400">{liveToda.rosterCount || 0}</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+                  {/* Filter Pills */}
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {[
+                      { id: 'all', label: `All (${allTodaMembers.length})` },
+                      { id: 'active_mtop', label: `Active MTOP (${liveToda.compliantCount || 0})` },
+                      { id: 'registered', label: `App Accounts (${liveToda.registeredCount || 0})` },
+                      { id: 'roster', label: `Certified Roster (${liveToda.rosterCount || 0})` }
+                    ].map((tab) => (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setTodaModalFilter(tab.id)}
+                        className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer ${
+                          todaModalFilter === tab.id
+                            ? 'bg-[#9E2A2B] text-white'
+                            : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E] border border-[#E4E1DC] dark:border-[#2E2A27] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3]'
+                        }`}
+                      >
+                        {tab.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Search Input */}
+                  <div className="relative w-full sm:w-64 shrink-0">
+                    <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B6761] dark:text-[#A8A29E]" />
+                    <input
+                      type="text"
+                      placeholder="Search member, body #, plate..."
+                      value={todaModalSearch}
+                      onChange={(e) => setTodaModalSearch(e.target.value)}
+                      className="w-full pl-8 pr-7 py-1.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-xs font-medium text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37]"
+                    />
+                    {todaModalSearch && (
+                      <button
+                        type="button"
+                        onClick={() => setTodaModalSearch('')}
+                        className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#6B6761] hover:text-[#1F1D1B] cursor-pointer"
+                        aria-label="Clear member search"
+                      >
+                        <X size={13} />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Member List (Mobile Cards + Desktop Table) */}
+              <div className="flex-1 overflow-y-auto">
+                {/* Mobile Stacked Cards */}
+                <div className="md:hidden divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
+                  {filteredTodaMembers.length === 0 ? (
+                    <div className="p-8 text-center text-[#6B6761] dark:text-[#A8A29E]">
+                      <Users size={28} className="mx-auto mb-2 opacity-40" />
+                      <p className="font-semibold text-sm text-[#1F1D1B] dark:text-[#F6F5F3]">
+                        No members found matching this filter.
+                      </p>
+                      <p className="text-xs mt-0.5">
+                        Try switching filter tabs or clearing your search query.
+                      </p>
+                    </div>
+                  ) : (
+                    filteredTodaMembers.map((member, idx) => {
+                      const initials = (member.name || 'M')
+                        .split(' ')
+                        .filter(Boolean)
+                        .slice(0, 2)
+                        .map(w => w[0])
+                        .join('')
+                        .toUpperCase();
+
+                      return (
+                        <div key={member.id || idx} className="p-3.5 space-y-2 bg-white dark:bg-[#1C1917]">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              <span className="w-7 h-7 rounded-full bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/25 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center text-[10px] font-bold shrink-0">
+                                {initials}
+                              </span>
+                              <div className="min-w-0">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] text-xs truncate">
+                                    {member.name}
+                                  </span>
+                                  {member.isPresident && (
+                                    <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#D4AF37]/20 text-[#9E2A2B] dark:text-[#D4AF37] border border-[#D4AF37]/40">
+                                      TODA President
+                                    </span>
+                                  )}
+                                </div>
+                                <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] truncate">
+                                  {[member.address, member.contact].filter(Boolean).join(' • ') || 'Gasan, Marinduque'}
+                                </p>
+                              </div>
+                            </div>
+                            {member.bodyNumber ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3] shrink-0">
+                                <Hash size={11} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                                {member.bodyNumber}
+                              </span>
+                            ) : (
+                              <span className="text-xs font-mono text-[#6B6761] dark:text-[#A8A29E] shrink-0">#{idx + 1}</span>
+                            )}
+                          </div>
+
+                          <div className="flex flex-wrap items-center justify-between gap-2 pt-1 text-[11px]">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              {member.plateNo && (
+                                <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3] px-1.5 py-0.5 rounded bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                                  {member.plateNo}
+                                </span>
+                              )}
+                              {(member.sources || []).map((src) => (
+                                <span
+                                  key={src}
+                                  className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27]"
+                                >
+                                  {src}
+                                </span>
+                              ))}
+                            </div>
+                            {member.franchiseStatus ? (
+                              <StatusBadge status={member.franchiseStatus} />
+                            ) : member.isRegisteredUser ? (
+                              <span className="inline-flex items-center text-[10px] font-semibold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-800">
+                                Registered Account
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center text-[10px] font-semibold text-[#6B6761] dark:text-[#A8A29E] bg-[#F6F5F3] dark:bg-[#14110F] px-2 py-0.5 rounded border border-[#E4E1DC] dark:border-[#2E2A27]">
+                                Roster Listed
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+                {/* Desktop Table */}
+                <table className="hidden md:table w-full text-left border-collapse text-xs min-w-[680px]">
+                  <thead className="sticky top-0 bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] font-bold uppercase text-[11px] tracking-wider z-10">
+                    <tr>
+                      <th className="p-3 pl-5 w-24">Body #</th>
+                      <th className="p-3">Member / Operator Name</th>
+                      <th className="p-3">Tricycle Unit (Plate / Model)</th>
+                      <th className="p-3">Record Source</th>
+                      <th className="p-3 pr-5 text-right">Franchise Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
+                    {filteredTodaMembers.length === 0 ? (
+                      <tr>
+                        <td colSpan="5" className="p-10 text-center text-[#6B6761] dark:text-[#A8A29E]">
+                          <Users size={28} className="mx-auto mb-2 opacity-40" />
+                          <p className="font-semibold text-sm text-[#1F1D1B] dark:text-[#F6F5F3]">
+                            No members found matching this filter.
+                          </p>
+                          <p className="text-xs mt-0.5">
+                            Try switching filter tabs or clearing your search query.
+                          </p>
+                        </td>
+                      </tr>
+                    ) : (
+                      filteredTodaMembers.map((member, idx) => {
+                        const initials = (member.name || 'M')
+                          .split(' ')
+                          .filter(Boolean)
+                          .slice(0, 2)
+                          .map(w => w[0])
+                          .join('')
+                          .toUpperCase();
+
+                        return (
+                          <tr key={member.id || idx} className="hover:bg-[#F6F5F3]/60 dark:hover:bg-[#14110F]/60 transition-colors">
+                            <td className="p-3 pl-5 font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
+                              {member.bodyNumber ? (
+                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs">
+                                  <Hash size={11} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                                  {member.bodyNumber}
+                                </span>
+                              ) : (
+                                <span className="text-[#6B6761] dark:text-[#A8A29E] font-normal">#{idx + 1}</span>
+                              )}
+                            </td>
+                            <td className="p-3">
+                              <div className="flex items-center gap-2.5">
+                                <span className="w-7 h-7 rounded-full bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/25 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center text-[10px] font-bold shrink-0">
+                                  {initials}
+                                </span>
+                                <div>
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] text-xs sm:text-sm">
+                                      {member.name}
+                                    </span>
+                                    {member.isPresident && (
+                                      <span className="px-1.5 py-0.5 rounded text-[10px] font-bold bg-[#D4AF37]/20 text-[#9E2A2B] dark:text-[#D4AF37] border border-[#D4AF37]/40">
+                                        TODA President
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
+                                    {[member.address, member.contact].filter(Boolean).join(' • ') || 'Gasan, Marinduque'}
+                                  </p>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="p-3">
+                              {member.plateNo ? (
+                                <div>
+                                  <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3] px-1.5 py-0.5 rounded bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                                    {member.plateNo}
+                                  </span>
+                                  {member.makeModel && (
+                                    <span className="block text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-0.5">
+                                      {member.makeModel}
+                                    </span>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] italic">No unit linked</span>
+                              )}
+                            </td>
+                            <td className="p-3">
+                              <div className="flex flex-wrap gap-1">
+                                {(member.sources || []).map((src) => (
+                                  <span
+                                    key={src}
+                                    className="px-2 py-0.5 rounded text-[10px] font-semibold bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27]"
+                                  >
+                                    {src}
+                                  </span>
+                                ))}
+                              </div>
+                            </td>
+                            <td className="p-3 pr-5 text-right">
+                              {member.franchiseStatus ? (
+                                <StatusBadge status={member.franchiseStatus} />
+                              ) : member.isRegisteredUser ? (
+                                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 px-2 py-0.5 rounded border border-blue-200 dark:border-blue-800">
+                                  Registered Account
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center text-[11px] font-semibold text-[#6B6761] dark:text-[#A8A29E] bg-[#F6F5F3] dark:bg-[#14110F] px-2 py-0.5 rounded border border-[#E4E1DC] dark:border-[#2E2A27]">
+                                  Roster Listed
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Modal Footer */}
+              <div className="px-5 py-3.5 border-t border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] flex flex-col sm:flex-row items-center justify-between gap-2">
+                <div className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                  Showing <strong className="text-[#1F1D1B] dark:text-[#F6F5F3]">{filteredTodaMembers.length}</strong> of <strong className="text-[#1F1D1B] dark:text-[#F6F5F3]">{allTodaMembers.length}</strong> members in {liveToda.name}
+                </div>
+                <div className="flex items-center gap-2">
+                  {liveToda.latestSubmission && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const sub = liveToda.latestSubmission;
+                        setSelectedTodaModal(null);
+                        setSelectedSubmissionOCR(sub);
+                      }}
+                      className="px-3 py-1.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#F6F5F3] hover:bg-[#E4E1DC]/40 text-xs font-semibold transition-colors cursor-pointer flex items-center gap-1.5"
+                    >
+                      <Sparkles size={13} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                      <span>Inspect OCR Submission</span>
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedTodaModal(null); setTodaModalSearch(''); setTodaModalFilter('all'); }}
+                    className="px-4 py-1.5 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white text-xs font-semibold transition-colors cursor-pointer"
+                  >
+                    Close Directory
                   </button>
                 </div>
               </div>

@@ -317,7 +317,7 @@ export const TODA_DIRECTORY = [
     id: '4B TODA',
     name: '4B TODA',
     zone: 'North',
-    color: 'bg-indigo-600',
+    color: 'bg-teal-600',
     terminal: 'Northern Four Barangays Crossing',
     barangays: ['Bahi', 'Bangbang', 'Banot', 'Banuyo'],
     description: 'Inter-barangay commuter loop across Bahi, Bangbang, Banot, and Banuyo.'
@@ -344,7 +344,7 @@ export const TODA_DIRECTORY = [
     id: 'GASAN CENTRAL TODA',
     name: 'GASAN CENTRAL TODA',
     zone: 'Central',
-    color: 'bg-indigo-500',
+    color: 'bg-[#9E2A2B]',
     terminal: 'Gasan Central Integrated Terminal',
     barangays: ['Barangay I (Poblacion)', 'Barangay II (Poblacion)', 'Barangay III (Poblacion)', 'Mahunig'],
     description: 'Inter-barangay shuttle terminal servicing general public passenger transit.'
@@ -362,7 +362,7 @@ export const TODA_DIRECTORY = [
     id: 'NON-TODA',
     name: 'NON-TODA (Independent Franchise)',
     zone: 'All Authorized Municipal Routes',
-    color: 'bg-slate-500',
+    color: 'bg-[#6B6761]',
     terminal: 'Operator Residence Base',
     barangays: ['All Gasan Barangays'],
     description: 'Independent operators authorized to operate within their designated residency zone.'

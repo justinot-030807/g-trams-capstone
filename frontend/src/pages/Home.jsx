@@ -52,7 +52,7 @@ const Home = () => {
       if (role === 'admin' || role === 'administrator' || role === 'system admin') {
         navigate('/admin-dashboard', { replace: true });
       } else if (role === 'bplo staff') {
-        navigate('/bplo-dashboard', { replace: true });
+        navigate('/llsa-dashboard', { replace: true });
       } else if (role === 'cashier') {
         navigate('/cashier-dashboard', { replace: true });
       } else {
@@ -76,20 +76,19 @@ const Home = () => {
   }, []);
 
   const springFade = {
-    hidden: { opacity: 0, y: 30, scale: 0.97 },
+    hidden: { opacity: 1, y: 10 },
     visible: { 
       opacity: 1, 
       y: 0, 
-      scale: 1,
-      transition: { type: "spring", stiffness: 90, damping: 18 } 
+      transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] } 
     }
   };
 
   const staggerContainer = {
-    hidden: { opacity: 0 },
+    hidden: { opacity: 1 },
     visible: {
       opacity: 1,
-      transition: { staggerChildren: 0.12, delayChildren: 0.1 }
+      transition: { staggerChildren: 0.06 }
     }
   };
 
@@ -119,8 +118,7 @@ const Home = () => {
           
           <motion.div 
             initial="hidden" 
-            whileInView="visible" 
-            viewport={{ once: true, amount: 0.3 }}
+            animate="visible"
             variants={staggerContainer}
             className="flex flex-col items-center w-full"
           >
@@ -143,7 +141,7 @@ const Home = () => {
               {/* Log In Button */}
               <Link
                 to="/login"
-                className="relative overflow-hidden group w-full sm:w-1/2 flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-lg bg-white hover:bg-[#F6F5F3] text-[#9E2A2B] font-bold text-sm uppercase tracking-wider shadow-xs hover:shadow transition-colors cursor-pointer whitespace-nowrap min-h-[48px]"
+                className="relative overflow-hidden group w-full sm:w-1/2 flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-lg bg-white hover:bg-[#F6F5F3] text-[#9E2A2B] font-bold text-sm uppercase tracking-wider shadow-sm hover:shadow transition-colors cursor-pointer whitespace-nowrap min-h-[48px]"
               >
                 <div className="w-6 h-6 rounded-lg bg-[#9E2A2B]/10 flex items-center justify-center">
                   <LogIn size={15} className="text-[#9E2A2B]" />
@@ -154,7 +152,7 @@ const Home = () => {
               {/* Register Button */}
               <Link
                 to="/register"
-                className="relative overflow-hidden group w-full sm:w-1/2 flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-lg bg-[#D4AF37] hover:bg-[#C29D2D] text-[#1C1917] font-bold text-sm uppercase tracking-wider shadow-xs hover:shadow transition-colors cursor-pointer whitespace-nowrap min-h-[48px]"
+                className="relative overflow-hidden group w-full sm:w-1/2 flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-lg bg-[#D4AF37] hover:bg-[#C29D2D] text-[#1C1917] font-bold text-sm uppercase tracking-wider shadow-sm hover:shadow transition-colors cursor-pointer whitespace-nowrap min-h-[48px]"
               >
                 <div className="w-6 h-6 rounded-lg bg-black/10 flex items-center justify-center">
                   <UserPlus size={15} className="text-[#1C1917]" />
@@ -173,7 +171,7 @@ const Home = () => {
                 <span className="font-mono text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight tabular-nums drop-shadow-md">
                   {isLoadingStats ? '—' : Number(stats?.operators ?? 0).toLocaleString()}
                 </span>
-                <span className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-white/85 mt-1.5 drop-shadow-xs">
+                <span className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-white/85 mt-1.5 drop-shadow-sm">
                   Registered Operators
                 </span>
               </div>
@@ -183,7 +181,7 @@ const Home = () => {
                 <span className="font-mono text-3xl sm:text-4xl md:text-5xl font-black text-[#D4AF37] tracking-tight tabular-nums drop-shadow-md">
                   {isLoadingStats ? '—' : Number(stats?.todas ?? 0).toLocaleString()}
                 </span>
-                <span className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-white/85 mt-1.5 drop-shadow-xs">
+                <span className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-white/85 mt-1.5 drop-shadow-sm">
                   Accredited TODAs
                 </span>
               </div>
@@ -193,7 +191,7 @@ const Home = () => {
                 <span className="font-mono text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight tabular-nums drop-shadow-md">
                   {isLoadingStats ? '—' : Number(stats?.franchises ?? 0).toLocaleString()}
                 </span>
-                <span className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-white/85 mt-1.5 drop-shadow-xs">
+                <span className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-white/85 mt-1.5 drop-shadow-sm">
                   Active Franchises
                 </span>
               </div>

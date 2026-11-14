@@ -61,7 +61,7 @@ const LanguagePreferenceModal = ({ isOpen, onConfirm }) => {
             onClick={() => handleSelect('en')}
             className={`p-3 rounded-lg border text-left transition-colors cursor-pointer relative flex flex-col justify-between min-h-[90px] ${
               selectedLang === 'en'
-                ? 'border border-[#9E2A2B] dark:border-[#D4AF37] bg-[#9E2A2B]/5 dark:bg-[#D4AF37]/10 shadow-xs'
+                ? 'border border-[#9E2A2B] dark:border-[#D4AF37] bg-[#9E2A2B]/5 dark:bg-[#D4AF37]/10 shadow-sm'
                 : 'border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:border-[#9E2A2B]/40'
             }`}
           >
@@ -89,7 +89,7 @@ const LanguagePreferenceModal = ({ isOpen, onConfirm }) => {
             onClick={() => handleSelect('fil')}
             className={`p-3 rounded-lg border text-left transition-colors cursor-pointer relative flex flex-col justify-between min-h-[90px] ${
               selectedLang === 'fil'
-                ? 'border border-[#9E2A2B] dark:border-[#D4AF37] bg-[#9E2A2B]/5 dark:bg-[#D4AF37]/10 shadow-xs'
+                ? 'border border-[#9E2A2B] dark:border-[#D4AF37] bg-[#9E2A2B]/5 dark:bg-[#D4AF37]/10 shadow-sm'
                 : 'border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:border-[#9E2A2B]/40'
             }`}
           >
@@ -116,7 +116,7 @@ const LanguagePreferenceModal = ({ isOpen, onConfirm }) => {
         <button
           type="button"
           onClick={handleContinue}
-          className="w-full py-3 px-4 rounded-lg font-bold text-xs text-white bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-[#14110F] transition-colors shadow-xs active:scale-[0.98] flex items-center justify-center gap-1.5 cursor-pointer min-h-[44px]"
+          className="w-full py-3 px-4 rounded-lg font-bold text-xs text-white bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-[#14110F] transition-colors shadow-sm active:scale-[0.98] flex items-center justify-center gap-1.5 cursor-pointer min-h-[44px]"
         >
           <span>{isFilipino ? 'Magpatuloy sa Portal' : 'Continue to Portal'}</span>
           <ArrowRight size={14} />

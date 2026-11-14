@@ -1,5 +1,6 @@
 const axios = require('axios');
 const SmsLog = require('../models/smsLogModel');
+const sendSms = require('../utils/sendSms');
 const { emitToUser, emitToAdmins, getIO } = require('../config/socket');
 const { getManilaNow, formatManilaDate } = require('../utils/phTime');
 
@@ -28,7 +29,8 @@ async function dispatchExpirationSms({
     franchise,
     daysRemaining = 30,
     simulated = true,
-    customPhone = null
+    customPhone = null,
+    skipGatewaySend = false
 }) {
     try {
         const now = getManilaNow();
@@ -42,22 +44,27 @@ async function dispatchExpirationSms({
         const message = `[G-TRAMS LGU] Paalala: Ang inyong MTOP prangkisa para sa unit ${plateNo}${bodyNumber ? ` (Body #${bodyNumber})` : ''} ay mag-e-expire sa loob ng ${daysRemaining} araw (${expiryDateStr}). Mangyaring mag-renew sa BPLO Gasan upang maiwasan ang multa at pagkahuli.`;
 
         let status = 'SIMULATED';
-        const apiKey = process.env.SEMAPHORE_API_KEY;
+        const hasLiveSmsKey = Boolean(
+            (process.env.TEXTBEE_API_KEY && process.env.TEXTBEE_API_KEY.trim()) ||
+            (process.env.SEMAPHORE_API_KEY && !['mock_key', 'test_key'].includes(process.env.SEMAPHORE_API_KEY))
+        );
 
-        // If live API key is present and simulation is explicitly turned off
-        if (apiKey && !simulated && apiKey !== 'mock_key' && apiKey !== 'test_key') {
+        // If TextBee or Semaphore API key is present
+        if (hasLiveSmsKey && !skipGatewaySend) {
             try {
-                await axios.post('https://api.semaphore.co/api/v4/messages', {
-                    apikey: apiKey,
-                    number: recipientPhone,
-                    message: message,
-                    sendername: 'GTRAMS'
-                }, { timeout: 8000 });
-                status = 'DELIVERED';
+                const smsRes = await sendSms({
+                    phone: recipientPhone,
+                    message
+                });
+                if (smsRes && smsRes.success && !smsRes.simulated) {
+                    status = 'DELIVERED';
+                }
             } catch (apiErr) {
-                console.warn('[notificationService] Semaphore SMS gateway call failed, logging as simulated fallback:', apiErr.message);
+                console.warn('[notificationService] SMS gateway call failed, logging as simulated fallback:', apiErr.message);
                 status = 'SIMULATED';
             }
+        } else if (hasLiveSmsKey && skipGatewaySend) {
+            status = 'DELIVERED';
         }
 
         // Create timestamped audit record

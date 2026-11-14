@@ -6,6 +6,23 @@
 export const compressImage = async (file, maxDimension = 1600, quality = 0.82) => {
   if (!file) return file;
   
+  // Support both (file, maxDimension, quality) and (file, { maxWidth, maxHeight, maxDimension, quality })
+  let maxWidth = 1600;
+  let maxHeight = 1600;
+  let resolvedQuality = 0.82;
+
+  if (typeof maxDimension === 'object' && maxDimension !== null) {
+    const fallbackDim = Number(maxDimension.maxDimension) || 1600;
+    maxWidth = Number(maxDimension.maxWidth) || fallbackDim;
+    maxHeight = Number(maxDimension.maxHeight) || fallbackDim;
+    resolvedQuality = Number(maxDimension.quality) || Number(quality) || 0.82;
+  } else {
+    const dim = Number(maxDimension) || 1600;
+    maxWidth = dim;
+    maxHeight = dim;
+    resolvedQuality = Number(quality) || 0.82;
+  }
+
   // Only compress standard image files; pass through PDFs, SVG, etc.
   if (!file.type || !file.type.startsWith('image/') || file.type === 'image/svg+xml') {
     return file;
@@ -24,15 +41,11 @@ export const compressImage = async (file, maxDimension = 1600, quality = 0.82) =
         let width = img.width;
         let height = img.height;
 
-        // Scale down proportionally if larger than maxDimension
-        if (width > maxDimension || height > maxDimension) {
-          if (width > height) {
-            height = Math.round((height * maxDimension) / width);
-            width = maxDimension;
-          } else {
-            width = Math.round((width * maxDimension) / height);
-            height = maxDimension;
-          }
+        // Scale down proportionally if larger than maxWidth / maxHeight
+        if (width > maxWidth || height > maxHeight) {
+          const scale = Math.min(maxWidth / width, maxHeight / height);
+          width = Math.round(width * scale);
+          height = Math.round(height * scale);
         }
 
         const canvas = document.createElement('canvas');
@@ -59,7 +72,7 @@ export const compressImage = async (file, maxDimension = 1600, quality = 0.82) =
             }
           },
           'image/jpeg',
-          quality
+          resolvedQuality
         );
       };
       img.onerror = () => resolve(file);

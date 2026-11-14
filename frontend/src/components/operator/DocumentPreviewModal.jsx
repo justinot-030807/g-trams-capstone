@@ -117,7 +117,7 @@ const DocumentPreviewModal = ({
               <img 
                 src={url} 
                 alt={title} 
-                className="max-h-[75vh] w-auto max-w-full object-contain rounded-lg shadow-xs border border-[#E4E1DC] dark:border-[#2E2A27]" 
+                className="max-h-[75vh] w-auto max-w-full object-contain rounded-lg shadow-sm border border-[#E4E1DC] dark:border-[#2E2A27]" 
               />
             </div>
           )}

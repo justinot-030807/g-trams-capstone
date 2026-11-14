@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-14T06:10:00Z",
+  "title": "Design System: G-TRAMS",
+  "extensions": {
+    "colorMeta": {
+      "gasan-maroon": {
+        "role": "primary",
+        "displayName": "Gasan Heritage Maroon",
+        "canonical": "#9E2A2B",
+        "tonalRamp": ["#3D080D", "#5E0D14", "#7A1B22", "#9E2A2B", "#B83D40", "#E88B8E", "#F8C5CA", "#FDF2F4"]
+      },
+      "gasan-gold": {
+        "role": "secondary",
+        "displayName": "Gasan Municipal Gold",
+        "canonical": "#D4AF37",
+        "tonalRamp": ["#4A3A0A", "#7A6015", "#A68420", "#D4AF37", "#E4C45D", "#F0D57A", "#F5E6B3", "#FCF6E3"]
+      },
+      "warm-alabaster": {
+        "role": "neutral",
+        "displayName": "Warm Alabaster Canvas",
+        "canonical": "#F6F5F3",
+        "tonalRamp": ["#14110F", "#1C1917", "#2E2A27", "#6B6761", "#A8A29E", "#D4D0C8", "#E4E1DC", "#F6F5F3"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "IBM Plex Sans Display", "purpose": "Public hero and main empty banners." },
+      "headline": { "displayName": "IBM Plex Sans Headline", "purpose": "PageHeader and dashboard section headers." },
+      "title": { "displayName": "IBM Plex Sans Title", "purpose": "Card headings and accessible Dialog titles." },
+      "body": { "displayName": "IBM Plex Sans Body", "purpose": "Standard interface prose, table cells, and forms." },
+      "label": { "displayName": "IBM Plex Mono Label", "purpose": "Table column headers, KPI captions, OR numbers, and plate stamps." }
+    },
+    "shadows": [
+      { "name": "surface-sm", "value": "0 1px 2px 0 rgba(0, 0, 0, 0.05)", "purpose": "Subtle resting separation on light surfaces only." }
+    ],
+    "motion": [
+      { "name": "ease-standard", "value": "cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Default 120ms-200ms state transition." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Civic Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Primary CTA reserved for main submission and approval actions.",
+      "html": "<button class=\"ds-btn-primary\">Approve Application</button>",
+      "css": ".ds-btn-primary { background: #9E2A2B; color: #FFFFFF; border: 1px solid #9E2A2B; border-radius: 8px; padding: 10px 16px; min-height: 44px; font-weight: 600; font-size: 13px; cursor: pointer; transition: background-color 120ms cubic-bezier(0.4,0,0.2,1); } .ds-btn-primary:hover { background: #7A1B22; border-color: #7A1B22; } .ds-btn-primary:focus-visible { outline: 2px solid #9E2A2B; outline-offset: 2px; }"
+    },
+    {
+      "name": "Civic Record Card",
+      "kind": "card",
+      "refersTo": "card-surface",
+      "description": "Flat bordered ledger panel on warm canvas.",
+      "html": "<div class=\"ds-card\"><h4>Franchise Application</h4><p>Over-the-Counter Cash Settlement</p></div>",
+      "css": ".ds-card { background: #FFFFFF; color: #1F1D1B; border: 1px solid #E4E1DC; border-radius: 12px; padding: 20px; box-shadow: 0 1px 2px 0 rgba(0,0,0,0.05); } .ds-card h4 { margin: 0 0 6px; font-size: 16px; font-weight: 600; } .ds-card p { margin: 0; font-size: 13px; color: #6B6761; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Civic Ledger",
+    "overview": "G-TRAMS pairs formal Philippine municipal authority with legible, resilient digital record-keeping across five civic roles.",
+    "keyCharacteristics": [
+      "Warm limestone-and-paper neutrals with zero cool slate drift.",
+      "Precision tabular numerals via IBM Plex Mono.",
+      "Strictly 4 semantic status bands with WCAG AA text-and-icon pairing.",
+      "Restrained 1px hairline borders rather than drop-shadow haze."
+    ],
+    "rules": [
+      { "name": "The One-Accent Landmark Rule", "body": "Gasan Maroon occupies primary landmarks and primary actions only.", "section": "colors" },
+      { "name": "The Tabular Ledger Rule", "body": "All currency, plate codes, OR numbers, and counts use font-mono tabular-nums.", "section": "typography" }
+    ],
+    "dos": [
+      "Do use warm #F6F5F3 / #14110F / #1C1917 / #2E2A27 neutrals on every panel, modal, and skeleton.",
+      "Do validate >= 4.5:1 normal text contrast and >= 3:1 UI border/icon contrast across Light & Dark themes.",
+      "Do enforce 44px minimum touch targets on mobile triggers and convert wide <768px tables into readable stacked cards."
+    ],
+    "donts": [
+      "Don't use Tailwind numeric neutral-* classes, slate-* cool grays, or invalid TWv4 classes.",
+      "Don't place thick border-l-4 left accent borders on cards or callouts, or use animate-bounce on floating widgets.",
+      "Don't expose native browser alert(), window.confirm(), or window.prompt() popups."
+    ]
+  }
+}

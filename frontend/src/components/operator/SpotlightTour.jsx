@@ -253,7 +253,7 @@ const SpotlightTour = ({ isOpen, onClose, steps = [] }) => {
               <button
                 type="button"
                 onClick={handleNext}
-                className="px-4 py-2 rounded-lg font-bold text-xs text-white bg-[#9E2A2B] hover:bg-[#7A1B22] transition-all shadow-xs active:scale-95 flex items-center gap-1.5 cursor-pointer min-h-[44px]"
+                className="px-4 py-2 rounded-lg font-bold text-xs text-white bg-[#9E2A2B] hover:bg-[#7A1B22] transition-all shadow-sm active:scale-95 flex items-center gap-1.5 cursor-pointer min-h-[44px]"
               >
                 <span>
                   {isLastStep ? 'Finish' : 'Next'}

@@ -6,6 +6,6 @@ const { getServerTime, getSettings, updateSettings, getSystemHealth } = require(
 router.get('/time', getServerTime);
 router.get('/', getSettings);
 router.get('/health', protect, authorize('system_admin', 'admin'), getSystemHealth);
-router.put('/', protect, authorize('system_admin', 'admin'), updateSettings);
+router.put('/', protect, authorize('system_admin', 'admin', 'bplo_staff'), updateSettings);
 
 module.exports = router;

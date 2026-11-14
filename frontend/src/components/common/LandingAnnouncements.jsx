@@ -105,7 +105,7 @@ const LandingAnnouncements = () => {
           <motion.div 
             key={item._id || item.id || idx} 
             variants={cardVariants}
-            className="flex flex-col justify-between p-6 rounded-xl bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] hover:border-[#D4AF37] shadow-xs hover:shadow-md transition-all relative overflow-hidden group"
+            className="flex flex-col justify-between p-6 rounded-xl bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] hover:border-[#D4AF37] shadow-sm hover:shadow-md transition-all relative overflow-hidden group"
           >
             <div>
               <div className="flex justify-between items-center mb-4 relative z-10">

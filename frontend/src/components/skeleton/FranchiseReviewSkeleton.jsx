@@ -13,7 +13,7 @@ export const FranchiseReviewSkeleton = ({ baseDelay = 30 }) => {
     <div className="fixed inset-0 w-full h-full flex flex-col bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] overflow-hidden select-none z-50">
       
       {/* 1. TOP HEADER: WORKBENCH TOOLBAR */}
-      <header className="h-14 px-4 bg-slate-900 border-b border-slate-800 flex items-center justify-between gap-3 shrink-0 shadow-xs">
+      <header className="h-14 px-4 bg-[#1C1917] border-b border-[#2E2A27] flex items-center justify-between gap-3 shrink-0 shadow-sm">
         {/* Left: Back & Applicant Title */}
         <div className="flex items-center gap-3 min-w-0">
           <SkeletonElement height="32px" className="w-18" rounded="rounded-lg" delay={baseDelay} />
@@ -40,29 +40,29 @@ export const FranchiseReviewSkeleton = ({ baseDelay = 30 }) => {
       <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden">
         
         {/* LEFT COLUMN: INSPECTION & DOCUMENTS CHECKLIST */}
-        <aside className="w-full md:w-[340px] lg:w-[380px] bg-white dark:bg-[#1C1917] border-r border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col shrink-0 h-full overflow-y-auto p-3.5 space-y-3 shadow-xs">
+        <aside className="w-full md:w-[340px] lg:w-[380px] bg-white dark:bg-[#1C1917] border-r border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col shrink-0 h-full overflow-y-auto p-3.5 space-y-3 shadow-sm">
           {/* Applicant Summary Box */}
           <div className="bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3 space-y-2.5">
             <div className="flex items-center justify-between">
-              <SkeletonElement height="13px" className="w-28" rounded="rounded-xs" delay={baseDelay + 50} />
-              <SkeletonElement height="13px" className="w-16" rounded="rounded-xs" delay={baseDelay + 55} />
+              <SkeletonElement height="13px" className="w-28" rounded="rounded-sm" delay={baseDelay + 50} />
+              <SkeletonElement height="13px" className="w-16" rounded="rounded-sm" delay={baseDelay + 55} />
             </div>
             <div className="grid grid-cols-2 gap-2 pt-1">
               <div className="space-y-1">
-                <SkeletonElement height="9px" className="w-12" rounded="rounded-xs" delay={baseDelay + 60} />
-                <SkeletonElement height="13px" className="w-28" rounded="rounded-xs" delay={baseDelay + 65} />
+                <SkeletonElement height="9px" className="w-12" rounded="rounded-sm" delay={baseDelay + 60} />
+                <SkeletonElement height="13px" className="w-28" rounded="rounded-sm" delay={baseDelay + 65} />
               </div>
               <div className="space-y-1">
-                <SkeletonElement height="9px" className="w-12" rounded="rounded-xs" delay={baseDelay + 70} />
-                <SkeletonElement height="13px" className="w-24" rounded="rounded-xs" delay={baseDelay + 75} />
+                <SkeletonElement height="9px" className="w-12" rounded="rounded-sm" delay={baseDelay + 70} />
+                <SkeletonElement height="13px" className="w-24" rounded="rounded-sm" delay={baseDelay + 75} />
               </div>
               <div className="space-y-1">
-                <SkeletonElement height="9px" className="w-16" rounded="rounded-xs" delay={baseDelay + 80} />
-                <SkeletonElement height="13px" className="w-24" rounded="rounded-xs" delay={baseDelay + 85} />
+                <SkeletonElement height="9px" className="w-16" rounded="rounded-sm" delay={baseDelay + 80} />
+                <SkeletonElement height="13px" className="w-24" rounded="rounded-sm" delay={baseDelay + 85} />
               </div>
               <div className="space-y-1">
-                <SkeletonElement height="9px" className="w-14" rounded="rounded-xs" delay={baseDelay + 90} />
-                <SkeletonElement height="13px" className="w-20" rounded="rounded-xs" delay={baseDelay + 95} />
+                <SkeletonElement height="9px" className="w-14" rounded="rounded-sm" delay={baseDelay + 90} />
+                <SkeletonElement height="13px" className="w-20" rounded="rounded-sm" delay={baseDelay + 95} />
               </div>
             </div>
           </div>
@@ -70,8 +70,8 @@ export const FranchiseReviewSkeleton = ({ baseDelay = 30 }) => {
           {/* Record Check Box */}
           <div className="bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3 flex items-center justify-between">
             <div className="space-y-1">
-              <SkeletonElement height="13px" className="w-36" rounded="rounded-xs" delay={baseDelay + 100} />
-              <SkeletonElement height="10px" className="w-28" rounded="rounded-xs" delay={baseDelay + 105} />
+              <SkeletonElement height="13px" className="w-36" rounded="rounded-sm" delay={baseDelay + 100} />
+              <SkeletonElement height="10px" className="w-28" rounded="rounded-sm" delay={baseDelay + 105} />
             </div>
             <SkeletonElement height="22px" className="w-20" rounded="rounded-md" delay={baseDelay + 110} />
           </div>
@@ -79,8 +79,8 @@ export const FranchiseReviewSkeleton = ({ baseDelay = 30 }) => {
           {/* Document Checklist Items */}
           <div className="space-y-2 pt-1">
             <div className="flex items-center justify-between pb-1">
-              <SkeletonElement height="12px" className="w-32" rounded="rounded-xs" delay={baseDelay + 115} />
-              <SkeletonElement height="12px" className="w-12" rounded="rounded-xs" delay={baseDelay + 120} />
+              <SkeletonElement height="12px" className="w-32" rounded="rounded-sm" delay={baseDelay + 115} />
+              <SkeletonElement height="12px" className="w-12" rounded="rounded-sm" delay={baseDelay + 120} />
             </div>
 
             {[
@@ -97,9 +97,9 @@ export const FranchiseReviewSkeleton = ({ baseDelay = 30 }) => {
               >
                 <div className="flex items-center gap-2.5 min-w-0">
                   <SkeletonElement rounded="rounded-md" className="w-7 h-7 shrink-0" delay={baseDelay + 125 + idx * 15} />
-                  <SkeletonElement height="13px" className="w-36 sm:w-44" rounded="rounded-xs" delay={baseDelay + 130 + idx * 15} />
+                  <SkeletonElement height="13px" className="w-36 sm:w-44" rounded="rounded-sm" delay={baseDelay + 130 + idx * 15} />
                 </div>
-                <SkeletonElement height="18px" className="w-14" rounded="rounded-xs" delay={baseDelay + 135 + idx * 15} />
+                <SkeletonElement height="18px" className="w-14" rounded="rounded-sm" delay={baseDelay + 135 + idx * 15} />
               </div>
             ))}
           </div>
@@ -110,7 +110,7 @@ export const FranchiseReviewSkeleton = ({ baseDelay = 30 }) => {
           {/* Canvas Studio Toolbar */}
           <div className="h-11 px-4 bg-white/80 dark:bg-[#1C1917]/80 backdrop-blur-sm border-b border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-between gap-2 shrink-0">
             <div className="flex items-center gap-2">
-              <SkeletonElement height="14px" className="w-36" rounded="rounded-xs" delay={baseDelay + 200} />
+              <SkeletonElement height="14px" className="w-36" rounded="rounded-sm" delay={baseDelay + 200} />
               <SkeletonElement height="18px" className="w-20" rounded="rounded-md" delay={baseDelay + 210} />
             </div>
             <div className="flex items-center gap-1.5">
@@ -126,18 +126,18 @@ export const FranchiseReviewSkeleton = ({ baseDelay = 30 }) => {
               <div className="flex items-center justify-between pb-4 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
                 <SkeletonElement rounded="rounded-lg" className="w-12 h-12" delay={baseDelay + 250} />
                 <div className="space-y-1.5 text-right flex flex-col items-end">
-                  <SkeletonElement height="12px" className="w-32" rounded="rounded-xs" delay={baseDelay + 260} />
-                  <SkeletonElement height="10px" className="w-24" rounded="rounded-xs" delay={baseDelay + 270} />
+                  <SkeletonElement height="12px" className="w-32" rounded="rounded-sm" delay={baseDelay + 260} />
+                  <SkeletonElement height="10px" className="w-24" rounded="rounded-sm" delay={baseDelay + 270} />
                 </div>
               </div>
               <div className="space-y-3 flex-1 flex flex-col justify-center">
-                <SkeletonElement height="14px" className="w-3/4" rounded="rounded-xs" delay={baseDelay + 280} />
-                <SkeletonElement height="14px" className="w-full" rounded="rounded-xs" delay={baseDelay + 290} />
-                <SkeletonElement height="14px" className="w-5/6" rounded="rounded-xs" delay={baseDelay + 300} />
-                <SkeletonElement height="14px" className="w-2/3" rounded="rounded-xs" delay={baseDelay + 310} />
+                <SkeletonElement height="14px" className="w-3/4" rounded="rounded-sm" delay={baseDelay + 280} />
+                <SkeletonElement height="14px" className="w-full" rounded="rounded-sm" delay={baseDelay + 290} />
+                <SkeletonElement height="14px" className="w-5/6" rounded="rounded-sm" delay={baseDelay + 300} />
+                <SkeletonElement height="14px" className="w-2/3" rounded="rounded-sm" delay={baseDelay + 310} />
               </div>
               <div className="pt-4 border-t border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-between">
-                <SkeletonElement height="12px" className="w-24" rounded="rounded-xs" delay={baseDelay + 320} />
+                <SkeletonElement height="12px" className="w-24" rounded="rounded-sm" delay={baseDelay + 320} />
                 <SkeletonElement height="24px" className="w-28" rounded="rounded-md" delay={baseDelay + 330} />
               </div>
             </div>

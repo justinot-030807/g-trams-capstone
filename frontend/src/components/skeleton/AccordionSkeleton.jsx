@@ -12,14 +12,14 @@ export const AccordionListSkeleton = ({ count = 5, baseDelay = 40, stepDelay = 5
         return (
           <div
             key={index}
-            className="stagger-reveal bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4 sm:p-5 shadow-xs flex items-center justify-between gap-4 transition-colors"
+            className="stagger-reveal bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4 sm:p-5 shadow-sm flex items-center justify-between gap-4 transition-colors"
             style={{ animationDelay: `${itemDelay}ms` }}
           >
             <div className="flex items-center gap-3 min-w-0">
               <SkeletonElement rounded="rounded-lg" className="w-9 h-9 shrink-0" delay={itemDelay} />
               <div className="space-y-1.5 min-w-0">
                 <SkeletonElement height="14px" className="w-36 sm:w-52" rounded="rounded-md" delay={itemDelay + 15} />
-                <SkeletonElement height="10px" className="w-24" rounded="rounded-xs" delay={itemDelay + 25} />
+                <SkeletonElement height="10px" className="w-24" rounded="rounded-sm" delay={itemDelay + 25} />
               </div>
             </div>
 
@@ -51,11 +51,11 @@ export const SubmissionCardsSkeleton = ({ count = 3, baseDelay = 40, stepDelay =
             <div className="flex items-start justify-between gap-2">
               <div className="flex items-center gap-2">
                 <SkeletonElement rounded="rounded-md" className="w-6 h-6 shrink-0" delay={itemDelay} />
-                <SkeletonElement height="13px" className="w-28" rounded="rounded-xs" delay={itemDelay + 15} />
+                <SkeletonElement height="13px" className="w-28" rounded="rounded-sm" delay={itemDelay + 15} />
               </div>
-              <SkeletonElement height="16px" className="w-16" rounded="rounded-xs" delay={itemDelay + 25} />
+              <SkeletonElement height="16px" className="w-16" rounded="rounded-sm" delay={itemDelay + 25} />
             </div>
-            <SkeletonElement height="10px" className="w-32" rounded="rounded-xs" delay={itemDelay + 35} />
+            <SkeletonElement height="10px" className="w-32" rounded="rounded-sm" delay={itemDelay + 35} />
           </div>
         );
       })}

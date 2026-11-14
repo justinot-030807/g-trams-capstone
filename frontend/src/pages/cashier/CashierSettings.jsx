@@ -36,9 +36,10 @@ const CashierSettings = () => {
   const [soundAlert, setSoundAlert] = useState(() => {
     return localStorage.getItem('cashier_sound_alert') !== 'false';
   });
-  const [defaultPaymentMethod, setDefaultPaymentMethod] = useState(() => {
-    return localStorage.getItem('cashier_default_payment') || 'Cash';
-  });
+  const standardFranchiseFee = useMemo(() => {
+    const val = Number(localStorage.getItem('franchise_fee'));
+    return Number.isFinite(val) && val > 0 ? val : 500;
+  }, []);
 
   // Archive state
   const [archiveList, setArchiveList] = useState([]);
@@ -170,12 +171,6 @@ const CashierSettings = () => {
     showToast(`Queue sound alert ${next ? 'enabled' : 'disabled'}.`, 'info');
   };
 
-  const handleChangePaymentMethod = (method) => {
-    setDefaultPaymentMethod(method);
-    localStorage.setItem('cashier_default_payment', method);
-    showToast(`Default payment method set to ${method}.`, 'info');
-  };
-
   // Filtered Archive List
   const filteredArchive = useMemo(() => {
     let result = [...archiveList];
@@ -270,18 +265,18 @@ const CashierSettings = () => {
       )}
 
       {/* Top Banner Header */}
-      <div className="bg-white dark:bg-[#1C1917] rounded-lg p-5 sm:p-6 mb-6 text-[#1F1D1B] dark:text-[#F6F5F3] shadow-xs border border-[#E4E1DC] dark:border-[#2E2A27] border-l-4 border-l-[#9E2A2B]">
+      <div className="bg-white dark:bg-[#1C1917] rounded-xl p-5 sm:p-6 mb-6 text-[#1F1D1B] dark:text-[#F6F5F3] shadow-sm border border-[#E4E1DC] dark:border-[#2E2A27]">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-center gap-3.5">
             <div className="w-12 h-12 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37] border border-[#9E2A2B]/20 dark:border-[#D4AF37]/20 flex items-center justify-center shrink-0">
               <ShieldCheck size={26} />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <h1 className="text-lg sm:text-xl font-bold tracking-tight uppercase">
                   Cashier Settings &amp; Archive
                 </h1>
-                <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#9E2A2B] text-white">
+                <span className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#9E2A2B] text-white">
                   Treasury
                 </span>
               </div>
@@ -294,21 +289,21 @@ const CashierSettings = () => {
           <button
             type="button"
             onClick={() => navigate('/cashier-dashboard')}
-            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#252220] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] transition-all cursor-pointer min-h-[44px] shadow-xs shrink-0 self-start sm:self-auto"
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#252220] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] transition-all cursor-pointer min-h-[44px] shadow-sm shrink-0 self-start sm:self-auto"
           >
             <ArrowLeft size={16} />
             <span>Back to Terminal</span>
           </button>
         </div>
 
-        {/* Tab Navigation Navigation Bar */}
-        <div className="flex items-center gap-2 mt-5 pt-4 border-t border-[#E4E1DC] dark:border-[#2E2A27] overflow-x-auto">
+        {/* Tab Navigation Bar — wraps cleanly on small screens so no pill clips */}
+        <div className="flex flex-wrap items-center gap-2 mt-5 pt-4 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
           <button
             type="button"
             onClick={() => setActiveTab('profile')}
             className={`px-4 py-2 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap min-h-[38px] ${
               activeTab === 'profile'
-                ? 'bg-[#9E2A2B] text-white shadow-xs'
+                ? 'bg-[#9E2A2B] text-white shadow-sm'
                 : 'text-[#6B6761] dark:text-[#A8A29E] hover:bg-[#F6F5F3] dark:hover:bg-[#252220]'
             }`}
           >
@@ -321,7 +316,7 @@ const CashierSettings = () => {
             onClick={() => setActiveTab('preferences')}
             className={`px-4 py-2 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap min-h-[38px] ${
               activeTab === 'preferences'
-                ? 'bg-[#9E2A2B] text-white shadow-xs'
+                ? 'bg-[#9E2A2B] text-white shadow-sm'
                 : 'text-[#6B6761] dark:text-[#A8A29E] hover:bg-[#F6F5F3] dark:hover:bg-[#252220]'
             }`}
           >
@@ -334,13 +329,13 @@ const CashierSettings = () => {
             onClick={() => setActiveTab('archive')}
             className={`px-4 py-2 rounded-lg text-xs sm:text-sm font-bold flex items-center gap-2 transition-all cursor-pointer whitespace-nowrap min-h-[38px] ${
               activeTab === 'archive'
-                ? 'bg-[#9E2A2B] text-white shadow-xs'
+                ? 'bg-[#9E2A2B] text-white shadow-sm'
                 : 'text-[#6B6761] dark:text-[#A8A29E] hover:bg-[#F6F5F3] dark:hover:bg-[#252220]'
             }`}
           >
             <Archive size={15} />
             <span>Payment Archive</span>
-            <span className="ml-1 text-[10px] px-1.5 py-0.2 rounded-full bg-white/20 dark:bg-white/10">
+            <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full bg-white/20 dark:bg-white/10">
               {archiveList.length}
             </span>
           </button>
@@ -350,10 +345,10 @@ const CashierSettings = () => {
       {/* TAB 1: PROFILE & ACCOUNT */}
       {activeTab === 'profile' && (
         <div className="space-y-6 max-w-3xl">
-          <div className="bg-white dark:bg-[#1C1917] rounded-lg p-5 sm:p-6 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs">
+          <div className="bg-white dark:bg-[#1C1917] rounded-lg p-5 sm:p-6 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm">
             {/* Header */}
             <div className="flex items-center gap-3 pb-4 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
-              <div className="w-14 h-14 rounded-full bg-[#9E2A2B] text-white border-2 border-[#D4AF37] flex items-center justify-center font-bold text-xl shadow-xs shrink-0">
+              <div className="w-14 h-14 rounded-full bg-[#9E2A2B] text-white border-2 border-[#D4AF37] flex items-center justify-center font-bold text-xl shadow-sm shrink-0">
                 {(profileData.name || 'C').charAt(0).toUpperCase()}
               </div>
               <div>
@@ -384,7 +379,7 @@ const CashierSettings = () => {
                     value={profileData.name}
                     onChange={(e) => setProfileData(prev => ({ ...prev, name: e.target.value }))}
                     required
-                    className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3.5 py-2.5 text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] focus:outline-hidden focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] min-h-[44px]"
+                    className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3.5 py-2.5 text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] focus:outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] min-h-[44px]"
                     placeholder="Enter cashier name"
                   />
                   <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1">
@@ -400,7 +395,7 @@ const CashierSettings = () => {
                     type="tel"
                     value={profileData.contact}
                     onChange={(e) => setProfileData(prev => ({ ...prev, contact: e.target.value }))}
-                    className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3.5 py-2.5 text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] focus:outline-hidden focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] min-h-[44px]"
+                    className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3.5 py-2.5 text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] focus:outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] min-h-[44px]"
                     placeholder="e.g. 09123456789"
                   />
                 </div>
@@ -440,7 +435,7 @@ const CashierSettings = () => {
                 <button
                   type="submit"
                   disabled={isSavingProfile}
-                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white text-xs sm:text-sm font-bold transition-all shadow-xs cursor-pointer min-h-[44px] active:scale-95 disabled:opacity-50"
+                  className="inline-flex items-center gap-2 px-6 py-2.5 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white text-xs sm:text-sm font-bold transition-all shadow-sm cursor-pointer min-h-[44px] active:scale-95 disabled:opacity-50"
                 >
                   {isSavingProfile ? <RefreshCw size={15} className="animate-spin" /> : <Save size={15} />}
                   <span>{isSavingProfile ? 'Saving...' : 'Save Profile Changes'}</span>
@@ -455,7 +450,7 @@ const CashierSettings = () => {
       {activeTab === 'preferences' && (
         <div className="space-y-6 max-w-3xl">
           {/* Appearance & Language Card */}
-          <div className="bg-white dark:bg-[#1C1917] rounded-lg p-5 sm:p-6 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs space-y-5">
+          <div className="bg-white dark:bg-[#1C1917] rounded-lg p-5 sm:p-6 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm space-y-5">
             <h3 className="text-sm sm:text-base font-bold text-[#1F1D1B] dark:text-[#F6F5F3] border-b border-[#E4E1DC] dark:border-[#2E2A27] pb-3">
               Display &amp; Language
             </h3>
@@ -500,7 +495,7 @@ const CashierSettings = () => {
                   onClick={() => changeLanguage('en')}
                   className={`px-3.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all min-h-[38px] ${
                     language === 'en'
-                      ? 'bg-[#9E2A2B] text-white shadow-xs'
+                      ? 'bg-[#9E2A2B] text-white shadow-sm'
                       : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27]'
                   }`}
                 >
@@ -511,7 +506,7 @@ const CashierSettings = () => {
                   onClick={() => changeLanguage('fil')}
                   className={`px-3.5 py-1.5 rounded-lg text-xs font-bold cursor-pointer transition-all min-h-[38px] ${
                     language === 'fil'
-                      ? 'bg-[#9E2A2B] text-white shadow-xs'
+                      ? 'bg-[#9E2A2B] text-white shadow-sm'
                       : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27]'
                   }`}
                 >
@@ -522,7 +517,7 @@ const CashierSettings = () => {
           </div>
 
           {/* Workstation & Terminal Workflow Preferences */}
-          <div className="bg-white dark:bg-[#1C1917] rounded-lg p-5 sm:p-6 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs space-y-5">
+          <div className="bg-white dark:bg-[#1C1917] rounded-lg p-5 sm:p-6 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm space-y-5">
             <h3 className="text-sm sm:text-base font-bold text-[#1F1D1B] dark:text-[#F6F5F3] border-b border-[#E4E1DC] dark:border-[#2E2A27] pb-3">
               Payment Terminal Workflow
             </h3>
@@ -541,7 +536,7 @@ const CashierSettings = () => {
               <button
                 type="button"
                 onClick={handleToggleAutoPrint}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                   autoPrintReceipt ? 'bg-[#9E2A2B]' : 'bg-[#E4E1DC] dark:bg-[#2E2A27]'
                 }`}
               >
@@ -567,7 +562,7 @@ const CashierSettings = () => {
               <button
                 type="button"
                 onClick={handleToggleSound}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-hidden ${
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                   soundAlert ? 'bg-[#9E2A2B]' : 'bg-[#E4E1DC] dark:border-[#2E2A27] bg-[#E4E1DC] dark:bg-[#2E2A27]'
                 }`}
               >
@@ -579,31 +574,20 @@ const CashierSettings = () => {
               </button>
             </div>
 
-            {/* Default Payment Mode Selection */}
-            <div className="pt-4 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
-              <p className="text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
-                Default Payment Method
-              </p>
-              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mb-3">
-                Pre-selected payment method on the payment modal.
-              </p>
-
-              <div className="grid grid-cols-3 gap-2.5 max-w-md">
-                {['Cash', 'GCash / Maya', 'Treasury Check'].map((method) => (
-                  <button
-                    key={method}
-                    type="button"
-                    onClick={() => handleChangePaymentMethod(method)}
-                    className={`p-2.5 rounded-lg border text-xs font-bold transition-all cursor-pointer text-center ${
-                      defaultPaymentMethod === method
-                        ? 'bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 border-[#9E2A2B] dark:border-[#D4AF37] text-[#9E2A2B] dark:text-[#D4AF37]'
-                        : 'bg-[#F6F5F3] dark:bg-[#14110F] border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E]'
-                    }`}
-                  >
-                    {method}
-                  </button>
-                ))}
+            {/* Over-the-Counter Cash Policy */}
+            <div className="pt-4 border-t border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <p className="text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                  Accepted Payment Method
+                </p>
+                <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                  Municipal Treasury collections are strictly settled over the counter in cash.
+                </p>
               </div>
+              <span className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-[#FDF2F4] dark:bg-[#2E1A1B] border border-[#F8C5CA] dark:border-[#5C2427] text-xs font-bold text-[#9E2A2B] dark:text-[#F5E6B3] self-start sm:self-auto shrink-0">
+                <Banknote size={15} />
+                <span>Cash (Over-the-Counter Only)</span>
+              </span>
             </div>
           </div>
         </div>
@@ -614,7 +598,7 @@ const CashierSettings = () => {
         <div className="space-y-4">
           {/* Summary Metric Strip */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-            <div className="bg-white dark:bg-[#1C1917] p-4 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs flex items-center gap-3">
+            <div className="bg-white dark:bg-[#1C1917] p-4 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center shrink-0">
                 <CheckCircle2 size={20} />
               </div>
@@ -628,7 +612,7 @@ const CashierSettings = () => {
               </div>
             </div>
 
-            <div className="bg-white dark:bg-[#1C1917] p-4 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs flex items-center gap-3">
+            <div className="bg-white dark:bg-[#1C1917] p-4 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 flex items-center justify-center shrink-0">
                 <DollarSign size={20} />
               </div>
@@ -642,23 +626,23 @@ const CashierSettings = () => {
               </div>
             </div>
 
-            <div className="bg-white dark:bg-[#1C1917] p-4 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 border border-blue-200 dark:border-blue-800 flex items-center justify-center shrink-0">
+            <div className="bg-white dark:bg-[#1C1917] p-4 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm flex items-center gap-3">
+              <div className="w-10 h-10 rounded-lg bg-[#FDF2F4] dark:bg-[#2E1A1B] text-[#9E2A2B] dark:text-[#F5E6B3] border border-[#F8C5CA] dark:border-[#5C2427] flex items-center justify-center shrink-0">
                 <FileText size={20} />
               </div>
               <div>
                 <p className="text-[11px] font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">
-                  Fixed Rate
+                  Standard Fee Rate
                 </p>
                 <p className="text-lg sm:text-xl font-bold font-mono text-[#1F1D1B] dark:text-[#F6F5F3]">
-                  ₱500.00 / MTOP
+                  ₱{standardFranchiseFee.toFixed(2)} / MTOP
                 </p>
               </div>
             </div>
           </div>
 
           {/* Filters & Search Toolbar */}
-          <div className="bg-white dark:bg-[#1C1917] p-3.5 sm:p-4 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+          <div className="bg-white dark:bg-[#1C1917] p-3.5 sm:p-4 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B6761] dark:text-[#A8A29E]" size={16} />
               <input
@@ -666,7 +650,7 @@ const CashierSettings = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search by OR No., Plate No., Operator Name..."
-                className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg pl-9 pr-3.5 py-2 text-xs sm:text-sm font-medium text-[#1F1D1B] dark:text-[#EAE7E1] focus:outline-hidden focus:border-[#9E2A2B] dark:focus:border-[#D4AF37]"
+                className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg pl-9 pr-3.5 py-2 text-xs sm:text-sm font-medium text-[#1F1D1B] dark:text-[#EAE7E1] focus:outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37]"
               />
               {searchQuery && (
                 <button
@@ -703,7 +687,7 @@ const CashierSettings = () => {
           </div>
 
           {/* Archive Records Table */}
-          <div className="bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs overflow-hidden">
+          <div className="bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm overflow-hidden">
             {isLoadingArchive ? (
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse text-xs sm:text-sm">
@@ -732,63 +716,102 @@ const CashierSettings = () => {
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse text-xs sm:text-sm">
-                  <thead>
-                    <tr className="bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E] font-bold uppercase text-[10px] tracking-wider border-b border-[#E4E1DC] dark:border-[#2E2A27]">
-                      <th className="py-3 px-4">OR Number</th>
-                      <th className="py-3 px-4">Operator / Payor</th>
-                      <th className="py-3 px-4">Plate No.</th>
-                      <th className="py-3 px-4">TODA / Zone</th>
-                      <th className="py-3 px-4">Amount Paid</th>
-                      <th className="py-3 px-4">Date Settled</th>
-                      <th className="py-3 px-4 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
-                    {filteredArchive.map((item) => {
-                      const payDate = item.paymentDate ? new Date(item.paymentDate) : new Date(item.updatedAt || Date.now());
-                      const dateStr = payDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                      const timeStr = payDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+              <>
+                {/* Mobile Cards for Archive */}
+                <div className="md:hidden divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
+                  {filteredArchive.map((item) => {
+                    const payDate = item.paymentDate ? new Date(item.paymentDate) : new Date(item.updatedAt || Date.now());
+                    const dateStr = payDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                    return (
+                      <div key={item._id} className="p-4 space-y-2.5 bg-white dark:bg-[#1C1917]">
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="min-w-0">
+                            <span className="font-mono font-bold text-xs text-[#9E2A2B] dark:text-[#F5E6B3]">
+                              OR #{item.officialReceiptNo || '—'}
+                            </span>
+                            <p className="font-bold text-sm text-[#1F1D1B] dark:text-[#F6F5F3] truncate">
+                              {item.fullName || (item.operator && item.operator.name) || 'Unknown Operator'}
+                            </p>
+                            <p className="text-xs font-mono text-[#6B6761] dark:text-[#A8A29E]">
+                              {item.plateNo || '—'} &bull; {dateStr}
+                            </p>
+                          </div>
+                          <span className="font-mono font-bold text-sm text-emerald-700 dark:text-emerald-400 shrink-0">
+                            ₱{parseFloat(item.amountPaid || standardFranchiseFee).toFixed(2)}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenReceipt(item)}
+                          className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2.5 min-h-[44px] rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#9E2A2B] hover:text-white border border-[#E4E1DC] dark:border-[#2E2A27] text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] transition-colors cursor-pointer"
+                        >
+                          <Printer size={13} />
+                          <span>Reprint Official Receipt</span>
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
 
-                      return (
-                        <tr key={item._id} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50 transition-colors">
-                          <td className="py-3.5 px-4 font-mono font-bold text-[#9E2A2B] dark:text-[#D4AF37]">
-                            {item.officialReceiptNo || '—'}
-                          </td>
-                          <td className="py-3.5 px-4 font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
-                            {item.fullName || (item.operator && item.operator.name) || 'Unknown Operator'}
-                          </td>
-                          <td className="py-3.5 px-4 font-mono font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                            {item.plateNo || '—'}
-                          </td>
-                          <td className="py-3.5 px-4 text-xs text-[#6B6761] dark:text-[#A8A29E]">
-                            {item.todaName || 'NON-TODA'} {item.zone ? `• ${formatZoneLabel(item.zone)}` : ''}
-                          </td>
-                          <td className="py-3.5 px-4 font-mono font-bold text-emerald-700 dark:text-emerald-400">
-                            ₱{parseFloat(item.amountPaid || 500).toFixed(2)}
-                          </td>
-                          <td className="py-3.5 px-4 text-xs text-[#6B6761] dark:text-[#A8A29E]">
-                            <div>{dateStr}</div>
-                            <div className="text-[10px]">{timeStr}</div>
-                          </td>
-                          <td className="py-3.5 px-4 text-right">
-                            <button
-                              type="button"
-                              onClick={() => handleOpenReceipt(item)}
-                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#9E2A2B] hover:text-white dark:hover:bg-[#D4AF37] dark:hover:text-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] transition-all cursor-pointer shadow-2xs"
-                              title="Reprint Official Receipt"
-                            >
-                              <Printer size={13} />
-                              <span>Reprint</span>
-                            </button>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
-              </div>
+                {/* Desktop Table */}
+                <div className="hidden md:block overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-xs sm:text-sm">
+                    <thead>
+                      <tr className="bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E] font-bold uppercase text-[10px] tracking-wider border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+                        <th className="py-3 px-4">OR Number</th>
+                        <th className="py-3 px-4">Operator / Payor</th>
+                        <th className="py-3 px-4">Plate No.</th>
+                        <th className="py-3 px-4">TODA / Zone</th>
+                        <th className="py-3 px-4">Amount Paid</th>
+                        <th className="py-3 px-4">Date Settled</th>
+                        <th className="py-3 px-4 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
+                      {filteredArchive.map((item) => {
+                        const payDate = item.paymentDate ? new Date(item.paymentDate) : new Date(item.updatedAt || Date.now());
+                        const dateStr = payDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                        const timeStr = payDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
+
+                        return (
+                          <tr key={item._id} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50 transition-colors">
+                            <td className="py-3.5 px-4 font-mono font-bold text-[#9E2A2B] dark:text-[#D4AF37]">
+                              {item.officialReceiptNo || '—'}
+                            </td>
+                            <td className="py-3.5 px-4 font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
+                              {item.fullName || (item.operator && item.operator.name) || 'Unknown Operator'}
+                            </td>
+                            <td className="py-3.5 px-4 font-mono font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                              {item.plateNo || '—'}
+                            </td>
+                            <td className="py-3.5 px-4 text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                              {item.todaName || 'NON-TODA'} {item.zone ? `• ${formatZoneLabel(item.zone)}` : ''}
+                            </td>
+                            <td className="py-3.5 px-4 font-mono font-bold text-emerald-700 dark:text-emerald-400">
+                              ₱{parseFloat(item.amountPaid || standardFranchiseFee).toFixed(2)}
+                            </td>
+                            <td className="py-3.5 px-4 text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                              <div>{dateStr}</div>
+                              <div className="text-[10px]">{timeStr}</div>
+                            </td>
+                            <td className="py-3.5 px-4 text-right">
+                              <button
+                                type="button"
+                                onClick={() => handleOpenReceipt(item)}
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#9E2A2B] hover:text-white dark:hover:bg-[#D4AF37] dark:hover:text-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] transition-all cursor-pointer shadow-sm"
+                                title="Reprint Official Receipt"
+                              >
+                                <Printer size={13} />
+                                <span>Reprint</span>
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
           </div>
         </div>
@@ -796,7 +819,7 @@ const CashierSettings = () => {
 
       {/* Official Receipt Print Modal */}
       {isReceiptOpen && receiptData && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
           <div className="relative w-full max-w-md bg-white dark:bg-[#1C1917] rounded-lg shadow-2xl border border-[#E4E1DC] dark:border-[#2E2A27] p-6 text-[#1F1D1B] dark:text-[#F6F5F3] animate-in zoom-in-95 duration-150">
             {/* Header controls (hidden on print) */}
             <div className="flex items-center justify-between pb-3 mb-4 border-b border-[#E4E1DC] dark:border-[#2E2A27] print:hidden">
@@ -857,7 +880,7 @@ const CashierSettings = () => {
                 </div>
                 <div className="flex justify-between pt-1 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
                   <span className="text-[#6B6761] dark:text-[#A8A29E]">Payment Method:</span>
-                  <span className="font-semibold">{receiptData.paymentMethod}</span>
+                  <span className="font-semibold">Cash (Over-the-Counter)</span>
                 </div>
               </div>
 
@@ -865,7 +888,7 @@ const CashierSettings = () => {
               <div className="border-t border-b border-[#E4E1DC] dark:border-[#2E2A27] py-2.5 text-xs space-y-1">
                 <div className="flex justify-between font-bold">
                   <span>MTOP Franchise Regulatory Fee</span>
-                  <span className="font-mono">₱{parseFloat(receiptData.amountPaid || 500).toFixed(2)}</span>
+                  <span className="font-mono">₱{parseFloat(receiptData.amountPaid || standardFranchiseFee || 500).toFixed(2)}</span>
                 </div>
                 <p className="text-[10px] text-[#6B6761] dark:text-[#A8A29E]">Annual motor tricycle regulatory &amp; inspection fee</p>
               </div>
@@ -873,7 +896,7 @@ const CashierSettings = () => {
               <div className="flex justify-between items-center text-sm font-bold pt-1">
                 <span>TOTAL AMOUNT PAID:</span>
                 <span className="text-base font-mono text-[#9E2A2B] dark:text-[#D4AF37]">
-                  ₱{parseFloat(receiptData.amountPaid || 500).toFixed(2)}
+                  ₱{parseFloat(receiptData.amountPaid || standardFranchiseFee || 500).toFixed(2)}
                 </span>
               </div>
 
@@ -897,7 +920,7 @@ const CashierSettings = () => {
               <button
                 type="button"
                 onClick={handlePrintReceipt}
-                className="inline-flex items-center gap-1.5 px-5 py-2 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-5 py-2 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white text-xs font-bold transition-all shadow-sm cursor-pointer"
               >
                 <Printer size={14} />
                 <span>Print Receipt</span>

@@ -97,7 +97,7 @@ const OperatorGuideModal = ({ isOpen, onClose, defaultTab = 'apply' }) => {
               onClick={() => setActiveTab('apply')}
               className={`flex-1 min-w-[110px] py-2 px-3 rounded-md transition-all text-center cursor-pointer min-h-[44px] flex items-center justify-center ${
                 activeTab === 'apply' 
-                  ? 'bg-white text-[#9E2A2B] font-bold shadow-xs' 
+                  ? 'bg-white text-[#9E2A2B] font-bold shadow-sm' 
                   : 'text-white/75 hover:text-white'
               }`}
             >
@@ -108,7 +108,7 @@ const OperatorGuideModal = ({ isOpen, onClose, defaultTab = 'apply' }) => {
               onClick={() => setActiveTab('renew')}
               className={`flex-1 min-w-[100px] py-2 px-3 rounded-md transition-all text-center cursor-pointer min-h-[44px] flex items-center justify-center ${
                 activeTab === 'renew' 
-                  ? 'bg-white text-[#9E2A2B] font-bold shadow-xs' 
+                  ? 'bg-white text-[#9E2A2B] font-bold shadow-sm' 
                   : 'text-white/75 hover:text-white'
               }`}
             >
@@ -119,7 +119,7 @@ const OperatorGuideModal = ({ isOpen, onClose, defaultTab = 'apply' }) => {
               onClick={() => setActiveTab('status')}
               className={`flex-1 min-w-[110px] py-2 px-3 rounded-md transition-all text-center cursor-pointer min-h-[44px] flex items-center justify-center ${
                 activeTab === 'status' 
-                  ? 'bg-white text-[#9E2A2B] font-bold shadow-xs' 
+                  ? 'bg-white text-[#9E2A2B] font-bold shadow-sm' 
                   : 'text-white/75 hover:text-white'
               }`}
             >
@@ -130,7 +130,7 @@ const OperatorGuideModal = ({ isOpen, onClose, defaultTab = 'apply' }) => {
               onClick={() => setActiveTab('faqs')}
               className={`flex-1 min-w-[80px] py-2 px-3 rounded-md transition-all text-center cursor-pointer min-h-[44px] flex items-center justify-center ${
                 activeTab === 'faqs' 
-                  ? 'bg-white text-[#9E2A2B] font-bold shadow-xs' 
+                  ? 'bg-white text-[#9E2A2B] font-bold shadow-sm' 
                   : 'text-white/75 hover:text-white'
               }`}
             >
@@ -156,7 +156,7 @@ const OperatorGuideModal = ({ isOpen, onClose, defaultTab = 'apply' }) => {
 
               <div className="space-y-3">
                 <div className="p-4 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] flex items-start gap-3.5">
-                  <div className="w-8 h-8 rounded-lg bg-[#9E2A2B] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                  <div className="w-8 h-8 rounded-lg bg-[#9E2A2B] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
                     1
                   </div>
                   <div className="space-y-1">
@@ -172,7 +172,7 @@ const OperatorGuideModal = ({ isOpen, onClose, defaultTab = 'apply' }) => {
                 </div>
 
                 <div className="p-4 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] flex items-start gap-3.5">
-                  <div className="w-8 h-8 rounded-lg bg-[#9E2A2B] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                  <div className="w-8 h-8 rounded-lg bg-[#9E2A2B] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
                     2
                   </div>
                   <div className="space-y-1">
@@ -188,7 +188,7 @@ const OperatorGuideModal = ({ isOpen, onClose, defaultTab = 'apply' }) => {
                 </div>
 
                 <div className="p-4 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] flex items-start gap-3.5">
-                  <div className="w-8 h-8 rounded-lg bg-[#9E2A2B] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                  <div className="w-8 h-8 rounded-lg bg-[#9E2A2B] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
                     3
                   </div>
                   <div className="space-y-1">
@@ -220,7 +220,7 @@ const OperatorGuideModal = ({ isOpen, onClose, defaultTab = 'apply' }) => {
 
               <div className="space-y-3">
                 <div className="p-4 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] flex items-start gap-3.5">
-                  <div className="w-8 h-8 rounded-lg bg-[#9E2A2B] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                  <div className="w-8 h-8 rounded-lg bg-[#9E2A2B] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
                     1
                   </div>
                   <div className="space-y-1">
@@ -236,7 +236,7 @@ const OperatorGuideModal = ({ isOpen, onClose, defaultTab = 'apply' }) => {
                 </div>
 
                 <div className="p-4 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] flex items-start gap-3.5">
-                  <div className="w-8 h-8 rounded-lg bg-[#9E2A2B] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                  <div className="w-8 h-8 rounded-lg bg-[#9E2A2B] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
                     2
                   </div>
                   <div className="space-y-1">
@@ -252,7 +252,7 @@ const OperatorGuideModal = ({ isOpen, onClose, defaultTab = 'apply' }) => {
                 </div>
 
                 <div className="p-4 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] flex items-start gap-3.5">
-                  <div className="w-8 h-8 rounded-lg bg-[#9E2A2B] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+                  <div className="w-8 h-8 rounded-lg bg-[#9E2A2B] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
                     3
                   </div>
                   <div className="space-y-1">
@@ -387,7 +387,7 @@ const OperatorGuideModal = ({ isOpen, onClose, defaultTab = 'apply' }) => {
           <button
             type="button"
             onClick={onClose}
-            className="w-full sm:w-auto px-6 py-2.5 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-xs uppercase tracking-wider transition-all cursor-pointer min-h-[44px] flex items-center justify-center shadow-xs"
+            className="w-full sm:w-auto px-6 py-2.5 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-xs uppercase tracking-wider transition-all cursor-pointer min-h-[44px] flex items-center justify-center shadow-sm"
           >
             {isFilipino ? 'Naintindihan Ko' : 'Understood'}
           </button>

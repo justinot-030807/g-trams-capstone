@@ -78,7 +78,7 @@ const OfficialBploPermitForm = ({
       {showActions && (
         <div className="w-full max-w-[760px] bg-[#1F1D1B] dark:bg-[#1C1917] border border-[#E4E1DC]/20 dark:border-[#2E2A27] rounded-xl p-3 mb-4 flex items-center justify-between text-white shadow-md print:hidden">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-[#9E2A2B] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-xs">
+            <div className="w-8 h-8 rounded-lg bg-[#9E2A2B] text-white flex items-center justify-center font-bold text-xs shrink-0 shadow-sm">
               <Building2 size={17} />
             </div>
             <div>

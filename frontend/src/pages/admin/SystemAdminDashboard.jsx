@@ -4,7 +4,6 @@ import MainLayout from '../../components/MainLayout';
 import PageHeader from '../../components/common/PageHeader';
 import StatCard from '../../components/common/StatCard';
 import DataTable from '../../components/common/DataTable';
-import SmsDispatcherLog from '../../components/admin/SmsDispatcherLog';
 import { useLanguage } from '../../context/LanguageContext';
 import { 
   Users, Server, Shield, Activity, RefreshCw, 
@@ -100,21 +99,27 @@ const SystemAdminDashboard = () => {
       header: 'Event / Action',
       render: (log) => {
         const action = log.action || 'SYSTEM_EVENT';
-        let badgeColor = 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-200';
+        const formattedAction = action
+          .replace(/_/g, ' ')
+          .toLowerCase()
+          .replace(/\b\w/g, (c) => c.toUpperCase());
+        let badgeColor = 'bg-[#F6F5F3] text-[#6B6761] dark:bg-[#14110F] dark:text-[#A8A29E] border-[#E4E1DC] dark:border-[#2E2A27]';
         if (action.includes('USER_') || action.includes('AUTH')) {
-          badgeColor = 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border-blue-200';
+          badgeColor = 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border-blue-200 dark:border-blue-800';
         } else if (action.includes('SETTINGS') || action.includes('CONFIG')) {
-          badgeColor = 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border-amber-200';
+          badgeColor = 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border-amber-200 dark:border-amber-800';
         } else if (action.includes('DEACTIVAT') || action.includes('REVOK')) {
-          badgeColor = 'bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300 border-red-200';
+          badgeColor = 'bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300 border-red-200 dark:border-red-800';
         }
+        const rawActor = log.actorName || log.performedByName || '';
+        const cleanActor = rawActor.includes('LLSA I') ? 'LLSA I (Madhelyn Pastoral)' : rawActor;
         return (
-          <div className="flex flex-col">
-            <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-mono font-semibold uppercase tracking-wider border w-fit ${badgeColor}`}>
-              {action.replace(/_/g, ' ')}
+          <div className="flex flex-col min-w-0">
+            <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide border w-fit ${badgeColor}`}>
+              {formattedAction}
             </span>
-            <span className="text-xs text-[#1F1D1B] dark:text-[#F6F5F3] font-medium mt-0.5 truncate max-w-xs">
-              {log.actorName || log.performedByName ? `By ${log.actorName || log.performedByName}` : log.details?.name ? `Target: ${log.details.name}` : 'Administrative Operation'}
+            <span className="text-xs text-[#1F1D1B] dark:text-[#F6F5F3] font-medium mt-0.5 truncate max-w-[240px] sm:max-w-[320px]" title={log.details?.summary || rawActor}>
+              {cleanActor ? `By ${cleanActor}` : log.details?.name ? `Target: ${log.details.name}` : 'Administrative Operation'}
             </span>
           </div>
         );
@@ -124,11 +129,18 @@ const SystemAdminDashboard = () => {
       key: 'ip',
       header: 'IP / Origin',
       align: 'right',
-      render: (log) => (
-        <span className="font-mono text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
-          {log.ipAddress || log.ip || '127.0.0.1'}
-        </span>
-      )
+      width: '140px',
+      render: (log) => {
+        const rawIp = log.ipAddress || log.ip || '127.0.0.1';
+        return (
+          <span 
+            className="font-mono text-[11px] text-[#6B6761] dark:text-[#A8A29E] inline-block max-w-[125px] truncate align-bottom"
+            title={rawIp}
+          >
+            {rawIp}
+          </span>
+        );
+      }
     }
   ];
 
@@ -150,7 +162,7 @@ const SystemAdminDashboard = () => {
               type="button"
               onClick={() => fetchDiagnostics(true)}
               disabled={isRefreshing}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#1F1D1B] dark:text-[#F6F5F3] bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] rounded-md border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs transition-all active:scale-95 cursor-pointer disabled:opacity-50"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#1F1D1B] dark:text-[#F6F5F3] bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] rounded-md border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm transition-all active:scale-95 cursor-pointer disabled:opacity-50"
               title="Refresh telemetry"
             >
               <RefreshCw size={13} className={isRefreshing ? 'animate-spin text-[#9E2A2B]' : ''} />
@@ -159,7 +171,7 @@ const SystemAdminDashboard = () => {
             <button
               type="button"
               onClick={() => navigate('/user-management')}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#9E2A2B] hover:bg-[#7A1B22] rounded-md transition-colors shadow-xs active:scale-95 cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-white bg-[#9E2A2B] hover:bg-[#7A1B22] rounded-md transition-colors shadow-sm active:scale-95 cursor-pointer"
             >
               <Users size={13} />
               <span>Manage Accounts</span>
@@ -191,8 +203,8 @@ const SystemAdminDashboard = () => {
         />
         <StatCard
           label="Maintenance Mode"
-          count={sysInfo.maintenanceMode ? 'Active (Locked)' : 'Normal Operations'}
-          subtext={`Fiscal Year ${sysInfo.fiscalYear || '2026'}`}
+          count={sysInfo.maintenanceMode ? 'Locked' : 'Normal'}
+          subtext={`${sysInfo.maintenanceMode ? 'Maintenance active' : 'Normal operations'} • FY ${sysInfo.fiscalYear || '2026'}`}
           onClick={() => navigate('/admin/settings')}
           title="Configure maintenance mode in System Settings"
         />
@@ -201,35 +213,37 @@ const SystemAdminDashboard = () => {
       {/* 3. Account Roles Distribution & Infrastructure Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {/* User Role Governance Breakdown */}
-        <div className="lg:col-span-2 bg-white dark:bg-[#1C1917] p-5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs flex flex-col justify-between">
+        <div className="lg:col-span-2 bg-white dark:bg-[#1C1917] p-5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-4 pb-2 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
-              <div>
+            <div className="flex flex-wrap items-start sm:items-center justify-between gap-2 mb-4 pb-2.5 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+              <div className="min-w-0">
                 <h2 className="text-sm font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] flex items-center gap-2">
-                  <ShieldCheck size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                  <ShieldCheck size={16} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" />
                   <span>Account Governance & Role Separation</span>
                 </h2>
                 <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5">
-                  Decoupled authority: System Admins manage IT systems; BPLO Staff manage franchises; Cashiers manage revenue.
+                  Decoupled authority: System Admins manage IT systems; LLSA I Staff manage franchises; Cashiers manage revenue.
                 </p>
               </div>
-              <span className="text-xs font-mono font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
+              <span className="text-xs font-mono font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] bg-[#F6F5F3] dark:bg-[#14110F] px-2.5 py-1 rounded-md border border-[#E4E1DC] dark:border-[#2E2A27] whitespace-nowrap shrink-0">
                 {totalUsers} Total Accounts
               </span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
               {[
-                { label: 'Operators', count: roles.operator || 0, color: 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800' },
-                { label: 'TODA Presidents', count: roles.toda_president || 0, color: 'text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800' },
-                { label: 'BPLO Staff', count: roles.bplo_staff || 0, color: 'text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800' },
-                { label: 'Municipal Cashiers', count: roles.cashier || 0, color: 'text-purple-700 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/30 border-purple-200 dark:border-purple-800' },
-                { label: 'System Admins', count: roles.system_admin || 0, color: 'text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800' },
-                { label: 'Drivers', count: roles.driver || 0, color: 'text-slate-700 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800' },
+                { label: 'Operators', count: roles.operator || 0, dot: 'bg-emerald-600 dark:bg-emerald-400', text: 'text-[#1F1D1B] dark:text-[#F6F5F3]' },
+                { label: 'TODA Presidents', count: roles.toda_president || 0, dot: 'bg-amber-600 dark:bg-[#D4AF37]', text: 'text-[#1F1D1B] dark:text-[#F6F5F3]' },
+                { label: 'LLSA I Staff', count: roles.bplo_staff || 0, dot: 'bg-sky-600 dark:bg-sky-400', text: 'text-[#1F1D1B] dark:text-[#F6F5F3]' },
+                { label: 'Cashiers', count: roles.cashier || 0, dot: 'bg-[#7A1B22] dark:bg-[#D4AF37]', text: 'text-[#1F1D1B] dark:text-[#F6F5F3]' },
+                { label: 'System Admins', count: roles.system_admin || 0, dot: 'bg-[#9E2A2B] dark:bg-red-400', text: 'text-[#9E2A2B] dark:text-[#D4AF37]', span: 'col-span-2 sm:col-span-1' },
               ].map((item, idx) => (
-                <div key={idx} className={`p-3 rounded-lg border flex flex-col justify-between ${item.color}`}>
-                  <span className="text-[11px] font-semibold uppercase tracking-wider">{item.label}</span>
-                  <span className="text-xl font-mono font-bold mt-1 tabular-nums">{item.count}</span>
+                <div key={idx} className={`p-3 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col justify-between ${item.span || ''}`}>
+                  <div className="flex items-center gap-1.5">
+                    <span className={`w-2 h-2 rounded-full shrink-0 ${item.dot}`} />
+                    <span className="text-[11px] font-semibold text-[#6B6761] dark:text-[#A8A29E] whitespace-nowrap truncate">{item.label}</span>
+                  </div>
+                  <span className={`text-xl font-mono font-bold mt-1.5 tabular-nums ${item.text}`}>{item.count}</span>
                 </div>
               ))}
             </div>
@@ -251,7 +265,7 @@ const SystemAdminDashboard = () => {
         </div>
 
         {/* IT Infrastructure & Database Health */}
-        <div className="bg-white dark:bg-[#1C1917] p-5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs flex flex-col justify-between">
+        <div className="bg-white dark:bg-[#1C1917] p-5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4 pb-2 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
               <h2 className="text-sm font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] flex items-center gap-2">
@@ -327,14 +341,84 @@ const SystemAdminDashboard = () => {
             </button>
           </div>
 
-          <DataTable
-            columns={auditColumns}
-            data={auditLogs}
-            isLoading={isLoading}
-            emptyTitle="No audit logs recorded yet."
-            emptySubtitle="Administrative and security actions will be recorded here automatically."
-            rowKey="_id"
-          />
+          {/* Mobile Audit Cards */}
+          <div className="md:hidden space-y-2.5">
+            {isLoading ? (
+              Array.from({ length: 4 }).map((_, idx) => (
+                <div
+                  key={idx}
+                  className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3.5 space-y-2 animate-pulse"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="h-4 w-28 rounded bg-[#F6F5F3] dark:bg-[#2E2A27]" />
+                    <div className="h-3 w-14 rounded bg-[#F6F5F3] dark:bg-[#2E2A27]" />
+                  </div>
+                  <div className="h-3 w-40 rounded bg-[#F6F5F3] dark:bg-[#2E2A27]" />
+                </div>
+              ))
+            ) : auditLogs.length === 0 ? (
+              <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-6 text-center">
+                <p className="text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">No audit logs recorded yet.</p>
+                <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1">
+                  Administrative and security actions will be recorded here automatically.
+                </p>
+              </div>
+            ) : (
+              auditLogs.map((log, idx) => {
+                const action = log.action || 'SYSTEM_EVENT';
+                const formattedAction = action
+                  .replace(/_/g, ' ')
+                  .toLowerCase()
+                  .replace(/\b\w/g, (c) => c.toUpperCase());
+                let badgeColor = 'bg-[#F6F5F3] text-[#6B6761] dark:bg-[#14110F] dark:text-[#A8A29E] border-[#E4E1DC] dark:border-[#2E2A27]';
+                if (action.includes('USER_') || action.includes('AUTH')) {
+                  badgeColor = 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border-blue-200 dark:border-blue-800';
+                } else if (action.includes('SETTINGS') || action.includes('CONFIG')) {
+                  badgeColor = 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border-amber-200 dark:border-amber-800';
+                } else if (action.includes('DEACTIVAT') || action.includes('REVOK')) {
+                  badgeColor = 'bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300 border-red-200 dark:border-red-800';
+                }
+                const rawActor = log.actorName || log.performedByName || '';
+                const cleanActor = rawActor.includes('LLSA I') ? 'LLSA I (Madhelyn Pastoral)' : rawActor;
+                const cleanIp = String(log.ipAddress || log.ip || '127.0.0.1').replace(/^::ffff:/, '');
+
+                return (
+                  <div
+                    key={log._id || idx}
+                    className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3.5 shadow-sm space-y-2"
+                  >
+                    <div className="flex items-center justify-between gap-2">
+                      <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide border ${badgeColor}`}>
+                        {formattedAction}
+                      </span>
+                      <span className="font-mono text-[11px] text-[#6B6761] dark:text-[#A8A29E] whitespace-nowrap">
+                        {getRelativeTime(log.createdAt || log.timestamp)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2 text-xs">
+                      <span className="text-[#1F1D1B] dark:text-[#F6F5F3] font-medium truncate">
+                        {cleanActor ? `By ${cleanActor}` : log.details?.name ? `Target: ${log.details.name}` : 'Administrative Operation'}
+                      </span>
+                      <span className="font-mono text-[10px] text-[#6B6761] dark:text-[#A8A29E] shrink-0">
+                        {cleanIp}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+
+          <div className="hidden md:block">
+            <DataTable
+              columns={auditColumns}
+              data={auditLogs}
+              isLoading={isLoading}
+              emptyTitle="No audit logs recorded yet."
+              emptySubtitle="Administrative and security actions will be recorded here automatically."
+              rowKey="_id"
+            />
+          </div>
         </div>
 
         {/* Quick Management Shortcuts */}
@@ -345,7 +429,7 @@ const SystemAdminDashboard = () => {
 
           <div
             onClick={() => navigate('/user-management')}
-            className="p-4 bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27]/60 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs cursor-pointer transition-all flex items-center justify-between group"
+            className="p-4 bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27]/60 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm cursor-pointer transition-all flex items-center justify-between group"
           >
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-md bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
@@ -365,7 +449,7 @@ const SystemAdminDashboard = () => {
 
           <div
             onClick={() => navigate('/admin/settings')}
-            className="p-4 bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27]/60 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs cursor-pointer transition-all flex items-center justify-between group"
+            className="p-4 bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27]/60 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm cursor-pointer transition-all flex items-center justify-between group"
           >
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-400 flex items-center justify-center shrink-0">
@@ -385,7 +469,7 @@ const SystemAdminDashboard = () => {
 
           <div
             onClick={() => navigate('/admin/tickets')}
-            className="p-4 bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27]/60 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs cursor-pointer transition-all flex items-center justify-between group"
+            className="p-4 bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27]/60 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm cursor-pointer transition-all flex items-center justify-between group"
           >
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-md bg-blue-500/10 text-blue-700 dark:text-blue-400 flex items-center justify-center shrink-0">
@@ -403,11 +487,6 @@ const SystemAdminDashboard = () => {
             <ArrowRight size={14} className="text-[#6B6761] group-hover:translate-x-0.5 transition-transform" />
           </div>
         </div>
-      </div>
-
-      {/* 5. Automated SMS Dispatcher Audit Log (Full Width) */}
-      <div className="mt-8 w-full">
-        <SmsDispatcherLog />
       </div>
     </MainLayout>
   );

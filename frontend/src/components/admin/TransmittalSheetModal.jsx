@@ -105,7 +105,7 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
             <div className="flex items-center gap-2">
               <button
                 onClick={handleExportCSV}
-                className="flex items-center gap-1.5 bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-lg text-xs font-semibold transition-all shadow-xs cursor-pointer shrink-0"
+                className="flex items-center gap-1.5 bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-lg text-xs font-semibold transition-all shadow-sm cursor-pointer shrink-0"
                 title="Export transmittal data to CSV (Excel compatible)"
               >
                 <Download size={14} />
@@ -114,7 +114,7 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
 
               <button
                 onClick={handlePrint}
-                className="flex items-center gap-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] active:scale-95 text-white px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-lg text-xs font-semibold transition-all shadow-xs cursor-pointer shrink-0"
+                className="flex items-center gap-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] active:scale-95 text-white px-3 sm:px-3.5 py-1.5 sm:py-2 rounded-lg text-xs font-semibold transition-all shadow-sm cursor-pointer shrink-0"
                 title="Print Transmittal Sheet"
               >
                 <Printer size={14} />

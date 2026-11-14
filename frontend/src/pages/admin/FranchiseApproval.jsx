@@ -52,6 +52,7 @@ const FranchiseApproval = () => {
 
   const [applications, setApplications] = useState([]);
   const [historyApps, setHistoryApps] = useState([]); // Active (approved) + Cancelled (rejected)
+  const [franchiseFee, setFranchiseFee] = useState(500);
   const [isLoading, setIsLoading] = useState(true);
 
   // Batch selection state
@@ -109,10 +110,17 @@ const FranchiseApproval = () => {
     setIsLoading(true);
     try {
       const headers = { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
-      const [response, historyRes] = await Promise.all([
+      const [response, historyRes, settingsRes] = await Promise.all([
         fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises?status=Pending,Pending%20for%20Approval,For%20Payment,For%20Signing,Ready%20for%20Pickup,Cancellation%20Requested&limit=2000&sort=oldest`, { headers }),
-        fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises?status=Active,Cancelled&limit=500`, { headers })
+        fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises?status=Active,Cancelled&limit=500`, { headers }),
+        fetch(`${import.meta.env.VITE_API_URL}/api/v1/settings`, { headers }).catch(() => null)
       ]);
+      if (settingsRes?.ok) {
+        const sData = await settingsRes.json().catch(() => null);
+        if (sData?.franchiseFee != null && !Number.isNaN(Number(sData.franchiseFee))) {
+          setFranchiseFee(Number(sData.franchiseFee));
+        }
+      }
       if (response.ok) {
         const data = await response.json();
         // Server already sorted, ensure FIFO queue (oldest date applied first)
@@ -722,7 +730,7 @@ const FranchiseApproval = () => {
                   ) : (
                     <>
                       <Clock size={14} className="text-amber-600 shrink-0" />
-                      <span>Awaiting Cashier Payment (₱500.00)</span>
+                      <span>Awaiting Cashier Payment (₱{Number(franchiseFee || 500).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})</span>
                     </>
                   )}
                 </div>
@@ -954,7 +962,7 @@ const FranchiseApproval = () => {
                   const firstPending = applications.find(a => isPendingStatus(a.status)) || applications[0];
                   if (firstPending) handleOpenWorkstation(firstPending);
                 }}
-                className="px-3.5 py-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-semibold text-xs rounded-lg flex items-center gap-1.5 transition-all shadow-xs active:scale-95 cursor-pointer"
+                className="px-3.5 py-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-semibold text-xs rounded-lg flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
                 title="Open full-screen review workstation"
               >
                 <Eye size={14} />
@@ -967,7 +975,7 @@ const FranchiseApproval = () => {
             <button
               onClick={fetchApplications}
               disabled={isLoading}
-              className="p-2 bg-white dark:bg-[#1C1917] hover:bg-slate-100 dark:hover:bg-slate-800 border border-[#E4E1DC] dark:border-[#2E2A27] text-slate-700 dark:text-slate-200 rounded-lg transition-all cursor-pointer shadow-2xs"
+              className="p-2 bg-white dark:bg-[#1C1917] hover:bg-slate-100 dark:hover:bg-slate-800 border border-[#E4E1DC] dark:border-[#2E2A27] text-slate-700 dark:text-slate-200 rounded-lg transition-all cursor-pointer shadow-sm"
               title="Refresh queue"
             >
               <RefreshCw size={15} className={isLoading ? 'animate-spin text-[#9E2A2B]' : ''} />
@@ -977,7 +985,7 @@ const FranchiseApproval = () => {
       />
 
       {/* 2. ADVANCED TOOLBAR (Single TODA dropdown, Type, Barangay, Date, Flagged, Compact Toggle) */}
-      <div className="mb-4 bg-white dark:bg-[#1C1917] p-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs space-y-2.5">
+      <div className="mb-4 bg-white dark:bg-[#1C1917] p-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm space-y-2.5">
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2.5">
           {/* Left: Quick Search */}
           <div className="relative flex-1 min-w-[200px]">
@@ -1069,30 +1077,30 @@ const FranchiseApproval = () => {
       </div>
 
       {/* 3. STATUS TABS BAR & TRIAGE ACTIONS */}
-      <div className="mb-4 bg-white dark:bg-[#1C1917] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs space-y-2.5">
-        {/* Status Tabs - Full width with flex-wrap so all tabs including Approved and Rejected are visible without horizontal scrolling */}
-        <div className="flex flex-wrap items-center gap-1.5 sm:gap-2" role="tablist" aria-label="Franchise approval status queues">
+      <div className="mb-4 bg-white dark:bg-[#1C1917] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm space-y-2.5">
+        {/* Status Tabs - Full width with balanced flex-wrap */}
+        <div className="flex flex-wrap items-center gap-1.5" role="tablist" aria-label="Franchise approval status queues">
           {[
             { key: 'pending', label: 'Needs Review', icon: FileText, count: pendingCount },
             { key: 'payment', label: 'For Payment', icon: Clock, count: paymentCount },
             { key: 'signing', label: 'For Signing', icon: ShieldCheck, count: signingCount },
             { key: 'ready', label: 'Ready for Pickup', icon: Printer, count: readyCount },
-            { key: 'cancellations', label: 'Cancellations Queue', icon: ShieldAlert, count: cancellationCount, alertBadge: true },
-            { key: 'all', label: 'All in Queue', icon: null, count: allCount },
+            { key: 'cancellations', label: 'Cancellations', icon: ShieldAlert, count: cancellationCount, alertBadge: true },
+            { key: 'all', label: 'All Queue', icon: null, count: allCount },
             { divider: true },
             { key: 'approved', label: 'Approved', icon: CheckCircle2, count: approvedCount, history: true },
             { key: 'rejected', label: 'Rejected', icon: XCircle, count: rejectedCount, history: true }
           ].map((t, i) => {
             if (t.divider) {
-              return <span key={`d${i}`} aria-hidden="true" className="mx-1 h-5 w-px bg-[#E4E1DC] dark:bg-[#2E2A27] shrink-0" />;
+              return <span key={`d${i}`} aria-hidden="true" className="mx-0.5 h-5 w-px bg-[#E4E1DC] dark:bg-[#2E2A27] shrink-0 hidden sm:inline-block" />;
             }
             const isActive = activeTab === t.key;
             const Icon = t.icon;
             const activeClass = t.history
-              ? 'bg-[#1F1D1B] dark:bg-[#EAE7E1] text-white dark:text-[#1F1D1B] shadow-xs'
+              ? 'bg-[#1F1D1B] dark:bg-[#EAE7E1] text-white dark:text-[#1F1D1B] shadow-sm'
               : t.key === 'cancellations'
-              ? 'bg-[#B91C1C] text-white shadow-xs'
-              : 'bg-[#9E2A2B] text-white shadow-xs';
+              ? 'bg-[#B91C1C] text-white shadow-sm'
+              : 'bg-[#9E2A2B] text-white shadow-sm';
             return (
               <button
                 key={t.key}
@@ -1100,18 +1108,18 @@ const FranchiseApproval = () => {
                 role="tab"
                 aria-selected={isActive}
                 onClick={() => updateParams({ tab: t.key, page: 1 })}
-                className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 sm:gap-2 transition-all cursor-pointer whitespace-nowrap ${
-                  isActive ? activeClass : 'text-[#6B6761] dark:text-[#A8A29E] hover:bg-slate-100 dark:hover:bg-slate-800'
+                className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all cursor-pointer whitespace-nowrap min-h-[36px] ${
+                  isActive ? activeClass : 'text-[#6B6761] dark:text-[#A8A29E] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27]'
                 }`}
               >
                 {Icon && <Icon size={14} className={!isActive && t.key === 'cancellations' && t.count > 0 ? 'text-[#B91C1C] dark:text-[#EF4444]' : ''} />}
                 <span>{t.label}</span>
-                <span className={`text-xs px-1.5 py-0.5 rounded-full font-medium tabular-nums ${
+                <span className={`text-[11px] px-1.5 py-0.5 rounded-full font-medium tabular-nums ${
                   isActive 
                     ? 'bg-white/20 dark:bg-black/10' 
                     : t.key === 'cancellations' && t.count > 0
                     ? 'bg-red-100 dark:bg-red-950/60 text-[#B91C1C] dark:text-[#F87171] font-bold border border-red-200 dark:border-red-900/60'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300'
+                    : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27]'
                 }`}>
                   {t.count}
                 </span>
@@ -1143,7 +1151,7 @@ const FranchiseApproval = () => {
                 <button
                   type="button"
                   onClick={() => setIsBatchPrintOpen(true)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-800 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-2xs transition-all cursor-pointer"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-800 dark:text-slate-200 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm transition-all cursor-pointer"
                   title="Batch print MTOP certificates for mayor/licensing official signature"
                 >
                   <Printer size={14} />
@@ -1187,7 +1195,7 @@ const FranchiseApproval = () => {
                     <button
                       type="button"
                       onClick={() => setBatchReleaseModal(true)}
-                      className="px-3.5 py-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-semibold text-xs rounded-lg shadow-xs transition-all cursor-pointer"
+                      className="px-3.5 py-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-semibold text-xs rounded-lg shadow-sm transition-all cursor-pointer"
                     >
                       Release ({selectedIds.length})
                     </button>
@@ -1195,7 +1203,7 @@ const FranchiseApproval = () => {
                     <button
                       type="button"
                       onClick={() => setBatchApproveModal(true)}
-                      className="px-3.5 py-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-semibold text-xs rounded-lg shadow-xs transition-all cursor-pointer flex items-center gap-1"
+                      className="px-3.5 py-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-semibold text-xs rounded-lg shadow-sm transition-all cursor-pointer flex items-center gap-1"
                     >
                       <CheckCircle2 size={13} />
                       <span>Mark signed ({selectedIds.length})</span>
@@ -1204,7 +1212,7 @@ const FranchiseApproval = () => {
                     <button
                       type="button"
                       onClick={() => setBatchApproveModal(true)}
-                      className="px-3.5 py-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-semibold text-xs rounded-lg shadow-xs transition-all cursor-pointer flex items-center gap-1"
+                      className="px-3.5 py-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-semibold text-xs rounded-lg shadow-sm transition-all cursor-pointer flex items-center gap-1"
                     >
                       <CheckCircle2 size={13} />
                       <span>Send to cashier ({selectedIds.length})</span>
@@ -1223,7 +1231,7 @@ const FranchiseApproval = () => {
       ) : filteredApps.length === 0 ? (
         <div className="bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] p-12 text-center text-[#6B6761] dark:text-[#A8A29E] transition-colors">
           <div className="relative mb-3 flex justify-center">
-            <div className="w-16 h-16 bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-center p-2.5 shadow-xs">
+            <div className="w-16 h-16 bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-center p-2.5 shadow-sm">
               <TricycleIcon size={46} />
             </div>
           </div>
@@ -1273,7 +1281,7 @@ const FranchiseApproval = () => {
                       {isSelected ? (
                         <CheckSquare size={17} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                       ) : (
-                        <Square size={17} className="text-[#E4E1DC] dark:text-[#2E2A27]" />
+                        <Square size={17} className="text-[#6B6761]/60 dark:text-[#A8A29E]/60 hover:text-[#9E2A2B] dark:hover:text-[#D4AF37]" />
                       )}
                     </button>
 
@@ -1348,7 +1356,7 @@ const FranchiseApproval = () => {
                     {app.status === 'Cancellation Requested' ? (
                       <button
                         onClick={() => setCancellationReviewTarget(app)}
-                        className="bg-[#B91C1C] hover:bg-[#991B1B] text-white px-3.5 py-1.5 rounded-lg font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+                        className="bg-[#B91C1C] hover:bg-[#991B1B] text-white px-3.5 py-1.5 rounded-lg font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
                         title="Review voluntary cancellation letter and finalize"
                       >
                         <ShieldAlert size={13} />
@@ -1357,7 +1365,7 @@ const FranchiseApproval = () => {
                     ) : app.status === 'Ready for Pickup' ? (
                       <button
                         onClick={() => setQuickApproveTarget(app)}
-                        className={`px-3.5 py-1.5 text-white rounded-lg font-semibold text-xs flex items-center gap-1.5 transition-colors shadow-xs cursor-pointer ${
+                        className={`px-3.5 py-1.5 text-white rounded-lg font-semibold text-xs flex items-center gap-1.5 transition-colors shadow-sm cursor-pointer ${
                           app.paymentStatus === 'Paid' 
                             ? 'bg-emerald-700 hover:bg-emerald-800' 
                             : 'bg-amber-600 hover:bg-amber-700'
@@ -1370,7 +1378,7 @@ const FranchiseApproval = () => {
                     ) : app.status === 'For Signing' ? (
                       <button
                         onClick={() => setQuickApproveTarget(app)}
-                        className="bg-blue-700 hover:bg-blue-800 text-white px-3 py-1.5 rounded-lg font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+                        className="bg-blue-700 hover:bg-blue-800 text-white px-3 py-1.5 rounded-lg font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
                         title="Mark MTOP signed by Mayor and route to Ready for Pickup"
                       >
                         <CheckCircle2 size={13} />
@@ -1389,7 +1397,7 @@ const FranchiseApproval = () => {
                     ) : (
                       <button
                         onClick={() => handleOpenWorkstation(app)}
-                        className="bg-[#9E2A2B] hover:bg-[#7A1B22] text-white px-3.5 py-1.5 rounded-lg font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-xs"
+                        className="bg-[#9E2A2B] hover:bg-[#7A1B22] text-white px-3.5 py-1.5 rounded-lg font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
                         title="Open full review workstation"
                       >
                         <Eye size={13} />

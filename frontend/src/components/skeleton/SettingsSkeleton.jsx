@@ -19,7 +19,7 @@ export const SettingsSkeleton = ({ baseDelay = 40 }) => {
 
       {/* Card 1: Primary Section */}
       <div 
-        className="stagger-reveal bg-white dark:bg-[#1C1917] p-5 sm:p-6 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs space-y-5 transition-colors"
+        className="stagger-reveal bg-white dark:bg-[#1C1917] p-5 sm:p-6 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm space-y-5 transition-colors"
         style={{ animationDelay: `${baseDelay + 60}ms` }}
       >
         <div className="flex items-center gap-3 pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
@@ -48,7 +48,7 @@ export const SettingsSkeleton = ({ baseDelay = 40 }) => {
 
       {/* Card 2: Secondary Section */}
       <div 
-        className="stagger-reveal bg-white dark:bg-[#1C1917] p-5 sm:p-6 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs space-y-5 transition-colors"
+        className="stagger-reveal bg-white dark:bg-[#1C1917] p-5 sm:p-6 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm space-y-5 transition-colors"
         style={{ animationDelay: `${baseDelay + 160}ms` }}
       >
         <div className="flex items-center gap-3 pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
@@ -71,7 +71,7 @@ export const SettingsSkeleton = ({ baseDelay = 40 }) => {
 
       {/* Card 3: Action & Footer Card */}
       <div 
-        className="stagger-reveal bg-white dark:bg-[#1C1917] p-5 sm:p-6 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs space-y-4 transition-colors"
+        className="stagger-reveal bg-white dark:bg-[#1C1917] p-5 sm:p-6 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm space-y-4 transition-colors"
         style={{ animationDelay: `${baseDelay + 270}ms` }}
       >
         <div className="flex items-center gap-3 pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27]">

@@ -1,0 +1,19 @@
+{
+  "design_id": "DAHatm9FzI4",
+  "transaction_id": "130000446841155781",
+  "status": "awaiting_redesigned_cover_preview_approval",
+  "design_title": "Group 4 | G-TRAMS User's Manual",
+  "changed_pages": [
+    1,
+    3
+  ],
+  "system_url": "https://g-trams-official.vercel.app/",
+  "members": [
+    "Justine Lachica",
+    "Ian Simon Francis Rey",
+    "Jhude Michael Martin",
+    "Jay Vincent Motol",
+    "Jhon Kyn Axix Cabrigas"
+  ],
+  "cover_preview": "C:\\Users\\Hp\\GTRAMS\\tmp\\manual\\updated\\redesigned-cover-preview.png"
+}

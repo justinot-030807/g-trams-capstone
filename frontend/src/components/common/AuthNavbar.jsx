@@ -97,7 +97,7 @@ const AuthNavbar = () => {
   return (
     <>
       {/* FULL-WIDTH TOP NAVBAR (Velvet Maroon Header) */}
-      <header className="sticky top-0 z-40 w-full px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 bg-[#9E2A2B] border-b border-[#7A1B22] text-white shadow-xs flex items-center justify-between select-none shrink-0 transition-colors">
+      <header className="sticky top-0 z-40 w-full px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 bg-[#9E2A2B] border-b border-[#7A1B22] text-white shadow-sm flex items-center justify-between select-none shrink-0 transition-colors">
         
         {/* FAR LEFT: Interactive Flip Medallion (G-TRAMS <-> Sangguniang Bayan Seal) */}
         <div className="flex items-center gap-3 sm:gap-3.5">
@@ -137,7 +137,7 @@ const AuthNavbar = () => {
             <Link
               to="/login"
               aria-current={currentPath === '/login' ? 'page' : undefined}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold text-[#9E2A2B] bg-white hover:bg-[#F6F5F3] shadow-xs transition-all cursor-pointer border border-white/40 min-h-[44px]"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold text-[#9E2A2B] bg-white hover:bg-[#F6F5F3] shadow-sm transition-all cursor-pointer border border-white/40 min-h-[44px]"
             >
               <LogIn size={13} className="text-[#9E2A2B]" />
               <span>Log In</span>
@@ -148,7 +148,7 @@ const AuthNavbar = () => {
             <Link
               to="/register"
               aria-current={currentPath === '/register' ? 'page' : undefined}
-              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold text-[#14110F] bg-[#D4AF37] hover:bg-[#c29e2f] shadow-xs transition-all cursor-pointer min-h-[44px]"
+              className="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold text-[#14110F] bg-[#D4AF37] hover:bg-[#c29e2f] shadow-sm transition-all cursor-pointer min-h-[44px]"
             >
               <UserPlus size={13} className="text-[#14110F]" />
               <span>Register</span>
@@ -229,7 +229,7 @@ const AuthNavbar = () => {
                     onClick={handleCloseMenu}
                     className={`w-full flex items-center justify-between p-3 rounded-lg transition-all cursor-pointer min-h-[44px] ${
                       currentPath === '/' 
-                        ? 'bg-[#9E2A2B] text-white font-bold shadow-xs' 
+                        ? 'bg-[#9E2A2B] text-white font-bold shadow-sm' 
                         : 'bg-[#14110F] hover:bg-[#2E2A27] text-[#EAE7E1] border border-[#2E2A27]'
                     }`}
                   >
@@ -246,7 +246,7 @@ const AuthNavbar = () => {
                     aria-current={currentPath === '/login' ? 'page' : undefined}
                     className={`w-full flex items-center justify-between p-3 rounded-lg transition-all cursor-pointer min-h-[44px] ${
                       currentPath === '/login' 
-                        ? 'bg-[#9E2A2B] text-white font-bold shadow-xs' 
+                        ? 'bg-[#9E2A2B] text-white font-bold shadow-sm' 
                         : 'bg-[#14110F] hover:bg-[#2E2A27] text-[#EAE7E1] border border-[#2E2A27]'
                     }`}
                   >

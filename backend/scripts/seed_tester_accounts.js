@@ -16,12 +16,12 @@ const accountsToSeed = [
     todaAssociation: 'NON-TODA'
   },
   {
-    name: 'BPLO Licensing Officer',
+    name: 'LLSA I — Local Legislative Staff Assistant I (Madhelyn Pastoral)',
     contact: '09666666666',
-    email: 'bplo.tester@gtrams.com',
+    email: 'llsa.tester@gtrams.com',
     password: 'Password123!',
     role: 'bplo_staff',
-    address: 'BPLO Licensing Office, Municipal Hall, Gasan, Marinduque',
+    address: 'Office of the Sangguniang Bayan (Franchising & Licensing), Municipal Hall, Gasan, Marinduque',
     todaAssociation: 'NON-TODA'
   },
   {

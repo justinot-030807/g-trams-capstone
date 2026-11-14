@@ -97,7 +97,7 @@ async function assembleBackupPayload() {
 /**
  * Prune automated backups keeping only the latest 8 (Rolling retention)
  */
-function pruneOldAutomatedBackups(keepCount = 8) {
+async function pruneOldAutomatedBackups(keepCount = 8) {
     try {
         ensureBackupDir();
         const files = fs.readdirSync(BACKUP_DIR)
@@ -111,9 +111,14 @@ function pruneOldAutomatedBackups(keepCount = 8) {
 
         if (files.length > keepCount) {
             const toDelete = files.slice(keepCount);
+            const prunedFilenames = [];
             for (const file of toDelete) {
                 fs.unlinkSync(file.filePath);
+                prunedFilenames.push(file.name);
                 console.log(`[BackupService] Pruned old automated backup: ${file.name}`);
+            }
+            if (prunedFilenames.length > 0) {
+                await BackupArchive.deleteMany({ filename: { $in: prunedFilenames } }).catch(() => {});
             }
         }
     } catch (err) {
@@ -160,7 +165,7 @@ async function createBackupFile({ isAutomated = false, triggeredBy = 'System', n
 
     // Apply rolling retention for automated backups
     if (isAutomated) {
-        pruneOldAutomatedBackups(8);
+        await pruneOldAutomatedBackups(8);
     }
 
     // Record audit event
@@ -268,7 +273,11 @@ async function restoreFromBackup(backupPayload, { triggeredBy = 'System Admin' }
                 const BATCH_SIZE = 500;
                 for (let i = 0; i < records.length; i += BATCH_SIZE) {
                     const batch = records.slice(i, i + BATCH_SIZE);
-                    await model.insertMany(batch, { ordered: false });
+                    if (key === 'notifications') {
+                        await model.collection.insertMany(batch, { ordered: false });
+                    } else {
+                        await model.insertMany(batch, { ordered: false });
+                    }
                 }
             }
             restoredCounts[key] = records.length;

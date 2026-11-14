@@ -1,11 +1,11 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import MainLayout from '../../components/MainLayout';
 import { 
   FileText, Search, Filter, Archive, ArchiveRestore, CheckCircle, CheckCircle2,
   Clock, AlertCircle, Loader2, X, CalendarDays, Printer,
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Tag,
   ChevronDown, Check, CheckSquare, Square, RotateCcw, Eye,
-  User, ShieldCheck, Shield, FileCheck, Phone, MapPin, Hash, ExternalLink
+  User, ShieldCheck, Shield, FileCheck, Phone, MapPin, Hash, ExternalLink, ArrowUpDown
 } from 'lucide-react';
 import { TableRowsSkeleton } from '../../components/skeleton';
 import MtopCertificateModal from '../../components/admin/MtopCertificateModal';
@@ -13,6 +13,7 @@ import PageHeader from '../../components/common/PageHeader';
 import StatusBadge from '../../components/common/StatusBadge';
 import TricycleIcon from '../../components/common/TricycleIcon';
 import { formatZoneLabel } from '../../utils/constants';
+import { formatVehicleMake, formatVehicleModelYear, formatVehicleMakeAndModel } from '../../utils/vehicleFormatters';
 
 const STATUS_OPTIONS = [
   { label: 'Active', value: 'Active', color: 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-400 dark:border-emerald-800' },
@@ -63,7 +64,66 @@ const FranchiseMasterlist = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
 
+  // Archive Per-Year Grouping & Sorting States
+  const [selectedArchiveYear, setSelectedArchiveYear] = useState('ALL');
+  const [archiveYearSort, setArchiveYearSort] = useState('desc'); // 'desc' (Newest Year First) | 'asc' (Oldest Year First)
+  const [collapsedArchiveYears, setCollapsedArchiveYears] = useState({});
+
   const currentFiscalYear = localStorage.getItem('fiscal_year') || new Date().getFullYear().toString();
+
+  const getRecordArchiveYear = useCallback((record) => {
+    if (!record) return currentFiscalYear;
+    if (record.fiscalYear && /^\d{4}$/.test(String(record.fiscalYear).trim())) {
+      return String(record.fiscalYear).trim();
+    }
+    const rawDate = record.dateApplied || record.createdAt || record.updatedAt;
+    if (rawDate) {
+      const y = new Date(rawDate).getFullYear();
+      if (!Number.isNaN(y) && y >= 2000 && y <= 2100) return String(y);
+    }
+    return currentFiscalYear;
+  }, [currentFiscalYear]);
+
+  const archiveYearGroups = useMemo(() => {
+    if (activeTab !== 'archived') return [];
+    const byYear = {};
+    (franchises || []).forEach((f) => {
+      const yr = getRecordArchiveYear(f);
+      if (!byYear[yr]) {
+        byYear[yr] = {
+          year: yr,
+          records: [],
+          expiredCount: 0,
+          cancelledCount: 0,
+          revokedCount: 0
+        };
+      }
+      byYear[yr].records.push(f);
+      if (f.status === 'Expired') byYear[yr].expiredCount += 1;
+      else if (f.status === 'Cancelled') byYear[yr].cancelledCount += 1;
+      else if (f.status === 'Revoked') byYear[yr].revokedCount += 1;
+    });
+
+    const groups = Object.values(byYear).sort((a, b) => {
+      const diff = Number(b.year) - Number(a.year);
+      return archiveYearSort === 'desc' ? diff : -diff;
+    });
+
+    groups.forEach((g) => {
+      g.records.sort((a, b) => {
+        const dA = new Date(a.updatedAt || a.dateApplied || a.createdAt || 0).getTime();
+        const dB = new Date(b.updatedAt || b.dateApplied || b.createdAt || 0).getTime();
+        return archiveYearSort === 'desc' ? dB - dA : dA - dB;
+      });
+    });
+
+    return groups;
+  }, [activeTab, franchises, archiveYearSort, getRecordArchiveYear]);
+
+  const visibleArchiveYearGroups = useMemo(() => {
+    if (selectedArchiveYear === 'ALL') return archiveYearGroups;
+    return archiveYearGroups.filter((g) => g.year === selectedArchiveYear);
+  }, [archiveYearGroups, selectedArchiveYear]);
 
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
@@ -88,11 +148,12 @@ const FranchiseMasterlist = () => {
     try {
       const isArchived = activeTab === 'archived';
       const statusParam = selectedStatuses.length > 0 ? selectedStatuses.join(',') : 'All';
+      const effectiveLimit = isArchived ? Math.max(pageSize, 100) : pageSize;
       
       const queryParams = new URLSearchParams({
         archived: isArchived ? 'true' : 'false',
         page: currentPage.toString(),
-        limit: pageSize.toString(),
+        limit: effectiveLimit.toString(),
         search: searchQuery.trim(),
         status: statusParam
       });
@@ -131,6 +192,7 @@ const FranchiseMasterlist = () => {
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
+    setSelectedArchiveYear('ALL');
     setCurrentPage(1);
   };
 
@@ -361,11 +423,11 @@ const FranchiseMasterlist = () => {
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                   <div>
                     <span className="text-[#6B6761] dark:text-[#A8A29E] font-medium block text-xs uppercase">Make / Brand</span>
-                    <span className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{selectedFranchise.make || 'N/A'}</span>
+                    <span className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{formatVehicleMake(selectedFranchise, 'N/A')}</span>
                   </div>
                   <div>
                     <span className="text-[#6B6761] dark:text-[#A8A29E] font-medium block text-xs uppercase">Year Made</span>
-                    <span className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{selectedFranchise.made || 'N/A'}</span>
+                    <span className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{formatVehicleModelYear(selectedFranchise, 'N/A')}</span>
                   </div>
                   <div>
                     <span className="text-[#6B6761] dark:text-[#A8A29E] font-medium block text-xs uppercase">Motor Number</span>
@@ -591,11 +653,11 @@ const FranchiseMasterlist = () => {
                             {isSelected ? (
                               <CheckSquare size={15} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                             ) : (
-                              <Square size={15} className="text-[#E4E1DC] dark:text-[#2E2A27]" />
+                              <Square size={15} className="text-[#6B6761]/60 dark:text-[#A8A29E]/60" />
                             )}
                             <span>{opt.label}</span>
                           </div>
-                          <span className={`text-[10px] px-1.5 py-0.2 rounded border ${opt.color}`}>
+                          <span className={`text-[10px] px-1.5 py-0.5 rounded border ${opt.color}`}>
                             {opt.label}
                           </span>
                         </div>
@@ -695,6 +757,62 @@ const FranchiseMasterlist = () => {
           </div>
         )}
 
+        {/* ARCHIVE FISCAL YEAR SECTION BAR (VISIBLE IN HISTORICAL ARCHIVES TAB) */}
+        {activeTab === 'archived' && (
+          <div className="px-4 py-3 border-b border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3]/70 dark:bg-[#14110F] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 print-hide">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+              <span className="text-[11px] font-semibold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1 mr-1.5 shrink-0">
+                <CalendarDays size={13} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                <span>Archive by Year:</span>
+              </span>
+              <button
+                type="button"
+                onClick={() => setSelectedArchiveYear('ALL')}
+                className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer font-mono tabular-nums ${
+                  selectedArchiveYear === 'ALL'
+                    ? 'bg-[#9E2A2B] text-white shadow-sm'
+                    : 'bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#E4E1DC]/40'
+                }`}
+              >
+                All Years ({franchises.length})
+              </button>
+              {archiveYearGroups.map((yg) => (
+                <button
+                  key={yg.year}
+                  type="button"
+                  onClick={() => setSelectedArchiveYear(yg.year)}
+                  className={`px-2.5 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors cursor-pointer font-mono tabular-nums flex items-center gap-1.5 ${
+                    selectedArchiveYear === yg.year
+                      ? 'bg-[#9E2A2B] text-white shadow-sm'
+                      : 'bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#E4E1DC]/40'
+                  }`}
+                >
+                  <span>FY {yg.year}</span>
+                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                    selectedArchiveYear === yg.year
+                      ? 'bg-white/20 text-white'
+                      : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E]'
+                  }`}>
+                    {yg.records.length}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0 justify-end">
+              <button
+                type="button"
+                onClick={() => setArchiveYearSort((prev) => (prev === 'desc' ? 'asc' : 'desc'))}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] hover:bg-[#E4E1DC]/40 transition-colors cursor-pointer"
+                title="Toggle chronological sort order of archive years"
+              >
+                <ArrowUpDown size={13} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                <span>{archiveYearSort === 'desc' ? 'Newest Year First' : 'Oldest Year First'}</span>
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* TABLE CONTENT */}
         <div className="overflow-x-auto min-h-[320px]">
           <table className="w-full text-left border-collapse min-w-[800px]">
@@ -717,7 +835,7 @@ const FranchiseMasterlist = () => {
                       {activeTab === 'archived' ? (
                         <Archive size={36} className="text-[#6B6761] dark:text-[#A8A29E] mb-2 opacity-50"/>
                       ) : (
-                        <div className="w-14 h-14 bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-center p-2 mb-2 shadow-xs">
+                        <div className="w-14 h-14 bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-center p-2 mb-2 shadow-sm">
                           <TricycleIcon size={40} />
                         </div>
                       )}
@@ -726,6 +844,118 @@ const FranchiseMasterlist = () => {
                     </div>
                   </td>
                 </tr>
+              ) : activeTab === 'archived' ? (
+                visibleArchiveYearGroups.map((yearGroup) => {
+                  const isYearCollapsed = Boolean(collapsedArchiveYears[yearGroup.year]);
+
+                  return (
+                    <React.Fragment key={`archive-year-${yearGroup.year}`}>
+                      {/* PER-YEAR ARCHIVE SECTION HEADER ROW */}
+                      <tr
+                        onClick={() => setCollapsedArchiveYears((prev) => ({ ...prev, [yearGroup.year]: !prev[yearGroup.year] }))}
+                        className="bg-[#F6F5F3] dark:bg-[#14110F] border-y border-[#E4E1DC] dark:border-[#2E2A27] cursor-pointer hover:bg-[#E4E1DC]/50 dark:hover:bg-[#2E2A27]/40 transition-colors"
+                      >
+                        <td colSpan="5" className="px-5 py-3">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-2.5">
+                              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-[#9E2A2B] text-white font-mono font-bold text-xs shadow-sm">
+                                <CalendarDays size={13} />
+                                <span>FY {yearGroup.year} Archive</span>
+                              </span>
+                              <span className="text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] font-mono tabular-nums">
+                                {yearGroup.records.length} {yearGroup.records.length === 1 ? 'Archived Record' : 'Archived Records'}
+                              </span>
+                            </div>
+
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {yearGroup.expiredCount > 0 && (
+                                <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800 font-mono tabular-nums">
+                                  Expired: {yearGroup.expiredCount}
+                                </span>
+                              )}
+                              {yearGroup.cancelledCount > 0 && (
+                                <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E] border border-[#E4E1DC] dark:border-[#2E2A27] font-mono tabular-nums">
+                                  Cancelled: {yearGroup.cancelledCount}
+                                </span>
+                              )}
+                              {yearGroup.revokedCount > 0 && (
+                                <span className="px-2 py-0.5 rounded text-[11px] font-semibold bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-800 font-mono tabular-nums">
+                                  Revoked: {yearGroup.revokedCount}
+                                </span>
+                              )}
+                              <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#6B6761] dark:text-[#A8A29E] ml-1">
+                                <span>{isYearCollapsed ? 'Expand Year' : 'Collapse Year'}</span>
+                                <ChevronDown size={14} className={`transition-transform duration-200 ${isYearCollapsed ? '-rotate-90' : ''}`} />
+                              </span>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+
+                      {/* ARCHIVED RECORDS FOR THIS YEAR */}
+                      {!isYearCollapsed && yearGroup.records.map((f) => {
+                        const displayName = f.fullName || (f.operator ? f.operator.name : 'Unknown Operator');
+                        return (
+                          <tr
+                            key={f._id}
+                            className="hover:bg-[#F6F5F3]/80 dark:hover:bg-[#14110F]/80 transition-colors"
+                          >
+                            <td className="p-3.5 pl-5">
+                              <div className="flex items-center gap-2">
+                                <p className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
+                                  {displayName}
+                                </p>
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                                  FY {yearGroup.year}
+                                </span>
+                              </div>
+                              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5 flex items-center gap-1">
+                                <MapPin size={11} className="text-[#6B6761] dark:text-[#A8A29E] shrink-0" />
+                                <span className="truncate max-w-[200px]">{f.address ? `${f.address}, Gasan` : 'Gasan, Marinduque'}</span>
+                              </p>
+                            </td>
+                            <td className="p-3.5">
+                              <div className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] font-mono font-medium text-xs text-[#1F1D1B] dark:text-[#F6F5F3]">
+                                <TricycleIcon size={13} className="text-[#6B6761] dark:text-[#A8A29E]" />
+                                <span>{f.plateNo || 'PENDING'}</span>
+                              </div>
+                              <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1 font-normal truncate max-w-[190px]">
+                                {formatVehicleMakeAndModel(f, f.motorNo ? `Motor: ${f.motorNo}` : 'Motorcycle Unit')}
+                              </p>
+                            </td>
+                            <td className="p-3.5">
+                              <p className="font-medium text-[#1F1D1B] dark:text-[#F6F5F3]">{f.todaName || 'Non-TODA'}</p>
+                              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">{formatZoneLabel(f.zone)}</p>
+                            </td>
+                            <td className="p-3.5 text-center">
+                              <StatusBadge status={f.status} />
+                            </td>
+                            <td className="p-3.5 pr-5 text-center print-hide">
+                              <div className="flex items-center justify-center gap-1.5">
+                                <button
+                                  type="button"
+                                  onClick={() => setSelectedFranchise(f)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#F6F5F3] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] transition-all cursor-pointer"
+                                  title="View complete details"
+                                >
+                                  <Eye size={13} className="text-[#9E2A2B] dark:text-[#D4AF37]" /> Details
+                                </button>
+                                <button 
+                                  type="button"
+                                  onClick={() => initiateToggleArchive(f._id, displayName, true)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all border bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border-[#E4E1DC] dark:border-[#2E2A27] cursor-pointer"
+                                  title="Restore to Masterlist"
+                                >
+                                  <ArchiveRestore size={13} /> Restore
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </React.Fragment>
+                  );
+                })
               ) : (
                 franchises.map((f, fIdx) => {
                   const displayName = f.fullName || (f.operator ? f.operator.name : 'Unknown Operator');
@@ -750,7 +980,7 @@ const FranchiseMasterlist = () => {
                             <span>{f.plateNo || 'PENDING'}</span>
                           </div>
                           <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1 font-normal truncate max-w-[190px]">
-                            {f.make ? `${f.make} ${f.made || ''}`.trim() : (f.motorNo ? `Motor: ${f.motorNo}` : 'Motorcycle Unit')}
+                            {formatVehicleMakeAndModel(f, f.motorNo ? `Motor: ${f.motorNo}` : 'Motorcycle Unit')}
                           </p>
                         </td>
                         <td className="p-3.5">
@@ -911,7 +1141,7 @@ const FranchiseMasterlist = () => {
               <button 
                 disabled={isProcessing}
                 onClick={confirmAction}
-                className="flex-1 py-2 rounded-lg font-semibold text-white transition-all text-xs shadow-xs flex justify-center items-center gap-2 bg-[#9E2A2B] hover:bg-[#7A1B22] disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
+                className="flex-1 py-2 rounded-lg font-semibold text-white transition-all text-xs shadow-sm flex justify-center items-center gap-2 bg-[#9E2A2B] hover:bg-[#7A1B22] disabled:opacity-70 disabled:cursor-not-allowed cursor-pointer"
               >
                 {isProcessing && <Loader2 size={13} className="animate-spin" />}
                 {isProcessing ? 'Processing...' : `Yes, ${confirmModal.data.action}`}

@@ -1,5 +1,8 @@
-import React, { useRef, useEffect } from 'react';
-import { X, Printer, FileText } from 'lucide-react';
+import React, { useRef, useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { X, Printer, FileText, Loader2, Download } from 'lucide-react';
+import { downloadOriginalLguTemplate } from '../../utils/downloadOriginalLguTemplate';
+import { cleanText, formatVehicleMake, formatVehicleModelYear } from '../../utils/vehicleFormatters';
 
 const OfficialCancellationLetterModal = ({
   isOpen,
@@ -8,6 +11,7 @@ const OfficialCancellationLetterModal = ({
   franchise = {}
 }) => {
   const printRef = useRef(null);
+  const [isDownloadingDocx, setIsDownloadingDocx] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
@@ -23,58 +27,138 @@ const OfficialCancellationLetterModal = ({
   if (!isOpen) return null;
 
   const data = { ...franchise, ...cancellationData };
-  const operatorName = String(data.fullName || data.operatorName || data.name || 'OPERATOR').toUpperCase();
-  const address = String(data.address || 'Gasan, Marinduque');
-  const plateNo = String(data.plateNo || data.mvFileNo || 'PENDING').toUpperCase();
-  const franchiseNo = String(data.franchiseNo || data.mtopNo || '2026-000').toUpperCase();
-  const make = String(data.make || 'KAWASAKI').toUpperCase();
-  const chassisNo = String(data.chassisNo || '—').toUpperCase();
-  const motorNo = String(data.motorNo || '—').toUpperCase();
-  const model = String(data.made || data.model || new Date().getFullYear()).toUpperCase();
-  
-  const today = new Date();
-  const dateStr = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-  const dayStr = today.getDate();
-  const monthYearStr = today.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const rawName = String(
+    data.fullName ||
+    data.ownerName ||
+    data.operatorName ||
+    data.name ||
+    (data.operator?.firstName
+      ? `${data.operator.firstName} ${data.operator.middleName ? data.operator.middleName.charAt(0) + '. ' : ''}${data.operator.lastName || ''}`
+      : '') ||
+    '—'
+  ).toUpperCase().trim();
 
-  const orNo = data.cancellationOrNo || data.orNo || '7368238';
-  const orDate = data.cancellationOrDate || dateStr;
-  const amount = '₱50.00';
+  const recipientLine = /^(MR\.|MS\.|MRS\.)/i.test(rawName) ? rawName : `MR./MS. ${rawName}`;
+  const nameWords = rawName.replace(/^(MR\.\/MS\.|MR\.|MS\.|MRS\.)\s*/i, '').split(/\s+/).filter(Boolean);
+  const lastWord = nameWords[nameWords.length - 1] || 'Operator';
+  const salutationName = `Mr./Ms. ${lastWord.charAt(0).toUpperCase()}${lastWord.slice(1).toLowerCase()}`;
+
+  const rawBarangay = String(data.barangay || data.address || '')
+    .replace(/^Brgy\.?\s*/i, '')
+    .replace(/,?\s*Gasan.*$/i, '')
+    .trim() || '—';
+
+  const plateNo = cleanText(data.plateNo || data.plateNumber || data.mvFileNo, '—').toUpperCase();
+  const rawFranchiseNo = cleanText(data.franchiseNo || data.mtopNo || data.mtopNumber || data.franchiseNumber, '—')
+    .replace(/^MTOP-GASAN-/i, '')
+    .toUpperCase();
+
+  const make = formatVehicleMake(data, 'KAWASAKI').toUpperCase();
+  const chassisNo = cleanText(data.chassisNo || data.chassisNumber, 'N/A').toUpperCase();
+  const motorNo = cleanText(data.motorNo || data.motorNumber || data.engineNumber, 'N/A').toUpperCase();
+  const model = formatVehicleModelYear(data, String(new Date().getFullYear())).toUpperCase();
+
+  const cancelDateRaw = data.cancelledAt || data.cancellationRequestedAt || data.updatedAt || new Date();
+  const cancelDateObj = new Date(cancelDateRaw);
+  const validDate = isNaN(cancelDateObj.getTime()) ? new Date() : cancelDateObj;
+
+  const dayNum = validDate.getDate();
+  const getOrdinalSuffix = (n) => {
+    if (n % 10 === 1 && n !== 11) return 'st';
+    if (n % 10 === 2 && n !== 12) return 'nd';
+    if (n % 10 === 3 && n !== 13) return 'rd';
+    return 'th';
+  };
+  const ordinalSuffix = getOrdinalSuffix(dayNum);
+  const monthStr = validDate.toLocaleDateString('en-US', { month: 'long' });
+  const yearStr = String(validDate.getFullYear());
+  const fullDateStr = validDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+
+  const requestDateStr = data.cancellationRequestedAt
+    ? new Date(data.cancellationRequestedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+    : fullDateStr;
+
+  const orNo = data.cancellationOrNo || data.cancellationOrNumber || data.paymentOrNumber || '';
+  const orDate = data.cancellationOrDate
+    ? new Date(data.cancellationOrDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+    : fullDateStr;
 
   const handlePrint = () => {
     window.print();
   };
 
+  const handleDownloadDocx = async () => {
+    if (isDownloadingDocx) return;
+    setIsDownloadingDocx(true);
+    try {
+      await downloadOriginalLguTemplate({
+        franchise: {
+          ...data,
+          _id: data._id || data.id,
+          ownerName: rawName,
+          barangay: rawBarangay,
+          plateNumber: plateNo,
+          mtopNumber: rawFranchiseNo,
+          make,
+          chassisNumber: chassisNo,
+          motorNumber: motorNo,
+          yearModel: model,
+          cancelledAt: validDate.toISOString(),
+          cancellationRequestedAt: data.cancellationRequestedAt || validDate.toISOString(),
+          cancellationOrNumber: orNo,
+          cancellationOrDate: orDate,
+        },
+        type: 'cancellation',
+      });
+    } catch (err) {
+      console.error('Error downloading original Cancellation Word (.docx):', err);
+      toast.error('Could not download Word (.docx) file. Please try again.');
+    } finally {
+      setIsDownloadingDocx(false);
+    }
+  };
+
   return (
-    <div 
-      id="printable-cancellation-modal-root" 
-      className="fixed inset-0 z-[130] bg-black/75 overflow-y-auto flex items-center justify-center p-3 sm:p-6 print:p-0 print:bg-white print:static print:inset-auto"
+    <div
+      id="printable-cancellation-modal-root"
+      className="fixed inset-0 z-[130] bg-black/75 overflow-y-auto flex items-start justify-center p-3 sm:p-6 print:p-0 print:bg-white print:static print:inset-auto"
       onClick={onClose}
     >
-      <div 
-        className="w-full max-w-[760px] flex flex-col items-center shrink-0 print:max-w-full print:m-0"
+      <div
+        className="w-full max-w-[820px] flex flex-col items-center shrink-0 print:max-w-full print:m-0"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Toolbar */}
-        <div className="w-full bg-[#1F1D1B] dark:bg-[#1C1917] border border-[#E4E1DC]/20 dark:border-[#2E2A27] rounded-xl p-3 mb-3 flex items-center justify-between text-white shadow-md print:hidden">
+        <div className="w-full bg-[#1F1D1B] dark:bg-[#1C1917] border border-[#E4E1DC]/20 dark:border-[#2E2A27] rounded-xl p-3 mb-3 flex flex-wrap items-center justify-between gap-2 text-white shadow-md print:hidden sticky top-2 z-50">
           <div className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-red-600/20 text-red-400 border border-red-500/30 flex items-center justify-center shrink-0">
               <FileText size={17} />
             </div>
             <div>
               <h4 className="text-xs sm:text-sm font-black tracking-wide text-white uppercase flex items-center gap-2">
-                Official Franchise Cancellation Letter
+                Official Franchise Cancellation Letter (1:1 LGU Template)
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/30">
                   OVM Certified
                 </span>
               </h4>
               <p className="text-[10px] sm:text-xs text-white/60">
-                Official Sangguniang Bayan / Office of the Vice Mayor clearance format
+                Municipality of Gasan • Office of the Vice Mayor (`CANCELLATION OF FRANCHISE.docx`)
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              onClick={handleDownloadDocx}
+              disabled={isDownloadingDocx}
+              className="flex items-center gap-1.5 bg-blue-700 hover:bg-blue-800 active:scale-95 text-white px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-md disabled:opacity-50 cursor-pointer shrink-0"
+              title="Download populated original Gasan LGU Word (.docx) file"
+            >
+              {isDownloadingDocx ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
+              <span className="hidden sm:inline">Original Word (.docx)</span>
+              <span className="sm:hidden">.DOCX</span>
+            </button>
+
             <button
               onClick={handlePrint}
               className="flex items-center gap-1.5 bg-[#9E2A2B] hover:bg-[#851e20] active:scale-95 text-white px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer shrink-0"
@@ -83,6 +167,7 @@ const OfficialCancellationLetterModal = ({
               <span className="hidden sm:inline">Print / Save PDF</span>
               <span className="sm:hidden">Print</span>
             </button>
+
             <button
               onClick={onClose}
               className="text-white/60 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
@@ -92,140 +177,195 @@ const OfficialCancellationLetterModal = ({
           </div>
         </div>
 
-        {/* Printable Letter Sheet */}
-        <div 
-          ref={printRef}
-          id="printable-cancellation-letter"
-          className="relative bg-white text-slate-900 w-full max-w-[720px] min-h-[820px] rounded-lg shadow-xl p-8 sm:p-12 border border-slate-300 print:border-none print:shadow-none print:p-0 print:m-0 overflow-hidden"
-          style={{ fontFamily: "'Times New Roman', Times, serif" }}
-        >
-          {/* Print Style */}
-          <style>{`
-            @media print {
-              @page {
-                size: 8.5in 13in;
-                margin: 12mm 15mm;
+        {/* Printable Letter Sheet (1:1 replica of CANCELLATION OF FRANCHISE.docx Page 1) */}
+        <div className="w-full max-w-[820px] overflow-x-auto pb-4 custom-scrollbar flex justify-start sm:justify-center">
+          <div
+            ref={printRef}
+            id="printable-cancellation-letter"
+            className="relative bg-white text-black w-[794px] min-h-[1123px] shrink-0 shadow-2xl px-[72px] pt-[56px] pb-[56px] box-border select-text overflow-hidden print:shadow-none print:m-0"
+            style={{ fontFamily: "'Cambria', 'Georgia', 'Times New Roman', serif", fontSize: '13pt', lineHeight: '1.35' }}
+          >
+            {/* Print Style */}
+            <style>{`
+              @media print {
+                @page {
+                  size: 8.5in 13in;
+                  margin: 0;
+                }
+                html, body {
+                  margin: 0 !important;
+                  padding: 0 !important;
+                  background: white !important;
+                }
+                body.printing-cancellation * {
+                  visibility: hidden !important;
+                }
+                body.printing-cancellation #printable-cancellation-letter,
+                body.printing-cancellation #printable-cancellation-letter * {
+                  visibility: visible !important;
+                }
+                body.printing-cancellation #printable-cancellation-letter {
+                  position: absolute !important;
+                  left: 0 !important;
+                  top: 0 !important;
+                  width: 210mm !important;
+                  max-width: 210mm !important;
+                  min-height: 310mm !important;
+                  padding: 18mm 20mm !important;
+                  margin: 0 auto !important;
+                  border: none !important;
+                  box-shadow: none !important;
+                  background: white !important;
+                  color: black !important;
+                  -webkit-print-color-adjust: exact !important;
+                  print-color-adjust: exact !important;
+                }
               }
-              body.printing-cancellation * {
-                visibility: hidden !important;
-              }
-              body.printing-cancellation #printable-cancellation-letter,
-              body.printing-cancellation #printable-cancellation-letter * {
-                visibility: visible !important;
-              }
-              body.printing-cancellation #printable-cancellation-letter {
-                position: absolute !important;
-                left: 0 !important;
-                top: 0 !important;
-                width: 100% !important;
-                max-width: 100% !important;
-                border: none !important;
-                box-shadow: none !important;
-                background: white !important;
-                color: black !important;
-                -webkit-print-color-adjust: exact !important;
-                print-color-adjust: exact !important;
-              }
-            }
-          `}</style>
+            `}</style>
 
-          {/* Authentic Watermark */}
-          <div className="absolute inset-0 flex items-center justify-center opacity-[0.06] pointer-events-none select-none z-0">
-            <img 
-              src="/excel_assets/doc_image2.png" 
-              alt="Sangguniang Bayan Seal Watermark" 
-              className="w-[420px] h-[420px] object-contain" 
-            />
-          </div>
-
-          {/* Letterhead */}
-          <div className="relative z-10 w-full mb-6 border-b-2 border-slate-900 pb-2">
-            <img 
-              src="/excel_assets/header_banner.png" 
-              alt="Municipality of Gasan - Office of the Municipal Vice Mayor" 
-              className="w-full h-auto object-contain"
-            />
-          </div>
-
-          {/* Recipient Block */}
-          <div className="relative z-10 text-xs sm:text-sm text-slate-900 mb-6 space-y-1">
-            <p className="font-bold">{operatorName}</p>
-            <p>{address}</p>
-          </div>
-
-          <div className="relative z-10 text-xs sm:text-sm text-slate-900 mb-6">
-            <p className="font-bold">Dear Mr./Ms. {operatorName.split(' ')[0]}:</p>
-          </div>
-
-          {/* Body Content */}
-          <div className="relative z-10 text-xs sm:text-sm text-slate-900 leading-relaxed space-y-4 text-justify">
-            <p className="indent-8">
-              This has reference to your letter requesting this office to cancel the franchise of your motorized tricycle with Plate / File No. <strong className="font-mono">{plateNo}</strong>.
-            </p>
-            <p className="indent-8">
-              Having submitted all the necessary documents for cancellation, your request is hereby granted.
-            </p>
-            <p className="indent-8">
-              Franchise No. <strong className="font-mono">{franchiseNo}</strong> cancelled this <strong>{dayStr}th day of {monthYearStr}</strong>.
-            </p>
-
-            {/* Specifications Box */}
-            <div className="my-6 pl-8 font-mono text-xs sm:text-sm space-y-1.5 border-l-2 border-slate-400">
-              <div className="grid grid-cols-12">
-                <span className="col-span-4 font-bold font-sans">MAKE</span>
-                <span className="col-span-8">: {make}</span>
-              </div>
-              <div className="grid grid-cols-12">
-                <span className="col-span-4 font-bold font-sans">CHASSIS NO.</span>
-                <span className="col-span-8">: {chassisNo}</span>
-              </div>
-              <div className="grid grid-cols-12">
-                <span className="col-span-4 font-bold font-sans">MOTOR NO.</span>
-                <span className="col-span-8">: {motorNo}</span>
-              </div>
-              <div className="grid grid-cols-12">
-                <span className="col-span-4 font-bold font-sans">MODEL</span>
-                <span className="col-span-8">: {model}</span>
-              </div>
-            </div>
-
-            <p className="indent-8">
-              Issued this <strong>{dayStr}th day of {monthYearStr}</strong> upon request of the interested party for whatever legal purpose it may serve.
-            </p>
-          </div>
-
-          {/* Signatory */}
-          <div className="relative z-10 mt-12 flex justify-end">
-            <div className="relative inline-block text-center min-w-[240px]">
-              <img 
-                src="/excel_assets/franchise_image2.png" 
-                alt="Signature of Vice Mayor" 
-                className="absolute -top-10 left-1/2 -translate-x-1/2 w-44 h-16 object-contain pointer-events-none" 
+            {/* Authentic Word Header Watermark (matching header1.xml image3.jpeg) */}
+            <div className="absolute inset-0 flex items-center justify-center opacity-[0.14] pointer-events-none select-none z-0">
+              <img
+                src="/extracted_logos/image3.jpeg"
+                alt="Gasan Seal Watermark"
+                className="w-[460px] h-[460px] object-contain"
               />
-              <p className="font-serif font-black text-sm sm:text-base text-slate-900 tracking-wide border-t border-slate-800 pt-1">
-                LIDANY A. LAO-BALDO
-              </p>
-              <p className="text-xs font-sans uppercase font-bold text-slate-700">
-                Municipal Vice Mayor
-              </p>
-              <p className="text-[9px] font-sans text-slate-500 italic">
-                Presiding Officer &bull; Sangguniang Bayan
-              </p>
+            </div>
+
+            <div className="relative z-10">
+              {/* Paragraphs [0]–[5]: Official Office of the Vice Mayor Letterhead */}
+              <div className="relative flex items-start justify-between mb-12">
+                <img
+                  src="/extracted_logos/image2.jpeg"
+                  alt="Municipality of Gasan Official Seal"
+                  className="w-[88px] h-[88px] object-contain shrink-0"
+                />
+                <div className="flex-1 text-center leading-tight px-2">
+                  <div className="text-[11pt]">Republic of the Philippines</div>
+                  <div className="text-[11pt]">Province of Marinduque</div>
+                  <div className="text-[12pt]">MUNICIPALITY OF GASAN</div>
+                  <div
+                    className="font-bold text-[19pt] my-0.5"
+                    style={{ fontFamily: "'Old English Text MT', 'UnifrakturMaguntia', 'Bookman Old Style', Georgia, serif" }}
+                  >
+                    Office of the Vice Mayor
+                  </div>
+                  <div className="text-[11pt]">E-mail: sbgasan7@gmail.com</div>
+                  <div className="text-[11pt] italic">Tel. No.: (042) 704-0208</div>
+                </div>
+                <img
+                  src="/extracted_logos/image1.jpeg"
+                  alt="Sangguniang Bayan Official Logo"
+                  className="w-[88px] h-[88px] object-contain shrink-0 rounded-full"
+                />
+              </div>
+
+              {/* Paragraphs [9]–[10]: Recipient Block */}
+              <div className="mb-6 leading-snug">
+                <div className="font-bold underline">{recipientLine}</div>
+                <div className="underline">Brgy. {rawBarangay}, Gasan, Marinduque</div>
+              </div>
+
+              {/* Paragraph [12]: Salutation */}
+              <div className="mb-6">
+                Dear <span className="underline">{salutationName}</span>:
+              </div>
+
+              {/* Paragraphs [14]–[25]: Letter Body */}
+              <div className="space-y-5 text-justify">
+                {/* [14] */}
+                <p className="indent-12">
+                  This has reference to your letter dated{' '}
+                  <strong className="underline text-[14pt]">{requestDateStr}</strong>{' '}
+                  requesting this office to cancel the franchise of your motorized tricycle with{' '}
+                  <strong className="underline text-[14pt]">Plate No. {plateNo}</strong>.
+                </p>
+
+                {/* [16] */}
+                <p>
+                  Having submitted all the necessary documents for{' '}
+                  <strong className="underline">cancellation</strong>, your request is hereby granted.
+                </p>
+
+                {/* [18] */}
+                <p className="indent-12">
+                  <strong className="underline text-[14pt]">Franchise No. {rawFranchiseNo}</strong>{' '}
+                  cancelled this <span className="underline">{dayNum}</span>
+                  <sup className="underline">{ordinalSuffix}</sup> day of{' '}
+                  <span className="underline">{monthStr}</span>, {yearStr}.
+                </p>
+
+                {/* [20]–[23]: Vehicle Specs Block (Plain Indented Lines with Tabbed Colons, No Vertical Border) */}
+                <div className="pl-12 py-1 space-y-1 text-left">
+                  <div className="grid grid-cols-[170px_1fr]">
+                    <span>MAKE</span>
+                    <span>
+                      : <strong className="underline">{make}</strong>
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-[170px_1fr]">
+                    <span>CHASSIS NO.</span>
+                    <span>
+                      : <strong className="underline">{chassisNo}</strong>
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-[170px_1fr]">
+                    <span>MOTOR NO.</span>
+                    <span>
+                      : <strong className="underline">{motorNo}</strong>
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-[170px_1fr]">
+                    <span>MODEL</span>
+                    <span>
+                      : <strong className="underline">{model}</strong>
+                    </span>
+                  </div>
+                </div>
+
+                {/* [25] */}
+                <p className="indent-12">
+                  Issued this{' '}
+                  <strong className="underline text-[14pt]">
+                    {dayNum}
+                    <sup>{ordinalSuffix}</sup> day of {monthStr}, {yearStr}
+                  </strong>{' '}
+                  upon request of the interested party for whatever legal purpose it may serve.
+                </p>
+              </div>
+
+              {/* Paragraphs [29]–[30]: Signatory Block */}
+              <div className="mt-16 flex justify-end pr-6">
+                <div className="relative text-center">
+                  <img
+                    src="/excel_assets/franchise_image2.png"
+                    alt="Signature of Municipal Vice Mayor"
+                    className="absolute -top-12 left-1/2 -translate-x-1/2 w-48 h-16 object-contain pointer-events-none"
+                  />
+                  <div className="font-bold underline text-[14pt] tracking-wide">
+                    LIDANY A. LAO-BALDO
+                  </div>
+                  <div className="font-bold text-[12pt]">
+                    Municipal Vice Mayor
+                  </div>
+                </div>
+              </div>
+
+              {/* Paragraphs [38]–[40]: Official Receipt Block (Bookman Old Style 8pt Bold, #7030A0, bottom-left) */}
+              <div
+                className="mt-24 font-bold leading-snug"
+                style={{
+                  fontFamily: "'Bookman Old Style', 'Georgia', serif",
+                  fontSize: '8.5pt',
+                  color: '#7030A0',
+                }}
+              >
+                <div>Amount: P50.00</div>
+                <div>O.R. No.: {orNo}</div>
+                <div>Date: {orDate}</div>
+              </div>
             </div>
           </div>
-
-          {/* Official Receipt Footer */}
-          <div className="relative z-10 mt-14 pt-4 border-t border-slate-300 text-[10px] font-sans text-slate-600 flex items-center justify-between">
-            <div className="space-y-0.5">
-              <p>Amount: <strong className="text-slate-900 font-mono">{amount}</strong></p>
-              <p>O.R. No.: <strong className="text-slate-900 font-mono">{orNo}</strong></p>
-              <p>Date: <strong className="text-slate-900">{orDate}</strong></p>
-            </div>
-            <div className="text-right italic text-slate-400 text-[9px]">
-              G-TRAMS Electronic Document System &bull; Municipality of Gasan
-            </div>
-          </div>
-
         </div>
       </div>
     </div>

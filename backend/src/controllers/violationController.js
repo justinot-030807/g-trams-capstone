@@ -281,7 +281,7 @@ const recordViolation = async (req, res) => {
             operator: operatorRef,
             franchise: franchise._id,
             plateNo: franchise.plateNo,
-            bodyNumber: franchise.bodyType || req.body.bodyNumber || '',
+            bodyNumber: franchise.bodyNumber || req.body.bodyNumber || '',
             driverName: driverName || franchise.driverName || franchise.fullName,
             violationType,
             violationCode: violationCode || matchedTypeConfig?.code || 'OTHER',

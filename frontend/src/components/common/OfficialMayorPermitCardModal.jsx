@@ -22,6 +22,8 @@ const OfficialMayorPermitCardModal = ({
 
   return (
     <div 
+      role="dialog"
+      aria-modal="true"
       className="fixed inset-0 z-[140] bg-black/80 flex items-center justify-center p-3 sm:p-6 overflow-y-auto print:p-0 print:bg-white print:static print:inset-auto"
       onClick={onClose}
     >

@@ -47,7 +47,7 @@ const LguAdvisoryModal = ({ isOpen, onClose, advisory, message, applicantData })
   const details = advisory?.details || applicantData || {};
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
       <div 
         className="relative w-full max-w-lg bg-white dark:bg-[#1C1917] rounded-2xl border border-[#E4E1DC] dark:border-[#2E2A27] shadow-2xl overflow-hidden flex flex-col max-h-[92vh]"
         role="dialog"
@@ -59,7 +59,7 @@ const LguAdvisoryModal = ({ isOpen, onClose, advisory, message, applicantData })
 
         {/* Header with Official Municipal Branding */}
         <div className="p-4 sm:p-5 border-b border-[#E4E1DC] dark:border-[#2E2A27] flex items-start gap-3.5 bg-[#FAF9F7] dark:bg-[#14110F]">
-          <div className="w-11 h-11 rounded-xl bg-white dark:bg-[#1C1917] p-1 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs shrink-0 flex items-center justify-center">
+          <div className="w-11 h-11 rounded-xl bg-white dark:bg-[#1C1917] p-1 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm shrink-0 flex items-center justify-center">
             <img 
               src="/gasan-logo.png" 
               alt="Seal of Gasan" 
@@ -206,7 +206,7 @@ const LguAdvisoryModal = ({ isOpen, onClose, advisory, message, applicantData })
           <button
             type="button"
             onClick={onClose}
-            className="w-full sm:w-auto px-5 py-2 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white text-xs font-semibold shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer active:scale-98"
+            className="w-full sm:w-auto px-5 py-2 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white text-xs font-semibold shadow-sm transition-colors flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.98]"
           >
             <span>{isTagalog ? 'Naiintindihan Ko' : 'Acknowledge Notice'}</span>
             <ArrowRight size={14} />

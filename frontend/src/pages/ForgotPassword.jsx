@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { ShieldAlert, KeyRound, ArrowLeft, RefreshCw, Loader2, User, Lock, Phone, Mail } from 'lucide-react';
+import { ShieldAlert, KeyRound, ArrowLeft, RefreshCw, Loader2, User, Lock, Phone, Mail, Eye, EyeOff, Check, X } from 'lucide-react';
 import AuthNavbar from '../components/common/AuthNavbar';
 import AuthFooter from '../components/common/AuthFooter';
 import { resilientApiFetch } from '../utils/googleAuthUtils';
@@ -28,6 +28,17 @@ const ForgotPassword = () => {
   const [otpCode, setOtpCode] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const passwordRules = [
+    { id: 'length', label: 'At least 8 characters', met: (newPassword || '').length >= 8 },
+    { id: 'upper', label: 'At least 1 uppercase letter (A-Z)', met: /[A-Z]/.test(newPassword || '') },
+    { id: 'lower', label: 'At least 1 lowercase letter (a-z)', met: /[a-z]/.test(newPassword || '') },
+    { id: 'number', label: 'At least 1 number (0-9)', met: /[0-9]/.test(newPassword || '') },
+    { id: 'special', label: 'At least 1 special symbol (!@#$%^&*)', met: /[^A-Za-z0-9]/.test(newPassword || '') }
+  ];
+  const isPasswordQualified = passwordRules.every(r => r.met);
 
   useEffect(() => {
     let timer;
@@ -209,9 +220,9 @@ const ForgotPassword = () => {
     setIsLoading(true);
     setError(''); setSuccess('');
 
-    if (newPassword.length < 6) {
+    if (!newPassword || newPassword.length < 8 || !isPasswordQualified) {
       setIsLoading(false);
-      return setError('PASSWORD MUST BE AT LEAST 6 CHARACTERS LONG!');
+      return setError('PASSWORD MUST MEET ALL SECURITY QUALIFICATIONS (MIN. 8 CHARS, UPPERCASE, LOWERCASE, NUMBER, AND SYMBOL)!');
     }
 
     if (newPassword !== confirmPassword) {
@@ -271,12 +282,12 @@ const ForgotPassword = () => {
         <main className="relative z-10 w-full max-w-md mx-auto px-4 my-auto py-8 sm:py-12 flex flex-col items-center justify-center">
           <div className="w-full bg-white dark:bg-[#1C1917] rounded-lg shadow-xl border border-[#E4E1DC] dark:border-[#2E2A27] p-6 sm:p-8">
             <div className="mb-6 text-center">
-              <div className="w-12 h-12 mx-auto mb-3 rounded-lg bg-[#9E2A2B]/10 flex items-center justify-center text-[#9E2A2B]">
+              <div className="w-12 h-12 mx-auto mb-3 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 flex items-center justify-center text-[#9E2A2B] dark:text-[#F5E6B3]">
                 {step === 1 ? <ShieldAlert size={24} /> : <KeyRound size={24} />}
               </div>
-              <h2 className="text-2xl sm:text-3xl font-black text-[#9E2A2B] tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-black text-[#9E2A2B] dark:text-[#F6F5F3] tracking-tight">
                 {step === 1 ? 'Forgot Password?' : 'Reset Password'}
-              </h2>
+              </h1>
               <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] font-medium mt-1.5 leading-relaxed">
                 {step === 1 
                   ? 'Enter your registered email or phone number to receive a 6-digit verification code.' 
@@ -285,12 +296,12 @@ const ForgotPassword = () => {
             </div>
 
             {error && (
-              <div className="mb-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 text-red-600 dark:text-red-400 text-xs font-bold rounded-lg p-3 text-center shadow-xs tracking-wide">
+              <div className="mb-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 text-red-600 dark:text-red-400 text-xs font-bold rounded-lg p-3 text-center shadow-sm tracking-wide">
                 {error}
               </div>
             )}
             {success && (
-              <div className="mb-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-400 text-xs font-bold rounded-lg p-3 text-center shadow-xs tracking-wide">
+              <div className="mb-4 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60 text-emerald-700 dark:text-emerald-400 text-xs font-bold rounded-lg p-3 text-center shadow-sm tracking-wide">
                 {success}
               </div>
             )}
@@ -320,7 +331,7 @@ const ForgotPassword = () => {
                   <button 
                     type="submit" 
                     disabled={isLoading}
-                    className="w-full flex items-center justify-center gap-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white py-3 rounded-lg text-sm font-bold shadow-xs active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer min-h-[44px]"
+                    className="w-full flex items-center justify-center gap-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white py-3 rounded-lg text-sm font-bold shadow-sm active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer min-h-[44px]"
                   >
                     {isLoading ? (
                       <>
@@ -431,14 +442,51 @@ const ForgotPassword = () => {
                       <Lock size={18} />
                     </div>
                     <input 
-                      type="password" 
+                      type={showNewPassword ? "text" : "password"} 
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                       required 
-                      className={`w-full pl-10 pr-3.5 py-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-sm text-[#1F1D1B] dark:text-[#F6F5F3] placeholder-[#6B6761] outline-none focus:outline-none focus:bg-white dark:focus:bg-[#1C1917] focus:border-[#9E2A2B] focus:ring-1 focus:ring-[#9E2A2B] transition-colors font-medium min-h-[46px]`} 
+                      className={`w-full pl-10 pr-10 py-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-sm text-[#1F1D1B] dark:text-[#F6F5F3] placeholder-[#6B6761] outline-none focus:outline-none focus:bg-white dark:focus:bg-[#1C1917] focus:border-[#9E2A2B] focus:ring-1 focus:ring-[#9E2A2B] transition-colors font-medium min-h-[46px]`} 
                       placeholder="••••••••" 
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowNewPassword(!showNewPassword)}
+                      className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[#6B6761] hover:text-[#9E2A2B] dark:text-[#A8A29E] dark:hover:text-[#D4AF37] cursor-pointer"
+                    >
+                      {showNewPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                    </button>
                   </div>
+
+                  {Boolean(newPassword && newPassword.length > 0) && (
+                    <div className="mt-2 bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-2.5 text-left space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
+                          Password Qualifications
+                        </span>
+                        <span className={`text-[11px] font-bold ${isPasswordQualified ? 'text-emerald-600' : 'text-[#6B6761] dark:text-[#A8A29E]'}`}>
+                          {isPasswordQualified ? '✓ All Met' : `${passwordRules.filter(r => r.met).length}/5 Met`}
+                        </span>
+                      </div>
+                      <div className="grid grid-cols-1 gap-1">
+                        {passwordRules.map((rule) => (
+                          <div
+                            key={rule.id}
+                            className={`flex items-center gap-1.5 text-[11px] leading-tight ${
+                              rule.met ? 'text-emerald-600 font-bold' : 'text-[#6B6761] dark:text-[#A8A29E] font-medium'
+                            }`}
+                          >
+                            {rule.met ? (
+                              <Check size={12} className="shrink-0 stroke-[3] text-emerald-600" />
+                            ) : (
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#A8A29E] dark:bg-[#6B6761] shrink-0 mx-0.5" />
+                            )}
+                            <span>{rule.label}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -450,13 +498,20 @@ const ForgotPassword = () => {
                       <Lock size={18} />
                     </div>
                     <input 
-                      type="password" 
+                      type={showConfirmPassword ? "text" : "password"} 
                       value={confirmPassword}
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       required 
-                      className={`w-full pl-10 pr-3.5 py-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-sm text-[#1F1D1B] dark:text-[#F6F5F3] placeholder-[#6B6761] outline-none focus:outline-none focus:bg-white dark:focus:bg-[#1C1917] focus:border-[#9E2A2B] focus:ring-1 focus:ring-[#9E2A2B] transition-colors font-medium min-h-[46px]`} 
+                      className={`w-full pl-10 pr-10 py-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-sm text-[#1F1D1B] dark:text-[#F6F5F3] placeholder-[#6B6761] outline-none focus:outline-none focus:bg-white dark:focus:bg-[#1C1917] focus:border-[#9E2A2B] focus:ring-1 focus:ring-[#9E2A2B] transition-colors font-medium min-h-[46px]`} 
                       placeholder="••••••••" 
                     />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute inset-y-0 right-0 pr-3.5 flex items-center text-[#6B6761] hover:text-[#9E2A2B] dark:text-[#A8A29E] dark:hover:text-[#D4AF37] cursor-pointer"
+                    >
+                      {showConfirmPassword ? <EyeOff size={17} /> : <Eye size={17} />}
+                    </button>
                   </div>
                 </div>
                 
@@ -464,7 +519,7 @@ const ForgotPassword = () => {
                   <button 
                     type="submit" 
                     disabled={isLoading}
-                    className="w-full flex items-center justify-center gap-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white py-3 rounded-lg text-sm font-bold shadow-xs active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer min-h-[44px]"
+                    className="w-full flex items-center justify-center gap-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white py-3 rounded-lg text-sm font-bold shadow-sm active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer min-h-[44px]"
                   >
                     {isLoading ? (
                       <>

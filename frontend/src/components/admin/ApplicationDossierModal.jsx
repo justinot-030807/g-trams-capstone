@@ -7,6 +7,7 @@ import { GASAN_ZONES } from '../operator/TodaZoneGuideModal';
 import { formatZoneLabel, normalizeZone } from '../../utils/constants';
 import { getServerNow } from '../../utils/serverTime';
 import TricycleIcon from '../common/TricycleIcon';
+import { cleanText, formatVehicleMake, formatVehicleModelYear } from '../../utils/vehicleFormatters';
 
 const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReject, isProcessing = false }) => {
   const dossierRef = useRef(null);
@@ -96,7 +97,7 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
                 type="button"
                 onClick={onApprove}
                 disabled={isProcessing}
-                className="px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer disabled:opacity-50"
+                className="px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer disabled:opacity-50"
               >
                 <CheckCircle2 size={14} />
                 <span>Approve for Signing</span>
@@ -108,7 +109,7 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
                 type="button"
                 onClick={onReject}
                 disabled={isProcessing}
-                className="px-3 py-1.5 bg-red-700 hover:bg-red-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-xs cursor-pointer disabled:opacity-50"
+                className="px-3 py-1.5 bg-red-700 hover:bg-red-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer disabled:opacity-50"
               >
                 <span>Reject</span>
               </button>
@@ -366,11 +367,11 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
                     <span className="text-xs font-semibold text-slate-800">{formatDate(franchise.driverLicenseExpiryDate)}</span>
                     {franchise.driverLicenseExpiryDate && (
                       isDateExpired(franchise.driverLicenseExpiryDate) ? (
-                        <span className="text-[10px] font-bold text-red-600 bg-red-100 border border-red-300 px-1.5 py-0.2 rounded">
+                        <span className="text-[10px] font-bold text-red-600 bg-red-100 border border-red-300 px-1.5 py-0.5 rounded">
                           EXPIRED
                         </span>
                       ) : (
-                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 border border-emerald-300 px-1.5 py-0.2 rounded">
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 border border-emerald-300 px-1.5 py-0.5 rounded">
                           VALID
                         </span>
                       )
@@ -408,19 +409,19 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
               <div className="p-3.5 grid grid-cols-2 sm:grid-cols-4 gap-3 bg-white">
                 <div>
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Make / Brand</span>
-                  <span className="text-xs font-bold text-slate-900">{franchise.make || '—'}</span>
+                  <span className="text-xs font-bold text-slate-900">{formatVehicleMake(franchise, '—')}</span>
                 </div>
                 <div>
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Model Year</span>
-                  <span className="text-xs font-bold text-slate-900">{franchise.made || '—'}</span>
+                  <span className="text-xs font-bold text-slate-900">{formatVehicleModelYear(franchise, '—')}</span>
                 </div>
                 <div>
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Plate Number</span>
-                  <span className="text-xs font-mono font-bold text-slate-900">{franchise.plateNo || '—'}</span>
+                  <span className="text-xs font-mono font-bold text-slate-900">{cleanText(franchise.plateNo, '—')}</span>
                 </div>
                 <div>
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Engine / Motor No.</span>
-                  <span className="text-xs font-mono font-bold text-slate-900 truncate block">{franchise.motorNo || '—'}</span>
+                  <span className="text-xs font-mono font-bold text-slate-900 truncate block">{cleanText(franchise.motorNo, '—')}</span>
                 </div>
                 <div className="sm:col-span-2">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Chassis Frame Serial No.</span>
@@ -436,11 +437,11 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
                     <span className="text-xs font-semibold text-slate-800">{formatDate(franchise.orCrExpiryDate)}</span>
                     {franchise.orCrExpiryDate && (
                       isDateExpired(franchise.orCrExpiryDate) ? (
-                        <span className="text-[10px] font-bold text-red-600 bg-red-100 border border-red-300 px-1.5 py-0.2 rounded">
+                        <span className="text-[10px] font-bold text-red-600 bg-red-100 border border-red-300 px-1.5 py-0.5 rounded">
                           EXPIRED
                         </span>
                       ) : (
-                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 border border-emerald-300 px-1.5 py-0.2 rounded">
+                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-100 border border-emerald-300 px-1.5 py-0.5 rounded">
                           VALID
                         </span>
                       )

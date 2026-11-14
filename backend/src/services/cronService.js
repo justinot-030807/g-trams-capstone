@@ -143,12 +143,14 @@ async function sendRenewalReminders() {
                         type: 'renewal_reminder'
                     }).catch(err => console.warn('[CRON] Renewal push alert failed:', err.message));
 
-                    // Dispatch automated 30-day expiration SMS alert & record audit log
+                    // Record 30-day expiration SMS audit log without sending a duplicate gateway SMS
+                    // (since Notification.create above already triggers dispatchNotificationEmail which sends SMS)
                     const { dispatchExpirationSms } = require('./notificationService');
                     await dispatchExpirationSms({
                         franchise,
                         daysRemaining: daysLeft,
-                        simulated: true
+                        simulated: true,
+                        skipGatewaySend: true
                     }).catch(smsErr => console.warn('[CRON] SMS dispatch failed:', smsErr.message));
                 }
 

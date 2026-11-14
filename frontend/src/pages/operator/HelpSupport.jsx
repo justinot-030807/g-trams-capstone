@@ -8,6 +8,7 @@ import {
 import { useLanguage } from '../../context/LanguageContext';
 import TermsPolicyModal from '../../components/common/TermsPolicyModal';
 import { HELP_DESK_EMAIL, HOTLINE_DISPLAY, HOTLINE_NUMBER, MUNICIPAL_OFFICE_NAME } from '../../utils/contactConfig';
+import { toast } from 'sonner';
 
 const FAQS_DATA = {
   en: [
@@ -126,13 +127,13 @@ const HelpSupport = () => {
       });
       const data = await res.json();
       if (res.ok) {
-        alert(currentLang === 'fil' ? 'Naisumite na ang iyong ticket! Maghihintay ng sagot ang admin.' : 'Ticket submitted successfully! Please wait for an admin response.');
+        toast.success(currentLang === 'fil' ? 'Naisumite na ang iyong ticket! Maghintay ng tugon mula sa admin.' : 'Ticket submitted successfully! Please wait for an admin response.');
         setTicketData({ subject: 'Franchise Application Issue', contactNumber: '', message: '' });
       } else {
-        alert(data.message || 'Error submitting ticket');
+        toast.error(data.message || 'Error submitting ticket');
       }
     } catch (err) {
-      alert('Network error. Please try again later.');
+      toast.error('Network error. Please try again later.');
     } finally {
       setIsSubmitting(false);
     }
@@ -181,7 +182,7 @@ const HelpSupport = () => {
     <MainLayout>
       <div className="w-full space-y-8 pb-28 sm:pb-24">
         {/* Header Ribbon */}
-        <div className="bg-[#9E2A2B] rounded-lg p-5 sm:p-6 text-white shadow-xs border-l-4 border-l-[#D4AF37] relative overflow-hidden">
+        <div className="bg-[#9E2A2B] rounded-lg p-5 sm:p-6 text-white shadow-sm border border-[#7A1B22] relative overflow-hidden">
           <div className="relative z-10">
             <span className="text-xs font-bold uppercase tracking-wider text-[#14110F] bg-[#D4AF37] px-2.5 py-0.5 rounded">
               Helpdesk &amp; Support
@@ -206,7 +207,7 @@ const HelpSupport = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
           
           {/* About Us Card */}
-          <div className="lg:col-span-2 bg-white dark:bg-[#1C1917] rounded-lg p-5 sm:p-6 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs flex flex-col justify-between transition-colors">
+          <div className="lg:col-span-2 bg-white dark:bg-[#1C1917] rounded-lg p-5 sm:p-6 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm flex flex-col justify-between transition-colors">
             <div>
               <div className="flex items-center gap-3 mb-3.5">
                 <div className="p-2.5 bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 text-[#9E2A2B] dark:text-[#D4AF37] rounded-lg shrink-0">
@@ -239,7 +240,7 @@ const HelpSupport = () => {
           </div>
 
           {/* Admin Contact Info Card */}
-          <div className="bg-[#1C1917] dark:bg-[#14110F] border border-[#2E2A27] text-white rounded-lg p-5 sm:p-6 shadow-xs flex flex-col justify-between">
+          <div className="bg-[#1C1917] dark:bg-[#14110F] border border-[#2E2A27] text-white rounded-lg p-5 sm:p-6 shadow-sm flex flex-col justify-between">
             <div>
               <div className="flex items-center gap-2 mb-1.5">
                 <ShieldCheck size={18} className="text-[#D4AF37]" />
@@ -258,7 +259,7 @@ const HelpSupport = () => {
             <div className="space-y-2.5 text-xs">
               <a 
                 href={`tel:${HOTLINE_NUMBER}`} 
-                className="flex items-center gap-3 bg-white/5 hover:bg-white/10 active:scale-95 p-3 rounded-lg border border-white/10 transition-all shadow-xs cursor-pointer min-h-[46px]"
+                className="flex items-center gap-3 bg-white/5 hover:bg-white/10 active:scale-95 p-3 rounded-lg border border-white/10 transition-all shadow-sm cursor-pointer min-h-[46px]"
                 title="Call Municipal Hotline"
               >
                 <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-[#D4AF37] shrink-0">
@@ -274,7 +275,7 @@ const HelpSupport = () => {
 
               <a 
                 href={`mailto:${HELP_DESK_EMAIL}`} 
-                className="flex items-center gap-3 bg-white/5 hover:bg-white/10 active:scale-95 p-3 rounded-lg border border-white/10 transition-all shadow-xs cursor-pointer min-h-[46px]"
+                className="flex items-center gap-3 bg-white/5 hover:bg-white/10 active:scale-95 p-3 rounded-lg border border-white/10 transition-all shadow-sm cursor-pointer min-h-[46px]"
                 title="Send Email to Municipal Helpdesk"
               >
                 <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center text-[#D4AF37] shrink-0">
@@ -292,7 +293,7 @@ const HelpSupport = () => {
         </div>
 
         {/* Municipal Office Hours & Fee Schedule */}
-        <div className="bg-white dark:bg-[#1C1917] rounded-lg p-5 sm:p-7 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs mb-8">
+        <div className="bg-white dark:bg-[#1C1917] rounded-lg p-5 sm:p-7 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm mb-8">
           <div className="flex items-center gap-2 mb-5">
             <Building size={24} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
             <h2 className="text-lg font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">Office Hours &amp; Fees</h2>
@@ -350,7 +351,7 @@ const HelpSupport = () => {
         </div>
 
         {/* Legal & Privacy Policy Banner */}
-        <div className="bg-[#1C1917] dark:bg-[#14110F] rounded-lg p-5 sm:p-6 text-white mb-8 border border-[#2E2A27] border-l-4 border-l-[#9E2A2B] shadow-xs flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="bg-[#1C1917] dark:bg-[#14110F] rounded-lg p-5 sm:p-6 text-white mb-8 border border-[#2E2A27] shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3.5 text-center sm:text-left">
             <div className="w-12 h-12 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center text-[#D4AF37] shrink-0 mx-auto sm:mx-0 shadow-inner">
               <ShieldCheck size={26} />
@@ -377,7 +378,7 @@ const HelpSupport = () => {
           <button
             type="button"
             onClick={() => setShowTermsModal(true)}
-            className="w-full sm:w-auto px-5 py-2.5 bg-[#D4AF37] hover:bg-[#c29e2f] active:scale-[0.98] text-[#14110F] text-xs font-bold rounded-lg shadow-xs uppercase tracking-wider transition-all shrink-0 flex items-center justify-center gap-2 cursor-pointer min-h-[44px]"
+            className="w-full sm:w-auto px-5 py-2.5 bg-[#D4AF37] hover:bg-[#c29e2f] active:scale-[0.98] text-[#14110F] text-xs font-bold rounded-lg shadow-sm uppercase tracking-wider transition-all shrink-0 flex items-center justify-center gap-2 cursor-pointer min-h-[44px]"
           >
             <FileText size={15} />
             <span>{currentLang === 'fil' ? 'BUKSAN ANG PATAKARAN' : 'VIEW FULL POLICY'}</span>
@@ -385,7 +386,7 @@ const HelpSupport = () => {
         </div>
 
         {/* Dynamic FAQ Module */}
-        <div className="bg-white dark:bg-[#1C1917] rounded-lg p-5 sm:p-7 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs transition-colors">
+        <div className="bg-white dark:bg-[#1C1917] rounded-lg p-5 sm:p-7 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm transition-colors">
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5 pb-5 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
             <div>
               <h2 className="text-base sm:text-lg font-bold text-[#1F1D1B] dark:text-[#F6F5F3] tracking-tight flex items-center gap-2">
@@ -404,7 +405,7 @@ const HelpSupport = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search help topics (e.g. renewal, permit)..."
-                className="w-full pl-9 pr-4 py-2.5 bg-white dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg text-xs sm:text-sm font-medium text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] transition-colors shadow-2xs placeholder:text-[#6B6761] dark:placeholder:text-[#A8A29E] min-h-[44px]"
+                className="w-full pl-9 pr-4 py-2.5 bg-white dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg text-xs sm:text-sm font-medium text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] transition-colors shadow-sm placeholder:text-[#6B6761] dark:placeholder:text-[#A8A29E] min-h-[44px]"
               />
             </div>
           </div>
@@ -418,7 +419,7 @@ const HelpSupport = () => {
               filteredAndSortedFaqs.map((faq, idx) => (
                 <div 
                   key={faq.id}
-                  className="border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg overflow-hidden transition-colors hover:border-[#9E2A2B]/40 shadow-2xs"
+                  className="border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg overflow-hidden transition-colors hover:border-[#9E2A2B]/40 shadow-sm"
                 >
                   <button
                     onClick={() => handleFaqClick(faq.id)}
@@ -465,7 +466,7 @@ const HelpSupport = () => {
         </div>
 
         {/* Support Ticket Submission Form */}
-        <div className="bg-white dark:bg-[#1C1917] rounded-lg p-5 sm:p-7 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs transition-colors">
+        <div className="bg-white dark:bg-[#1C1917] rounded-lg p-5 sm:p-7 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm transition-colors">
           <div className="mb-6 pb-4 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
             <h2 className="text-base sm:text-lg font-bold text-[#1F1D1B] dark:text-[#F6F5F3] tracking-tight flex items-center gap-2">
               <Mail className="text-[#9E2A2B] dark:text-[#D4AF37]" size={20} /> 
@@ -534,7 +535,7 @@ const HelpSupport = () => {
               <button 
                 type="submit" 
                 disabled={isSubmitting}
-                className="w-full sm:w-auto px-6 py-2.5 bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-[#14110F] text-xs font-bold rounded-lg shadow-xs transition-colors active:scale-95 disabled:opacity-70 flex items-center justify-center gap-2 min-h-[44px]"
+                className="w-full sm:w-auto px-6 py-2.5 bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-[#14110F] text-xs font-bold rounded-lg shadow-sm transition-colors active:scale-95 disabled:opacity-70 flex items-center justify-center gap-2 min-h-[44px]"
               >
                 <Send className="w-4 h-4" />
                 <span>{isSubmitting ? (currentLang === 'fil' ? 'Sinasubmit...' : 'Submitting...') : (currentLang === 'fil' ? 'Ipadala ang Ticket' : 'Send Ticket')}</span>
@@ -544,7 +545,7 @@ const HelpSupport = () => {
         </div>
 
         {/* System Developers Section */}
-        <div className="bg-white dark:bg-[#1C1917] rounded-lg p-5 sm:p-7 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xs transition-colors">
+        <div className="bg-white dark:bg-[#1C1917] rounded-lg p-5 sm:p-7 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm transition-colors">
           <div className="mb-6 pb-4 border-b border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-between flex-wrap gap-2">
             <div>
               <h2 className="text-base sm:text-lg font-bold text-[#1F1D1B] dark:text-[#F6F5F3] tracking-tight flex items-center gap-2">
@@ -569,7 +570,7 @@ const HelpSupport = () => {
               { name: "Pedro Penduko", role: "QA / Compliance Specialist", icon: <ShieldCheck size={18} className="text-[#9E2A2B] dark:text-[#D4AF37]" /> },
             ].map((dev, idx) => (
               <div key={idx} className="p-3.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center gap-3 hover:border-[#9E2A2B]/40 transition-colors">
-                <div className="w-10 h-10 rounded-lg bg-white dark:bg-[#1C1917] shadow-xs flex items-center justify-center shrink-0 border border-[#E4E1DC] dark:border-[#2E2A27]">
+                <div className="w-10 h-10 rounded-lg bg-white dark:bg-[#1C1917] shadow-sm flex items-center justify-center shrink-0 border border-[#E4E1DC] dark:border-[#2E2A27]">
                   {dev.icon}
                 </div>
                 <div className="min-w-0">

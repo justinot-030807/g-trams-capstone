@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { toast } from 'sonner';
 import { MessageSquare, Search, Send, Loader2, Trash2, Check, CheckCheck, User, Sparkles } from 'lucide-react';
 import { useSocket } from '../../context/SocketContext';
+import { useConfirm } from '../ui/ConfirmContext';
 
 const AdminLiveChat = () => {
   const { socket } = useSocket();
+  const { confirm } = useConfirm();
   const [threads, setThreads] = useState([]);
   const [activeThread, setActiveThread] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -212,12 +215,12 @@ const AdminLiveChat = () => {
             : t
         ).sort((a, b) => new Date(b.lastMessageAt) - new Date(a.lastMessageAt)));
       } else {
-        alert('Failed to send message.');
+        toast.error('Failed to send message.');
         setInput(text);
       }
     } catch (err) {
       console.error('Send error:', err);
-      alert('Network error sending message.');
+      toast.error('Network error sending message.');
       setInput(text);
     } finally {
       setIsSending(false);
@@ -226,7 +229,14 @@ const AdminLiveChat = () => {
 
   const handleDeleteThread = async (e, threadId) => {
     e.stopPropagation();
-    if (!window.confirm('Delete this entire conversation with the operator?')) return;
+    const ok = await confirm({
+      title: 'Delete Conversation',
+      description: 'Delete this entire conversation with the operator? This action cannot be undone.',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      variant: 'danger'
+    });
+    if (!ok) return;
     try {
       const res = await fetch(`${API_URL}/api/v1/chat/threads/${threadId}`, {
         method: 'DELETE',
@@ -238,14 +248,24 @@ const AdminLiveChat = () => {
           setActiveThread(null);
           setMessages([]);
         }
+        toast.success('Conversation deleted.');
+      } else {
+        toast.error('Failed to delete conversation.');
       }
     } catch {
-      alert('Failed to delete conversation');
+      toast.error('Failed to delete conversation.');
     }
   };
 
   const handleDeleteMessage = async (msgId) => {
-    if (!window.confirm('Delete this message?')) return;
+    const ok = await confirm({
+      title: 'Delete Message',
+      description: 'Remove this message from the conversation?',
+      confirmLabel: 'Delete',
+      cancelLabel: 'Cancel',
+      variant: 'danger'
+    });
+    if (!ok) return;
     try {
       const res = await fetch(`${API_URL}/api/v1/chat/messages/${msgId}`, {
         method: 'DELETE',
@@ -253,9 +273,12 @@ const AdminLiveChat = () => {
       });
       if (res.ok) {
         setMessages(prev => prev.filter(m => String(m._id) !== String(msgId)));
+        toast.success('Message deleted.');
+      } else {
+        toast.error('Failed to delete message.');
       }
     } catch {
-      alert('Failed to delete message');
+      toast.error('Failed to delete message.');
     }
   };
 
@@ -339,7 +362,7 @@ const AdminLiveChat = () => {
                   onClick={() => setActiveThread(t)}
                   className={`p-3.5 flex items-center gap-3 cursor-pointer transition-colors relative group ${
                     isSelected 
-                      ? 'bg-white dark:bg-[#2E2A27]/40 border-l-4 border-[#9E2A2B] dark:border-[#D4AF37]' 
+                      ? 'bg-white dark:bg-[#2E2A27]/60 ring-1 ring-inset ring-[#9E2A2B]/35 dark:ring-[#D4AF37]/40' 
                       : 'hover:bg-[#F6F5F3] dark:hover:bg-[#14110F]/60'
                   }`}
                 >
@@ -517,7 +540,7 @@ const AdminLiveChat = () => {
                 <button
                   type="submit"
                   disabled={!input.trim() || isSending}
-                  className="h-9 px-3.5 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-medium text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shrink-0 shadow-xs"
+                  className="h-9 px-3.5 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-medium text-xs sm:text-sm flex items-center justify-center gap-1.5 transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shrink-0 shadow-sm"
                 >
                   {isSending ? (
                     <Loader2 size={14} className="animate-spin" />
