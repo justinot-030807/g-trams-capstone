@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const sendEmail = require('../utils/sendEmail');
+const sendSms = require('../utils/sendSms');
 
 const notificationSchema = new mongoose.Schema({
   recipient: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
@@ -99,14 +100,36 @@ function buildNotificationEmailHtml({ recipientName, title, message, type, plate
   </div>`;
 }
 
+function extractRecipientPhone(user, franchise) {
+  const candidates = [
+    user?.contact,
+    user?.recoveryPhone,
+    user?.backupContact,
+    franchise?.contact
+  ];
+  for (const raw of candidates) {
+    if (raw && typeof raw === 'string' && !raw.includes('@')) {
+      const formatted = sendSms.formatPhoneE164(raw);
+      if (formatted && formatted.length >= 12) {
+        return formatted;
+      }
+    }
+  }
+  return null;
+}
+
 async function dispatchNotificationEmail(doc) {
   try {
     if (!doc || !doc.recipient) return;
-    if (process.env.NODE_ENV === 'test' || !process.env.SMTP_API_KEY) return;
+    if (process.env.NODE_ENV === 'test') return;
+
+    const hasEmailConfig = Boolean(process.env.SMTP_API_KEY);
+    const hasSmsConfig = Boolean(process.env.TEXTBEE_API_KEY || process.env.SEMAPHORE_API_KEY);
+    if (!hasEmailConfig && !hasSmsConfig) return;
 
     const User = mongoose.models.User || require('./userModel');
     const user = await User.findById(doc.recipient)
-      .select('name email recoveryEmail contact backupContact')
+      .select('name email recoveryEmail contact recoveryPhone backupContact')
       .lean();
 
     let franchise = null;
@@ -118,26 +141,42 @@ async function dispatchNotificationEmail(doc) {
         .catch(() => null);
     }
 
-    const email = extractRecipientEmail(user, franchise);
-    if (!email) return;
-
     const recipientName = user?.name || franchise?.fullName || 'G-TRAMS User';
-    const html = buildNotificationEmailHtml({
-      recipientName,
-      title: doc.title,
-      message: doc.message,
-      type: doc.type,
-      plateNo: franchise?.plateNo
-    });
 
-    await sendEmail({
-      email,
-      subject: `[G-TRAMS LGU Gasan] ${doc.title}`,
-      message: `Magandang araw ${recipientName},\n\n${doc.title}\n${doc.message}\n\nBuksan ang G-TRAMS Portal: https://g-trams-official.vercel.app`,
-      html
-    });
+    // 1. Dispatch Email (Brevo) if configured and recipient has email
+    if (hasEmailConfig) {
+      const email = extractRecipientEmail(user, franchise);
+      if (email) {
+        const html = buildNotificationEmailHtml({
+          recipientName,
+          title: doc.title,
+          message: doc.message,
+          type: doc.type,
+          plateNo: franchise?.plateNo
+        });
+
+        await sendEmail({
+          email,
+          subject: `[G-TRAMS LGU Gasan] ${doc.title}`,
+          message: `Magandang araw ${recipientName},\n\n${doc.title}\n${doc.message}\n\nBuksan ang G-TRAMS Portal: https://g-trams-official.vercel.app`,
+          html
+        }).catch(err => console.warn('[Notification Email] Warning:', err.message));
+      }
+    }
+
+    // 2. Dispatch SMS (TextBee / Semaphore) if configured and recipient has phone number
+    if (hasSmsConfig) {
+      const phone = extractRecipientPhone(user, franchise);
+      if (phone) {
+        const smsText = `[G-TRAMS LGU Gasan] ${doc.title}: ${doc.message}`;
+        await sendSms({
+          phone,
+          message: smsText
+        }).catch(err => console.warn('[Notification SMS] Warning:', err.message));
+      }
+    }
   } catch (err) {
-    console.warn('[Notification Email] Non-critical email dispatch warning:', err.message);
+    console.warn('[Notification Dispatch] Non-critical dispatch warning:', err.message);
   }
 }
 

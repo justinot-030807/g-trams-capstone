@@ -3,6 +3,7 @@ const Franchise = require('../models/franchiseModel');
 const SystemSettings = require('../models/systemSettingsModel');
 const jwt = require('jsonwebtoken'); 
 const sendEmail = require('../utils/sendEmail'); 
+const sendSms = require('../utils/sendSms');
 const axios = require('axios');
 const crypto = require('crypto');
 const { logAudit } = require('../utils/auditLogger');
@@ -266,11 +267,10 @@ exports.register = async (req, res) => {
                         message: `Your OTP for G-TRAMS registration is: ${otp}\n\nThis is valid for 10 minutes only.${useBackupForOtp ? '\n\n(Sent via your Backup Contact)' : ''}` 
                     });
                 } else {
-                    await axios.post('https://api.semaphore.co/api/v4/messages', { 
-                        apikey: process.env.SEMAPHORE_API_KEY, 
-                        number: otpTargetContact, 
-                        message: `G-TRAMS: Your verification code is ${otp}. Do not share this with anyone.${useBackupForOtp ? ' (Backup Contact)' : ''}` 
-                    }, { timeout: 5000 });
+                    await sendSms({
+                        phone: otpTargetContact,
+                        message: `G-TRAMS LGU Gasan: Ang inyong verification code ay ${otp}. Huwag itong ibahagi kahit kanino.${useBackupForOtp ? ' (Backup Contact)' : ''}`
+                    });
                 }
             } catch (sendErr) {
                 console.error("OTP Delivery Warning (email/SMS):", sendErr.message);
@@ -565,12 +565,11 @@ exports.forgotPassword = async (req, res) => {
                         message: `Your OTP for G-TRAMS password reset is: ${otp}\n\nThis code is valid for 10 minutes only.${isRecovery ? '\n\nNote: This code was requested using your registered Recovery Email.' : ''}` 
                     });
                 } else {
-                    // Send OTP via SMS
-                    await axios.post('https://api.semaphore.co/api/v4/messages', { 
-                        apikey: process.env.SEMAPHORE_API_KEY, 
-                        number: destination, 
-                        message: `G-TRAMS: Your password reset verification code is ${otp}. Do not share this with anyone.${isRecovery ? ' (Sent to recovery phone)' : ''}` 
-                    }, { timeout: 5000 });
+                    // Send OTP via SMS (TextBee / Semaphore)
+                    await sendSms({
+                        phone: destination,
+                        message: `G-TRAMS LGU Gasan: Ang inyong password reset OTP code ay ${otp}. Huwag itong ibahagi kahit kanino.${isRecovery ? ' (Sent to recovery phone)' : ''}`
+                    });
                 }
             }
 
