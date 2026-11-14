@@ -598,373 +598,77 @@ const ValidateTODA = () => {
                   )}
                 </div>
               ) : (
-                <div className="space-y-3">
-                  {groupedToda.map((toda) => {
-                    const isOpen = isSearching || expandedToda === toda.name;
+                <div className="grid grid-cols-1 gap-2.5">
+                  {groupedToda.map((toda) => (
+                    <div 
+                      key={toda.name} 
+                      onClick={() => {
+                        setSelectedTodaModal(toda);
+                        setTodaModalSearch('');
+                        setTodaModalFilter('all');
+                      }}
+                      className="group border border-[#E4E1DC] dark:border-[#2E2A27] hover:border-[#9E2A2B]/50 dark:hover:border-[#D4AF37]/50 rounded-xl bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3]/60 dark:hover:bg-[#14110F]/60 p-3.5 sm:p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 transition-all shadow-2xs cursor-pointer"
+                    >
+                      <div className="flex items-center gap-3.5 min-w-0">
+                        <div className="w-10 h-10 bg-[#9E2A2B] text-white font-bold rounded-xl flex items-center justify-center text-xs shrink-0 shadow-xs tracking-wider">
+                          {(toda.name || '').substring(0, 3)}
+                        </div>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <h3 className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] text-sm sm:text-base truncate group-hover:text-[#9E2A2B] dark:group-hover:text-[#D4AF37] transition-colors">
+                              {toda.name}
+                            </h3>
+                            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] border border-[#9E2A2B]/20 dark:border-[#D4AF37]/30 font-mono tabular-nums">
+                              <Users size={11} />
+                              <span>{toda.totalCount} {toda.totalCount === 1 ? 'Member' : 'Members'}</span>
+                            </span>
+                          </div>
+                          <div className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1 flex items-center gap-2 flex-wrap">
+                            <span className="font-medium">{toda.registeredCount} App Account{toda.registeredCount === 1 ? '' : 's'}</span>
+                            <span className="text-[#E4E1DC] dark:text-[#2E2A27]">•</span>
+                            <span className="font-medium text-emerald-700 dark:text-emerald-400">{toda.compliantCount} Active MTOP</span>
+                            {toda.rosterCount > 0 && (
+                              <>
+                                <span className="text-[#E4E1DC] dark:text-[#2E2A27]">•</span>
+                                <span className="font-medium">{toda.rosterCount} Official Roster</span>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
 
-                    return (
-                      <div 
-                        key={toda.name} 
-                        className={`border rounded-lg overflow-hidden transition-colors ${
-                          isOpen 
-                            ? 'border-[#9E2A2B] dark:border-[#D4AF37]' 
-                            : 'border-[#E4E1DC] dark:border-[#2E2A27] hover:border-[#9E2A2B]/40'
-                        }`}
-                      >
-                        <div 
-                          onClick={() => {
+                      <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 flex-wrap sm:justify-end pt-2 sm:pt-0 border-t sm:border-t-0 border-[#E4E1DC]/70 dark:border-[#2E2A27]">
+                        <span className={`text-[11px] font-bold px-2.5 py-1 rounded-lg border tabular-nums ${
+                          toda.complianceRate >= 80 
+                            ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60' 
+                            : toda.complianceRate >= 50 
+                              ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-200 dark:border-amber-800/60' 
+                              : 'bg-neutral-100 dark:bg-neutral-800/70 text-[#6B6761] dark:text-[#A8A29E] border-[#E4E1DC] dark:border-[#2E2A27]'
+                        }`}>
+                          {toda.complianceRate}% Compliant
+                        </span>
+                        {toda.colorumCount > 0 && (
+                          <span className="inline-flex items-center gap-1 text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60" title={`${toda.colorumCount} member(s) without active MTOP`}>
+                            <AlertTriangle size={11} /> {toda.colorumCount} Pending MTOP
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setSelectedTodaModal(toda);
                             setTodaModalSearch('');
                             setTodaModalFilter('all');
                           }}
-                          className={`w-full p-3.5 sm:p-4 flex justify-between items-center transition-colors text-left cursor-pointer ${
-                            isOpen 
-                              ? 'bg-[#F6F5F3] dark:bg-[#2E2A27]/30' 
-                              : 'bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3]/60 dark:hover:bg-[#14110F]/60'
-                          }`}
+                          className="ml-auto sm:ml-0 inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white text-xs font-semibold transition-all shadow-xs active:scale-95 cursor-pointer whitespace-nowrap"
+                          title={`Open full member list modal for ${toda.name}`}
                         >
-                          <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-9 h-9 bg-[#9E2A2B] text-white font-bold rounded-lg flex items-center justify-center text-xs shrink-0 shadow-xs">
-                              {(toda.name || '').substring(0, 3)}
-                            </div>
-                            <div className="min-w-0">
-                              <div className="flex items-center gap-2 flex-wrap">
-                                <h3 className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] text-sm sm:text-base truncate">
-                                  {toda.name}
-                                </h3>
-                                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] border border-[#9E2A2B]/25 dark:border-[#D4AF37]/30 font-mono tabular-nums">
-                                  <Users size={11} />
-                                  <span>{toda.totalCount} {toda.totalCount === 1 ? 'Member' : 'Members'}</span>
-                                </span>
-                              </div>
-                              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5 flex items-center gap-2 flex-wrap">
-                                <span>{toda.registeredCount} App Account{toda.registeredCount === 1 ? '' : 's'}</span>
-                                <span>•</span>
-                                <span>{toda.compliantCount} Active MTOP</span>
-                                {toda.rosterCount > 0 && (
-                                  <>
-                                    <span>•</span>
-                                    <span>{toda.rosterCount} Official Roster</span>
-                                  </>
-                                )}
-                              </p>
-                            </div>
-                          </div>
-
-                          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0 flex-wrap justify-end">
-                            <span className={`text-[11px] font-semibold px-2 py-0.5 rounded border ${
-                              toda.complianceRate >= 80 
-                                ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800' 
-                                : toda.complianceRate >= 50 
-                                  ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800' 
-                                  : 'bg-red-50 dark:bg-red-950/40 text-red-800 dark:text-red-300 border-red-300 dark:border-red-800'
-                            }`}>
-                              {toda.complianceRate}% Compliant
-                            </span>
-                            {toda.colorumCount > 0 && (
-                              <span className="hidden sm:inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-300 border border-red-300 dark:border-red-800/60" title={`${toda.colorumCount} driver(s) without active MTOP`}>
-                                <AlertTriangle size={11} /> {toda.colorumCount} Unregistered MTOP
-                              </span>
-                            )}
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedTodaModal(toda);
-                                setTodaModalSearch('');
-                                setTodaModalFilter('all');
-                              }}
-                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white text-xs font-semibold transition-colors shadow-xs cursor-pointer"
-                              title={`Open full member list modal for ${toda.name}`}
-                            >
-                              <Users size={12} />
-                              <span>View Members ({toda.totalCount})</span>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setExpandedToda(expandedToda === toda.name ? null : toda.name);
-                              }}
-                              className={`p-1.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3] transition-transform duration-200 cursor-pointer ${isOpen ? 'rotate-180' : ''}`}
-                              title={isOpen ? 'Collapse inline details' : 'Expand inline details'}
-                            >
-                              <ChevronDown size={15} />
-                            </button>
-                          </div>
-                        </div>
-                        
-                        {/* Sub-tab Navigation and Content inside opened TODA card */}
-                        {isOpen && (
-                          <div className="bg-white dark:bg-[#1C1917] border-t border-[#E4E1DC] dark:border-[#2E2A27]">
-                            {/* Sub-Tab Header */}
-                            <div className="flex items-center gap-2 px-4 py-2 bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] overflow-x-auto">
-                              <button
-                                type="button"
-                                onClick={() => setTodaActiveSubTabs(prev => ({ ...prev, [toda.name]: 'roster' }))}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer min-h-[34px] ${
-                                  (todaActiveSubTabs[toda.name] || 'roster') === 'roster'
-                                    ? 'bg-[#9E2A2B] text-white shadow-xs'
-                                    : 'bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-neutral-100'
-                                }`}
-                              >
-                                <Sparkles size={13} />
-                                <span>Official Scanned Roster</span>
-                                <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
-                                  (todaActiveSubTabs[toda.name] || 'roster') === 'roster' 
-                                    ? 'bg-white/20 text-white' 
-                                    : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1]'
-                                }`}>
-                                  {toda.latestSubmission ? (toda.latestSubmission.extractedCount || toda.latestSubmission.extractedMembers?.length || 0) : 0}
-                                </span>
-                              </button>
-
-                              <button
-                                type="button"
-                                onClick={() => setTodaActiveSubTabs(prev => ({ ...prev, [toda.name]: 'drivers' }))}
-                                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer min-h-[34px] ${
-                                  todaActiveSubTabs[toda.name] === 'drivers'
-                                    ? 'bg-[#9E2A2B] text-white shadow-xs'
-                                    : 'bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-neutral-100'
-                                }`}
-                              >
-                                <Users size={13} />
-                                <span>Registered App Drivers</span>
-                                <span className={`px-1.5 py-0.2 rounded text-[10px] font-bold ${
-                                  todaActiveSubTabs[toda.name] === 'drivers' 
-                                    ? 'bg-white/20 text-white' 
-                                    : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1]'
-                                }`}>
-                                  {toda.members?.length || 0}
-                                </span>
-                              </button>
-                            </div>
-
-                            {/* SUB-TAB 1: OFFICIAL EXTRACTED MASTERLIST ROSTER */}
-                            {(todaActiveSubTabs[toda.name] || 'roster') === 'roster' && (
-                              <div className="p-3.5 sm:p-4 space-y-3">
-                                {toda.latestSubmission ? (
-                                  <>
-                                    {/* Submission Info Bar */}
-                                    <div className="p-3 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                                      <div className="space-y-1">
-                                        <div className="flex items-center gap-2 flex-wrap">
-                                          <div className="flex items-center gap-1 text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                                            <FileText size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                                            <span>{toda.latestSubmission.fileName}</span>
-                                          </div>
-                                          <StatusBadge 
-                                            status={toda.latestSubmission.status === 'Approved' ? 'Active' : 'Pending'} 
-                                            label={toda.latestSubmission.status} 
-                                          />
-                                          <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
-                                            <Sparkles size={11} />
-                                            <span>{toda.latestSubmission.extractedCount || toda.latestSubmission.extractedMembers?.length || 0} Members Digitized</span>
-                                          </span>
-                                        </div>
-                                        <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
-                                          Submitted by TODA President: <strong className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{toda.latestSubmission.presidentName}</strong> on {new Date(toda.latestSubmission.createdAt).toLocaleDateString()}
-                                        </p>
-                                      </div>
-
-                                      <div className="flex items-center gap-2 shrink-0 flex-wrap">
-                                        {toda.latestSubmission.filePath && (
-                                          <a
-                                            href={toda.latestSubmission.filePath.startsWith('http') ? toda.latestSubmission.filePath : `${import.meta.env.VITE_API_URL}/${toda.latestSubmission.filePath}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] hover:bg-neutral-100 transition-colors shadow-xs"
-                                          >
-                                            <Eye size={12} />
-                                            <span>View Document</span>
-                                          </a>
-                                        )}
-                                        {toda.latestSubmission.status !== 'Approved' && (
-                                          <button
-                                            type="button"
-                                            onClick={() => handleApprove(toda.latestSubmission._id)}
-                                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold transition-colors shadow-xs cursor-pointer"
-                                          >
-                                            <CheckCircle size={12} />
-                                            <span>Approve Masterlist</span>
-                                          </button>
-                                        )}
-                                        {(toda.latestSubmission.extractedCount === 0 || !toda.latestSubmission.extractedMembers?.length) && (
-                                          <button
-                                            type="button"
-                                            onClick={() => handleRescan(toda.latestSubmission._id)}
-                                            disabled={isRescanning}
-                                            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white text-xs font-bold transition-colors shadow-xs cursor-pointer"
-                                          >
-                                            <RefreshCw size={12} className={isRescanning ? 'animate-spin' : ''} />
-                                            <span>Re-scan with AI OCR</span>
-                                          </button>
-                                        )}
-                                      </div>
-                                    </div>
-
-                                    {/* Extracted Members Table */}
-                                    <div className="overflow-x-auto rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
-                                      <table className="w-full text-left border-collapse text-xs min-w-[620px]">
-                                        <thead>
-                                          <tr className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] font-semibold text-[11px] uppercase tracking-wider">
-                                            <th className="p-2.5 pl-4 w-12 text-center">#</th>
-                                            <th className="p-2.5">Certified Member Name</th>
-                                            <th className="p-2.5 w-28">Body No.</th>
-                                            <th className="p-2.5 pr-4 text-right">App Registration Status</th>
-                                          </tr>
-                                        </thead>
-                                        <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
-                                          {(!toda.latestSubmission.extractedMembers || toda.latestSubmission.extractedMembers.length === 0) ? (
-                                            <tr>
-                                              <td colSpan="4" className="p-6 text-center text-xs text-[#6B6761] dark:text-[#A8A29E]">
-                                                <p className="font-semibold text-sm mb-1 text-[#1F1D1B] dark:text-[#EAE7E1]">0 member records digitized from this file.</p>
-                                                <p className="text-[11px] mb-3">This file was uploaded as a document attachment without digitized rows.</p>
-                                                <button
-                                                  type="button"
-                                                  onClick={() => handleRescan(toda.latestSubmission._id)}
-                                                  disabled={isRescanning}
-                                                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white text-xs font-bold cursor-pointer transition-all shadow-xs"
-                                                >
-                                                  <Sparkles size={13} />
-                                                  <span>Run AI OCR Re-scan on Document</span>
-                                                </button>
-                                              </td>
-                                            </tr>
-                                          ) : (
-                                            (toda.latestSubmission?.extractedMembers || []).filter(Boolean).map((m, idx) => {
-                                              const todaUsers = users.filter(u => (u.todaAssociation || '').trim().toUpperCase() === (toda.name || '').toUpperCase());
-                                              const matchedUser = todaUsers.find(u => isNameMatch(u.name, m?.name)) ||
-                                                                  users.find(u => isNameMatch(u.name, m?.name));
-                                              const displayName = m?.operatorName || m?.name || '';
-                                              const displayBodyNo = m?.bodyNumber || m?.unitNo || '';
-                                              const franchise = matchedUser ? getMemberFranchise(matchedUser) : null;
-
-                                              return (
-                                                <tr key={idx} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50 transition-colors">
-                                                  <td className="p-2.5 pl-4 font-mono text-[#6B6761]">{idx + 1}</td>
-                                                  <td className="p-2.5 font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                                                    <div className="flex items-center gap-2">
-                                                      <span className="w-6 h-6 rounded-full bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/25 text-[#9E2A2B] dark:text-[#EAE7E1] flex items-center justify-center text-[10px] font-bold shrink-0">
-                                                        {(displayName || 'M').split(' ').filter(Boolean).slice(0, 2).map(w => w[0]).join('').toUpperCase()}
-                                                      </span>
-                                                      <span>{displayName}</span>
-                                                    </div>
-                                                  </td>
-                                                  <td className="p-2.5 font-mono font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                                                    {displayBodyNo ? (
-                                                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-neutral-100 dark:bg-neutral-800 text-xs text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27]">
-                                                        <Hash size={11} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                                                        {displayBodyNo}
-                                                      </span>
-                                                    ) : (
-                                                      <span className="text-[#6B6761] dark:text-[#A8A29E] text-[11px] italic">Not set</span>
-                                                    )}
-                                                  </td>
-                                                  <td className="p-2.5 pr-4 text-right">
-                                                    {matchedUser ? (
-                                                      <div className="inline-flex items-center gap-1.5 flex-wrap justify-end">
-                                                        <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800">
-                                                          <CheckCircle2 size={11} />
-                                                          <span>Registered User</span>
-                                                        </span>
-                                                        {franchise && <StatusBadge status={franchise.status} />}
-                                                      </div>
-                                                    ) : (
-                                                      <span className="inline-flex items-center text-[11px] font-semibold text-neutral-500 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded">
-                                                        Not Registered in App
-                                                      </span>
-                                                    )}
-                                                  </td>
-                                                </tr>
-                                              );
-                                            })
-                                          )}
-                                        </tbody>
-                                      </table>
-                                    </div>
-                                  </>
-                                ) : (
-                                  <div className="text-center py-8 bg-[#F6F5F3]/50 dark:bg-[#14110F]/50 rounded-lg border border-dashed border-[#E4E1DC] dark:border-[#2E2A27]">
-                                    <FileText size={26} className="mx-auto mb-2 opacity-40 text-[#6B6761]" />
-                                    <p className="font-bold text-xs sm:text-sm text-[#1F1D1B] dark:text-[#EAE7E1]">
-                                      No Official Masterlist Document Submitted Yet
-                                    </p>
-                                    <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5 max-w-sm mx-auto">
-                                      The association officer of {toda.name} has not submitted a signed endorsement roster masterlist yet.
-                                    </p>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-
-                            {/* SUB-TAB 2: REGISTERED APP DRIVERS */}
-                            {todaActiveSubTabs[toda.name] === 'drivers' && (
-                              <div className="overflow-x-auto">
-                                <table className="w-full text-left border-collapse min-w-[650px]">
-                                  <thead>
-                                    <tr className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] text-xs uppercase tracking-wider font-semibold">
-                                      <th className="p-3 pl-5">Operator Name</th>
-                                      <th className="p-3">Barangay Residence</th>
-                                      <th className="p-3">Plate No</th>
-                                      <th className="p-3">Motor / Chassis No</th>
-                                      <th className="p-3 pr-5">Compliance Status</th>
-                                    </tr>
-                                  </thead>
-                                  <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27] text-xs">
-                                    {(toda.members || []).length === 0 ? (
-                                      <tr>
-                                        <td colSpan="5" className="p-6 text-center text-[#6B6761] dark:text-[#A8A29E]">
-                                          No registered user accounts found for this association.
-                                        </td>
-                                      </tr>
-                                    ) : (
-                                      (toda.members || []).map((member) => {
-                                        const franchise = getMemberFranchise(member);
-                                        const isCompliant = franchise && franchise.status === 'Active';
-
-                                        return (
-                                          <tr key={member._id} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50 transition-colors">
-                                            <td className="p-3 pl-5 font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
-                                              {member.name}
-                                              {member.contact && (
-                                                <span className="block text-[11px] font-normal text-[#6B6761] dark:text-[#A8A29E]">
-                                                  {member.contact}
-                                                </span>
-                                              )}
-                                            </td>
-                                            <td className="p-3 text-[#6B6761] dark:text-[#A8A29E]">
-                                              {member.address || 'N/A'}
-                                            </td>
-                                            <td className="p-3 font-mono text-[#1F1D1B] dark:text-[#F6F5F3]">
-                                              {franchise?.plateNo || 'NO RECORD'}
-                                            </td>
-                                            <td className="p-3 text-[#6B6761] dark:text-[#A8A29E] font-mono text-[11px]">
-                                              <div>{franchise?.motorNo ? `M: ${franchise.motorNo}` : '—'}</div>
-                                              <div>{franchise?.chassisNo ? `C: ${franchise.chassisNo}` : '—'}</div>
-                                            </td>
-                                            <td className="p-3 pr-5">
-                                              {franchise ? (
-                                                <StatusBadge status={franchise.status} />
-                                              ) : (
-                                                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-neutral-500 bg-neutral-100 dark:bg-neutral-800 px-2 py-0.5 rounded">
-                                                  No Franchise Application
-                                                </span>
-                                              )}
-                                            </td>
-                                          </tr>
-                                        );
-                                      })
-                                    )}
-                                  </tbody>
-                                </table>
-                              </div>
-                            )}
-                          </div>
-                        )}
+                          <Users size={13} />
+                          <span>See Members ({toda.totalCount})</span>
+                        </button>
                       </div>
-                    );
-                  })}
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -973,28 +677,36 @@ const ValidateTODA = () => {
           {/* TAB 2: DOCUMENT VALIDATIONS & OCR */}
           {activeTab === 'validations' && (
             <>
-              <div className="p-4 sm:p-5 border-b border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col sm:flex-row gap-4 justify-between items-center bg-[#F6F5F3] dark:bg-[#14110F]">
+              <div className="p-4 sm:p-5 border-b border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col sm:flex-row gap-3 justify-between items-start sm:items-center bg-[#F6F5F3]/70 dark:bg-[#14110F]">
+                <div>
+                  <h3 className="text-sm font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
+                    Submitted TODA Masterlists &amp; AI OCR Digitization
+                  </h3>
+                  <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                    Verify official roster documents uploaded by TODA Presidents and inspect AI-extracted member records.
+                  </p>
+                </div>
                 <div className="relative w-full sm:w-80">
                   <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6B6761] dark:text-[#A8A29E]" size={15} />
                   <input 
                     type="text" 
-                    placeholder="Search by TODA President or filename..." 
+                    placeholder="Search by TODA, President, or filename..." 
                     value={searchQuery} 
                     onChange={(e) => setSearchQuery(e.target.value)} 
-                    className="w-full bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg pl-9 pr-3.5 py-1.5 text-xs sm:text-sm font-medium text-[#1F1D1B] dark:text-[#F6F5F3] placeholder-[#6B6761] dark:placeholder-[#A8A29E] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] transition-colors" 
+                    className="w-full bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg pl-9 pr-3.5 py-2 text-xs sm:text-sm font-medium text-[#1F1D1B] dark:text-[#F6F5F3] placeholder-[#6B6761] dark:placeholder-[#A8A29E] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] transition-colors" 
                   />
                 </div>
               </div>
               
               <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
+                <table className="w-full text-left border-collapse min-w-[780px]">
                   <thead>
-                    <tr className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] text-xs uppercase tracking-wider font-semibold">
-                      <th className="p-3.5 pl-5">Submitted By</th>
-                      <th className="p-3.5">Document &amp; AI OCR Scan</th>
-                      <th className="p-3.5">Date Submitted</th>
-                      <th className="p-3.5">Status</th>
-                      <th className="p-3.5 text-center pr-5">Action</th>
+                    <tr className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] text-[11px] uppercase tracking-wider font-semibold">
+                      <th className="py-3 pl-5 pr-3">TODA &amp; Submitted By</th>
+                      <th className="py-3 px-3">Roster File &amp; AI Extraction</th>
+                      <th className="py-3 px-3 whitespace-nowrap">Date Submitted</th>
+                      <th className="py-3 px-3">Status</th>
+                      <th className="py-3 pl-3 pr-5 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27] text-xs">
@@ -1006,85 +718,98 @@ const ValidateTODA = () => {
                       filteredSubmissions.map((sub) => (
                         <tr 
                           key={sub._id} 
-                          className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50 transition-colors"
+                          className="hover:bg-[#F6F5F3]/60 dark:hover:bg-[#14110F]/60 transition-colors"
                         >
-                          <td className="p-3.5 pl-5">
-                            <p className="font-semibold text-sm text-[#1F1D1B] dark:text-[#F6F5F3]">{sub.presidentName}</p>
-                            {sub.todaAssociation && (
-                              <span className="text-[10px] font-bold text-[#9E2A2B] dark:text-[#D4AF37]">
-                                {sub.todaAssociation}
-                              </span>
-                            )}
-                          </td>
-                          <td className="p-3.5">
-                            <div className="flex items-center gap-2 text-xs sm:text-sm font-medium text-[#1F1D1B] dark:text-[#F6F5F3]">
-                              <FileText size={15} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" /> 
-                              <span className="truncate max-w-xs">{sub.fileName}</span>
+                          <td className="py-3.5 pl-5 pr-3">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-8 h-8 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] font-bold text-[11px] flex items-center justify-center shrink-0 border border-[#9E2A2B]/20 dark:border-[#D4AF37]/30">
+                                {(sub.todaAssociation || 'TOD').substring(0, 3)}
+                              </div>
+                              <div className="min-w-0">
+                                {sub.todaAssociation && (
+                                  <span className="inline-block text-[11px] font-bold uppercase tracking-wider text-[#9E2A2B] dark:text-[#D4AF37]">
+                                    {sub.todaAssociation}
+                                  </span>
+                                )}
+                                <p className="font-semibold text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3] truncate max-w-[220px]" title={sub.presidentName}>
+                                  {sub.presidentName}
+                                </p>
+                              </div>
                             </div>
-                            {sub.extractedCount > 0 ? (
-                              <button
-                                type="button"
-                                onClick={() => setSelectedSubmissionOCR(sub)}
-                                className="mt-1 inline-flex items-center gap-1 text-[11px] font-bold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800 hover:bg-emerald-100 cursor-pointer transition-colors"
-                              >
-                                <Sparkles size={11} />
-                                <span>{sub.extractedCount} members extracted via OCR • View List</span>
-                              </button>
-                            ) : (
-                              <div className="mt-1 flex items-center gap-2 flex-wrap">
-                                <span className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] italic">
-                                  0 members digitized
-                                </span>
+                          </td>
+                          <td className="py-3.5 px-3">
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
+                                <FileText size={14} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" /> 
+                                <span className="truncate max-w-[240px]" title={sub.fileName}>{sub.fileName}</span>
+                              </div>
+                              {sub.extractedCount > 0 ? (
+                                <div className="flex items-center gap-1.5">
+                                  <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/40 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800/60">
+                                    <Sparkles size={11} />
+                                    <span>{sub.extractedCount} {sub.extractedCount === 1 ? 'member' : 'members'} digitized via AI OCR</span>
+                                  </span>
+                                </div>
+                              ) : (
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] italic">
+                                    0 members digitized
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRescan(sub._id)}
+                                    disabled={isRescanning}
+                                    className="inline-flex items-center gap-1 text-[11px] font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer"
+                                  >
+                                    <RefreshCw size={11} className={isRescanning ? 'animate-spin' : ''} />
+                                    <span>Re-scan</span>
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-3.5 px-3 text-xs text-[#6B6761] dark:text-[#A8A29E] font-mono tabular-nums whitespace-nowrap">
+                            {new Date(sub.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                          </td>
+                          <td className="py-3.5 px-3 whitespace-nowrap">
+                            <StatusBadge status={sub.status === 'Approved' ? 'Active' : 'Pending'} label={sub.status === 'Approved' ? 'Approved' : sub.status} />
+                          </td>
+                          <td className="py-3.5 pl-3 pr-5 text-right whitespace-nowrap">
+                            <div className="inline-flex items-center justify-end gap-1.5">
+                              {(() => {
+                                const fileUrl = sub.filePath?.startsWith('http') ? sub.filePath : `${import.meta.env.VITE_API_URL}/${sub.filePath}`;
+                                return (
+                                  <a 
+                                    href={fileUrl} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] text-xs font-semibold rounded-lg transition-colors border border-[#E4E1DC] dark:border-[#2E2A27] shadow-2xs"
+                                  >
+                                    <Eye size={13} />
+                                    <span>View File</span>
+                                  </a>
+                                );
+                              })()}
+                              {sub.extractedCount > 0 && (
                                 <button
                                   type="button"
-                                  onClick={() => handleRescan(sub._id)}
-                                  disabled={isRescanning}
-                                  className="inline-flex items-center gap-1 text-[11px] font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer"
+                                  onClick={() => setSelectedSubmissionOCR(sub)}
+                                  className="inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 bg-[#9E2A2B]/10 hover:bg-[#9E2A2B]/15 dark:bg-[#D4AF37]/15 dark:hover:bg-[#D4AF37]/25 text-[#9E2A2B] dark:text-[#D4AF37] border border-[#9E2A2B]/25 dark:border-[#D4AF37]/30 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
                                 >
-                                  <RefreshCw size={11} className={isRescanning ? 'animate-spin' : ''} />
-                                  <span>Re-scan with AI OCR</span>
+                                  <Users size={13} />
+                                  <span>View Roster ({sub.extractedCount})</span>
                                 </button>
-                              </div>
-                            )}
-                          </td>
-                          <td className="p-3.5 text-xs text-[#6B6761] dark:text-[#A8A29E] font-mono tabular-nums">{new Date(sub.createdAt).toLocaleDateString()}</td>
-                          <td className="p-3.5">
-                            <StatusBadge status={sub.status === 'Approved' ? 'Active' : 'Pending'} label={sub.status} />
-                          </td>
-                          <td className="p-3.5 pr-5 text-center space-x-2 flex justify-center flex-wrap gap-1">
-                            {(() => {
-                              const fileUrl = sub.filePath?.startsWith('http') ? sub.filePath : `${import.meta.env.VITE_API_URL}/${sub.filePath}`;
-                              return (
-                                <a 
-                                  href={fileUrl} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer" 
-                                  className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] text-xs font-medium rounded-lg transition-colors border border-[#E4E1DC] dark:border-[#2E2A27]"
+                              )}
+                              {sub.status !== 'Approved' && (
+                                <button 
+                                  onClick={() => handleApprove(sub._id)} 
+                                  className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors bg-emerald-700 hover:bg-emerald-800 text-white border border-emerald-700 shadow-2xs cursor-pointer"
                                 >
-                                  <Eye size={13} /> View File
-                                </a>
-                              );
-                            })()}
-                            {sub.extractedCount > 0 && (
-                              <button
-                                type="button"
-                                onClick={() => setSelectedSubmissionOCR(sub)}
-                                className="inline-flex items-center justify-center gap-1 px-2.5 py-1.5 bg-emerald-50 dark:bg-emerald-950/40 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800/60 rounded-lg text-xs font-semibold hover:bg-emerald-100 transition-colors cursor-pointer"
-                              >
-                                <Sparkles size={12} /> View Roster
-                              </button>
-                            )}
-                            <button 
-                              onClick={() => handleApprove(sub._id)} 
-                              disabled={sub.status === 'Approved'} 
-                              className={`inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors border ${
-                                sub.status === 'Approved' 
-                                  ? 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E] border-[#E4E1DC] dark:border-[#2E2A27] cursor-not-allowed' 
-                                  : 'bg-emerald-700 hover:bg-emerald-800 text-white border-emerald-700 cursor-pointer'
-                              }`}
-                            >
-                              <CheckCircle size={13} /> {sub.status === 'Approved' ? 'Approved' : 'Approve & Ingest'}
-                            </button>
+                                  <CheckCircle size={13} />
+                                  <span>Approve</span>
+                                </button>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       ))

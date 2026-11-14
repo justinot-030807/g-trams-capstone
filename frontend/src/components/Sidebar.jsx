@@ -3,7 +3,7 @@ import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { 
   LayoutDashboard, Users, FileText, Settings, 
   FileCheck, ShieldAlert, LogOut, User, Printer, 
-  HelpCircle, ChevronDown, Folder, PanelLeftClose, Receipt, Shield
+  HelpCircle, ChevronDown, Folder, PanelLeftClose, Receipt, Shield, MessageSquare
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useSocket } from '../context/SocketContext';
@@ -253,9 +253,9 @@ const Sidebar = ({ isOpen, onClose }) => {
     },
     { 
       type: 'link', 
-      name: t('nav.supportTickets', 'Support & Tickets'), 
+      name: 'Communications & Chat', 
       path: '/admin/tickets', 
-      icon: <HelpCircle size={18} />,
+      icon: <MessageSquare size={18} />,
       badge: chatUnreadCount > 0 ? chatUnreadCount : null
     },
     { 

@@ -283,13 +283,16 @@ const AdminAuditLogs = () => {
                               })
                             : ''}
                         </span>
-                        <span className="text-[10px] font-mono text-[#6B6761] dark:text-[#A8A29E] pl-4 mt-0.5 block">
+                        <span 
+                          className="text-[10px] font-mono text-[#6B6761] dark:text-[#A8A29E] pl-4 mt-0.5 block max-w-[145px] truncate"
+                          title={`IP: ${cleanText(log.ipAddress, '127.0.0.1')}`}
+                        >
                           IP: {cleanText(log.ipAddress, '127.0.0.1')}
                         </span>
                       </td>
 
                       {/* Actor & Official Role */}
-                      <td className="py-3 px-4 align-top">
+                      <td className="py-3 px-4 align-top max-w-[240px]">
                         <div className="flex items-start gap-2">
                           <div className="w-7 h-7 rounded-full bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0 mt-0.5">
                             <User size={13} />
@@ -299,7 +302,7 @@ const AdminAuditLogs = () => {
                               {cleanActorName}
                             </p>
                             <span className={`inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-semibold border ${getRoleBadgeStyle(log.actorRole)}`}>
-                              {roleLabel}
+                              {roleLabel.includes('LLSA I') ? 'LLSA I (Franchising Staff)' : roleLabel}
                             </span>
                           </div>
                         </div>

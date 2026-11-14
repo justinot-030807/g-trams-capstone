@@ -464,7 +464,7 @@ const UserManagement = () => {
       <div className="flex items-center gap-1.5 mb-4 overflow-x-auto pb-1 text-xs">
         {[
           { id: 'all', label: `All Users (${allCount})` },
-          { id: 'bplo_staff', label: `SB Staff / LLSA I — Local Legislative Staff Assistant I (${bploStaffCount})` },
+          { id: 'bplo_staff', label: `LLSA I Staff (${bploStaffCount})` },
           { id: 'admin', label: `System Admin (${adminCount})` },
           { id: 'cashier', label: `Cashiers (${cashierCount})` },
           { id: 'toda_president', label: `TODA Presidents (${todaPresidentCount})` },
@@ -527,13 +527,20 @@ const UserManagement = () => {
                   </td>
                 </tr>
               ) : (
-                paginatedUsers.map((user, uIdx) => {
+                paginatedUsers.map((user) => {
                   const activity = getActivityStatus(user);
-                  const unitsCount = user.unitsCount || 0;
-                  const isMaxUnits = unitsCount >= 2;
-                  const r = (user.role || '').toLowerCase();
+                  const activeOrPendingUnits = (user.activeUnitsCount || 0) + (user.pendingUnitsCount || 0);
+                  const totalUnitsRecords = user.unitsCount || 0;
+                  const isMaxUnits = activeOrPendingUnits >= 2;
+                  const r = (user.role || '').toLowerCase().trim();
                   const isAdminUser = r === 'admin' || r === 'administrator' || r === 'system_admin' || r === 'system admin';
                   const isStaffOrCashier = r === 'bplo_staff' || r === 'bplo staff' || r === 'cashier';
+                  const roleDisplayLabel =
+                    r === 'bplo_staff' || r === 'bplo staff' ? 'LLSA I (Franchising Staff)' :
+                    isAdminUser ? 'System Administrator' :
+                    r === 'cashier' ? 'Municipal Cashier' :
+                    r === 'toda_president' || r === 'toda president' ? 'TODA President' :
+                    'Operator';
                   let isSelf = false;
                   try {
                     const stored = JSON.parse(localStorage.getItem('user') || '{}');
@@ -547,7 +554,7 @@ const UserManagement = () => {
                       className={`hover:bg-[#F6F5F3]/80 dark:hover:bg-[#14110F]/80 transition-colors group ${user.isActive === false ? 'opacity-70 bg-red-50/20 dark:bg-red-950/10' : ''}`}
                     >
                       {/* Profile / User */}
-                      <td className="py-3 pl-5 pr-3">
+                      <td className="py-3.5 pl-5 pr-3 min-w-[230px] max-w-[280px]">
                         <div className="flex items-center gap-3">
                           <div className="relative shrink-0">
                             <div className={`w-8 h-8 rounded-full overflow-hidden flex items-center justify-center border ${user.isActive === false ? 'border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/50 text-red-500' : 'border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761]'}`}>
@@ -565,18 +572,22 @@ const UserManagement = () => {
                               </span>
                             )}
                           </div>
-                          <div>
-                            <span className={`font-semibold block text-sm ${user.isActive === false ? 'text-red-700 dark:text-red-400 line-through' : 'text-[#1F1D1B] dark:text-[#F6F5F3]'}`}>{user.name}</span>
-                            <span className="text-xs text-[#6B6761] dark:text-[#A8A29E] capitalize">{user.role ? user.role.replace('_', ' ') : 'Operator'}</span>
+                          <div className="min-w-0">
+                            <span className={`font-semibold block text-xs sm:text-sm leading-snug ${user.isActive === false ? 'text-red-700 dark:text-red-400 line-through' : 'text-[#1F1D1B] dark:text-[#F6F5F3]'}`}>
+                              {user.name}
+                            </span>
+                            <span className="text-[11px] font-medium text-[#6B6761] dark:text-[#A8A29E] block mt-0.5">
+                              {roleDisplayLabel}
+                            </span>
                           </div>
                         </div>
                       </td>
 
                       {/* Contact & TODA */}
-                      <td className="py-3 px-3">
+                      <td className="py-3.5 px-3">
                         <p className="text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] font-mono">{user.contact}</p>
                         <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
-                          <p className="text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37] uppercase tracking-wider bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 inline-block px-1.5 py-0.5 rounded border border-[#9E2A2B]/20 dark:border-[#9E2A2B]/30">
+                          <p className="text-[11px] font-semibold text-[#9E2A2B] dark:text-[#D4AF37] uppercase tracking-wider bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 inline-block px-1.5 py-0.5 rounded border border-[#9E2A2B]/20 dark:border-[#9E2A2B]/30">
                             {user.todaAssociation || 'NON-TODA'}
                           </p>
                           {user.bodyNumber && (
@@ -588,29 +599,29 @@ const UserManagement = () => {
                       </td>
 
                       {/* Units / Fleet (Compact Badge - No Logo) */}
-                      <td className="py-3 px-3 text-center">
+                      <td className="py-3.5 px-3 text-center whitespace-nowrap">
                         {isAdminUser || isStaffOrCashier ? (
                           <span className="text-[#6B6761] dark:text-[#A8A29E] font-medium">—</span>
                         ) : (
                           <button 
                             onClick={() => openDetailsModal(user)}
-                            title="Click to view registered units"
-                            className={`inline-flex items-center justify-center px-2 py-0.5 rounded-md text-xs font-semibold border transition-all cursor-pointer ${
+                            title={`Active/Pending: ${activeOrPendingUnits}/2 • Total Records: ${totalUnitsRecords}`}
+                            className={`inline-flex items-center justify-center px-2.5 py-1 rounded-md text-xs font-semibold border transition-all cursor-pointer ${
                               isMaxUnits 
                                 ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/60'
-                                : unitsCount === 1
-                                ? 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] border-[#E4E1DC] dark:border-[#2E2A27]'
+                                : activeOrPendingUnits === 1
+                                ? 'bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/60'
                                 : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E] border-[#E4E1DC] dark:border-[#2E2A27]'
                             }`}
                           >
-                            <span className="tabular-nums">{unitsCount}/2</span>
-                            {isMaxUnits && <span className="text-[9px] font-semibold text-amber-700 dark:text-amber-400 ml-1">MAX</span>}
+                            <span className="tabular-nums font-mono">{Math.min(2, activeOrPendingUnits)}/2</span>
+                            {isMaxUnits && <span className="text-[9px] font-bold text-amber-700 dark:text-amber-400 ml-1">MAX</span>}
                           </button>
                         )}
                       </td>
 
                       {/* Activity Status */}
-                      <td className="py-3 px-3">
+                      <td className="py-3.5 px-3 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md text-xs font-medium border select-none ${activity.badgeClass}`}>
                             <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${activity.dotClass}`}></span>
@@ -620,7 +631,7 @@ const UserManagement = () => {
                       </td>
                       
                       {/* Account Status */}
-                      <td className="py-3 px-3">
+                      <td className="py-3.5 px-3 whitespace-nowrap">
                         {user.isActive === false ? (
                           <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 text-xs font-medium uppercase tracking-wider border border-red-200 dark:border-red-800/60">
                             <ShieldAlert size={12} /> Deactivated
@@ -649,9 +660,9 @@ const UserManagement = () => {
                       </td>
 
                       {/* Manage Role */}
-                      <td className="py-3 px-3 text-center">
+                      <td className="py-3.5 px-3 text-center whitespace-nowrap">
                         {isSelf ? (
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-md text-xs font-semibold bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 text-[#9E2A2B] dark:text-[#D4AF37] border border-[#9E2A2B]/20 dark:border-[#9E2A2B]/30">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-semibold bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 text-[#9E2A2B] dark:text-[#D4AF37] border border-[#9E2A2B]/20 dark:border-[#9E2A2B]/30">
                             System Admin (You)
                           </span>
                         ) : (
@@ -666,12 +677,12 @@ const UserManagement = () => {
                             })()}
                             disabled={user.isActive === false}
                             onChange={(e) => initiateRoleChange(user, e.target.value)}
-                            className="border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] text-xs font-medium rounded-lg px-2 py-1 outline-none cursor-pointer focus:border-[#9E2A2B] dark:focus:border-[#D4AF37]"
+                            className="w-[175px] border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] text-xs font-semibold rounded-lg px-2.5 py-1.5 outline-none cursor-pointer focus:border-[#9E2A2B] dark:focus:border-[#D4AF37]"
                           >
                             <option value="operator">Operator</option>
-                            <option value="bplo_staff">SB Franchising Staff (LLSA I — Local Legislative Staff Assistant I)</option>
+                            <option value="bplo_staff">LLSA I (Franchising Staff)</option>
                             <option value="system_admin">System Admin</option>
-                            <option value="cashier">Cashier</option>
+                            <option value="cashier">Municipal Cashier</option>
                             <option value="toda_president">TODA President</option>
                           </select>
                         )}

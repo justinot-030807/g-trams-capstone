@@ -6,7 +6,6 @@ import StatCard from '../../components/common/StatCard';
 import BarList from '../../components/common/BarList';
 import DataTable from '../../components/common/DataTable';
 import StatusBadge from '../../components/common/StatusBadge';
-import SmsDispatcherLog from '../../components/admin/SmsDispatcherLog';
 import { useLanguage } from '../../context/LanguageContext';
 import { useDashboardStats } from '../../hooks/useDashboardStats';
 import { StatsCardsSkeleton, DashboardHealthSkeleton } from '../../components/skeleton';
@@ -537,11 +536,6 @@ const LlsaDashboard = () => {
             rowKey="_id"
           />
         </div>
-      </div>
-
-      {/* Automated SMS Dispatcher Audit Log (Full Width) */}
-      <div className="mt-8 w-full">
-        <SmsDispatcherLog />
       </div>
     </MainLayout>
   );

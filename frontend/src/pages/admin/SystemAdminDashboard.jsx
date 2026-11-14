@@ -4,7 +4,6 @@ import MainLayout from '../../components/MainLayout';
 import PageHeader from '../../components/common/PageHeader';
 import StatCard from '../../components/common/StatCard';
 import DataTable from '../../components/common/DataTable';
-import SmsDispatcherLog from '../../components/admin/SmsDispatcherLog';
 import { useLanguage } from '../../context/LanguageContext';
 import { 
   Users, Server, Shield, Activity, RefreshCw, 
@@ -100,21 +99,23 @@ const SystemAdminDashboard = () => {
       header: 'Event / Action',
       render: (log) => {
         const action = log.action || 'SYSTEM_EVENT';
-        let badgeColor = 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-200';
+        let badgeColor = 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700';
         if (action.includes('USER_') || action.includes('AUTH')) {
-          badgeColor = 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border-blue-200';
+          badgeColor = 'bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300 border-blue-200 dark:border-blue-800';
         } else if (action.includes('SETTINGS') || action.includes('CONFIG')) {
-          badgeColor = 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border-amber-200';
+          badgeColor = 'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300 border-amber-200 dark:border-amber-800';
         } else if (action.includes('DEACTIVAT') || action.includes('REVOK')) {
-          badgeColor = 'bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300 border-red-200';
+          badgeColor = 'bg-red-50 text-red-700 dark:bg-red-950/40 dark:text-red-300 border-red-200 dark:border-red-800';
         }
+        const rawActor = log.actorName || log.performedByName || '';
+        const cleanActor = rawActor.includes('LLSA I') ? 'LLSA I (Madhelyn Pastoral)' : rawActor;
         return (
-          <div className="flex flex-col">
+          <div className="flex flex-col min-w-0">
             <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-mono font-semibold uppercase tracking-wider border w-fit ${badgeColor}`}>
               {action.replace(/_/g, ' ')}
             </span>
-            <span className="text-xs text-[#1F1D1B] dark:text-[#F6F5F3] font-medium mt-0.5 truncate max-w-xs">
-              {log.actorName || log.performedByName ? `By ${log.actorName || log.performedByName}` : log.details?.name ? `Target: ${log.details.name}` : 'Administrative Operation'}
+            <span className="text-xs text-[#1F1D1B] dark:text-[#F6F5F3] font-medium mt-0.5 truncate max-w-[240px] sm:max-w-[320px]" title={log.details?.summary || rawActor}>
+              {cleanActor ? `By ${cleanActor}` : log.details?.name ? `Target: ${log.details.name}` : 'Administrative Operation'}
             </span>
           </div>
         );
@@ -124,11 +125,18 @@ const SystemAdminDashboard = () => {
       key: 'ip',
       header: 'IP / Origin',
       align: 'right',
-      render: (log) => (
-        <span className="font-mono text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
-          {log.ipAddress || log.ip || '127.0.0.1'}
-        </span>
-      )
+      width: '140px',
+      render: (log) => {
+        const rawIp = log.ipAddress || log.ip || '127.0.0.1';
+        return (
+          <span 
+            className="font-mono text-[11px] text-[#6B6761] dark:text-[#A8A29E] inline-block max-w-[125px] truncate align-bottom"
+            title={rawIp}
+          >
+            {rawIp}
+          </span>
+        );
+      }
     }
   ];
 
@@ -210,7 +218,7 @@ const SystemAdminDashboard = () => {
                   <span>Account Governance & Role Separation</span>
                 </h2>
                 <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5">
-                  Decoupled authority: System Admins manage IT systems; BPLO Staff manage franchises; Cashiers manage revenue.
+                  Decoupled authority: System Admins manage IT systems; LLSA I Staff manage franchises; Cashiers manage revenue.
                 </p>
               </div>
               <span className="text-xs font-mono font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
@@ -218,14 +226,13 @@ const SystemAdminDashboard = () => {
               </span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
               {[
                 { label: 'Operators', count: roles.operator || 0, color: 'text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800' },
                 { label: 'TODA Presidents', count: roles.toda_president || 0, color: 'text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800' },
-                { label: 'BPLO Staff', count: roles.bplo_staff || 0, color: 'text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800' },
-                { label: 'Municipal Cashiers', count: roles.cashier || 0, color: 'text-purple-700 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/30 border-purple-200 dark:border-purple-800' },
-                { label: 'System Admins', count: roles.system_admin || 0, color: 'text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800' },
-                { label: 'Drivers', count: roles.driver || 0, color: 'text-slate-700 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/40 border-slate-200 dark:border-slate-800' },
+                { label: 'LLSA I Staff', count: roles.bplo_staff || 0, color: 'text-blue-700 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800' },
+                { label: 'Cashiers', count: roles.cashier || 0, color: 'text-purple-700 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/30 border-purple-200 dark:border-purple-800' },
+                { label: 'System Admins', count: roles.system_admin || 0, color: 'text-rose-700 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/30 border-rose-200 dark:border-rose-800 col-span-2 sm:col-span-1' },
               ].map((item, idx) => (
                 <div key={idx} className={`p-3 rounded-lg border flex flex-col justify-between ${item.color}`}>
                   <span className="text-[11px] font-semibold uppercase tracking-wider">{item.label}</span>
@@ -403,11 +410,6 @@ const SystemAdminDashboard = () => {
             <ArrowRight size={14} className="text-[#6B6761] group-hover:translate-x-0.5 transition-transform" />
           </div>
         </div>
-      </div>
-
-      {/* 5. Automated SMS Dispatcher Audit Log (Full Width) */}
-      <div className="mt-8 w-full">
-        <SmsDispatcherLog />
       </div>
     </MainLayout>
   );

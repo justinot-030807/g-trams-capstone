@@ -8,15 +8,20 @@ import StatusBadge from '../../components/common/StatusBadge';
 import { TableRowsSkeleton } from '../../components/skeleton';
 
 const AdminTickets = () => {
+  const isLlsaStaff = String(localStorage.getItem('role') || '').toLowerCase().trim().replace(/_/g, ' ') === 'bplo staff';
   const [activeTab, setActiveTab] = useState('chat');
   const [tickets, setTickets] = useState([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!isLlsaStaff);
   const [search, setSearch] = useState('');
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [adminResponse, setAdminResponse] = useState('');
   const [isUpdating, setIsUpdating] = useState(false);
 
   const fetchTickets = async () => {
+    if (isLlsaStaff) {
+      setIsLoading(false);
+      return;
+    }
     try {
       const token = localStorage.getItem('token');
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/tickets`, {
@@ -32,9 +37,11 @@ const AdminTickets = () => {
   };
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchTickets();
-  }, []);
+    if (!isLlsaStaff) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      fetchTickets();
+    }
+  }, [isLlsaStaff]);
 
   const handleStatusUpdate = async (ticketId, newStatus, responseMessage = '') => {
     setIsUpdating(true);
@@ -79,10 +86,12 @@ const AdminTickets = () => {
       <div className="w-full space-y-6 pb-24">
         {/* Page Header */}
         <PageHeader 
-          title="Communications & Support"
-          subtitle="Manage live operator chats, broadcast municipal announcements, and resolve tickets."
+          title={isLlsaStaff ? "Operator Communications & Broadcasts" : "Communications & Support"}
+          subtitle={isLlsaStaff 
+            ? "Manage live operator chats and broadcast official municipal announcements." 
+            : "Manage live operator chats, broadcast municipal announcements, and resolve tickets."}
           actions={
-            activeTab === 'tickets' ? (
+            !isLlsaStaff && activeTab === 'tickets' ? (
               <div className="relative w-full sm:w-64">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B6761] dark:text-[#A8A29E]" size={15} />
                 <input 
@@ -121,22 +130,24 @@ const AdminTickets = () => {
             <Megaphone size={16} />
             <span>Broadcast Announcements</span>
           </button>
-          <button 
-            onClick={() => setActiveTab('tickets')} 
-            className={`flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors cursor-pointer shrink-0 ${
-              activeTab === 'tickets' 
-                ? 'border-[#9E2A2B] text-[#9E2A2B] dark:border-[#D4AF37] dark:text-[#D4AF37]' 
-                : 'border-transparent text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3]'
-            }`}
-          >
-            <Mail size={16} />
-            <span>Support Tickets</span>
-            {openTicketsCount > 0 && (
-              <span className="px-1.5 py-0.5 rounded text-[11px] font-semibold tabular-nums bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
-                {openTicketsCount}
-              </span>
-            )}
-          </button>
+          {!isLlsaStaff && (
+            <button 
+              onClick={() => setActiveTab('tickets')} 
+              className={`flex items-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold border-b-2 transition-colors cursor-pointer shrink-0 ${
+                activeTab === 'tickets' 
+                  ? 'border-[#9E2A2B] text-[#9E2A2B] dark:border-[#D4AF37] dark:text-[#D4AF37]' 
+                  : 'border-transparent text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3]'
+              }`}
+            >
+              <Mail size={16} />
+              <span>Support Tickets</span>
+              {openTicketsCount > 0 && (
+                <span className="px-1.5 py-0.5 rounded text-[11px] font-semibold tabular-nums bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-800">
+                  {openTicketsCount}
+                </span>
+              )}
+            </button>
+          )}
         </div>
 
         {/* Content by Active Tab */}
@@ -152,7 +163,7 @@ const AdminTickets = () => {
           </div>
         )}
 
-        {activeTab === 'tickets' && (
+        {!isLlsaStaff && activeTab === 'tickets' && (
           <div className="bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] overflow-hidden">
             {isLoading ? (
               <div className="overflow-x-auto">

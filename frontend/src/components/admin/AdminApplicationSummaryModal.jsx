@@ -55,7 +55,7 @@ const AdminApplicationSummaryModal = ({
       onClick={onClose}
     >
       <div 
-        className="relative max-w-xl w-full bg-white dark:bg-[#1C1917] rounded-lg overflow-hidden shadow-sm border border-[#E4E1DC] dark:border-[#2E2A27] p-5 sm:p-6 max-h-[90vh] flex flex-col"
+        className="relative max-w-2xl w-full bg-white dark:bg-[#1C1917] rounded-xl overflow-hidden shadow-lg border border-[#E4E1DC] dark:border-[#2E2A27] p-5 sm:p-6 max-h-[90vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Modal Header */}
@@ -335,27 +335,27 @@ const AdminApplicationSummaryModal = ({
                 </div>
               </div>
 
-              {/* TODA & Brgy Clearances */}
-              <div className="grid grid-cols-2 gap-2">
-                <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#9E2A2B] dark:text-[#D4AF37] block mb-1">
-                    TODA Certificate
-                  </span>
-                  <span className="text-slate-400 dark:text-slate-500 block text-[10px]">Cert No:</span>
-                  <span className="font-mono font-bold text-slate-800 dark:text-slate-200 truncate block">{franchise.todaCertNo || '—'}</span>
-                </div>
-                <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#9E2A2B] dark:text-[#D4AF37] block mb-1">
+              {/* Barangay Clearance Issuance */}
+              <div className="bg-slate-50 dark:bg-slate-800/60 p-2.5 rounded-xl border border-slate-100 dark:border-slate-800">
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-bold uppercase tracking-wider text-[#9E2A2B] dark:text-[#D4AF37]">
                     Barangay Clearance
                   </span>
-                  <span className="text-slate-400 dark:text-slate-500 block text-[10px]">Clearance No:</span>
-                  <span className="font-mono font-bold text-slate-800 dark:text-slate-200 truncate block">{franchise.brgyClearanceNo || '—'}</span>
-                  {franchise.brgyIssuer && (
-                    <>
-                      <span className="text-slate-400 dark:text-slate-500 block text-[10px] mt-1">Issuing Official:</span>
-                      <span className="font-bold text-slate-800 dark:text-slate-200 truncate block">{franchise.brgyIssuer}</span>
-                    </>
+                  {franchise.brgyClearanceUrl && (
+                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                      Attached
+                    </span>
                   )}
+                </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <span className="text-slate-400 dark:text-slate-500 block text-xs uppercase font-bold">Date Issued</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200">{formatDate(franchise.brgyClearanceDate)}</span>
+                  </div>
+                  <div>
+                    <span className="text-slate-400 dark:text-slate-500 block text-xs uppercase font-bold">Issuing Official / Punong Barangay</span>
+                    <span className="font-bold text-slate-800 dark:text-slate-200 truncate block">{franchise.brgyIssuer || '—'}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -368,12 +368,12 @@ const AdminApplicationSummaryModal = ({
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {[
-                { label: 'OR / CR', url: franchise.orCrUrl || franchise.crUrl },
+                { label: 'LTO CR Document', url: franchise.crUrl || franchise.orCrUrl },
+                { label: 'LTO OR Document', url: franchise.orUrl || franchise.orCrUrl },
                 { label: "Driver's License (Front)", url: franchise.licenseUrl },
                 { label: "Driver's License (Back)", url: franchise.licenseBackUrl },
-                { label: 'Cedula (CTC)', url: franchise.cedulaUrl },
-                { label: 'TODA Endorsement', url: franchise.todaEndorsementUrl },
-                { label: 'Brgy Clearance', url: franchise.brgyClearanceUrl }
+                { label: 'Barangay Clearance', url: franchise.brgyClearanceUrl },
+                { label: 'Cedula (CTC)', url: franchise.cedulaUrl }
               ].map((doc, idx) => (
                 <div key={idx} className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-100 dark:border-slate-800 text-xs flex items-center justify-between">
                   <span className="font-semibold text-slate-700 dark:text-slate-300 truncate">{doc.label}</span>
@@ -441,11 +441,11 @@ const AdminApplicationSummaryModal = ({
 
         {/* Modal Actions */}
         <div className="pt-3.5 border-t border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col sm:flex-row items-center justify-between gap-2.5">
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="flex items-center gap-1.5 w-full sm:w-auto">
             <button
               type="button"
               onClick={onClose}
-              className="w-full sm:w-auto px-4 py-2 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] font-semibold text-xs hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] transition-colors cursor-pointer"
+              className="px-3.5 py-2 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] font-semibold text-xs hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] transition-colors cursor-pointer whitespace-nowrap"
             >
               Close
             </button>
@@ -456,7 +456,7 @@ const AdminApplicationSummaryModal = ({
                   onClose();
                   onReview(franchise);
                 }}
-                className="w-full sm:w-auto px-4 py-2 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27] font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                className="px-3 py-2 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27] font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap"
                 title="Open image inspection workbench"
               >
                 <ExternalLink size={13} />
@@ -467,7 +467,7 @@ const AdminApplicationSummaryModal = ({
               <button
                 type="button"
                 onClick={onNext}
-                className="w-full sm:w-auto px-4 py-2 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27] font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                className="px-3 py-2 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27] font-semibold text-xs flex items-center justify-center gap-1 transition-colors cursor-pointer whitespace-nowrap"
                 title="Go to next application"
               >
                 <span>Next</span>
@@ -477,14 +477,14 @@ const AdminApplicationSummaryModal = ({
           </div>
 
           {/* Decision Buttons (Approve / Reject) & Official Form Print */}
-          <div className="flex items-center gap-2 w-full sm:w-auto justify-end flex-wrap">
+          <div className="flex items-center gap-1.5 w-full sm:w-auto justify-end">
             <button
               type="button"
               onClick={() => setShowOfficialForm(true)}
-              className="px-3.5 py-2 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-500/30 font-semibold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer"
+              className="px-3 py-2 rounded-lg bg-[#9E2A2B]/10 hover:bg-[#9E2A2B]/15 text-[#9E2A2B] dark:bg-[#D4AF37]/15 dark:hover:bg-[#D4AF37]/25 dark:text-[#D4AF37] border border-[#9E2A2B]/25 dark:border-[#D4AF37]/35 font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs cursor-pointer whitespace-nowrap"
               title="Print official MTOP application form pursuant to Ord. 48 s. 1999"
             >
-              <Printer size={14} className="text-[#D4AF37]" />
+              <Printer size={13} className="shrink-0" />
               <span>Official Form (PDF)</span>
             </button>
 
@@ -496,9 +496,9 @@ const AdminApplicationSummaryModal = ({
                   onReject(franchise);
                 }}
                 disabled={isProcessing}
-                className="flex-1 sm:flex-initial px-4 py-2 rounded-lg bg-red-700 hover:bg-red-800 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-95 cursor-pointer disabled:opacity-50"
+                className="px-3.5 py-2 rounded-lg bg-red-700 hover:bg-red-800 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-95 cursor-pointer disabled:opacity-50 whitespace-nowrap"
               >
-                <XCircle size={14} />
+                <XCircle size={13} />
                 <span>Reject</span>
               </button>
             )}
@@ -511,9 +511,9 @@ const AdminApplicationSummaryModal = ({
                   onApprove(franchise);
                 }}
                 disabled={isProcessing}
-                className="flex-1 sm:flex-initial px-5 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-95 cursor-pointer disabled:opacity-50"
+                className="px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-all shadow-xs active:scale-95 cursor-pointer disabled:opacity-50 whitespace-nowrap"
               >
-                {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
+                {isProcessing ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />}
                 <span>Approve for Signing</span>
               </button>
             )}

@@ -3640,20 +3640,7 @@ const ApplyFranchise = () => {
                     </div>
                   )}
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 pt-2 border-t border-[#E4E1DC]/80 dark:border-[#2E2A27]">
-                    <div id="field-brgyClearanceNo">
-                      <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                        Barangay Clearance No.
-                      </label>
-                      <input 
-                        type="text" 
-                        name="brgyClearanceNo" 
-                        value={formData.brgyClearanceNo} 
-                        onChange={handleInputChange} 
-                        className={inputClasses} 
-                        autoComplete="off"
-                      />
-                    </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5 pt-2 border-t border-[#E4E1DC]/80 dark:border-[#2E2A27]">
                     <div id="field-brgyClearanceDate">
                       <SimpleDatePicker
                         name="brgyClearanceDate"
@@ -3841,11 +3828,11 @@ const ApplyFranchise = () => {
                     </div>
                   </div>
 
-                  {/* Section B: Taxpayer Identity & Biometrics */}
+                  {/* Section B: Taxpayer Identity Details */}
                   <div className="pt-2 border-t border-[#E4E1DC]/80 dark:border-[#2E2A27]">
                     <div className="flex items-center justify-between mb-3">
                       <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E]">
-                        Taxpayer Identity &amp; Biometrics (Mula sa Cedula)
+                        Taxpayer Personal Details (Mula sa Cedula)
                       </h3>
                     </div>
 
@@ -3897,19 +3884,19 @@ const ApplyFranchise = () => {
                         </select>
                       </div>
 
-                      <div id="field-cedulaProfession">
+                      <div id="field-cedulaSex">
                         <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
-                          Profession / Occupation
+                          Sex / Kasarian
                         </label>
                         <select
-                          name="cedulaProfession"
-                          value={formData.cedulaProfession || ''}
+                          name="cedulaSex"
+                          value={formData.cedulaSex || ''}
                           onChange={handleInputChange}
                           className={`${inputClasses} cursor-pointer`}
                         >
-                          <option value="">-- Select Occupation --</option>
-                          {withCurrentOption(PROFESSION_OPTIONS, formData.cedulaProfession).map((prof) => (
-                            <option key={prof} value={prof}>{prof}</option>
+                          <option value="">-- Select Sex --</option>
+                          {withCurrentOption(SEX_OPTIONS, formData.cedulaSex).map((sx) => (
+                            <option key={sx} value={sx}>{sx}</option>
                           ))}
                         </select>
                       </div>
@@ -3936,24 +3923,7 @@ const ApplyFranchise = () => {
                         />
                       </div>
 
-                      <div id="field-cedulaSex">
-                        <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
-                          Sex / Kasarian
-                        </label>
-                        <select
-                          name="cedulaSex"
-                          value={formData.cedulaSex || ''}
-                          onChange={handleInputChange}
-                          className={`${inputClasses} cursor-pointer`}
-                        >
-                          <option value="">-- Select Sex --</option>
-                          {withCurrentOption(SEX_OPTIONS, formData.cedulaSex).map((sx) => (
-                            <option key={sx} value={sx}>{sx}</option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div id="field-cedulaTin">
+                      <div id="field-cedulaTin" className="sm:col-span-2">
                         <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
                           Tax Identification Number (TIN)
                         </label>
@@ -3961,34 +3931,6 @@ const ApplyFranchise = () => {
                           type="text" 
                           name="cedulaTin" 
                           value={formData.cedulaTin || ''} 
-                          onChange={handleInputChange} 
-                          className={inputClasses} 
-                          autoComplete="off"
-                        />
-                      </div>
-
-                      <div id="field-cedulaHeight">
-                        <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
-                          Height (ft)
-                        </label>
-                        <input 
-                          type="text" 
-                          name="cedulaHeight" 
-                          value={formData.cedulaHeight || ''} 
-                          onChange={handleInputChange} 
-                          className={inputClasses} 
-                          autoComplete="off"
-                        />
-                      </div>
-
-                      <div id="field-cedulaWeight">
-                        <label className="block text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
-                          Weight (kg)
-                        </label>
-                        <input 
-                          type="text" 
-                          name="cedulaWeight" 
-                          value={formData.cedulaWeight || ''} 
                           onChange={handleInputChange} 
                           className={inputClasses} 
                           autoComplete="off"
@@ -4241,11 +4183,7 @@ const ApplyFranchise = () => {
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5 text-xs [&>div]:min-w-0 [&_span]:break-words">
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Barangay Clearance No.</span>
-                      <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.brgyClearanceNo || '—'}</span>
-                    </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs [&>div]:min-w-0 [&_span]:break-words">
                     <div>
                       <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Date Issued</span>
                       <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.brgyClearanceDate || '—'}</span>
