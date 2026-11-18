@@ -3,6 +3,25 @@ dns.setServers(['8.8.8.8', '1.1.1.1']);
 const mongoose = require('mongoose');
 require('dotenv').config({ path: __dirname + '/../.env' });
 
+if (process.env.NODE_ENV === 'production' && process.env.ALLOW_PROD_SCRIPT !== 'true') {
+  console.error('Refusing to run unseed_test_franchises in production without ALLOW_PROD_SCRIPT=true.');
+  process.exit(1);
+}
+
+const mongoUri = String(process.env.MONGO_URI || '').trim();
+if (!mongoUri) {
+  console.error('Refusing to run unseed_test_franchises: MONGO_URI is not set.');
+  process.exit(1);
+}
+if (/prod|production|live/i.test(mongoUri) && process.env.ALLOW_PROD_SCRIPT !== 'true') {
+  console.error('Refusing to run unseed_test_franchises: MONGO_URI appears to target a production database without ALLOW_PROD_SCRIPT=true.');
+  process.exit(1);
+}
+if (process.env.CONFIRM_SCRIPT_RUN !== 'true' && !/localhost|127\.0\.0\.1|test|dev|staging|demo|sandbox/i.test(mongoUri) && process.env.ALLOW_PROD_SCRIPT !== 'true') {
+  console.error('Refusing to run destructive unseed script against an unrecognized remote MONGO_URI without CONFIRM_SCRIPT_RUN=true.');
+  process.exit(1);
+}
+
 const seededPlates = [
   '0401-CS01', '0401-CS02', '0401-EXP01', '0401-EXP02',
   '0401-RVK01', '0401-RVK02', '0401-CAN01', '0401-CAN02',

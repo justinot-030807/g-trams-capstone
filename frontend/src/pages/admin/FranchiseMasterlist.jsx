@@ -324,7 +324,13 @@ const FranchiseMasterlist = () => {
             </button>
           </div>
           {docPreviewUrl.toLowerCase().includes('.pdf') ? (
-            <iframe src={docPreviewUrl} className="w-full max-w-4xl h-[75vh] bg-white rounded-lg shadow-sm border border-[#E4E1DC] dark:border-[#2E2A27]" title="PDF Preview" />
+            <iframe
+              src={docPreviewUrl}
+              sandbox="allow-same-origin"
+              referrerPolicy="no-referrer"
+              className="w-full max-w-4xl h-[75vh] bg-white rounded-lg shadow-sm border border-[#E4E1DC] dark:border-[#2E2A27]"
+              title="PDF Preview"
+            />
           ) : (
             <img src={docPreviewUrl} alt="Requirement Preview" className="max-h-[80vh] max-w-[90vw] object-contain rounded-lg shadow-sm bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27]" />
           )}

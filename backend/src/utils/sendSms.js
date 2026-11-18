@@ -115,7 +115,10 @@ async function sendSms({ phone, number, message }) {
     return { success: true, provider: 'semaphore', data: res.data };
   }
 
-  console.warn(`[SMS Gateway] Neither TEXTBEE_API_KEY nor SEMAPHORE_API_KEY is configured. SMS to ${formattedPhone} skipped.`);
+  const maskedPhone = formattedPhone.length >= 7
+    ? `${formattedPhone.slice(0, 4)}****${formattedPhone.slice(-3)}`
+    : '****';
+  console.warn(`[SMS Gateway] Neither TEXTBEE_API_KEY nor SEMAPHORE_API_KEY is configured. SMS to ${maskedPhone} skipped.`);
   return { success: false, simulated: true, reason: 'No SMS API key configured' };
 }
 

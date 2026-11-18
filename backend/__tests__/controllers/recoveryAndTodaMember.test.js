@@ -39,7 +39,7 @@ beforeAll(async () => {
         isActive: true
     });
     await todaPresUser.save();
-    todaPresToken = jwt.sign({ id: todaPresUser._id, role: todaPresUser.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    todaPresToken = jwt.sign({ id: todaPresUser._id, role: todaPresUser.role, tokenVersion: todaPresUser.tokenVersion || 0 }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
     // Create BPLO Staff
     bploStaffUser = new User({
@@ -53,7 +53,7 @@ beforeAll(async () => {
         isActive: true
     });
     await bploStaffUser.save();
-    bploStaffToken = jwt.sign({ id: bploStaffUser._id, role: bploStaffUser.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    bploStaffToken = jwt.sign({ id: bploStaffUser._id, role: bploStaffUser.role, tokenVersion: bploStaffUser.tokenVersion || 0 }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
     // Create Standard Operator
     operatorUser = new User({
@@ -68,7 +68,7 @@ beforeAll(async () => {
         isActive: true
     });
     await operatorUser.save();
-    operatorToken = jwt.sign({ id: operatorUser._id, role: operatorUser.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    operatorToken = jwt.sign({ id: operatorUser._id, role: operatorUser.role, tokenVersion: operatorUser.tokenVersion || 0 }, process.env.JWT_SECRET, { expiresIn: '1d' });
 }, 60000);
 
 afterAll(async () => {

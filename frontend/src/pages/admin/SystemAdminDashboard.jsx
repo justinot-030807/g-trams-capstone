@@ -20,7 +20,10 @@ const SystemAdminDashboard = () => {
   const [auditLogs, setAuditLogs] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [lastRefreshed, setLastRefreshed] = useState(new Date());
+  const [healthLastUpdated, setHealthLastUpdated] = useState(null);
+  const [statsLastUpdated, setStatsLastUpdated] = useState(null);
+  const [healthError, setHealthError] = useState(false);
+  const [statsError, setStatsError] = useState(false);
 
   const fetchDiagnostics = useCallback(async (showRefreshing = false) => {
     if (showRefreshing) setIsRefreshing(true);
@@ -36,17 +39,30 @@ const SystemAdminDashboard = () => {
 
       if (healthRes && healthRes.ok) {
         const json = await healthRes.json();
-        if (json.data) setHealthData(json.data);
+        if (json.data) {
+          setHealthData(json.data);
+          setHealthLastUpdated(new Date());
+          setHealthError(false);
+        } else {
+          setHealthError(true);
+        }
+      } else {
+        setHealthError(true);
       }
 
       if (auditRes && auditRes.ok) {
         const auditJson = await auditRes.json();
         const logs = auditJson.data?.logs || auditJson.logs || auditJson.data || [];
         setAuditLogs(Array.isArray(logs) ? logs.slice(0, 8) : []);
+        setStatsLastUpdated(new Date());
+        setStatsError(false);
+      } else {
+        setStatsError(true);
       }
-      setLastRefreshed(new Date());
     } catch (err) {
       console.error('Failed to load system diagnostics:', err);
+      setHealthError(true);
+      setStatsError(true);
     } finally {
       setIsLoading(false);
       setIsRefreshing(false);
@@ -308,7 +324,17 @@ const SystemAdminDashboard = () => {
             </div>
           </div>
 
-          <div className="pt-3 border-t border-[#E4E1DC] dark:border-[#2E2A27] mt-3">
+          <div className="pt-3 border-t border-[#E4E1DC] dark:border-[#2E2A27] mt-3 space-y-2">
+            <div className="flex items-center justify-between text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
+              <span>
+                {healthLastUpdated
+                  ? `Health updated ${healthLastUpdated.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`
+                  : 'Awaiting health check'}
+              </span>
+              {healthError && (
+                <span className="text-amber-700 dark:text-amber-400 font-semibold">Refresh failed</span>
+              )}
+            </div>
             <button
               type="button"
               onClick={() => navigate('/admin/settings')}
@@ -330,6 +356,16 @@ const SystemAdminDashboard = () => {
                 <Activity size={15} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                 <span>Recent System Audit Logs</span>
               </h2>
+              {statsLastUpdated && (
+                <span className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
+                  &bull; {statsLastUpdated.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                </span>
+              )}
+              {statsError && (
+                <span className="text-[11px] font-semibold text-amber-700 dark:text-amber-400">
+                  (Logs refresh failed)
+                </span>
+              )}
             </div>
             <button
               type="button"

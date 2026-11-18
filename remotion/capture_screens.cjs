@@ -23,7 +23,8 @@ async function captureScreens() {
   const browser = await chromium.launch({
     executablePath: fs.existsSync(chromePath) ? chromePath : undefined,
     headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-web-security']
+    chromiumSandbox: process.env.CI !== 'true',
+    args: process.env.CI === 'true' ? ['--no-sandbox', '--disable-setuid-sandbox'] : []
   });
 
   const context = await browser.newContext({

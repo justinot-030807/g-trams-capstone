@@ -46,7 +46,7 @@ beforeAll(async () => {
     operatorId = operator._id;
 
     // Generate token for operator
-    operatorToken = jwt.sign({ id: operator._id, role: operator.role }, process.env.JWT_SECRET || 'testsecret', { expiresIn: '1h' });
+    operatorToken = jwt.sign({ id: operator._id, role: operator.role, tokenVersion: operator.tokenVersion || 0 }, process.env.JWT_SECRET || 'testsecret', { expiresIn: '1h' });
 }, 30000);
 
 afterAll(async () => {

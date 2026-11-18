@@ -95,7 +95,8 @@ const franchiseSchema = new mongoose.Schema({
         default: 'Pending',
         get: function(val) {
             if (val === 'Active' || val === 'Active - Under Warning') {
-                const effectiveExpiry = this.expiryDate || (this.approvalDate ? computeManilaExpiryDate(this.approvalDate) : null);
+                const years = this.applicationType === 'Renewal' ? 1 : 3;
+                const effectiveExpiry = this.expiryDate || (this.approvalDate ? computeManilaExpiryDate(this.approvalDate, years) : null);
                 if (effectiveExpiry && isExpired(effectiveExpiry)) {
                     return 'Expired';
                 }
@@ -135,14 +136,28 @@ const franchiseSchema = new mongoose.Schema({
     
     // Official Treasury Cashier & Payment Receipt fields
     paymentStatus: { type: String, enum: ['Unpaid', 'Paid'], default: 'Unpaid' },
-    officialReceiptNo: { type: String, default: '' },
+    officialReceiptNo: { type: String, trim: true, default: '' },
     payerName: { type: String, default: '' },
-    amountPaid: { type: Number, default: 500 },
-    paymentMethod: { type: String, enum: ['Cash', 'GCash', 'Landbank'], default: 'Cash' },
+    amountPaid: { type: Number, default: 0 },
+    paymentMethod: { type: String, enum: ['Cash', 'GCash', 'Landbank', ''], default: '' },
     paymentDate: { type: Date },
     paidByCashier: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     cashierName: { type: String, default: '' },
     paymentRemarks: { type: String, default: '' },
+    paymentHistory: [{
+        officialReceiptNo: { type: String, default: '' },
+        amountPaid: { type: Number, default: 0 },
+        paymentDate: { type: Date },
+        payerName: { type: String, default: '' },
+        paymentMethod: { type: String, default: '' },
+        paidByCashier: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+        cashierName: { type: String, default: '' },
+        paymentRemarks: { type: String, default: '' },
+        approvalDate: { type: Date },
+        expiryDate: { type: Date },
+        mtopNo: { type: String, default: '' },
+        archivedAt: { type: Date, default: Date.now }
+    }],
 
     isArchived: { type: Boolean, default: false },
     archivedAt: { type: Date },
@@ -180,7 +195,8 @@ const franchiseSchema = new mongoose.Schema({
 // Helper function to evaluate dynamic status on document instances or hydration
 function evaluateFranchiseDocument(doc) {
     if (!doc) return;
-    const effectiveExpiry = doc.expiryDate || (doc.approvalDate ? computeManilaExpiryDate(doc.approvalDate) : null);
+    const years = doc.applicationType === 'Renewal' ? 1 : 3;
+    const effectiveExpiry = doc.expiryDate || (doc.approvalDate ? computeManilaExpiryDate(doc.approvalDate, years) : null);
     if ((doc.status === 'Active' || doc.status === 'Active - Under Warning') && effectiveExpiry && isExpired(effectiveExpiry)) {
         doc.status = 'Expired';
     }
@@ -191,12 +207,14 @@ function evaluateFranchiseDocument(doc) {
 
 // Virtual properties for server-authoritative countdown and expiration state
 franchiseSchema.virtual('daysRemaining').get(function() {
-    const effectiveExpiry = this.expiryDate || (this.approvalDate ? computeManilaExpiryDate(this.approvalDate) : null);
+    const years = this.applicationType === 'Renewal' ? 1 : 3;
+    const effectiveExpiry = this.expiryDate || (this.approvalDate ? computeManilaExpiryDate(this.approvalDate, years) : null);
     return effectiveExpiry ? calculateDaysRemaining(effectiveExpiry) : null;
 });
 
 franchiseSchema.virtual('isExpired').get(function() {
-    const effectiveExpiry = this.expiryDate || (this.approvalDate ? computeManilaExpiryDate(this.approvalDate) : null);
+    const years = this.applicationType === 'Renewal' ? 1 : 3;
+    const effectiveExpiry = this.expiryDate || (this.approvalDate ? computeManilaExpiryDate(this.approvalDate, years) : null);
     return effectiveExpiry ? isExpired(effectiveExpiry) : false;
 });
 
@@ -208,9 +226,10 @@ franchiseSchema.virtual('isExpiringSoon').get(function() {
 // Pre-save lifecycle hook to ensure expiryDate is set and status accurately reflects validity
 franchiseSchema.pre('save', function() {
     if (this.approvalDate && !this.expiryDate) {
-        this.expiryDate = computeManilaExpiryDate(this.approvalDate);
+        const years = this.applicationType === 'Renewal' ? 1 : 3;
+        this.expiryDate = computeManilaExpiryDate(this.approvalDate, years);
     }
-    if (this.status === 'Active' && this.expiryDate && isExpired(this.expiryDate)) {
+    if ((this.status === 'Active' || this.status === 'Active - Under Warning') && this.expiryDate && isExpired(this.expiryDate)) {
         this.status = 'Expired';
     }
 });
@@ -242,6 +261,15 @@ franchiseSchema.index(
 franchiseSchema.index(
     { chassisNo: 1 }, 
     { unique: true, partialFilterExpression: { isArchived: false } }
+);
+franchiseSchema.index(
+    { officialReceiptNo: 1 },
+    { unique: true, partialFilterExpression: { officialReceiptNo: { $type: 'string', $gt: '' } } }
+);
+franchiseSchema.index({ 'paymentHistory.officialReceiptNo': 1 });
+franchiseSchema.index(
+    { mtopNo: 1 },
+    { unique: true, partialFilterExpression: { mtopNo: { $type: 'string', $gt: '' } } }
 );
 
 // Expiry and status indexes for optimized cron and query performance

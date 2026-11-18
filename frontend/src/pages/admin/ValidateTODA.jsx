@@ -137,20 +137,46 @@ const ValidateTODA = () => {
     fetchAllData();
   }, []);
 
-  const handleApprove = async (id) => {
+  const handleApprove = async (submissionOrId) => {
+    const selectedSubmission = (submissionOrId && typeof submissionOrId === 'object')
+      ? submissionOrId
+      : submissions.find(sub => sub._id === submissionOrId) ||
+        (selectedSubmissionOCR?._id === submissionOrId ? selectedSubmissionOCR : null);
+    const id = selectedSubmission?._id || submissionOrId;
+    if (!id) return;
+
     try {
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/toda/approve/${id}`, {
-        method: 'PUT', headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          expectedUpdatedAt: selectedSubmission?.updatedAt
+        })
       });
+      const data = await response.json().catch(() => ({}));
       if (response.ok) {
-        setSubmissions(submissions.map(sub => sub._id === id ? { ...sub, status: 'Approved' } : sub));
+        const updatedSub = data?.submission;
+        setSubmissions(prev => prev.map(sub => sub._id === id ? (updatedSub || { ...sub, status: 'Approved' }) : sub));
+        if (selectedSubmissionOCR && selectedSubmissionOCR._id === id) {
+          setSelectedSubmissionOCR(prev => prev && prev._id === id ? (updatedSub || { ...prev, status: 'Approved' }) : prev);
+        }
         fetchRosters();
         showToast('TODA member list approved successfully! Active OCR roster ingested.', 'success');
-      } else { 
-        showToast('Failed to approve list.', 'error'); 
+      } else if (response.status === 409) {
+        showToast(data.message || 'This TODA submission was modified or approved concurrently. Refreshing submissions...', 'error');
+        if (selectedSubmissionOCR && selectedSubmissionOCR._id === id) {
+          setSelectedSubmissionOCR(null);
+        }
+        await fetchSubmissions();
+        fetchRosters();
+      } else {
+        showToast(data.message || 'Failed to approve list.', 'error');
       }
-    } catch (error) { 
-      showToast('Cannot connect to server.', 'error'); 
+    } catch (error) {
+      showToast('Cannot connect to server.', 'error');
     }
   };
 
@@ -818,7 +844,7 @@ const ValidateTODA = () => {
                               )}
                               {sub.status !== 'Approved' && (
                                 <button 
-                                  onClick={() => handleApprove(sub._id)} 
+                                  onClick={() => handleApprove(sub)} 
                                   className="inline-flex items-center justify-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg transition-colors bg-emerald-700 hover:bg-emerald-800 text-white border border-emerald-700 shadow-sm cursor-pointer"
                                 >
                                   <CheckCircle size={13} />
@@ -1217,10 +1243,7 @@ const ValidateTODA = () => {
                   {selectedSubmissionOCR.status !== 'Approved' && (
                     <button
                       type="button"
-                      onClick={() => {
-                        handleApprove(selectedSubmissionOCR._id);
-                        setSelectedSubmissionOCR(prev => ({ ...prev, status: 'Approved' }));
-                      }}
+                      onClick={() => handleApprove(selectedSubmissionOCR)}
                       className="px-3.5 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold cursor-pointer transition-colors shadow-sm"
                     >
                       Approve &amp; Ingest

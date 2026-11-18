@@ -85,6 +85,18 @@ const ProfileRedirect = () => {
 
 function App() {
   useEffect(() => {
+    // Purge any legacy un-scoped cached franchises on unauthenticated load
+    try {
+      localStorage.removeItem('gtrams_cached_franchises');
+      if (!localStorage.getItem('token')) {
+        Object.keys(localStorage).forEach((key) => {
+          if (key.startsWith('gtrams_cached_franchises')) {
+            localStorage.removeItem(key);
+          }
+        });
+      }
+    } catch {}
+
     // Initial sync of system configuration and server-authoritative time
     const syncSettings = async () => {
       try {
@@ -134,7 +146,8 @@ function App() {
                   <Route path="/admin/audit-logs" element={<ProtectedRoute allowedRoles={['system_admin', 'admin']}><AdminAuditLogs /></ProtectedRoute>} />
                   <Route path="/admin/settings" element={<ProtectedRoute allowedRoles={['system_admin', 'admin', 'bplo_staff']}><AdminSettings /></ProtectedRoute>} />
                   <Route path="/system-settings" element={<Navigate to="/admin/settings" replace />} />
-                  <Route path="/admin/tickets" element={<ProtectedRoute allowedRoles={['system_admin', 'admin', 'bplo_staff']}><AdminTickets /></ProtectedRoute>} />
+                  <Route path="/admin/tickets" element={<ProtectedRoute allowedRoles={['system_admin']}><AdminTickets /></ProtectedRoute>} />
+                  <Route path="/admin-tickets" element={<ProtectedRoute allowedRoles={['system_admin']}><AdminTickets /></ProtectedRoute>} />
 
                   {/* LLSA I (SB FRANCHISING STAFF) SECURE ROUTES (Franchise Operations, Queues, Verification, Issuance) */}
                   <Route path="/llsa-dashboard" element={<ProtectedRoute allowedRoles={['bplo_staff']}><LlsaDashboard /></ProtectedRoute>} />

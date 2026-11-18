@@ -4,6 +4,8 @@ const upload = require('../config/cloudinary');
 const { protect, authorize } = require('../middleware/authMiddleware'); 
 
 const { 
+    blockDuringMaintenance,
+    authorizeFranchiseEdit,
     createFranchise, 
     getAllFranchises, 
     getMyFranchises, 
@@ -33,6 +35,17 @@ const memoryUpload = require('multer')({
     storage: require('multer').memoryStorage(),
     limits: { fileSize: 15 * 1024 * 1024 }, fileFilter: (req, file, cb) => { if (/^(image\/(jpeg|png|webp)|application\/pdf)$/i.test(file.mimetype)) cb(null, true); else cb(new Error('Only JPG, PNG, WEBP, and PDF files are allowed.')); }
 });
+
+const FRANCHISE_DOCUMENT_UPLOAD_FIELDS = [
+    'orCrDocument', 'orCrUrl', 'orcr', 'doc_0',
+    'crDocument', 'crFile', 'crUrl',
+    'orDocument', 'orFile', 'orUrl',
+    'license', 'licenseUrl', 'doc_1',
+    'licenseBack', 'licenseBackUrl', 'doc_license_back',
+    'todaEndorsement', 'todaEndorsementUrl', 'toda', 'doc_2',
+    'brgyClearance', 'brgyClearanceUrl', 'brgy', 'doc_3',
+    'cedulaDoc', 'cedulaUrl', 'cedula', 'doc_cedula', 'ctc'
+].map((name) => ({ name, maxCount: 1 }));
 
 // Real-time check of TODA membership status and jurisdiction routing
 router.get('/check-toda-member', checkTodaMemberStatus);
@@ -79,7 +92,8 @@ router.route('/')
     .post(
         protect, 
         authorize('operator', 'toda president'),
-        upload.any(), 
+        blockDuringMaintenance,
+        upload.fields(FRANCHISE_DOCUMENT_UPLOAD_FIELDS), 
         createFranchise
     )
     // Get franchise masterlist (BPLO Staff only)
@@ -97,7 +111,7 @@ router.get('/:id/download-original', protect, downloadOriginalTemplate);
 
 // Operator routes
 router.get('/my-franchises', protect, authorize('operator', 'toda president'), getMyFranchises);
-router.put('/:id/renew', protect, authorize('operator', 'toda president'), upload.fields([
+router.put('/:id/renew', protect, authorize('operator', 'toda president'), blockDuringMaintenance, upload.fields([
     { name: 'orcrFile', maxCount: 1 },
     { name: 'orCrDocument', maxCount: 1 },
     { name: 'crDocument', maxCount: 1 },
@@ -120,7 +134,9 @@ router.route('/:id')
     .get(protect, getFranchiseById)
     .put(
         protect, 
-        upload.any(), 
+        authorize('operator', 'toda president', 'toda_president', 'bplo_staff'),
+        authorizeFranchiseEdit,
+        upload.fields(FRANCHISE_DOCUMENT_UPLOAD_FIELDS), 
         updateFranchise
     )
     .delete(protect, authorize('bplo_staff'), deleteFranchise);

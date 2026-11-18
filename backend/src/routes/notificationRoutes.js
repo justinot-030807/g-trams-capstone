@@ -28,15 +28,18 @@ router.get('/unread-count', async (req, res) => {
   }
 });
 
-// Mark all as read & auto-delete notifications
+// Mark all notifications as read (preserving history)
 router.put(['/read-all', '/mark-all-read'], async (req, res) => {
   try {
-    await Notification.deleteMany({ recipient: req.user._id });
+    await Notification.updateMany(
+      { recipient: req.user._id, isRead: false },
+      { $set: { isRead: true } }
+    );
     const { emitToUser } = require('../config/socket');
-    emitToUser(req.user._id.toString(), 'notifications_read_all');
-    res.json({ message: 'All notifications cleared and marked as read' });
+    emitToUser(req.user._id.toString(), 'notifications_marked_read');
+    res.json({ message: 'All notifications marked as read' });
   } catch (error) {
-    res.status(500).json({ message: 'Error clearing all notifications'});
+    res.status(500).json({ message: 'Error marking all notifications as read' });
   }
 });
 
@@ -109,29 +112,6 @@ router.get('/sms-logs', authorize('system_admin', 'admin', 'bplo_staff'), async 
   } catch (error) {
     console.error('Error fetching SMS dispatch logs:', error);
     res.status(500).json({ success: false, message: 'Failed to retrieve SMS logs' });
-  }
-});
-
-// Trigger a live simulated 30-day expiration SMS alert (for defense demo)
-router.post('/simulate-sms', authorize('system_admin', 'admin', 'bplo_staff'), async (req, res) => {
-  try {
-    const { simulateTestDispatch } = require('../services/notificationService');
-    const { operatorName, phone, plateNo, bodyNumber, daysRemaining } = req.body;
-    const log = await simulateTestDispatch({
-      operatorName: operatorName || 'Juan Dela Cruz',
-      phone: phone || '09178923401',
-      plateNo: plateNo || '4528-TC',
-      bodyNumber: bodyNumber || '042',
-      daysRemaining: Number(daysRemaining) || 30
-    });
-    res.json({ 
-      success: true, 
-      message: 'Simulated 30-day expiration SMS alert dispatched successfully.', 
-      data: log 
-    });
-  } catch (error) {
-    console.error('Error triggering simulated SMS:', error);
-    res.status(500).json({ success: false, message: 'Failed to simulate SMS dispatch' });
   }
 });
 

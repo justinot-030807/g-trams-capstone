@@ -1,6 +1,17 @@
 const mongoose = require('mongoose');
+const { AsyncLocalStorage } = require('async_hooks');
 const sendEmail = require('../utils/sendEmail');
 const sendSms = require('../utils/sendSms');
+
+const notificationHookStorage = new AsyncLocalStorage();
+
+function isNotificationHooksSuppressed() {
+  return Boolean(notificationHookStorage.getStore()?.suppressHooks);
+}
+
+function runWithNotificationHooksSuppressed(fn) {
+  return notificationHookStorage.run({ suppressHooks: true }, fn);
+}
 
 const notificationSchema = new mongoose.Schema({
   recipient: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
@@ -34,6 +45,15 @@ function extractRecipientEmail(user, franchise) {
   return null;
 }
 
+function escapeHtml(value) {
+  return String(value || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
 function buildNotificationEmailHtml({ recipientName, title, message, type, plateNo }) {
   const badgeMap = {
     approval: { label: 'Franchise Approval', bg: '#ECFDF5', text: '#047857', border: '#A7F3D0' },
@@ -54,11 +74,10 @@ function buildNotificationEmailHtml({ recipientName, title, message, type, plate
     minute: '2-digit'
   });
 
-  const safeMessage = String(message || '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/\n/g, '<br/>');
+  const safeRecipientName = escapeHtml(recipientName || 'Ka-Gasan Operator');
+  const safeTitle = escapeHtml(title || '');
+  const safePlateNo = plateNo ? escapeHtml(plateNo) : '';
+  const safeMessage = escapeHtml(message || '').replace(/\n/g, '<br/>');
 
   return `
   <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #F6F5F3; padding: 24px 12px; color: #1F1D1B;">
@@ -74,14 +93,14 @@ function buildNotificationEmailHtml({ recipientName, title, message, type, plate
       <div style="padding: 24px;">
         <div style="margin-bottom: 16px;">
           <span style="display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; background-color: ${badge.bg}; color: ${badge.text}; border: 1px solid ${badge.border};">
-            ${badge.label}${plateNo ? ` • Unit ${plateNo}` : ''}
+            ${badge.label}${safePlateNo ? ` • Unit ${safePlateNo}` : ''}
           </span>
         </div>
         <p style="font-size: 14px; color: #4B5563; margin: 0 0 12px 0;">
-          Magandang araw, <strong style="color: #1F1D1B;">${recipientName || 'Ka-Gasan Operator'}</strong>,
+          Magandang araw, <strong style="color: #1F1D1B;">${safeRecipientName}</strong>,
         </p>
         <h2 style="font-size: 17px; font-weight: 700; color: #1F1D1B; margin: 0 0 12px 0;">
-          ${title}
+          ${safeTitle}
         </h2>
         <div style="background-color: #F6F5F3; border-left: 4px solid #9E2A2B; padding: 14px 16px; border-radius: 6px; font-size: 14px; line-height: 1.6; color: #1F1D1B; margin-bottom: 20px;">
           ${safeMessage}
@@ -121,7 +140,7 @@ function extractRecipientPhone(user, franchise) {
 async function dispatchNotificationEmail(doc) {
   try {
     if (!doc || !doc.recipient) return;
-    if (process.env.NODE_ENV === 'test') return;
+    if (process.env.NODE_ENV === 'test' || isNotificationHooksSuppressed()) return;
 
     const hasEmailConfig = Boolean(process.env.SMTP_API_KEY);
     const hasSmsConfig = Boolean(process.env.TEXTBEE_API_KEY || process.env.SEMAPHORE_API_KEY);
@@ -186,6 +205,7 @@ notificationSchema.pre('save', function () {
 });
 
 notificationSchema.post('save', function (doc) {
+  if (isNotificationHooksSuppressed()) return;
   if (this.$locals && this.$locals.wasNew) {
     setImmediate(() => {
       dispatchNotificationEmail(doc);
@@ -194,6 +214,7 @@ notificationSchema.post('save', function (doc) {
 });
 
 notificationSchema.post('insertMany', function (docs) {
+  if (isNotificationHooksSuppressed()) return;
   if (Array.isArray(docs) && docs.length > 0) {
     setImmediate(async () => {
       for (const doc of docs) {
@@ -203,4 +224,8 @@ notificationSchema.post('insertMany', function (docs) {
   }
 });
 
-module.exports = mongoose.model('Notification', notificationSchema);
+const Notification = mongoose.model('Notification', notificationSchema);
+Notification.runWithNotificationHooksSuppressed = runWithNotificationHooksSuppressed;
+Notification.isNotificationHooksSuppressed = isNotificationHooksSuppressed;
+
+module.exports = Notification;

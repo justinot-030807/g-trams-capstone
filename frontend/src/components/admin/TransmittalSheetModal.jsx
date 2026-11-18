@@ -32,6 +32,16 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
 
   const batchRef = `TRANS-${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}-${String(units.length).padStart(3, '0')}`;
 
+  const sanitizeCsvCell = (value) => {
+    const str = String(value ?? '');
+    const trimmedLeading = str.replace(/^[\s\u0000-\u001F\u00A0]+/, '');
+    const isFormula =
+      /^[=+\-@\t\r\n\uFF1D\uFF0B\uFF0D\uFF20]/.test(str) ||
+      /^[=+\-@\uFF1D\uFF0B\uFF0D\uFF20]/.test(trimmedLeading);
+    const neutralized = isFormula ? `'${str}` : str;
+    return `"${neutralized.replace(/"/g, '""')}"`;
+  };
+
   const handleExportCSV = () => {
     if (!units || units.length === 0) return;
 
@@ -53,15 +63,15 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
       const permitNo = cleanPlate ? `MTOP-GASAN-${cleanPlate}` : `MTOP-GASAN-${String(u._id).slice(-6).toUpperCase()}`;
       return [
         i + 1,
-        permitNo,
-        `"${(u.fullName || '').replace(/^[=+\-@]/, "'$&").replace(/"/g, '""')}"`,
-        `"${(u.todaName || 'NON-TODA').replace(/"/g, '""')}"`,
-        `"${(u.plateNo || 'PENDING').replace(/"/g, '""')}"`,
-        `"${(u.motorNo || 'N/A').replace(/"/g, '""')}"`,
-        `"${(u.chassisNo || 'N/A').replace(/"/g, '""')}"`,
-        `"${(u.applicationType || 'New').replace(/"/g, '""')}"`,
-        `"${(u.status || '').replace(/"/g, '""')}"`,
-        `"${u.dateApplied ? new Date(u.dateApplied).toLocaleDateString() : 'N/A'}"`
+        sanitizeCsvCell(permitNo),
+        sanitizeCsvCell(u.fullName || ''),
+        sanitizeCsvCell(u.todaName || 'NON-TODA'),
+        sanitizeCsvCell(u.plateNo || 'PENDING'),
+        sanitizeCsvCell(u.motorNo || 'N/A'),
+        sanitizeCsvCell(u.chassisNo || 'N/A'),
+        sanitizeCsvCell(u.applicationType || 'New'),
+        sanitizeCsvCell(u.status || ''),
+        sanitizeCsvCell(u.dateApplied ? new Date(u.dateApplied).toLocaleDateString() : 'N/A')
       ].join(',');
     });
 

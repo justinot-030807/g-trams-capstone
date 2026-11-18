@@ -69,6 +69,16 @@ const AdminReports = () => {
     window.print();
   };
 
+  const sanitizeCsvCell = (value) => {
+    const str = String(value ?? '');
+    const trimmedLeading = str.replace(/^[\s\u0000-\u001F\u00A0]+/, '');
+    const isFormula =
+      /^[=+\-@\t\r\n\uFF1D\uFF0B\uFF0D\uFF20]/.test(str) ||
+      /^[=+\-@\uFF1D\uFF0B\uFF0D\uFF20]/.test(trimmedLeading);
+    const neutralized = isFormula ? `'${str}` : str;
+    return `"${neutralized.replace(/"/g, '""')}"`;
+  };
+
   const handleExportCSV = () => {
     if (!reports || reports.length === 0) return;
 
@@ -84,12 +94,12 @@ const AdminReports = () => {
 
     const rows = reports.map((r, i) => [
       i + 1,
-      `"${(r.plateNo || 'PENDING').replace(/"/g, '""')}"`,
-      `"${(r.fullName || '').replace(/^[=+\-@]/, "'$&").replace(/"/g, '""')}"`,
-      `"${(r.address || 'N/A').replace(/"/g, '""')}"`,
-      `"${(r.todaName || 'NON-TODA').replace(/"/g, '""')}"`,
-      `"${r.dateApplied ? new Date(r.dateApplied).toLocaleDateString() : 'N/A'}"`,
-      `"${(r.status || '').replace(/"/g, '""')}"`
+      sanitizeCsvCell(r.plateNo || 'PENDING'),
+      sanitizeCsvCell(r.fullName || ''),
+      sanitizeCsvCell(r.address || 'N/A'),
+      sanitizeCsvCell(r.todaName || 'NON-TODA'),
+      sanitizeCsvCell(r.dateApplied ? new Date(r.dateApplied).toLocaleDateString() : 'N/A'),
+      sanitizeCsvCell(r.status || '')
     ].join(','));
 
     const csvContent = '\uFEFF' + [headers.join(','), ...rows].join('\r\n');

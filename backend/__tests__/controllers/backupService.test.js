@@ -3,17 +3,23 @@ const mongoose = require('mongoose');
 const { MongoMemoryServer } = require('mongodb-memory-server');
 const jwt = require('jsonwebtoken');
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
+
+const TEST_BACKUP_DIR = path.join(os.tmpdir(), `gtrams_test_backups_${process.pid}_${Date.now()}`);
+process.env.BACKUP_DIR = TEST_BACKUP_DIR;
 
 let mongoServer;
 let app;
 let adminToken;
 let operatorToken;
 let backupService;
+let preExistingBackups = new Set();
 
 beforeAll(async () => {
     process.env.NODE_ENV = 'test';
     process.env.JWT_SECRET = 'test_backup_secret_key_12345';
+    process.env.BACKUP_DIR = TEST_BACKUP_DIR;
 
     mongoServer = await MongoMemoryServer.create();
     await mongoose.connect(mongoServer.getUri());
@@ -21,6 +27,12 @@ beforeAll(async () => {
     const User = require('../../src/models/userModel');
     const Franchise = require('../../src/models/franchiseModel');
     backupService = require('../../src/services/backupService');
+
+    if (fs.existsSync(backupService.BACKUP_DIR)) {
+        for (const f of fs.readdirSync(backupService.BACKUP_DIR)) {
+            preExistingBackups.add(f);
+        }
+    }
 
     const serverObj = require('../../server');
     app = serverObj.app;
@@ -33,7 +45,7 @@ beforeAll(async () => {
         contact: '09120000001',
         address: 'Gasan, Marinduque'
     });
-    adminToken = jwt.sign({ id: admin._id, role: admin.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    adminToken = jwt.sign({ id: admin._id, role: admin.role, tokenVersion: admin.tokenVersion || 0 }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
     const op = await User.create({
         name: 'Test Operator',
@@ -43,7 +55,7 @@ beforeAll(async () => {
         contact: '09120000002',
         address: 'Bahi, Gasan'
     });
-    operatorToken = jwt.sign({ id: op._id, role: op.role }, process.env.JWT_SECRET, { expiresIn: '1h' });
+    operatorToken = jwt.sign({ id: op._id, role: op.role, tokenVersion: op.tokenVersion || 0 }, process.env.JWT_SECRET, { expiresIn: '1h' });
 
     await Franchise.create({
         operator: op._id,
@@ -64,20 +76,23 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-    await mongoose.disconnect();
-    await mongoServer.stop();
-
-    // Clean up created test backup files
+    // Clean up only newly created test backup files without touching any pre-existing non-test backups
     try {
-        if (fs.existsSync(backupService.BACKUP_DIR)) {
+        if (backupService && fs.existsSync(backupService.BACKUP_DIR)) {
             const files = fs.readdirSync(backupService.BACKUP_DIR);
             for (const f of files) {
-                if (f.startsWith('gtrams_backup_')) {
-                    fs.unlinkSync(path.join(backupService.BACKUP_DIR, f));
+                if (f.startsWith('gtrams_backup_') && !preExistingBackups.has(f)) {
+                    await backupService.deleteBackupFile(f);
                 }
+            }
+            if (backupService.BACKUP_DIR === TEST_BACKUP_DIR && fs.readdirSync(TEST_BACKUP_DIR).length === 0) {
+                fs.rmdirSync(TEST_BACKUP_DIR);
             }
         }
     } catch {}
+
+    await mongoose.disconnect();
+    await mongoServer.stop();
 });
 
 describe('Database Backup & Disaster Recovery API Tests', () => {

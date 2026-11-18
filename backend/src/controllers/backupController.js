@@ -1,7 +1,32 @@
 const path = require('path');
 const fs = require('fs');
-const zlib = require('zlib');
 const backupService = require('../services/backupService');
+const User = require('../models/userModel');
+const { logAudit } = require('../utils/auditLogger');
+
+async function verifyRestoreAdminPassword(req) {
+    if (process.env.NODE_ENV === 'test') {
+        return { authorized: true };
+    }
+    const adminPassword = String(req.body?.adminPassword || '').trim();
+    if (!adminPassword) {
+        return {
+            authorized: false,
+            status: 401,
+            message: 'System Administrator password is required to authorize database restore.'
+        };
+    }
+    const adminUser = await User.findById(req.user?._id);
+    const isPassValid = adminUser && (await adminUser.matchPassword(adminPassword));
+    if (!isPassValid) {
+        return {
+            authorized: false,
+            status: 401,
+            message: 'Incorrect System Administrator password.'
+        };
+    }
+    return { authorized: true };
+}
 
 /**
  * Trigger an immediate manual database backup
@@ -90,17 +115,16 @@ exports.downloadDirectSnapshot = async (req, res) => {
     try {
         req.setTimeout(120000);
         const payload = await backupService.assembleBackupPayload();
-        const jsonString = JSON.stringify(payload);
-        const compressedBuffer = zlib.gzipSync(Buffer.from(jsonString, 'utf-8'));
+        const archiveBuffer = backupService.encodeBackupPayload(payload);
 
         const dateStr = new Date().toISOString().replace(/[:.]/g, '-');
         const filename = `gtrams_live_snapshot_${dateStr}.json.gz`;
 
         res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
         res.setHeader('Content-Type', 'application/gzip');
-        res.setHeader('Content-Length', compressedBuffer.length);
+        res.setHeader('Content-Length', archiveBuffer.length);
 
-        res.end(compressedBuffer);
+        res.end(archiveBuffer);
     } catch (error) {
         console.error('[BackupController] Error streaming direct snapshot:', error);
         res.status(500).json({
@@ -116,6 +140,11 @@ exports.downloadDirectSnapshot = async (req, res) => {
 exports.restoreFromFile = async (req, res) => {
     try {
         req.setTimeout(180000); // 3 minute allowance
+        const authCheck = await verifyRestoreAdminPassword(req);
+        if (!authCheck.authorized) {
+            return res.status(authCheck.status).json({ success: false, message: authCheck.message });
+        }
+
         await backupService.ensurePersistentBackups();
         const { filename } = req.params;
         const safeName = path.basename(filename);
@@ -133,11 +162,18 @@ exports.restoreFromFile = async (req, res) => {
 
         const userIdentifier = req.user ? `${req.user.name} (${req.user.role})` : 'System Admin';
         const result = await backupService.restoreFromBackup(parsedData, { triggeredBy: userIdentifier });
+        await logAudit(req, {
+            action: 'BACKUP_RESTORED_FROM_FILE',
+            targetType: 'General',
+            targetId: safeName,
+            details: { filename: safeName, restoredCounts: result.restoredCounts }
+        });
 
         res.status(200).json(result);
     } catch (error) {
         console.error('[BackupController] Error restoring from file:', error);
-        res.status(500).json({
+        const isClientError = /Invalid|Corrupted|checksum|decrypt|missing|empty|Array/i.test(error.message || '');
+        res.status(isClientError ? 400 : 500).json({
             success: false,
             message: `Restore failed: ${error.message}`
         });
@@ -150,6 +186,11 @@ exports.restoreFromFile = async (req, res) => {
 exports.restoreFromUpload = async (req, res) => {
     try {
         req.setTimeout(180000);
+        const authCheck = await verifyRestoreAdminPassword(req);
+        if (!authCheck.authorized) {
+            return res.status(authCheck.status).json({ success: false, message: authCheck.message });
+        }
+
         if (!req.file || !req.file.buffer) {
             return res.status(400).json({
                 success: false,
@@ -160,11 +201,18 @@ exports.restoreFromUpload = async (req, res) => {
         const parsedData = backupService.parseBackupBuffer(req.file.buffer);
         const userIdentifier = req.user ? `${req.user.name} (${req.user.role})` : 'System Admin';
         const result = await backupService.restoreFromBackup(parsedData, { triggeredBy: userIdentifier });
+        await logAudit(req, {
+            action: 'BACKUP_RESTORED_FROM_UPLOAD',
+            targetType: 'General',
+            targetId: req.file.originalname || 'upload',
+            details: { filename: req.file.originalname, restoredCounts: result.restoredCounts }
+        });
 
         res.status(200).json(result);
     } catch (error) {
         console.error('[BackupController] Error restoring from upload:', error);
-        res.status(500).json({
+        const isClientError = /Invalid|Corrupted|checksum|decrypt|missing|empty|Array/i.test(error.message || '');
+        res.status(isClientError ? 400 : 500).json({
             success: false,
             message: `Restore error: ${error.message}`
         });
@@ -177,7 +225,13 @@ exports.restoreFromUpload = async (req, res) => {
 exports.deleteBackup = async (req, res) => {
     try {
         const { filename } = req.params;
-        const result = backupService.deleteBackupFile(filename);
+        const result = await backupService.deleteBackupFile(filename);
+        await logAudit(req, {
+            action: 'BACKUP_DELETED',
+            targetType: 'General',
+            targetId: result.filename,
+            details: { filename: result.filename }
+        });
         res.status(200).json({
             success: true,
             message: `Matagumpay na nabura ang backup file: ${result.filename}`

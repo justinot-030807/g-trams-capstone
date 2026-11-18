@@ -21,16 +21,33 @@ async function syncFranchiseStatuses() {
     try {
         const now = getManilaNow();
         await Franchise.updateMany({ status: 'Suspended', suspensionEndDate: { $ne: null, $lte: now } }, { $set: { status: 'Active - Under Warning', suspensionEndDate: null, currentSanction: 'Warning' } }).catch(() => {});
-        const oneYearAgo = new Date(now);
-        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
 
-        // Find active franchises that have expired
+        const settings = await SystemSettings.findOne().sort({ updatedAt: -1, createdAt: -1 }).lean().catch(() => null);
+        const validityNew = Number(settings?.validityNew) > 0 ? Number(settings.validityNew) : 3;
+        const validityRenew = Number(settings?.validityRenew) > 0 ? Number(settings.validityRenew) : 1;
+
+        // Reconcile any active permits missing an explicit expiryDate using configured term validity
+        const missingExpiryDocs = await Franchise.find({
+            status: { $in: ['Active', 'Active - Under Warning'] },
+            expiryDate: null,
+            approvalDate: { $ne: null }
+        }).select('_id applicationType approvalDate').lean();
+
+        for (const doc of missingExpiryDocs) {
+            const termYears = doc.applicationType === 'Renewal' ? validityRenew : validityNew;
+            const computedExpiry = computeManilaExpiryDate(doc.approvalDate, termYears);
+            if (computedExpiry) {
+                await Franchise.updateOne(
+                    { _id: doc._id, expiryDate: null },
+                    { $set: { expiryDate: computedExpiry } }
+                );
+            }
+        }
+
+        // Find active franchises that have reached their authoritative expiration date
         const expiredFranchises = await Franchise.find({
             status: { $in: ['Active', 'Active - Under Warning'] },
-            $or: [
-                { expiryDate: { $lte: now } },
-                { expiryDate: null, approvalDate: { $lte: oneYearAgo } }
-            ]
+            expiryDate: { $lte: now }
         }).populate('operator', 'name contact');
 
         if (expiredFranchises.length === 0) {
@@ -42,7 +59,8 @@ async function syncFranchiseStatuses() {
         for (const franchise of expiredFranchises) {
             franchise.status = 'Expired';
             if (!franchise.expiryDate && franchise.approvalDate) {
-                franchise.expiryDate = computeManilaExpiryDate(franchise.approvalDate);
+                const termYears = franchise.applicationType === 'Renewal' ? validityRenew : validityNew;
+                franchise.expiryDate = computeManilaExpiryDate(franchise.approvalDate, termYears);
             }
             await franchise.save();
 
@@ -111,13 +129,37 @@ async function sendRenewalReminders() {
         }).populate('operator', 'name contact');
 
         if (dueFranchises.length === 0) {
-            return { count: 0 };
+            return { count: 0, selectedCount: 0 };
         }
 
         console.log(`[CRON] Dispatching renewal reminders for ${dueFranchises.length} franchise(s) expiring within ${warningDays} days...`);
 
+        let sentCount = 0;
         for (const franchise of dueFranchises) {
             const operatorId = franchise.operator?._id || franchise.operator;
+            if (!operatorId) {
+                continue;
+            }
+
+            // Atomically claim the 7-day throttle window BEFORE dispatching notifications
+            const priorThrottleAt = franchise.lastRenewalReminderSentAt || null;
+            const claimedFranchise = await Franchise.findOneAndUpdate(
+                {
+                    _id: franchise._id,
+                    status: { $in: ['Active', 'Active - Under Warning'] },
+                    expiryDate: { $gt: now, $lte: warningThreshold },
+                    $or: [
+                        { lastRenewalReminderSentAt: null },
+                        { lastRenewalReminderSentAt: { $lt: sevenDaysAgo } }
+                    ]
+                },
+                { $set: { lastRenewalReminderSentAt: now } },
+                { returnDocument: 'after' }
+            );
+            if (!claimedFranchise) {
+                continue;
+            }
+
             const daysLeft = calculateDaysRemaining(franchise.expiryDate, now);
             const safeDays = daysLeft !== null ? daysLeft : 0;
             const formattedExpiry = formatManilaDate(franchise.expiryDate);
@@ -126,44 +168,44 @@ async function sendRenewalReminders() {
             const notifMessage = `Your franchise permit for unit ${franchise.plateNo || 'Tricycle'} will expire on ${formattedExpiry}${daysLeft !== null ? ` (${daysLeft} days remaining)` : ''}. The annual renewal window is now open.`;
 
             try {
-                if (operatorId) {
-                    const notif = await Notification.create({
-                        recipient: operatorId,
-                        type: 'renewal_reminder',
-                        title: notifTitle,
-                        message: notifMessage,
-                        relatedFranchise: franchise._id
-                    });
+                const notif = await Notification.create({
+                    recipient: operatorId,
+                    type: 'renewal_reminder',
+                    title: notifTitle,
+                    message: notifMessage,
+                    relatedFranchise: franchise._id
+                });
 
-                    emitToUser(String(operatorId), 'notification', notif);
-                    sendPushToUser(operatorId, {
-                        title: notifTitle,
-                        message: notifMessage,
-                        url: `/renew-franchise/${franchise._id}`,
-                        type: 'renewal_reminder'
-                    }).catch(err => console.warn('[CRON] Renewal push alert failed:', err.message));
+                emitToUser(String(operatorId), 'notification', notif);
+                sendPushToUser(operatorId, {
+                    title: notifTitle,
+                    message: notifMessage,
+                    url: `/renew-franchise/${franchise._id}`,
+                    type: 'renewal_reminder'
+                }).catch(err => console.warn('[CRON] Renewal push alert failed:', err.message));
 
-                    // Record 30-day expiration SMS audit log without sending a duplicate gateway SMS
-                    // (since Notification.create above already triggers dispatchNotificationEmail which sends SMS)
-                    const { dispatchExpirationSms } = require('./notificationService');
-                    await dispatchExpirationSms({
-                        franchise,
-                        daysRemaining: daysLeft,
-                        simulated: true,
-                        skipGatewaySend: true
-                    }).catch(smsErr => console.warn('[CRON] SMS dispatch failed:', smsErr.message));
-                }
+                // Record 30-day expiration SMS audit log without sending a duplicate gateway SMS
+                // (since Notification.create above already triggers dispatchNotificationEmail which sends SMS)
+                const { dispatchExpirationSms } = require('./notificationService');
+                await dispatchExpirationSms({
+                    franchise,
+                    daysRemaining: daysLeft,
+                    simulated: true,
+                    skipGatewaySend: true
+                }).catch(smsErr => console.warn('[CRON] SMS dispatch failed:', smsErr.message));
 
-                // Update timestamp to throttle future reminders
-                franchise.lastRenewalReminderSentAt = now;
-                await franchise.save();
+                sentCount += 1;
             } catch (err) {
                 console.error(`[CRON] Failed to send renewal reminder for ${franchise.plateNo}:`, err.message);
+                await Franchise.updateOne(
+                    { _id: franchise._id, lastRenewalReminderSentAt: now },
+                    { $set: { lastRenewalReminderSentAt: priorThrottleAt } }
+                ).catch(() => {});
             }
         }
 
-        console.log(`[CRON] Successfully sent ${dueFranchises.length} renewal reminder(s).`);
-        return { count: dueFranchises.length };
+        console.log(`[CRON] Successfully sent ${sentCount} of ${dueFranchises.length} selected renewal reminder(s).`);
+        return { count: sentCount, selectedCount: dueFranchises.length };
     } catch (error) {
         console.error('[CRON ERROR] Error in sendRenewalReminders:', error);
         return { error: error.message };

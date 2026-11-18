@@ -233,7 +233,7 @@ describe('Registration & Auth Verification Flow', () => {
     });
 
     it('10. should successfully verify OTP and return auth token and user', async () => {
-        await request(app)
+        const regRes = await request(app)
             .post('/api/v1/auth/register')
             .send({
                 name: 'Verification Target',
@@ -243,7 +243,8 @@ describe('Registration & Auth Verification Flow', () => {
             });
 
         const unverifiedUser = await User.findOne({ contact: 'target@test.com' });
-        const otpCode = unverifiedUser.otp;
+        expect(unverifiedUser.otp).toMatch(/^[a-f0-9]{64}$/);
+        const otpCode = regRes.body.testOtp;
 
         const verifyRes = await request(app)
             .post('/api/v1/auth/verify-otp')
@@ -338,7 +339,7 @@ describe('Registration & Auth Verification Flow', () => {
             .post('/api/v1/auth/verify-otp')
             .send({
                 contact: '+639123456789',
-                otp: user.otp
+                otp: res.body.testOtp
             });
 
         expect(verifyRes.status).toBe(200);

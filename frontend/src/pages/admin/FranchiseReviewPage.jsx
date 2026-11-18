@@ -527,6 +527,7 @@ const FranchiseReviewPage = () => {
     try {
       const payload = {
         status: newStatus,
+        expectedStatus: prevAppStatus,
         cancelReason: newStatus === 'Cancelled' ? (customCancelReason || 'Application rejected during technical review.') : null,
         rejectedField: newStatus === 'Cancelled' ? (rejectedField || undefined) : undefined
       };
@@ -570,8 +571,13 @@ const FranchiseReviewPage = () => {
             setTimeout(() => navigate(`/franchise-approval?tab=${currentTab}`), 1200);
           }
         }
+      } else if (res.status === 409) {
+        const errData = await res.json().catch(() => ({}));
+        showToast(errData.message || 'Record status changed by another user. Refreshing...', 'error');
+        fetchCurrentApp(targetAppId);
+        fetchQueue();
       } else {
-        const errData = await res.json();
+        const errData = await res.json().catch(() => ({}));
         showToast(errData.message || 'Failed to update status.', 'error');
       }
     } catch (err) {
@@ -594,6 +600,7 @@ const FranchiseReviewPage = () => {
         },
         body: JSON.stringify({
           status: undoState.previousStatus,
+          expectedStatus: undoState.newStatus,
           cancelReason: undoState.previousCancelReason,
           rejectedField: undoState.previousRejectedField
         })
@@ -603,6 +610,12 @@ const FranchiseReviewPage = () => {
         showToast(`Action undone! Restored ${undoState.applicantName} to ${undoState.previousStatus}.`, 'success');
         navigate(`/franchise-approval/review/${undoState.franchiseId}?tab=${currentTab}`);
         setUndoState({ show: false, franchiseId: null, secondsLeft: 10 });
+      } else if (res.status === 409) {
+        const errData = await res.json().catch(() => ({}));
+        showToast(errData.message || 'Cannot undo because this record was already modified. Refreshing...', 'error');
+        setUndoState({ show: false, franchiseId: null, secondsLeft: 10 });
+        fetchCurrentApp(undoState.franchiseId);
+        fetchQueue();
       } else {
         showToast('Unable to rollback action.', 'error');
       }
@@ -952,7 +965,9 @@ const FranchiseReviewPage = () => {
             {/* 1b. RECORD CHECK — violations & history before cashier */}
             {(() => {
               const rc = recordCheck.data;
-              const hasViolations = rc?.hasViolations;
+              const hasViolations = Boolean(rc?.hasViolations && rc?.violations?.length > 0);
+              const nameMatchWarnings = Array.isArray(rc?.nameMatchWarnings) ? rc.nameMatchWarnings : [];
+              const hasNameMatchWarnings = nameMatchWarnings.length > 0;
               return (
                 <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-2.5 space-y-1.5">
                   <div 
@@ -965,6 +980,10 @@ const FranchiseReviewPage = () => {
                       {hasViolations ? (
                         <span className="text-[10px] font-bold text-red-600 dark:text-red-400">
                           ({rc.violations.length} Revoked)
+                        </span>
+                      ) : hasNameMatchWarnings ? (
+                        <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400">
+                          ({nameMatchWarnings.length} Possible Name Match)
                         </span>
                       ) : (
                         <span className="text-[10px] font-semibold text-emerald-700 dark:text-emerald-400">
@@ -1032,6 +1051,29 @@ const FranchiseReviewPage = () => {
                             <p className="text-[11px] text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
                               <CheckCircle2 size={12} /> No violations or revocations on record
                             </p>
+                          )}
+
+                          {hasNameMatchWarnings && (
+                            <div className="space-y-1.5 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800/60 rounded-md p-2">
+                              <p className="text-[11px] font-semibold text-amber-800 dark:text-amber-300 flex items-center gap-1">
+                                <Info size={12} className="shrink-0" />
+                                Possible Duplicate Name Match ({nameMatchWarnings.length}) — Verify Identity
+                              </p>
+                              <p className="text-[10px] text-amber-700 dark:text-amber-400 leading-snug">
+                                Similar name found on another account or unit. Do not attribute as this applicant&apos;s violation without verifying identity.
+                              </p>
+                              {nameMatchWarnings.slice(0, 3).map((w, idx) => (
+                                <div key={w._id || idx} className="text-[11px] bg-white/80 dark:bg-[#14110F] border border-amber-200/70 dark:border-amber-900/50 rounded px-2 py-1">
+                                  <div className="flex justify-between gap-2 font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                                    <span className="truncate">{w.fullName || 'Name Match'} &bull; {w.plateNo || w.mtopNo || 'Unit'}</span>
+                                    <span className="text-[#6B6761] dark:text-[#A8A29E] font-normal shrink-0">{w.status || 'Revoked'}</span>
+                                  </div>
+                                  {w.cancelReason && (
+                                    <p className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] leading-snug">{w.cancelReason}</p>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
                           )}
 
                           {/* TODA Association Roster Verification Badge (3 States) */}
@@ -2383,6 +2425,8 @@ const FranchiseReviewPage = () => {
               <iframe
                 src={currentDoc.url}
                 title={currentDoc.label}
+                sandbox="allow-same-origin"
+                referrerPolicy="no-referrer"
                 className="w-full h-full border border-[#E4E1DC] dark:border-[#2E2A27] bg-white rounded-lg shadow-sm"
               />
             ) : (
@@ -2469,7 +2513,9 @@ const FranchiseReviewPage = () => {
         franchise={currentApp} 
         onApprove={() => { 
           setIsDossierOpen(false); 
-          if (selectedApp.status === 'Pending' && recordCheck.data?.violations?.length > 0) {
+          const verifiedViolationCount = recordCheck.data?.violations?.length || 0;
+          const nameWarningCount = Array.isArray(recordCheck.data?.nameMatchWarnings) ? recordCheck.data.nameMatchWarnings.length : 0;
+          if (selectedApp?.status === 'Pending' && (verifiedViolationCount > 0 || nameWarningCount > 0)) {
             setShowViolationConfirmModal(true);
             return;
           }
@@ -2482,42 +2528,55 @@ const FranchiseReviewPage = () => {
         isProcessing={isProcessing} 
       />
 
-      {showViolationConfirmModal && (
-        <div className="fixed inset-0 z-[10002] bg-black/60 flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg max-w-md w-full p-5 shadow-lg space-y-4">
-            <div className="flex items-start gap-3">
-              <AlertTriangle size={20} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
-              <div>
-                <h3 className="text-sm font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
-                  Prior Violation / Revocation Record Found
-                </h3>
-                <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1 leading-relaxed">
-                  {currentApp?.fullName} has {recordCheck.data?.violations?.length || 1} revoked franchise record(s). Send this application to the Municipal Cashier anyway?
-                </p>
+      {showViolationConfirmModal && (() => {
+        const verifiedViolationCount = recordCheck.data?.violations?.length || 0;
+        const nameMatchWarnings = Array.isArray(recordCheck.data?.nameMatchWarnings) ? recordCheck.data.nameMatchWarnings : [];
+        const hasVerifiedViolations = verifiedViolationCount > 0;
+        return (
+          <div className="fixed inset-0 z-[10002] bg-black/60 flex items-center justify-center p-4">
+            <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg max-w-md w-full p-5 shadow-lg space-y-4">
+              <div className="flex items-start gap-3">
+                {hasVerifiedViolations ? (
+                  <AlertTriangle size={20} className="text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+                ) : (
+                  <Info size={20} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                )}
+                <div>
+                  <h3 className="text-sm font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
+                    {hasVerifiedViolations
+                      ? 'Prior Violation / Revocation Record Found'
+                      : 'Possible Duplicate Name Match Found'}
+                  </h3>
+                  <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1 leading-relaxed">
+                    {hasVerifiedViolations
+                      ? `${currentApp?.fullName} has ${verifiedViolationCount} verified revoked franchise record(s) linked to this account or unit. Send this application to the Municipal Cashier anyway?`
+                      : `No verified violations belong to ${currentApp?.fullName}, but ${nameMatchWarnings.length} revoked record(s) on a different account/unit share a similar name. Verify applicant identity before proceeding to the Municipal Cashier.`}
+                  </p>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowViolationConfirmModal(false)}
+                  className="px-3.5 py-2 rounded-lg text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#E4E1DC] cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowViolationConfirmModal(false);
+                    handleUpdateStatus('For Payment', null, true);
+                  }}
+                  className="px-4 py-2 rounded-lg text-xs font-bold text-white bg-[#9E2A2B] hover:bg-[#7A1B22] cursor-pointer"
+                >
+                  Proceed to Cashier
+                </button>
               </div>
             </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setShowViolationConfirmModal(false)}
-                className="px-3.5 py-2 rounded-lg text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#E4E1DC] cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowViolationConfirmModal(false);
-                  handleUpdateStatus('For Payment', null, true);
-                }}
-                className="px-4 py-2 rounded-lg text-xs font-bold text-white bg-[#9E2A2B] hover:bg-[#7A1B22] cursor-pointer"
-              >
-                Proceed to Cashier
-              </button>
-            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 };

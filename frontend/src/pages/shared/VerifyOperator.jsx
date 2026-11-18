@@ -58,18 +58,130 @@ const VerifyOperator = () => {
     );
   }
 
-  const scannedStatus = operator.scannedFranchise?.status || '';
-  const isScannedUnitInvalid = ['Revoked', 'Suspended', 'Expired', 'Cancelled', 'Rejected'].includes(scannedStatus);
+  const isUnitExpiredByDate = (unit) => {
+    if (!unit?.expiryDate) return false;
+    const exp = new Date(unit.expiryDate);
+    return !isNaN(exp.getTime()) && exp.getTime() < Date.now();
+  };
+
+  const formatExpiryDate = (dateStr) => {
+    if (!dateStr) return null;
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return null;
+    return d.toLocaleDateString('en-US', {
+      timeZone: 'Asia/Manila',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+  };
+
+  const getUnitValidity = (unit) => {
+    if (!unit) return { isValid: false, label: 'INACTIVE', rawStatus: '' };
+    const expiredByDate = isUnitExpiredByDate(unit);
+    const hasValidExpiryDate = Boolean(unit?.expiryDate) && !isNaN(new Date(unit.expiryDate).getTime());
+    const ownerInactive =
+      operator.isActive === false ||
+      operator.validityStatus === 'INACTIVE_OWNER' ||
+      unit.validityStatus === 'INACTIVE_OWNER';
+    const unverifiedExpiry =
+      unit.validityStatus === 'UNVERIFIED_EXPIRY' ||
+      operator.validityStatus === 'UNVERIFIED_EXPIRY' ||
+      (['Active', 'Active - Under Warning'].includes(unit.status) && !hasValidExpiryDate && unit.isCurrentlyValid !== true);
+
+    const rawStatus = expiredByDate ? 'Expired' : (unit.status || '');
+    const statusAllowsValid = !unit.validityStatus || unit.validityStatus === 'VALID';
+    const isValid =
+      !ownerInactive &&
+      !unverifiedExpiry &&
+      !expiredByDate &&
+      statusAllowsValid &&
+      operator.isCurrentlyValid !== false &&
+      (typeof unit.isCurrentlyValid === 'boolean'
+        ? unit.isCurrentlyValid
+        : ['Active', 'Active - Under Warning'].includes(unit.status) && hasValidExpiryDate);
+
+    let label = unit.validityStatus;
+    if (ownerInactive) {
+      label = 'INACTIVE_OWNER';
+    } else if (unverifiedExpiry) {
+      label = 'UNVERIFIED_EXPIRY';
+    } else if (!label) {
+      if (isValid) label = 'VALID';
+      else if (rawStatus === 'Expired') label = 'EXPIRED';
+      else if (['Pending', 'Pending for Approval', 'For Payment', 'For Signing', 'Ready for Pickup', 'Cancellation Requested'].includes(rawStatus)) label = 'PENDING';
+      else label = 'INACTIVE';
+    } else if (expiredByDate && label === 'VALID') {
+      label = 'EXPIRED';
+    }
+
+    return { isValid, label, rawStatus };
+  };
+
+  const isOwnerInactive = operator.isActive === false || operator.validityStatus === 'INACTIVE_OWNER';
+  const isOverallUnverifiedExpiry = operator.validityStatus === 'UNVERIFIED_EXPIRY';
+  const scannedValidity = operator.scannedFranchise ? getUnitValidity(operator.scannedFranchise) : null;
+  const hasValidUnit =
+    !isOwnerInactive &&
+    !isOverallUnverifiedExpiry &&
+    operator.isCurrentlyValid !== false &&
+    (!operator.validityStatus || operator.validityStatus === 'VALID') &&
+    Array.isArray(operator.franchises) &&
+    operator.franchises.some(f => getUnitValidity(f).isValid);
+  const hasPendingUnit =
+    !isOwnerInactive &&
+    Array.isArray(operator.franchises) &&
+    operator.franchises.some(f => getUnitValidity(f).label === 'PENDING');
+
+  let bannerClasses = 'bg-[#9E2A2B] border-[#7A1B22]';
+  let bannerTitle = 'VERIFIED ACTIVE PERMIT';
+  if (scannedValidity) {
+    if (isOwnerInactive || scannedValidity.label === 'INACTIVE_OWNER') {
+      bannerClasses = 'bg-red-800 border-red-950';
+      bannerTitle = 'INACTIVE OWNER ACCOUNT — PERMIT NOT VALID';
+    } else if (isOverallUnverifiedExpiry || scannedValidity.label === 'UNVERIFIED_EXPIRY') {
+      bannerClasses = 'bg-red-800 border-red-950';
+      bannerTitle = 'UNVERIFIED PERMIT EXPIRY — NOT VERIFIED';
+    } else if (scannedValidity.isValid) {
+      bannerClasses = 'bg-[#9E2A2B] border-[#7A1B22]';
+      bannerTitle = scannedValidity.rawStatus === 'Active - Under Warning'
+        ? 'ACTIVE PERMIT (UNDER WARNING)'
+        : 'VERIFIED ACTIVE PERMIT';
+    } else if (scannedValidity.label === 'PENDING') {
+      bannerClasses = 'bg-amber-700 border-amber-900';
+      bannerTitle = `PERMIT NOT ACTIVE (${(scannedValidity.rawStatus || 'PENDING').toUpperCase()})`;
+    } else {
+      bannerClasses = 'bg-red-800 border-red-950';
+      bannerTitle = `PERMIT ${(scannedValidity.rawStatus || scannedValidity.label || 'INACTIVE').toUpperCase()}`;
+    }
+  } else {
+    if (isOwnerInactive) {
+      bannerClasses = 'bg-red-800 border-red-950';
+      bannerTitle = 'INACTIVE OWNER ACCOUNT';
+    } else if (isOverallUnverifiedExpiry) {
+      bannerClasses = 'bg-red-800 border-red-950';
+      bannerTitle = 'UNVERIFIED PERMIT EXPIRY';
+    } else if (hasValidUnit) {
+      bannerClasses = 'bg-[#9E2A2B] border-[#7A1B22]';
+      bannerTitle = 'VERIFIED OPERATOR';
+    } else if (hasPendingUnit) {
+      bannerClasses = 'bg-amber-700 border-amber-900';
+      bannerTitle = 'PENDING APPLICATION (NO ACTIVE PERMIT)';
+    } else {
+      bannerClasses = 'bg-red-800 border-red-950';
+      bannerTitle = 'NO ACTIVE PERMIT ON RECORD';
+    }
+  }
 
   return (
     <div className="min-h-[100dvh] bg-[#F6F5F3] dark:bg-[#14110F] flex flex-col items-center justify-center p-4">
       <div className="w-full max-w-md mx-auto">
-        <div className={`${isScannedUnitInvalid ? 'bg-red-800 border-red-950' : 'bg-[#9E2A2B] border-[#7A1B22]'} border-b rounded-t-lg pt-6 pb-16 px-6 text-center relative overflow-hidden`}>
+        <div className={`${bannerClasses} border-b rounded-t-lg pt-6 pb-16 px-6 text-center relative overflow-hidden`}>
           <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center mx-auto mb-3 shadow-md p-2">
             <img src="/gasan-logo.png" alt="LGU" className="w-full h-full object-contain" />
           </div>
           <h1 className="text-white font-bold tracking-tight text-lg mb-0.5">
-            {isScannedUnitInvalid ? `FRANCHISE ${scannedStatus.toUpperCase()}` : 'VERIFIED OPERATOR'}
+            {bannerTitle}
           </h1>
           <p className="text-[#F5E6B3] text-xs font-bold uppercase tracking-wider">Official LGU Record</p>
         </div>
@@ -114,17 +226,36 @@ const VerifyOperator = () => {
 
             {/* Franchise Info */}
             <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-3.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
-              {operator.scannedFranchise && (
-                <div className="mb-3 p-2.5 rounded-md bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 border border-[#9E2A2B]/30 dark:border-[#D4AF37]/40 flex items-center justify-between">
+              {operator.scannedFranchise && scannedValidity && (
+                <div className="mb-3 p-2.5 rounded-md bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 border border-[#9E2A2B]/30 dark:border-[#D4AF37]/40 flex items-center justify-between gap-2">
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-wider text-[#9E2A2B] dark:text-[#D4AF37]">Scanned MTOP Certificate Unit</p>
                     <p className="font-mono font-bold text-xs sm:text-sm text-[#1F1D1B] dark:text-white">Plate: {operator.scannedFranchise.plateNo} &bull; {operator.scannedFranchise.make}</p>
+                    {(operator.scannedFranchise.expiryDate || scannedValidity.label === 'UNVERIFIED_EXPIRY' || scannedValidity.label === 'INACTIVE_OWNER') && (
+                      <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] font-medium mt-0.5">
+                        {scannedValidity.label === 'INACTIVE_OWNER'
+                          ? 'Owner account is inactive'
+                          : scannedValidity.label === 'UNVERIFIED_EXPIRY'
+                          ? 'Permit expiry date is unverified'
+                          : scannedValidity.isValid
+                          ? `Valid until ${formatExpiryDate(operator.scannedFranchise.expiryDate)}`
+                          : scannedValidity.label === 'EXPIRED'
+                          ? `Expired on ${formatExpiryDate(operator.scannedFranchise.expiryDate)}`
+                          : `Status: ${scannedValidity.rawStatus || scannedValidity.label}`}
+                      </p>
+                    )}
                   </div>
-                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded text-white uppercase tracking-wider ${
-                    operator.scannedFranchise.status === 'Active' ? 'bg-emerald-600' :
-                    operator.scannedFranchise.status === 'Active - Under Warning' || operator.scannedFranchise.status === 'Pending' ? 'bg-amber-600' :
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded text-white uppercase tracking-wider shrink-0 ${
+                    scannedValidity.isValid && scannedValidity.rawStatus !== 'Active - Under Warning' ? 'bg-emerald-600' :
+                    scannedValidity.isValid || scannedValidity.label === 'PENDING' ? 'bg-amber-600' :
                     'bg-red-600'
-                  }`}>{operator.scannedFranchise.status}</span>
+                  }`}>
+                    {scannedValidity.label === 'INACTIVE_OWNER'
+                      ? 'INACTIVE OWNER'
+                      : scannedValidity.label === 'UNVERIFIED_EXPIRY'
+                      ? 'UNVERIFIED EXPIRY'
+                      : (scannedValidity.rawStatus || scannedValidity.label)}
+                  </span>
                 </div>
               )}
               <div className="flex items-center justify-between mb-2.5 border-b border-[#E4E1DC] dark:border-[#2E2A27] pb-2">
@@ -140,24 +271,42 @@ const VerifyOperator = () => {
                 </p>
               ) : (
                 <div className="space-y-2">
-                  {operator.franchises.map((f, i) => (
-                    <div key={i} className="bg-white dark:bg-[#1C1917] p-2.5 rounded-md border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-between">
-                      <div>
-                        <p className="text-xs font-bold font-mono text-[#1F1D1B] dark:text-white uppercase tracking-wider">{f.plateNo || 'PENDING'}</p>
-                        <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] font-medium truncate max-w-[150px]">
-                          {f.make} &bull; {f.motorNo}
-                        </p>
+                  {operator.franchises.map((f, i) => {
+                    const unitValidity = getUnitValidity(f);
+                    const effectiveStatus = unitValidity.label === 'INACTIVE_OWNER'
+                      ? 'INACTIVE OWNER'
+                      : unitValidity.label === 'UNVERIFIED_EXPIRY'
+                      ? 'UNVERIFIED EXPIRY'
+                      : (unitValidity.rawStatus || unitValidity.label);
+                    const expiryStr = formatExpiryDate(f.expiryDate);
+                    const subLabel = unitValidity.label === 'INACTIVE_OWNER'
+                      ? ' • Inactive Owner'
+                      : unitValidity.label === 'UNVERIFIED_EXPIRY'
+                      ? ' • Unverified Expiry'
+                      : unitValidity.isValid && expiryStr
+                      ? ` • Valid until ${expiryStr}`
+                      : unitValidity.label === 'EXPIRED' && expiryStr
+                      ? ` • Expired ${expiryStr}`
+                      : ` • ${unitValidity.label}`;
+                    return (
+                      <div key={i} className="bg-white dark:bg-[#1C1917] p-2.5 rounded-md border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-between gap-2">
+                        <div>
+                          <p className="text-xs font-bold font-mono text-[#1F1D1B] dark:text-white uppercase tracking-wider">{f.plateNo || 'PENDING'}</p>
+                          <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] font-medium truncate max-w-[200px]">
+                            {f.make || 'Tricycle Unit'}{subLabel}
+                          </p>
+                        </div>
+                        <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border shrink-0 ${
+                          unitValidity.isValid && effectiveStatus !== 'Active - Under Warning' ? 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 border-emerald-600/30' :
+                          unitValidity.isValid || unitValidity.label === 'PENDING' ? 'bg-amber-500/10 text-amber-800 dark:text-amber-300 border-amber-600/30' :
+                          ['Revoked', 'Suspended', 'Expired', 'Cancelled', 'Rejected'].includes(effectiveStatus) || ['INACTIVE', 'EXPIRED', 'INACTIVE_OWNER', 'UNVERIFIED_EXPIRY'].includes(unitValidity.label) ? 'bg-red-500/10 text-red-800 dark:text-red-300 border-red-600/30' :
+                          'bg-[#F6F5F3] text-[#6B6761] border-[#E4E1DC] dark:bg-[#2E2A27] dark:text-[#A8A29E] dark:border-[#3E3834]'
+                        }`}>
+                          {effectiveStatus}
+                        </span>
                       </div>
-                      <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border ${
-                        f.status === 'Active' ? 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 border-emerald-600/30' :
-                        f.status === 'Pending' || f.status === 'Active - Under Warning' ? 'bg-amber-500/10 text-amber-800 dark:text-amber-300 border-amber-600/30' :
-                        ['Revoked', 'Suspended', 'Expired', 'Cancelled', 'Rejected'].includes(f.status) ? 'bg-red-500/10 text-red-800 dark:text-red-300 border-red-600/30' :
-                        'bg-[#F6F5F3] text-[#6B6761] border-[#E4E1DC] dark:bg-[#2E2A27] dark:text-[#A8A29E] dark:border-[#3E3834]'
-                      }`}>
-                        {f.status}
-                      </span>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>

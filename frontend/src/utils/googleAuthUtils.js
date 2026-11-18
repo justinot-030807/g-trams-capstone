@@ -130,24 +130,33 @@ export const normalizeApiOrigin = (rawUrl) => {
 
 export const getCandidateBaseUrls = () => {
   const primary = normalizeApiOrigin(import.meta.env.VITE_API_URL);
-  const isLocal = primary.includes('localhost') || primary.includes('127.0.0.1');
-  if (isLocal) {
-    return [primary];
-  }
-  return [...new Set([primary, DIRECT_RENDER_URL].filter(Boolean))];
+  return [primary];
+};
+
+const SAFE_RETRY_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
+
+export const isSafeRetryMethod = (method, input) => {
+  const rawMethod =
+    method ||
+    (typeof Request !== 'undefined' && input instanceof Request ? input.method : 'GET') ||
+    'GET';
+  return SAFE_RETRY_METHODS.has(String(rawMethod).trim().toUpperCase());
 };
 
 /**
  * Resilient fetch wrapper that handles Render cold-start hibernation (429/502/503/504)
  * directly against Render without routing through the legacy Cloudflare Worker proxy.
+ * Retries are strictly limited to safe/idempotent HTTP methods (GET, HEAD, OPTIONS).
  */
 export const resilientApiFetch = async (path, options = {}, maxAttempts = 3) => {
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
   const baseUrls = getCandidateBaseUrls();
+  const canRetry = isSafeRetryMethod(options?.method);
+  const effectiveMaxAttempts = canRetry ? Math.max(1, maxAttempts) : 1;
   let lastError = null;
   let lastResponse = null;
 
-  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+  for (let attempt = 0; attempt < effectiveMaxAttempts; attempt++) {
     const baseUrl = baseUrls[attempt % baseUrls.length];
     const url = `${baseUrl}${cleanPath}`;
     try {
@@ -157,7 +166,7 @@ export const resilientApiFetch = async (path, options = {}, maxAttempts = 3) => 
       const isRateLimited429 = res.status === 429;
       const isBadGateway = res.status === 502 || res.status === 503 || res.status === 504;
 
-      if ((isRateLimited429 || isBadGateway) && attempt < maxAttempts - 1) {
+      if (canRetry && (isRateLimited429 || isBadGateway) && attempt < effectiveMaxAttempts - 1) {
         await new Promise(resolve => setTimeout(resolve, 700 * (attempt + 1)));
         continue;
       }
@@ -165,7 +174,7 @@ export const resilientApiFetch = async (path, options = {}, maxAttempts = 3) => 
       return res;
     } catch (err) {
       lastError = err;
-      if (attempt < maxAttempts - 1) {
+      if (canRetry && attempt < effectiveMaxAttempts - 1) {
         await new Promise(resolve => setTimeout(resolve, 700 * (attempt + 1)));
       }
     }
@@ -177,7 +186,8 @@ export const resilientApiFetch = async (path, options = {}, maxAttempts = 3) => 
 
 /**
  * Installs a global window.fetch interceptor so any legacy workers.dev request is
- * rewritten directly to https://g-trams-web2.onrender.com, with automatic retry on Render cold-start.
+ * rewritten directly to https://g-trams-web2.onrender.com, with automatic retry on Render cold-start
+ * strictly for safe/idempotent methods (GET, HEAD, OPTIONS).
  */
 export const installGlobalApiFetchInterceptor = () => {
   if (typeof window === 'undefined' || typeof window.fetch !== 'function' || window.__gtramsFetchInstalled) {
@@ -196,6 +206,11 @@ export const installGlobalApiFetchInterceptor = () => {
       : input;
 
     if (!targetUrl.startsWith(DIRECT_RENDER_URL)) {
+      return nativeFetch(targetUrl, init);
+    }
+
+    const canRetry = isSafeRetryMethod(init?.method, input);
+    if (!canRetry) {
       return nativeFetch(targetUrl, init);
     }
 

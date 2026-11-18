@@ -38,7 +38,7 @@ beforeAll(async () => {
         isActive: true,
         todaAssociation: 'BATODA'
     });
-    operatorToken = jwt.sign({ id: operatorUser._id, role: operatorUser.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    operatorToken = jwt.sign({ id: operatorUser._id, role: operatorUser.role, tokenVersion: operatorUser.tokenVersion || 0 }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
     // Operator 2 (for data isolation testing)
     operator2User = await User.create({
@@ -52,7 +52,7 @@ beforeAll(async () => {
         isActive: true,
         todaAssociation: 'PINGGAN TODA'
     });
-    operator2Token = jwt.sign({ id: operator2User._id, role: operator2User.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    operator2Token = jwt.sign({ id: operator2User._id, role: operator2User.role, tokenVersion: operator2User.tokenVersion || 0 }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
     // Admin
     adminUser = await User.create({
@@ -65,7 +65,7 @@ beforeAll(async () => {
         isVerified: true,
         isActive: true
     });
-    adminToken = jwt.sign({ id: adminUser._id, role: adminUser.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    adminToken = jwt.sign({ id: adminUser._id, role: adminUser.role, tokenVersion: adminUser.tokenVersion || 0 }, process.env.JWT_SECRET, { expiresIn: '1d' });
 }, 60000);
 
 afterAll(async () => {
@@ -327,6 +327,8 @@ describe('Operator Workflow & Field Operations Test Suite', () => {
             });
 
         expect(passRes.status).toBe(200);
+        expect(passRes.body.token).toBeDefined();
+        operatorToken = passRes.body.token;
 
         // Verify login with new password
         const loginRes = await request(app)

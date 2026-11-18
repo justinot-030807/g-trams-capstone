@@ -1,32 +1,16 @@
 const rateLimit = require('express-rate-limit');
 
 const resolveClientIp = (req) => {
-    const cfIp = req.headers?.['cf-connecting-ip'];
-    if (cfIp && typeof cfIp === 'string') return cfIp.trim();
-    const realIp = req.headers?.['x-real-ip'];
-    if (realIp && typeof realIp === 'string') return realIp.trim();
-    const forwardedFor = req.headers?.['x-forwarded-for'];
-    if (forwardedFor && typeof forwardedFor === 'string') {
-        const first = forwardedFor.split(',')[0]?.trim();
-        if (first) return first;
-    }
-    return req.ip || '127.0.0.1';
+    const ip = req?.ip || req?.socket?.remoteAddress || '127.0.0.1';
+    return String(ip).replace(/^::ffff:/, '').trim() || '127.0.0.1';
 };
 
 const resolveAuthKey = (req) => {
-    const ip = resolveClientIp(req);
-    if (process.env.FORCE_RATE_LIMIT) return ip;
-    const contactKey = String(req.body?.contact || req.body?.email || '').toLowerCase().trim();
-    return contactKey ? `${ip}:${contactKey}` : ip;
+    return resolveClientIp(req);
 };
 
 const resolveApiKey = (req) => {
-    const ip = resolveClientIp(req);
-    const authHeader = req.headers?.authorization;
-    if (authHeader && typeof authHeader === 'string' && authHeader.length > 16) {
-        return `${ip}:${authHeader.slice(-24)}`;
-    }
-    return ip;
+    return resolveClientIp(req);
 };
 
 // Flexible Rate Limiter Generator

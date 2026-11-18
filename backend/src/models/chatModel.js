@@ -7,9 +7,11 @@ const chatMessageSchema = new mongoose.Schema({
   targetToda: { type: String, default: 'ALL' },
   targetStatus: { type: String, default: 'ALL' },
   isRead: { type: Boolean, default: false },
+  readBy: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
 }, { timestamps: true });
 
 const chatThreadSchema = new mongoose.Schema({
+  owner: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null, index: true },
   participants: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
   lastMessage: { type: String, default: '' },
   lastMessageAt: { type: Date, default: Date.now },
@@ -18,6 +20,7 @@ const chatThreadSchema = new mongoose.Schema({
 
 chatThreadSchema.index({ participants: 1 });
 chatMessageSchema.index({ thread: 1, createdAt: 1 });
+chatMessageSchema.index({ thread: 1, createdAt: -1, _id: -1 });
 
 const ChatMessage = mongoose.model('ChatMessage', chatMessageSchema);
 const ChatThread = mongoose.model('ChatThread', chatThreadSchema);

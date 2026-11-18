@@ -7,12 +7,12 @@ const PushSubscription = require('../models/pushSubscriptionModel');
  * @param {Object} notificationData { title, body/message, url, type, icon, badge }
  */
 const sendPushToUser = async (userId, notificationData) => {
-  if (!userId) return { success: false, reason: 'No userId provided' };
+  if (!userId) return { success: false, sentCount: 0, totalCount: 0, reason: 'No userId provided' };
 
   try {
     const subscriptions = await PushSubscription.find({ user: userId });
     if (!subscriptions || subscriptions.length === 0) {
-      return { success: true, count: 0, reason: 'No push subscriptions found for user' };
+      return { success: true, count: 0, sentCount: 0, totalCount: 0, reason: 'No push subscriptions found for user' };
     }
 
     const {
@@ -77,7 +77,7 @@ const sendPushToUser = async (userId, notificationData) => {
     };
   } catch (error) {
     console.error('Error in sendPushToUser:', error.message);
-    return { success: false};
+    return { success: false, sentCount: 0, totalCount: 0 };
   }
 };
 

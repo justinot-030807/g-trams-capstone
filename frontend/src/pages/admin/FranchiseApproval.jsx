@@ -193,21 +193,44 @@ const FranchiseApproval = () => {
     showToast("Reverting previous action...", "info");
 
     try {
-      await Promise.all(toRevert.map(item => 
-        fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${item._id}/status`, {
-          method: 'PUT',
-          headers: { 
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ 
-            status: item.prevStatus,
-            cancelReason: '',
-            rejectedField: ''
-          })
-        })
-      ));
-      showToast(`Action undone! Reverted ${toRevert.length} application(s).`, "success");
+      const results = await Promise.all(toRevert.map(async (item) => {
+        try {
+          const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${item._id}/status`, {
+            method: 'PUT',
+            headers: { 
+              'Authorization': `Bearer ${localStorage.getItem('token')}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+              status: item.prevStatus,
+              expectedStatus: item.newStatus || undefined,
+              expectedUpdatedAt: item.updatedAt || undefined,
+              cancelReason: '',
+              rejectedField: ''
+            })
+          });
+          return { item, ok: res.ok, conflict: res.status === 409 };
+        } catch {
+          return { item, ok: false, conflict: false };
+        }
+      }));
+      const succeeded = results.filter(r => r.ok);
+      const conflictCount = results.filter(r => r.conflict).length;
+      const failedCount = results.length - succeeded.length;
+      if (conflictCount > 0 && succeeded.length === 0) {
+        showToast("Record status changed by another user. Refreshing queue...", "warning");
+      } else if (succeeded.length === 0) {
+        showToast("Failed to undo action.", "error");
+      } else if (failedCount > 0) {
+        showToast(
+          conflictCount > 0
+            ? `Reverted ${succeeded.length} application(s); ${conflictCount} already modified elsewhere — queue refreshed.`
+            : `Reverted ${succeeded.length} application(s); ${failedCount} failed.`,
+          "warning"
+        );
+      } else {
+        showToast(`Action undone! Reverted ${succeeded.length} application(s).`, "success");
+      }
       fetchApplications();
     } catch (err) {
       console.error('Undo error:', err);
@@ -236,12 +259,15 @@ const FranchiseApproval = () => {
         },
         body: JSON.stringify({ 
           status: status, 
+          expectedStatus: targetApp.status,
+          expectedUpdatedAt: targetApp.updatedAt,
           cancelReason: finalReason,
           rejectedField: status === 'Cancelled' ? (rejectedField || undefined) : undefined
         })
       });
 
       if (response.ok) {
+        const updatedDoc = await response.json().catch(() => null);
         const prevStatus = targetApp.status;
         setQuickApproveTarget(null);
         setQuickRejectTarget(null);
@@ -249,11 +275,19 @@ const FranchiseApproval = () => {
         fetchApplications();
 
         triggerUndoCountdown(
-          [{ _id: targetApp._id, prevStatus, name: targetApp.fullName }],
+          [{ _id: targetApp._id, prevStatus, newStatus: status, updatedAt: updatedDoc?.updatedAt, name: targetApp.fullName }],
           `Updated ${targetApp.fullName} to ${status}.`
         );
+      } else if (response.status === 409) {
+        const errData = await response.json().catch(() => ({}));
+        setQuickApproveTarget(null);
+        setQuickRejectTarget(null);
+        setActiveMenuId(null);
+        fetchApplications();
+        showToast(errData.message || 'Application status was updated by another user. Refreshing queue...', 'warning');
       } else {
-        showToast('Failed to update status. Please try again.', 'error');
+        const errData = await response.json().catch(() => ({}));
+        showToast(errData.message || 'Failed to update status. Please try again.', 'error');
       }
     } catch (error) {
       showToast('Network error. Cannot connect to server.', 'error');
@@ -347,29 +381,58 @@ const FranchiseApproval = () => {
         return;
       }
 
-      const promises = eligibleUnits.map(unit => 
-        fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${unit._id}/status`, {
-          method: 'PUT',
-          headers: { 
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ status: targetStatus })
-        })
-      );
+      const results = await Promise.all(eligibleUnits.map(async (unit) => {
+        try {
+          const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${unit._id}/status`, {
+            method: 'PUT',
+            headers: { 
+              'Authorization': `Bearer ${localStorage.getItem('token')}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ status: targetStatus, expectedStatus: unit.status, expectedUpdatedAt: unit.updatedAt })
+          });
+          const updatedDoc = res.ok ? await res.json().catch(() => null) : null;
+          return { unit, updatedAt: updatedDoc?.updatedAt, ok: res.ok, conflict: res.status === 409 };
+        } catch {
+          return { unit, updatedAt: undefined, ok: false, conflict: false };
+        }
+      }));
 
-      await Promise.all(promises);
+      const succeededResults = results.filter(r => r.ok);
+      const succeededUnits = succeededResults.map(r => r.unit);
+      const conflictCount = results.filter(r => r.conflict).length;
+      const failedUnits = results.filter(r => !r.ok).map(r => r.unit);
+      const failedCount = failedUnits.length;
 
-      const affected = eligibleUnits.map(u => ({ _id: u._id, prevStatus: u.status, name: u.fullName }));
-      setSelectedIds([]);
+      setSelectedIds(failedUnits.map(u => u._id));
       setBatchApproveModal(false);
       fetchApplications();
 
+      if (succeededUnits.length === 0) {
+        showToast(
+          conflictCount > 0
+            ? 'Selected unit(s) were already modified by another user. Queue refreshed.'
+            : 'Batch approval failed for all selected units.',
+          conflictCount > 0 ? 'warning' : 'error'
+        );
+        return;
+      }
+
+      if (failedCount > 0) {
+        showToast(
+          conflictCount > 0
+            ? `Processed ${succeededUnits.length} unit(s); ${conflictCount} already changed elsewhere — queue refreshed.`
+            : `Processed ${succeededUnits.length} unit(s), but ${failedCount} unit(s) failed.`,
+          'warning'
+        );
+      }
+
+      const affected = succeededResults.map(r => ({ _id: r.unit._id, prevStatus: r.unit.status, newStatus: targetStatus, updatedAt: r.updatedAt, name: r.unit.fullName }));
       triggerUndoCountdown(
         affected,
         targetStatus === 'Ready for Pickup'
-          ? `Marked ${eligibleUnits.length} units as signed and ready for pickup.`
-          : `Sent ${eligibleUnits.length} units to the cashier for payment.`
+          ? `Marked ${succeededUnits.length} unit(s) as signed and ready for pickup${failedCount > 0 ? ` (${failedCount} failed)` : ''}.`
+          : `Sent ${succeededUnits.length} unit(s) to the cashier for payment${failedCount > 0 ? ` (${failedCount} failed)` : ''}.`
       );
     } catch (error) {
       console.error('Error in batch action:', error);
@@ -392,26 +455,56 @@ const FranchiseApproval = () => {
         return;
       }
 
-      const promises = eligibleUnits.map(unit => 
-        fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${unit._id}/status`, {
-          method: 'PUT',
-          headers: { 
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({ status: 'Active' })
-        })
-      );
+      const results = await Promise.all(eligibleUnits.map(async (unit) => {
+        try {
+          const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${unit._id}/status`, {
+            method: 'PUT',
+            headers: { 
+              'Authorization': `Bearer ${localStorage.getItem('token')}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ status: 'Active', expectedStatus: unit.status, expectedUpdatedAt: unit.updatedAt })
+          });
+          const updatedDoc = res.ok ? await res.json().catch(() => null) : null;
+          return { unit, updatedAt: updatedDoc?.updatedAt, ok: res.ok, conflict: res.status === 409 };
+        } catch {
+          return { unit, updatedAt: undefined, ok: false, conflict: false };
+        }
+      }));
 
-      await Promise.all(promises);
-      const affected = eligibleUnits.map(u => ({ _id: u._id, prevStatus: u.status, name: u.fullName }));
-      setSelectedIds([]);
+      const succeededResults = results.filter(r => r.ok);
+      const succeededUnits = succeededResults.map(r => r.unit);
+      const conflictCount = results.filter(r => r.conflict).length;
+      const failedUnits = results.filter(r => !r.ok).map(r => r.unit);
+      const failedCount = failedUnits.length;
+
+      setSelectedIds(failedUnits.map(u => u._id));
       setBatchReleaseModal(false);
       fetchApplications();
 
+      if (succeededUnits.length === 0) {
+        showToast(
+          conflictCount > 0
+            ? 'Selected unit(s) were already modified by another user. Queue refreshed.'
+            : 'Batch release failed for all selected units.',
+          conflictCount > 0 ? 'warning' : 'error'
+        );
+        return;
+      }
+
+      if (failedCount > 0) {
+        showToast(
+          conflictCount > 0
+            ? `Released ${succeededUnits.length} unit(s); ${conflictCount} already changed elsewhere — queue refreshed.`
+            : `Released ${succeededUnits.length} unit(s), but ${failedCount} unit(s) failed.`,
+          'warning'
+        );
+      }
+
+      const affected = succeededResults.map(r => ({ _id: r.unit._id, prevStatus: r.unit.status, newStatus: 'Active', updatedAt: r.updatedAt, name: r.unit.fullName }));
       triggerUndoCountdown(
         affected,
-        `Released and activated ${eligibleUnits.length} franchise(s).`
+        `Released and activated ${succeededUnits.length} franchise(s)${failedCount > 0 ? ` (${failedCount} failed)` : ''}.`
       );
     } catch (error) {
       console.error('Error in batch release:', error);

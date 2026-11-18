@@ -25,10 +25,7 @@ const registerSchema = z.object({
         bodyNumber: z.string().trim().optional(),
         password: z.string().min(8, 'Password must be at least 8 characters'),
         confirmPassword: z.string().optional(),
-        role: z.preprocess(
-            () => 'operator',
-            z.literal('operator').default('operator')
-        ).optional(),
+        role: z.string().optional(),
         authProvider: z.enum(['local', 'google']).default('local'),
         googleId: z.string().optional(),
         profilePic: z.string().optional(),

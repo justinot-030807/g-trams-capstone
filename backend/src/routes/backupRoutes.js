@@ -16,7 +16,14 @@ const {
 // Multer memory storage for backup upload (up to 50MB)
 const upload = multer({
     storage: multer.memoryStorage(),
-    limits: { fileSize: 50 * 1024 * 1024 }
+    limits: { fileSize: 50 * 1024 * 1024 },
+    fileFilter: (req, file, cb) => {
+        const lowerName = String(file.originalname || '').toLowerCase();
+        if (lowerName.endsWith('.json.gz') || lowerName.endsWith('.json') || lowerName.endsWith('.gz')) {
+            return cb(null, true);
+        }
+        return cb(new Error('Only .json.gz or .json backup archives are allowed.'), false);
+    }
 });
 
 // All backup routes are strictly restricted to Admin / System Admin

@@ -14,9 +14,10 @@ const validate = (schema) => (req, res, next) => {
         next();
     } catch (err) {
         // Zod specific error mapping
-        if (err.errors) {
-            const formattedErrors = err.errors.map((e) => ({
-                field: e.path.join('.'),
+        const issues = err.issues || err.errors;
+        if (Array.isArray(issues)) {
+            const formattedErrors = issues.map((e) => ({
+                field: Array.isArray(e.path) ? e.path.join('.') : String(e.path || ''),
                 message: e.message,
             }));
             return errorResponse(res, 400, 'Validation Failed', formattedErrors);

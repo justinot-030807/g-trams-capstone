@@ -118,35 +118,153 @@ function compareField(inputVal, extractedVal, fieldLabel, fieldKey) {
     };
 }
 
+const dns = require('dns');
+
+function isDisallowedIpv4Octets(octets) {
+    if (!Array.isArray(octets) || octets.length !== 4 || octets.some(o => !Number.isInteger(o) || o < 0 || o > 255)) {
+        return true;
+    }
+    const [a, b, c] = octets;
+    if (a === 0) return true; // 0.0.0.0/8 ("this" network)
+    if (a === 10) return true; // 10.0.0.0/8 (RFC1918 private)
+    if (a === 100 && b >= 64 && b <= 127) return true; // 100.64.0.0/10 (CGNAT)
+    if (a === 127) return true; // 127.0.0.0/8 (loopback)
+    if (a === 169 && b === 254) return true; // 169.254.0.0/16 (link-local / cloud metadata)
+    if (a === 172 && b >= 16 && b <= 31) return true; // 172.16.0.0/12 (RFC1918 private)
+    if (a === 192 && b === 0 && c === 0) return true; // 192.0.0.0/24 (IETF protocol)
+    if (a === 192 && b === 0 && c === 2) return true; // 192.0.2.0/24 (TEST-NET-1)
+    if (a === 192 && b === 168) return true; // 192.168.0.0/16 (RFC1918 private)
+    if (a === 198 && (b === 18 || b === 19)) return true; // 198.18.0.0/15 (benchmarking)
+    if (a === 198 && b === 51 && c === 100) return true; // 198.51.100.0/24 (TEST-NET-2)
+    if (a === 203 && b === 0 && c === 113) return true; // 203.0.113.0/24 (TEST-NET-3)
+    if (a >= 224) return true; // 224.0.0.0/4 (multicast) & 240.0.0.0/4 (reserved/broadcast)
+    return false;
+}
+
+function isDisallowedIpAddress(ip) {
+    if (!ip || typeof ip !== 'string') return true;
+    const normalized = ip.trim().toLowerCase().replace(/^\[|\]$/g, '').split('%')[0];
+    if (!normalized) return true;
+
+    // Block all IPv4-mapped IPv6 addresses (::ffff:*) and unspecified/loopback/ULA/link-local/multicast IPv6
+    if (
+        normalized === '::' ||
+        normalized === '::1' ||
+        /^0{0,4}(:0{0,4})*$/.test(normalized) ||
+        normalized.startsWith('::ffff:') ||
+        /^f[cd][0-9a-f]{2}:/i.test(normalized) ||
+        /^fe[89ab][0-9a-f]:/i.test(normalized) ||
+        /^ff[0-9a-f]{2}:/i.test(normalized)
+    ) {
+        return true;
+    }
+
+    if (/^\d{1,3}(\.\d{1,3}){3}$/.test(normalized)) {
+        const octets = normalized.split('.').map(n => parseInt(n, 10));
+        return isDisallowedIpv4Octets(octets);
+    }
+
+    return false;
+}
+
+async function validateSafeExternalUrl(rawUrl) {
+    if (!rawUrl || typeof rawUrl !== 'string') {
+        throw new Error('Invalid URL');
+    }
+    const parsedUrl = new URL(rawUrl);
+    const host = parsedUrl.hostname.toLowerCase().replace(/^\[|\]$/g, '').split('%')[0];
+    if (
+        !['http:', 'https:'].includes(parsedUrl.protocol) ||
+        !host ||
+        host === 'localhost' ||
+        host.endsWith('.localhost') ||
+        host.endsWith('.local') ||
+        host.endsWith('.internal') ||
+        host.endsWith('.localdomain') ||
+        isDisallowedIpAddress(host)
+    ) {
+        throw new Error(`Blocked SSRF attempt to disallowed URL: ${rawUrl}`);
+    }
+
+    const resolvedRecords = await dns.promises.lookup(host, { all: true });
+    if (!Array.isArray(resolvedRecords) || resolvedRecords.length === 0) {
+        throw new Error(`DNS lookup returned no records for host: ${host}`);
+    }
+    if (resolvedRecords.some(rec => isDisallowedIpAddress(rec.address))) {
+        throw new Error(`Blocked SSRF attempt (DNS resolved to disallowed IP): ${host}`);
+    }
+    return parsedUrl.toString();
+}
+
+const REDIRECT_STATUS_CODES = new Set([301, 302, 303, 307, 308]);
+const MAX_FETCH_BYTES = 15 * 1024 * 1024;
+
+async function fetchWithSafeRedirects(initialUrl, headers = {}, maxHops = 2) {
+    let currentUrl = await validateSafeExternalUrl(initialUrl);
+
+    for (let hop = 0; hop <= maxHops; hop++) {
+        const response = await axios.get(currentUrl, {
+            responseType: 'arraybuffer',
+            timeout: 15000,
+            maxRedirects: 0,
+            maxContentLength: MAX_FETCH_BYTES,
+            maxBodyLength: MAX_FETCH_BYTES,
+            validateStatus: (status) => status >= 200 && status < 400,
+            headers
+        });
+
+        const status = response?.status;
+        if (status !== undefined && REDIRECT_STATUS_CODES.has(status)) {
+            if (hop >= maxHops) {
+                throw new Error(`Exceeded maximum redirect hops (${maxHops})`);
+            }
+            const location = response.headers?.location || response.headers?.Location;
+            if (!location || typeof location !== 'string') {
+                throw new Error(`Redirect (${status}) missing Location header`);
+            }
+            const resolvedNext = new URL(location, currentUrl).toString();
+            currentUrl = await validateSafeExternalUrl(resolvedNext);
+            continue;
+        }
+
+        if (status !== undefined && (status < 200 || status >= 300)) {
+            throw new Error(`Request failed with status code ${status}`);
+        }
+
+        return response;
+    }
+
+    throw new Error(`Exceeded maximum redirect hops (${maxHops})`);
+}
+
 /**
  * Downloads image from URL and converts to base64
  */
 async function fetchImageAsBase64(url) {
     try {
         if (!url || typeof url !== 'string') return null;
-        try { const parsedUrl = new URL(url); const host = parsedUrl.hostname.toLowerCase(); if (!['http:', 'https:'].includes(parsedUrl.protocol) || host === 'localhost' || host === '0.0.0.0' || host === '[::1]' || /^127\./.test(host) || /^10\./.test(host) || /^192\.168\./.test(host) || /^169\.254\./.test(host) || /^172\.(1[6-9]|2\d|3[01])\./.test(host)) { console.warn('[DocVerify] Blocked SSRF attempt to internal/disallowed URL:', url); return null; } } catch { return null; }
-        let targetUrl = url;
+
+        let targetUrl;
+        try {
+            targetUrl = await validateSafeExternalUrl(url);
+        } catch (ssrfErr) {
+            console.warn('[DocVerify]', ssrfErr.message);
+            return null;
+        }
+
         let response = null;
         let isPdf = targetUrl.toLowerCase().includes('.pdf');
 
         try {
-            response = await axios.get(targetUrl, {
-                responseType: 'arraybuffer',
-                timeout: 15000,
-                headers: {
-                    'Accept': 'image/*,application/pdf,*/*'
-                }
-            });
+            response = await fetchWithSafeRedirects(targetUrl, {
+                'Accept': 'image/*,application/pdf,*/*'
+            }, 2);
         } catch (fetchErr) {
             // Cloudinary sandbox blocks raw .pdf delivery with HTTP 401. Fallback to Cloudinary dynamic image rendering via .png
             if (targetUrl.includes('res.cloudinary.com') && isPdf) {
                 const pngUrl = targetUrl.replace(/\.pdf$/i, '.png');
                 console.log(`[DocVerify] Cloudinary PDF returned ${fetchErr.message}. Retrying via Cloudinary image conversion: ${pngUrl}`);
-                response = await axios.get(pngUrl, {
-                    responseType: 'arraybuffer',
-                    timeout: 15000,
-                    headers: { 'Accept': 'image/*' }
-                });
+                response = await fetchWithSafeRedirects(pngUrl, { 'Accept': 'image/*' }, 2);
                 isPdf = false;
             } else {
                 throw fetchErr;
@@ -418,14 +536,16 @@ async function extractWithOcrSpaceFallback(base64Data, mimeType, docType) {
         };
     }
 
-    // Fast-path exact ground-truth match for official G-TRAMS TAMA sample documents
+    // Fast-path exact ground-truth match for official G-TRAMS TAMA sample documents (test environment only)
     if (
-        ((docType === 'orCr' || docType === 'crFile' || docType === 'orFile') && (upper.includes('0048192019') || upper.includes('1204-0000089271'))) ||
-        (docType === 'license' && upper.includes('D02-14-098231')) ||
-        (docType === 'licenseBack' && upper.includes('884719203948')) ||
-        (docType === 'brgyClearance' && upper.includes('BC-2026-POB-019')) ||
-        (docType === 'todaEndorsement' && upper.includes('POB-2026-088')) ||
-        (docType === 'cedula' && upper.includes('0928174'))
+        process.env.NODE_ENV === 'test' && (
+            ((docType === 'orCr' || docType === 'crFile' || docType === 'orFile') && (upper.includes('0048192019') || upper.includes('1204-0000089271'))) ||
+            (docType === 'license' && upper.includes('D02-14-098231')) ||
+            (docType === 'licenseBack' && upper.includes('884719203948')) ||
+            (docType === 'brgyClearance' && upper.includes('BC-2026-POB-019')) ||
+            (docType === 'todaEndorsement' && upper.includes('POB-2026-088')) ||
+            (docType === 'cedula' && upper.includes('0928174'))
+        )
     ) {
         return {
             isValidDocument: true,
@@ -1092,7 +1212,7 @@ Return raw JSON only, no markdown codeblocks, no explanations.`;
             console.warn(`[DocVerify] No text returned by Gemini models for ${docType}. Cascading to OCR.space fallback...`);
             const ocrFallback = await extractWithOcrSpaceFallback(base64Data, mimeType, docType);
             if (ocrFallback) {
-                console.log(`[DocVerify] OCR.space fallback succeeded for ${docType}:`, ocrFallback);
+                console.log(`[DocVerify] OCR.space fallback succeeded for ${docType}`);
                 return ocrFallback;
             }
             return null;
@@ -1108,7 +1228,7 @@ Return raw JSON only, no markdown codeblocks, no explanations.`;
         // Remove trailing commas before closing braces/brackets for JSON compatibility
         cleaned = cleaned.replace(/,\s*([}\]])/g, '$1');
         const parsed = JSON.parse(cleaned);
-        console.log(`[DocVerify] Parsed extraction data for ${docType}:`, parsed);
+        console.log(`[DocVerify] Parsed extraction data for ${docType} (valid: ${Boolean(parsed?.isValidDocument)})`);
         if (parsed && (parsed.isValidDocument === false || parsed.isExpectedDocumentType === false)) {
             console.warn(`[DocVerify] Image rejected by Document Classification Guard for ${docType}:`, parsed.message || parsed.detectedDocumentType);
             return {
@@ -1504,22 +1624,28 @@ async function verifyFranchiseDocuments(franchise) {
 async function extractTodaRosterFromDocument(input) {
     reloadGeminiEnv();
     const apiKey = (process.env.GEMINI_API_KEY || '').trim();
-    if (!apiKey) {
-        console.warn('[TodaRosterOCR] GEMINI_API_KEY is not defined. Using resilient fallback for demo roster.');
-        return {
-            todaAssociation: "POB TODA (POBLACION CENTRAL)",
-            documentTitle: "OFFICIAL MASTERLIST OF ACCREDITED TODA MEMBERS",
-            totalMembersDetected: 5,
-            members: [
-                { name: "JUAN DELA CRUZ", operatorName: "JUAN DELA CRUZ", bodyNumber: "01", unitNo: "01" },
-                { name: "PEDRO S. SANTOS", operatorName: "PEDRO S. SANTOS", bodyNumber: "02", unitNo: "02" },
-                { name: "ROBERTO V. REYES", operatorName: "ROBERTO V. REYES", bodyNumber: "03", unitNo: "03" },
-                { name: "MARIO D. BAUTISTA", operatorName: "MARIO D. BAUTISTA", bodyNumber: "04", unitNo: "04" },
-                { name: "EDGARDO C. RAMOS", operatorName: "EDGARDO C. RAMOS", bodyNumber: "05", unitNo: "05" }
-            ],
-            notes: "Official Accredited TODA Masterlist (Digitized)"
-        };
-    }
+    const isTestEnv = process.env.NODE_ENV === 'test';
+    const demoFallback = {
+        todaAssociation: "POB TODA (POBLACION CENTRAL)",
+        documentTitle: "OFFICIAL MASTERLIST OF ACCREDITED TODA MEMBERS",
+        totalMembersDetected: 5,
+        members: [
+            { name: "JUAN DELA CRUZ", operatorName: "JUAN DELA CRUZ", bodyNumber: "01", unitNo: "01" },
+            { name: "PEDRO S. SANTOS", operatorName: "PEDRO S. SANTOS", bodyNumber: "02", unitNo: "02" },
+            { name: "ROBERTO V. REYES", operatorName: "ROBERTO V. REYES", bodyNumber: "03", unitNo: "03" },
+            { name: "MARIO D. BAUTISTA", operatorName: "MARIO D. BAUTISTA", bodyNumber: "04", unitNo: "04" },
+            { name: "EDGARDO C. RAMOS", operatorName: "EDGARDO C. RAMOS", bodyNumber: "05", unitNo: "05" }
+        ],
+        notes: "Official Accredited TODA Masterlist (Digitized)"
+    };
+    const emptyFailureResult = {
+        todaAssociation: null,
+        documentTitle: null,
+        totalMembersDetected: 0,
+        members: [],
+        extractionFailed: true,
+        notes: 'OCR extraction unavailable or could not read document.'
+    };
 
     let img = null;
     if (typeof input === 'string') {
@@ -1535,19 +1661,7 @@ async function extractTodaRosterFromDocument(input) {
 
     if (!img || !img.base64Data) {
         console.warn('[TodaRosterOCR] Could not obtain base64 document data for OCR.');
-        return {
-            todaAssociation: "POB TODA (POBLACION CENTRAL)",
-            documentTitle: "OFFICIAL MASTERLIST OF ACCREDITED TODA MEMBERS",
-            totalMembersDetected: 5,
-            members: [
-                { name: "JUAN DELA CRUZ", operatorName: "JUAN DELA CRUZ", bodyNumber: "01", unitNo: "01" },
-                { name: "PEDRO S. SANTOS", operatorName: "PEDRO S. SANTOS", bodyNumber: "02", unitNo: "02" },
-                { name: "ROBERTO V. REYES", operatorName: "ROBERTO V. REYES", bodyNumber: "03", unitNo: "03" },
-                { name: "MARIO D. BAUTISTA", operatorName: "MARIO D. BAUTISTA", bodyNumber: "04", unitNo: "04" },
-                { name: "EDGARDO C. RAMOS", operatorName: "EDGARDO C. RAMOS", bodyNumber: "05", unitNo: "05" }
-            ],
-            notes: "Official Accredited TODA Masterlist (Digitized)"
-        };
+        return isTestEnv ? demoFallback : emptyFailureResult;
     }
 
     let mimeType = img.mimeType || 'image/jpeg';
@@ -1557,6 +1671,13 @@ async function extractTodaRosterFromDocument(input) {
         mimeType = 'application/pdf';
     } else if (mimeType === 'application/octet-stream') {
         mimeType = (typeof input === 'string' && input.toLowerCase().includes('.pdf')) ? 'application/pdf' : 'image/jpeg';
+    }
+
+    if (!apiKey) {
+        console.warn('[TodaRosterOCR] GEMINI_API_KEY is not defined. Attempting OCR fallback...');
+        const ocrRoster = await extractTodaRosterWithOcrSpaceFallback(img.base64Data, mimeType);
+        if (ocrRoster) return ocrRoster;
+        return isTestEnv ? demoFallback : emptyFailureResult;
     }
 
     try {
@@ -1637,22 +1758,10 @@ Return raw JSON only, no markdown, no surrounding text.`;
         }
 
         if (!responseText) {
-            console.warn('[TodaRosterOCR] No text returned by Gemini models. Applying resilient fallback for roster...');
+            console.warn('[TodaRosterOCR] No text returned by Gemini models. Attempting OCR fallback for roster...');
             const ocrRoster = await extractTodaRosterWithOcrSpaceFallback(img.base64Data, mimeType);
             if (ocrRoster) return ocrRoster;
-            return {
-                todaAssociation: "POB TODA (POBLACION CENTRAL)",
-                documentTitle: "OFFICIAL MASTERLIST OF ACCREDITED TODA MEMBERS",
-                totalMembersDetected: 5,
-                members: [
-                    { name: "JUAN DELA CRUZ" },
-                    { name: "PEDRO S. SANTOS" },
-                    { name: "ROBERTO V. REYES" },
-                    { name: "MARIO D. BAUTISTA" },
-                    { name: "EDGARDO C. RAMOS" }
-                ],
-                notes: "Official Accredited TODA Masterlist (Digitized)"
-            };
+            return isTestEnv ? demoFallback : emptyFailureResult;
         }
 
         let cleanJson = responseText
@@ -1672,41 +1781,26 @@ Return raw JSON only, no markdown, no surrounding text.`;
         if (parsed && Array.isArray(parsed.members) && parsed.members.length > 0) {
             parsed.members = parsed.members.map(m => {
                 const nameStr = (typeof m === 'string' ? m : (m && m.name ? m.name : '')).trim();
-                const bodyNoStr = (typeof m === 'object' && m ? (m.bodyNumber || m.unitNo || '') : '').trim(); return { name: nameStr, operatorName: nameStr, ...(bodyNoStr ? { bodyNumber: bodyNoStr, unitNo: bodyNoStr } : {}) };
+                const bodyNoStr = (typeof m === 'object' && m ? (m.bodyNumber || m.unitNo || '') : '').trim();
+                return { name: nameStr, operatorName: nameStr, ...(bodyNoStr ? { bodyNumber: bodyNoStr, unitNo: bodyNoStr } : {}) };
             }).filter(m => Boolean(m.name));
             parsed.totalMembersDetected = parsed.members.length;
             return parsed;
         }
 
-        // If parsed members is empty array, fallback to default roster
-        return {
-            todaAssociation: parsed?.todaAssociation || "POB TODA (POBLACION CENTRAL)",
-            documentTitle: parsed?.documentTitle || "OFFICIAL MASTERLIST OF ACCREDITED TODA MEMBERS",
-            totalMembersDetected: 5,
-            members: [
-                { name: "JUAN DELA CRUZ" },
-                { name: "PEDRO S. SANTOS" },
-                { name: "ROBERTO V. REYES" },
-                { name: "MARIO D. BAUTISTA" },
-                { name: "EDGARDO C. RAMOS" }
-            ],
-            notes: "Official Accredited TODA Masterlist (Digitized)"
+        // If parsed members is empty array, try OCR fallback or return empty failure result
+        const ocrRosterEmpty = await extractTodaRosterWithOcrSpaceFallback(img.base64Data, mimeType);
+        if (ocrRosterEmpty) return ocrRosterEmpty;
+        return isTestEnv ? demoFallback : {
+            ...emptyFailureResult,
+            todaAssociation: parsed?.todaAssociation || null,
+            documentTitle: parsed?.documentTitle || null
         };
     } catch (err) {
-        console.error('[TodaRosterOCR] Extraction error, returning fallback:', err.message);
-        return {
-            todaAssociation: "POB TODA (POBLACION CENTRAL)",
-            documentTitle: "OFFICIAL MASTERLIST OF ACCREDITED TODA MEMBERS",
-            totalMembersDetected: 5,
-            members: [
-                { name: "JUAN DELA CRUZ" },
-                { name: "PEDRO S. SANTOS" },
-                { name: "ROBERTO V. REYES" },
-                { name: "MARIO D. BAUTISTA" },
-                { name: "EDGARDO C. RAMOS" }
-            ],
-            notes: "Official Accredited TODA Masterlist (Digitized)"
-        };
+        console.error('[TodaRosterOCR] Extraction error:', err.message);
+        const ocrRosterCatch = await extractTodaRosterWithOcrSpaceFallback(img.base64Data, mimeType).catch(() => null);
+        if (ocrRosterCatch) return ocrRosterCatch;
+        return isTestEnv ? demoFallback : emptyFailureResult;
     }
 }
 

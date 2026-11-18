@@ -14,6 +14,7 @@ import {
   getNotificationVisuals, 
   formatRelativeTime 
 } from '../utils/notificationUtils';
+import { unsubscribeFromPush } from '../utils/pushNotification';
 
 const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
   const { t, language, changeLanguage } = useLanguage();
@@ -635,14 +636,32 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
 
               <div className="pt-1 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
                 <button
-                  onClick={() => {
+                  onClick={async () => {
+                    await unsubscribeFromPush().catch(() => {});
+                    try {
+                      Object.keys(localStorage).forEach((key) => {
+                        if (
+                          key.startsWith('gtrams_cached_franchises') ||
+                          key.startsWith('gtrams_apply_draft') ||
+                          key.startsWith('gtrams_renewal_draft')
+                        ) {
+                          localStorage.removeItem(key);
+                        }
+                      });
+                    } catch {}
                     localStorage.removeItem('token');
                     localStorage.removeItem('role');
                     localStorage.removeItem('name');
                     localStorage.removeItem('user');
                     localStorage.removeItem('userId');
                     localStorage.removeItem('gtrams_apply_draft');
-                    localStorage.removeItem('reapply_target'); localStorage.removeItem('gtrams_cached_franchises'); if (window.caches) { window.caches.delete('api-cache').catch(() => {}); }
+                    localStorage.removeItem('reapply_target');
+                    localStorage.removeItem('gtrams_cached_franchises');
+                    localStorage.removeItem('gtrams_cached_notifications');
+                    localStorage.removeItem('gtrams_all_notifs_read_at');
+                    if (window.caches) { window.caches.delete('api-cache').catch(() => {}); }
+                    window.dispatchEvent(new Event('gtrams-auth-changed'));
+                    window.dispatchEvent(new Event('gtrams-auth-change'));
                     navigate('/login');
                   }}
                   className="w-full px-4 py-2 text-left text-xs font-semibold text-[#B91C1C] dark:text-[#EF4444] hover:bg-[#B91C1C]/10 flex items-center gap-2.5 transition-colors cursor-pointer"

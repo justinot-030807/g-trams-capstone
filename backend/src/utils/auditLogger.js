@@ -57,16 +57,16 @@ function buildHumanSummary(action, targetType, details = {}) {
 
 /**
  * Asynchronously records an administrative or security event in the audit trail.
- * Does not throw errors to avoid disrupting primary operations.
+ * Returns the persisted AuditLog entry (or null on non-strict failure).
+ * Callers performing critical deletions/revocations may await logAudit(..., { throwOnError: true }).
  */
-const logAudit = async (req, { action, targetType = 'General', targetId = '', details = {} }) => {
+const logAudit = async (req, { action, targetType = 'General', targetId = '', details = {}, throwOnError = false }) => {
     try {
         const actor = req?.user || {};
-        const rawIp = req?.headers?.['x-forwarded-for']?.split(',')[0].trim() || 
-                      req?.socket?.remoteAddress || 
-                      req?.ip || 
+        const rawIp = req?.ip ||
+                      req?.socket?.remoteAddress ||
                       '127.0.0.1';
-        const normalizedIp = rawIp.replace(/^::ffff:/, '');
+        const normalizedIp = String(rawIp).replace(/^::ffff:/, '').trim() || '127.0.0.1';
         const rawActorName = actor.name || 'System Administrator';
         const normalizedActorName = rawActorName === 'BPLO Licensing Officer'
             ? 'LLSA I — Local Legislative Staff Assistant I (Madhelyn Pastoral)'
@@ -85,7 +85,7 @@ const logAudit = async (req, { action, targetType = 'General', targetId = '', de
         };
         enrichedDetails.summary = buildHumanSummary(action, targetType, enrichedDetails);
 
-        await AuditLog.create({
+        const entry = await AuditLog.create({
             action,
             actorId: actor._id || null,
             actorName: normalizedActorName,
@@ -95,8 +95,19 @@ const logAudit = async (req, { action, targetType = 'General', targetId = '', de
             details: enrichedDetails,
             ipAddress: normalizedIp
         });
+        return entry;
     } catch (err) {
-        console.error('[AUDIT LOG ERROR]: Failed to persist audit entry:', err.message);
+        console.error('[AUDIT LOG ERROR]: Failed to persist audit entry:', {
+            action,
+            targetType,
+            targetId: String(targetId || ''),
+            error: err.message,
+            stack: err.stack
+        });
+        if (throwOnError) {
+            throw err;
+        }
+        return null;
     }
 };
 
