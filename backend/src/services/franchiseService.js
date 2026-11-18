@@ -139,22 +139,54 @@ class FranchiseService {
      * Create a new franchise application
      */
     static async createFranchise(data, operatorId) {
-        const motorNo = (data.motorNo || '').trim();
-        const chassisNo = (data.chassisNo || '').trim();
-        const plateNo = (data.plateNo || '').trim().toUpperCase();
-        
-        const existingTricycle = await Franchise.findOne({ 
-            $or: [{ motorNo }, { chassisNo }, { plateNo }],
-            isArchived: { $ne: true },
-            status: { $nin: ['Cancelled'] }
-        });
-                
-        if (existingTricycle) {
-            throw new Error('Tricycle (Plate/Motor/Chassis) is already registered.'); } await Franchise.updateMany({ $or: [{ motorNo }, { chassisNo }, { plateNo }], status: 'Cancelled', isArchived: false }, { $set: { isArchived: true } }); if (operatorId) { const SystemSettings = require('../models/systemSettingsModel'); const sysSettings = await SystemSettings.findOne().sort({ updatedAt: -1, createdAt: -1 }).lean(); const maxUnits = Number(sysSettings?.maxUnitsPerOperator) || 2; const currentActiveOrPending = await Franchise.countDocuments({ operator: operatorId, isArchived: { $ne: true }, status: { $nin: ['Cancelled', 'Rejected', 'Revoked', 'Expired'] } }); if (currentActiveOrPending >= maxUnits) { throw new Error(`Maximum fleet limit reached (${maxUnits} units per operator).`); }
+        const motorNo = String(data.motorNo || '').trim().toUpperCase();
+        const chassisNo = String(data.chassisNo || '').trim().toUpperCase();
+        const plateNo = String(data.plateNo || '').trim().toUpperCase();
+
+        const escapeRegex = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const identifierMatchers = [];
+        if (motorNo) identifierMatchers.push({ motorNo: { $regex: new RegExp(`^${escapeRegex(motorNo)}$`, 'i') } });
+        if (chassisNo) identifierMatchers.push({ chassisNo: { $regex: new RegExp(`^${escapeRegex(chassisNo)}$`, 'i') } });
+        if (plateNo) identifierMatchers.push({ plateNo: { $regex: new RegExp(`^${escapeRegex(plateNo)}$`, 'i') } });
+
+        if (identifierMatchers.length > 0) {
+            const existingTricycle = await Franchise.findOne({
+                $or: identifierMatchers,
+                isArchived: { $ne: true },
+                status: { $nin: ['Cancelled'] }
+            });
+
+            if (existingTricycle) {
+                throw new Error('Tricycle (Plate/Motor/Chassis) is already registered.');
+            }
+            await Franchise.updateMany(
+                { $or: identifierMatchers, status: 'Cancelled', isArchived: false },
+                { $set: { isArchived: true } }
+            );
         }
 
-        // Safe date parsing
-        const parsedCedulaDate = data.cedulaDate && !isNaN(new Date(data.cedulaDate).getTime()) ? new Date(data.cedulaDate) : new Date();
+        const SystemSettings = require('../models/systemSettingsModel');
+        const sysSettings = await SystemSettings.findOne().sort({ updatedAt: -1, createdAt: -1 }).lean().catch(() => null);
+        if (sysSettings?.maintenanceMode === true) {
+            const maintErr = new Error(sysSettings.maintenanceMessage || 'System is currently undergoing maintenance. New franchise applications are temporarily suspended.');
+            maintErr.statusCode = 503;
+            throw maintErr;
+        }
+
+        const maxUnits = Number(sysSettings?.maxUnitsPerOperator) || 2;
+        if (operatorId) {
+            const currentActiveOrPending = await Franchise.countDocuments({
+                operator: operatorId,
+                isArchived: { $ne: true },
+                status: { $nin: ['Cancelled', 'Rejected', 'Revoked', 'Expired'] }
+            });
+            if (currentActiveOrPending >= maxUnits) {
+                throw new Error(`Maximum fleet limit reached (${maxUnits} units per operator).`);
+            }
+        }
+
+        // Safe date parsing (never synthesize fake cedula metadata when omitted)
+        const parsedCedulaDate = data.cedulaDate && !isNaN(new Date(data.cedulaDate).getTime()) ? new Date(data.cedulaDate) : undefined;
         const parsedDateApplied = data.dateApplied && !isNaN(new Date(data.dateApplied).getTime()) ? new Date(data.dateApplied) : new Date();
 
         const franchise = await Franchise.create({
@@ -169,8 +201,8 @@ class FranchiseService {
             plateNo, 
             todaName: data.todaName,
             cedulaDate: parsedCedulaDate,
-            cedulaAddress: data.cedulaAddress || 'Gasan, Marinduque',
-            cedulaSerialNo: data.cedulaSerialNo || '000000',
+            cedulaAddress: data.cedulaAddress ? String(data.cedulaAddress).trim() : undefined,
+            cedulaSerialNo: data.cedulaSerialNo ? String(data.cedulaSerialNo).trim() : undefined,
             cedulaAmount: 0,
             cedulaYear: data.cedulaYear || '',
             cedulaPlaceIssued: data.cedulaPlaceIssued || data.cedulaAddress || '',
@@ -186,10 +218,10 @@ class FranchiseService {
             cedulaTin: data.cedulaTin || '',
             cedulaDetails: data.cedulaDetails || (data.aiScannedData?.cedula || null),
             applicationType: data.applicationType || 'New',
-            status: data.status || 'Pending',
+            status: 'Pending',
             dateApplied: parsedDateApplied,
-            approvalDate: data.approvalDate && !isNaN(new Date(data.approvalDate).getTime()) ? new Date(data.approvalDate) : undefined,
-            expiryDate: data.expiryDate && !isNaN(new Date(data.expiryDate).getTime()) ? new Date(data.expiryDate) : (data.approvalDate ? computeManilaExpiryDate(data.approvalDate) : undefined),
+            approvalDate: undefined,
+            expiryDate: undefined,
             orCrUrl: data.orCrUrl, 
             crUrl: data.crUrl || '',
             orUrl: data.orUrl || '',
@@ -245,6 +277,27 @@ class FranchiseService {
             aiScannedData: data.aiScannedData || null,
             aiDiscrepancies: data.aiDiscrepancies || []
         });
+
+        // Post-insert fleet limit guard against concurrent submissions by the same operator
+        if (operatorId) {
+            const activeDocs = await Franchise.find({
+                operator: operatorId,
+                isArchived: { $ne: true },
+                status: { $nin: ['Cancelled', 'Rejected', 'Revoked', 'Expired'] }
+            }).sort({ createdAt: 1, _id: 1 }).select('_id').lean();
+            if (activeDocs.length > maxUnits) {
+                const allowedIds = new Set(activeDocs.slice(0, maxUnits).map(d => String(d._id)));
+                if (!allowedIds.has(String(franchise._id))) {
+                    try {
+                        await Franchise.deleteOne({ _id: franchise._id });
+                    } catch (cleanupErr) {
+                        console.error(`[FranchiseService] CRITICAL: Compensating delete failed for franchise ${franchise._id} after fleet-limit race:`, cleanupErr);
+                        throw cleanupErr;
+                    }
+                    throw new Error(`Maximum fleet limit reached (${maxUnits} units per operator).`);
+                }
+            }
+        }
 
         return await franchise.populate('operator', 'name address contact');
     }

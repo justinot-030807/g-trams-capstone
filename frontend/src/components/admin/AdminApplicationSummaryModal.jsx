@@ -593,6 +593,8 @@ const AdminApplicationSummaryModal = ({
                 <iframe
                   src={previewDoc.url}
                   title={previewDoc.label}
+                  sandbox="allow-same-origin"
+                  referrerPolicy="no-referrer"
                   className="w-full h-[70vh] rounded-lg border border-[#2E2A27] bg-white"
                 />
               ) : (

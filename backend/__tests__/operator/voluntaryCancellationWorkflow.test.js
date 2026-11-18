@@ -38,7 +38,7 @@ beforeAll(async () => {
         isActive: true,
         todaAssociation: 'BATODA'
     });
-    operatorToken = jwt.sign({ id: operatorUser._id, role: operatorUser.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    operatorToken = jwt.sign({ id: operatorUser._id, role: operatorUser.role, tokenVersion: operatorUser.tokenVersion || 0 }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
     // Operator 2
     operator2User = await User.create({
@@ -52,7 +52,7 @@ beforeAll(async () => {
         isActive: true,
         todaAssociation: 'PINGGAN TODA'
     });
-    operator2Token = jwt.sign({ id: operator2User._id, role: operator2User.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    operator2Token = jwt.sign({ id: operator2User._id, role: operator2User.role, tokenVersion: operator2User.tokenVersion || 0 }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
     // BPLO Staff (strictly bplo_staff role to adhere to Separation of Duties)
     staffUser = await User.create({
@@ -65,7 +65,7 @@ beforeAll(async () => {
         isVerified: true,
         isActive: true
     });
-    staffToken = jwt.sign({ id: staffUser._id, role: staffUser.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    staffToken = jwt.sign({ id: staffUser._id, role: staffUser.role, tokenVersion: staffUser.tokenVersion || 0 }, process.env.JWT_SECRET, { expiresIn: '1d' });
 }, 60000);
 
 afterAll(async () => {

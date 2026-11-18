@@ -13,6 +13,15 @@ router.get('/vapid-public-key', (req, res) => {
 // All routes below require authentication
 router.use(protect);
 
+function sanitizePreferences(rawPrefs) {
+  const prefs = rawPrefs && typeof rawPrefs === 'object' ? rawPrefs : {};
+  return {
+    statusUpdates: prefs.statusUpdates !== undefined ? Boolean(prefs.statusUpdates) : true,
+    renewalReminders: prefs.renewalReminders !== undefined ? Boolean(prefs.renewalReminders) : true,
+    announcements: prefs.announcements !== undefined ? Boolean(prefs.announcements) : true
+  };
+}
+
 // Save or update a push subscription
 router.post('/subscribe', async (req, res) => {
   try {
@@ -34,9 +43,15 @@ router.post('/subscribe', async (req, res) => {
     }
     const userAgent = req.headers['user-agent'] || '';
 
-    // Update if endpoint exists, otherwise insert
+    // Verify ownership if endpoint already exists
+    const existingSub = await PushSubscription.findOne({ endpoint }).select('user').lean();
+    if (existingSub && existingSub.user && String(existingSub.user) !== String(req.user._id)) {
+      return res.status(403).json({ message: 'Subscription endpoint is already bound to another user account' });
+    }
+
+    // Update if endpoint exists for this user, otherwise insert
     const updatedSub = await PushSubscription.findOneAndUpdate(
-      { endpoint },
+      { endpoint, user: req.user._id },
       {
         user: req.user._id,
         endpoint,
@@ -44,13 +59,9 @@ router.post('/subscribe', async (req, res) => {
           p256dh: keys.p256dh,
           auth: keys.auth
         },
-        preferences: preferences || {
-          statusUpdates: true,
-          renewalReminders: true,
-          announcements: true
-        },
+        preferences: sanitizePreferences(preferences),
         userAgent,
-        deviceType: deviceType || 'Mobile Device'
+        deviceType: typeof deviceType === 'string' && deviceType.trim() ? deviceType.trim().slice(0, 64) : 'Mobile Device'
       },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
@@ -67,11 +78,11 @@ router.post('/subscribe', async (req, res) => {
 });
 
 // Unsubscribe a device
-router.post('/unsubscribe', async (req, res) => {
+const handleUnsubscribe = async (req, res) => {
   try {
-    const { endpoint } = req.body;
+    const endpoint = req.body?.endpoint || req.query?.endpoint;
     if (endpoint) {
-      await PushSubscription.deleteOne({ endpoint, user: req.user._id });
+      await PushSubscription.deleteOne({ endpoint: String(endpoint), user: req.user._id });
     } else {
       // If no specific endpoint provided, remove all for this user
       await PushSubscription.deleteMany({ user: req.user._id });
@@ -82,7 +93,10 @@ router.post('/unsubscribe', async (req, res) => {
     console.error('Error unsubscribing push:', error);
     res.status(500).json({ message: 'Error unsubscribing'});
   }
-});
+};
+
+router.post('/unsubscribe', handleUnsubscribe);
+router.delete('/subscribe', handleUnsubscribe);
 
 // Get push subscription status & preferences for current user
 router.get('/status', async (req, res) => {
@@ -109,16 +123,17 @@ router.get('/status', async (req, res) => {
 router.put('/preferences', async (req, res) => {
   try {
     const { preferences } = req.body;
-    if (!preferences) {
+    if (!preferences || typeof preferences !== 'object') {
       return res.status(400).json({ message: 'Preferences required' });
     }
 
+    const safePreferences = sanitizePreferences(preferences);
     await PushSubscription.updateMany(
       { user: req.user._id },
-      { $set: { preferences } }
+      { $set: { preferences: safePreferences } }
     );
 
-    res.json({ success: true, message: 'Preferences updated successfully', preferences });
+    res.json({ success: true, message: 'Preferences updated successfully', preferences: safePreferences });
   } catch (error) {
     res.status(500).json({ message: 'Error updating preferences'});
   }
@@ -134,7 +149,7 @@ router.post('/test', async (req, res) => {
       type: 'general'
     });
 
-    if (result.sentCount === 0) {
+    if (!result || !result.sentCount) {
       return res.status(400).json({
         success: false,
         message: 'No active subscription found for this device. Please enable push notifications first.'

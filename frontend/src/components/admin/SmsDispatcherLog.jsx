@@ -14,18 +14,7 @@ const SmsDispatcherLog = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [page, setPage] = useState(1);
-  const [isSimulating, setIsSimulating] = useState(false);
-  const [showSimulateModal, setShowSimulateModal] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
-
-  // Simulation form data
-  const [simForm, setSimForm] = useState({
-    operatorName: 'Juan Dela Cruz',
-    phone: '09178923401',
-    plateNo: '4528-TC',
-    bodyNumber: '042',
-    daysRemaining: 30
-  });
 
   const showFeedback = (message, type = 'success') => {
     setToast({ show: true, message, type });
@@ -80,39 +69,6 @@ const SmsDispatcherLog = () => {
       window.removeEventListener('gtrams_sms_dispatched', onSmsDispatched);
     };
   }, []);
-
-  const handleTriggerSimulate = async (e) => {
-    e.preventDefault();
-    setIsSimulating(true);
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/notifications/simulate-sms`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(simForm)
-      });
-
-      if (res.ok) {
-        const json = await res.json();
-        if (json.success && json.data) {
-          setShowSimulateModal(false);
-          showFeedback('Automated 30-day expiration SMS alert simulated and logged successfully!');
-          fetchLogs(true);
-        } else {
-          showFeedback(json.message || 'Simulation failed', 'error');
-        }
-      } else {
-        showFeedback('Server responded with error', 'error');
-      }
-    } catch (err) {
-      showFeedback('Network error during simulation', 'error');
-    } finally {
-      setIsSimulating(false);
-    }
-  };
 
   const formatTimestamp = (dateStr) => {
     if (!dateStr) return '—';
@@ -180,16 +136,6 @@ const SmsDispatcherLog = () => {
             <RefreshCw size={13} className={isRefreshing ? 'animate-spin text-[#9E2A2B]' : ''} />
             <span>Refresh</span>
           </button>
-
-          <button
-            type="button"
-            onClick={() => setShowSimulateModal(true)}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-semibold text-white bg-[#9E2A2B] hover:bg-[#7A1B22] rounded-md transition-colors shadow-sm active:scale-95 cursor-pointer"
-            title="Trigger simulated 30-day expiration SMS for defense demonstration"
-          >
-            <Zap size={13} className="text-[#D4AF37]" />
-            <span>Simulate 30-Day Alert</span>
-          </button>
         </div>
       </div>
 
@@ -237,7 +183,7 @@ const SmsDispatcherLog = () => {
                 <td colSpan={5} className="py-8 text-center text-[#6B6761] dark:text-[#A8A29E]">
                   <MessageSquare size={24} className="mx-auto mb-1.5 opacity-40" />
                   <p className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">No SMS dispatch logs found</p>
-                  <p className="text-[11px] mt-0.5">Click "Simulate 30-Day Alert" to trigger an automated expiration SMS test.</p>
+                  <p className="text-[11px] mt-0.5">Automated 30-day renewal alerts will appear here as they are dispatched.</p>
                 </td>
               </tr>
             ) : (
@@ -303,117 +249,6 @@ const SmsDispatcherLog = () => {
             >
               Next
             </button>
-          </div>
-        </div>
-      )}
-
-      {/* Live Simulation Modal for Defense Presentation */}
-      {showSimulateModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-[#1C1917] w-full max-w-md rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] shadow-2xl p-5 relative">
-            <button
-              type="button"
-              onClick={() => setShowSimulateModal(false)}
-              className="absolute right-4 top-4 text-[#6B6761] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3] cursor-pointer"
-            >
-              <X size={18} />
-            </button>
-
-            <div className="flex items-center gap-2.5 mb-3">
-              <div className="p-2 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37]">
-                <Zap size={18} />
-              </div>
-              <div>
-                <h3 className="text-sm font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
-                  Demonstrate 30-Day Expiration SMS
-                </h3>
-                <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
-                  Trigger an automated expiration dispatch test for defense presentation.
-                </p>
-              </div>
-            </div>
-
-            <form onSubmit={handleTriggerSimulate} className="space-y-3 mt-4">
-              <div>
-                <label className="block text-xs font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
-                  Recipient Operator Name
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={simForm.operatorName}
-                  onChange={(e) => setSimForm({ ...simForm, operatorName: e.target.value })}
-                  className="w-full px-3 py-1.5 text-xs rounded-md bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3]"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
-                  Recipient Mobile Phone (+63)
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={simForm.phone}
-                  onChange={(e) => setSimForm({ ...simForm, phone: e.target.value })}
-                  className="w-full px-3 py-1.5 text-xs font-mono rounded-md bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3]"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-2.5">
-                <div>
-                  <label className="block text-xs font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
-                    Plate Number
-                  </label>
-                  <input
-                    type="text"
-                    required
-                    value={simForm.plateNo}
-                    onChange={(e) => setSimForm({ ...simForm, plateNo: e.target.value })}
-                    className="w-full px-3 py-1.5 text-xs font-mono uppercase rounded-md bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3]"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-xs font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1">
-                    Body Number
-                  </label>
-                  <input
-                    type="text"
-                    value={simForm.bodyNumber}
-                    onChange={(e) => setSimForm({ ...simForm, bodyNumber: e.target.value })}
-                    className="w-full px-3 py-1.5 text-xs font-mono uppercase rounded-md bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3]"
-                  />
-                </div>
-              </div>
-
-              <div className="p-3 bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg border border-[#E4E1DC]/80 dark:border-[#2E2A27]/80">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E] block mb-1">
-                  Live Dispatch Preview
-                </span>
-                <p className="text-[11px] font-mono text-[#1F1D1B] dark:text-[#EAE7E1] leading-relaxed">
-                  [G-TRAMS LGU] Paalala: Ang inyong MTOP prangkisa para sa unit {simForm.plateNo || '4528-TC'} {simForm.bodyNumber ? `(Body #${simForm.bodyNumber})` : ''} ay mag-e-expire sa loob ng {simForm.daysRemaining} araw. Mangyaring mag-renew sa BPLO Gasan upang maiwasan ang multa at pagkahuli.
-                </p>
-              </div>
-
-              <div className="pt-2 flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setShowSimulateModal(false)}
-                  className="px-3 py-1.5 text-xs font-medium rounded-md border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] cursor-pointer"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={isSimulating}
-                  className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold text-white bg-[#9E2A2B] hover:bg-[#7A1B22] rounded-md transition-colors shadow-sm active:scale-95 cursor-pointer disabled:opacity-50"
-                >
-                  {isSimulating ? <RefreshCw size={13} className="animate-spin" /> : <Send size={13} />}
-                  <span>{isSimulating ? 'Dispatching...' : 'Dispatch Simulated SMS'}</span>
-                </button>
-              </div>
-            </form>
           </div>
         </div>
       )}

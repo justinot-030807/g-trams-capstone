@@ -2,22 +2,21 @@ const { errorResponse } = require('../utils/apiResponse');
 
 const timeoutMiddleware = (timeoutInMs) => {
     return (req, res, next) => {
-        // Exempt file uploads, OCR scans, and database backups from short timeout to prevent 408 on heavy operations
-        if (
-            req.originalUrl.includes('/upload') ||
-            req.originalUrl.includes('/scan-document') ||
-            req.originalUrl.includes('/scan-roster') ||
-            req.originalUrl.includes('/backups') ||
-            req.headers['content-type']?.includes('multipart/form-data')
-        ) {
-            return next();
-        }
+        const reqPath = String(req.originalUrl || req.url || '').split('?')[0].toLowerCase();
+        const isHeavyOperation =
+            reqPath.endsWith('/scan-document') ||
+            reqPath.endsWith('/scan-roster') ||
+            reqPath.startsWith('/api/v1/backups') ||
+            reqPath.includes('/backups/') ||
+            Boolean(req.headers['content-type']?.includes('multipart/form-data'));
 
-        // Set the timeout for the specific request
-        res.setTimeout(timeoutInMs, () => {
+        // Allow longer bounded timeout (180s) for uploads, OCR scans, and backups; standard timeout otherwise
+        const effectiveTimeoutMs = isHeavyOperation ? Math.max(timeoutInMs, 180000) : timeoutInMs;
+
+        res.setTimeout(effectiveTimeoutMs, () => {
             const errMessage = 'Request Timeout: The server took too long to process the request.';
-            console.error(`[TIMEOUT] ${req.method} ${req.originalUrl}`);
-            
+            console.error(`[TIMEOUT] ${req.method} ${reqPath}`);
+
             if (!res.headersSent) {
                 return errorResponse(res, 408, errMessage);
             }

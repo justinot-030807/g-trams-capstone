@@ -29,7 +29,7 @@ const MaintenanceMode = () => {
             } else if (role === 'bplo_staff' || role.includes('bplo') || role.includes('llsa')) {
               navigate('/llsa-dashboard');
             } else if (role === 'toda_president' || role.includes('toda')) {
-              navigate('/toda-dashboard');
+              navigate('/operator-dashboard');
             } else if (role === 'cashier' || role.includes('cashier')) {
               navigate('/cashier-dashboard');
             } else {

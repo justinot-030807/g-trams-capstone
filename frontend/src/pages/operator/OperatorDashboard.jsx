@@ -1,5 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import ReactDOM from 'react-dom';
+import localforage from 'localforage';
 import MainLayout from '../../components/MainLayout';
 import { 
   RefreshCw, AlertCircle, AlertTriangle, CheckCircle, CheckCircle2, Clock, Loader2, 
@@ -29,6 +30,7 @@ import {
 } from '../../utils/notificationUtils';
 import { formatZoneLabel } from '../../utils/constants';
 import { getServerNow, calculateDaysRemaining as calcServerDaysRemaining, recordServerTimeFromResponse } from '../../utils/serverTime';
+import { unsubscribeFromPush } from '../../utils/pushNotification';
 
 const CANCEL_REASONS = [
   "Need to correct vehicle or tricycle details",
@@ -42,9 +44,60 @@ const OperatorDashboard = () => {
   const { t, language, changeLanguage } = useLanguage();
   const { theme, toggleTheme, isDark } = useTheme();
   const { textScale, cycleTextScale, scaleLabel } = useTextSize();
+
+  const getCurrentUserId = () => {
+    try {
+      const id = localStorage.getItem('userId');
+      if (id) return id;
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      if (user._id || user.id) return user._id || user.id;
+      if (user.email) return user.email;
+      const name = localStorage.getItem('name');
+      if (name) return name;
+    } catch (e) {}
+    return 'default';
+  };
+
+  const getCachedFranchisesKey = () => {
+    const uid = getCurrentUserId();
+    return uid && uid !== 'default' ? `gtrams_cached_franchises_${uid}` : null;
+  };
+
+  const clearCachedFranchises = () => {
+    try {
+      localStorage.removeItem('gtrams_cached_franchises');
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith('gtrams_cached_franchises')) {
+          localStorage.removeItem(key);
+        }
+      });
+    } catch {}
+  };
+
+  const clearAllDraftKeys = () => {
+    try {
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith('gtrams_apply_draft') || key.startsWith('gtrams_renewal_draft')) {
+          localStorage.removeItem(key);
+        }
+      });
+    } catch {}
+    localforage.keys()
+      .then((keys) => Promise.all(
+        keys
+          .filter((k) => k.startsWith('gtrams_apply_draft') || k.startsWith('gtrams_renewal_draft'))
+          .map((k) => localforage.removeItem(k))
+      ))
+      .catch(() => {});
+  };
+
+  const fetchAbortRef = useRef(null);
+
   const [franchises, setFranchises] = useState(() => {
     try {
-      const cached = localStorage.getItem('gtrams_cached_franchises');
+      const cacheKey = getCachedFranchisesKey();
+      if (!cacheKey) return [];
+      const cached = localStorage.getItem(cacheKey);
       return cached ? JSON.parse(cached) : [];
     } catch {
       return [];
@@ -65,14 +118,24 @@ const OperatorDashboard = () => {
   const [isLangModalOpen, setIsLangModalOpen] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    if (fetchAbortRef.current) {
+      fetchAbortRef.current.abort();
+      fetchAbortRef.current = null;
+    }
+    await unsubscribeFromPush().catch(() => {});
+    clearCachedFranchises();
+    clearAllDraftKeys();
     localStorage.removeItem('token');
     localStorage.removeItem('role');
     localStorage.removeItem('user');
     localStorage.removeItem('userId');
     localStorage.removeItem('name');
-    localStorage.removeItem('gtrams_apply_draft');
     localStorage.removeItem('reapply_target');
+    localStorage.removeItem('gtrams_all_notifs_read_at');
+    localStorage.removeItem('gtrams_cached_notifications');
+    window.dispatchEvent(new Event('gtrams-auth-changed'));
+    window.dispatchEvent(new Event('gtrams-auth-change'));
     navigate('/login');
   };
 
@@ -167,39 +230,74 @@ const OperatorDashboard = () => {
     }
   };
 
-  const fetchMyFranchises = async () => {
+  const fetchMyFranchises = useCallback(async () => {
+    const reqToken = localStorage.getItem('token') || '';
+    const reqCacheKey = getCachedFranchisesKey();
+
+    if (!reqToken) {
+      setFranchises([]);
+      clearCachedFranchises();
+      setIsLoading(false);
+      return;
+    }
+
+    if (fetchAbortRef.current) {
+      fetchAbortRef.current.abort();
+    }
+    const controller = new AbortController();
+    fetchAbortRef.current = controller;
+
+    const isSameSession = () =>
+      !controller.signal.aborted &&
+      (localStorage.getItem('token') || '') === reqToken &&
+      getCachedFranchisesKey() === reqCacheKey;
+
     setIsLoading(true);
     try {
       const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/franchises/my-franchises', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        headers: { 'Authorization': `Bearer ${reqToken}` },
+        signal: controller.signal
       });
+
+      if (!isSameSession()) return;
+
       if (response.ok) {
         recordServerTimeFromResponse(response);
         const data = await response.json();
+        if (!isSameSession()) return;
         const list = Array.isArray(data) ? data : [];
         setFranchises(list);
         try {
-          localStorage.setItem('gtrams_cached_franchises', JSON.stringify(list));
+          localStorage.removeItem('gtrams_cached_franchises');
+          if (reqCacheKey) {
+            localStorage.setItem(reqCacheKey, JSON.stringify(list));
+          }
         } catch {
           // Ignore local storage error
         }
       } else if (response.status === 401 || response.status === 403) {
         setFranchises([]);
+        clearCachedFranchises();
       }
     } catch (error) {
+      if (error?.name === 'AbortError' || !isSameSession()) return;
       console.warn('Network offline or error loading dashboard units; preserving cached fleet:', error);
       try {
-        const cached = localStorage.getItem('gtrams_cached_franchises');
+        const cached = reqCacheKey ? localStorage.getItem(reqCacheKey) : null;
         if (cached) {
           setFranchises(JSON.parse(cached));
+        } else {
+          setFranchises([]);
         }
       } catch {
         // Ignore parse error
       }
     } finally {
-      setIsLoading(false);
+      if (isSameSession()) {
+        setIsLoading(false);
+      }
     }
-  };
+  }, []);
 
   // Re-fetch franchises if we get a status_change notification
   useEffect(() => {
@@ -209,25 +307,47 @@ const OperatorDashboard = () => {
         fetchMyFranchises();
       }
     }
-  }, [notifications]);
+  }, [notifications, fetchMyFranchises]);
 
   useEffect(() => {
     fetchMyFranchises();
     fetchSystemSettings();
-  }, []);
 
-  const getCurrentUserId = () => {
-    try {
-      const id = localStorage.getItem('userId');
-      if (id) return id;
-      const user = JSON.parse(localStorage.getItem('user') || '{}');
-      if (user._id || user.id) return user._id || user.id;
-      if (user.email) return user.email;
-      const name = localStorage.getItem('name');
-      if (name) return name;
-    } catch (e) {}
-    return 'default';
-  };
+    const handleSessionChange = () => {
+      const nextKey = getCachedFranchisesKey();
+      const nextToken = localStorage.getItem('token') || '';
+      if (!nextToken) {
+        if (fetchAbortRef.current) fetchAbortRef.current.abort();
+        setFranchises([]);
+        clearCachedFranchises();
+        return;
+      }
+      if (nextKey) {
+        try {
+          const cached = localStorage.getItem(nextKey);
+          setFranchises(cached ? JSON.parse(cached) : []);
+        } catch {
+          setFranchises([]);
+        }
+      } else {
+        setFranchises([]);
+      }
+      fetchMyFranchises();
+    };
+
+    window.addEventListener('storage', handleSessionChange);
+    window.addEventListener('gtrams-auth-change', handleSessionChange);
+    window.addEventListener('gtrams-auth-changed', handleSessionChange);
+
+    return () => {
+      if (fetchAbortRef.current) {
+        fetchAbortRef.current.abort();
+      }
+      window.removeEventListener('storage', handleSessionChange);
+      window.removeEventListener('gtrams-auth-change', handleSessionChange);
+      window.removeEventListener('gtrams-auth-changed', handleSessionChange);
+    };
+  }, [fetchMyFranchises]);
 
   // On-demand guide and language controls: modals do not intrusively auto-popup on fresh loads
   useEffect(() => {

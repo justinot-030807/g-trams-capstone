@@ -62,7 +62,130 @@ import { isNameMatch } from '../../utils/nameMatcher';
 
 import { compressImage } from '../../utils/imageCompressor';
 
-const DRAFT_STORAGE_KEY = 'gtrams_apply_draft';
+const getStoredUserId = () => {
+  try {
+    const u = JSON.parse(localStorage.getItem('user') || '{}');
+    if (u._id) return String(u._id);
+    if (u.id) return String(u.id);
+    if (u.contact) return String(u.contact);
+  } catch {}
+  const uid = localStorage.getItem('userId');
+  if (uid) return String(uid);
+  const token = localStorage.getItem('token');
+  if (token) {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      if (payload.id) return String(payload.id);
+    } catch {}
+  }
+  return null;
+};
+
+const getScopedFranchisesCacheKey = (uid) => (uid ? `gtrams_cached_franchises_${uid}` : null);
+
+const getStoredUserDefaults = () => {
+  let fullName = localStorage.getItem('name') || '';
+  let address = '';
+  let todaName = 'NON-TODA';
+  let plateNo = '';
+  const userObj = localStorage.getItem('user');
+  if (userObj) {
+    try {
+      const parsedUser = JSON.parse(userObj);
+      if (!fullName) fullName = parsedUser.name || '';
+      if (parsedUser.address) address = parsedUser.address;
+      if (parsedUser.todaAssociation) todaName = parsedUser.todaAssociation;
+      if (parsedUser.plateNumber || parsedUser.plateNo) {
+        plateNo = String(parsedUser.plateNumber || parsedUser.plateNo).trim().toUpperCase();
+      }
+    } catch (e) { console.error(e); }
+  }
+  return {
+    fullName,
+    address,
+    zone: address ? getZoneForBarangay(address) : '',
+    todaName,
+    plateNo
+  };
+};
+
+const getCleanFormDefaults = (overrides = {}) => ({
+  fullName: '',
+  address: '',
+  zone: '',
+  made: '',
+  make: '',
+  motorNo: '',
+  chassisNo: '',
+  plateNo: '',
+  todaName: 'NON-TODA',
+  dateApplied: new Date().toISOString().split('T')[0],
+  cedulaDate: '',
+  cedulaAddress: 'Gasan, Marinduque',
+  cedulaSerialNo: '',
+  cedulaAmount: '55.00',
+  cedulaYear: String(new Date().getFullYear()),
+  cedulaPlaceIssued: 'Gasan, Marinduque',
+  cedulaFullName: '',
+  cedulaCitizenship: '',
+  cedulaCivilStatus: '',
+  cedulaProfession: '',
+  cedulaDob: '',
+  cedulaPlaceOfBirth: '',
+  cedulaSex: '',
+  cedulaHeight: '',
+  cedulaWeight: '',
+  cedulaTin: '',
+  cedulaDetails: null,
+  orCrNo: '',
+  orNo: '',
+  orCrExpiryDate: '',
+  crNo: '',
+  orDate: '',
+  crDate: '',
+  color: '',
+  series: '',
+  yearModel: '',
+  fileNo: '',
+  vehicleType: 'Tricycle',
+  vehicleCategory: 'L4',
+  classification: 'For Hire / PUV',
+  bodyType: 'MOTORCYCLE WITH SIDECAR',
+  displacement: '',
+  grossWeight: '',
+  fuelType: 'GASOLINE',
+  passengerCapacity: '4',
+  registeredOwner: '',
+  ownerAddress: '',
+  numberOfUnits: 1,
+  isOperatorDriver: true,
+  driverName: '',
+  driverContact: '',
+  driverLicenseNo: '',
+  driverLicenseSerialNo: '',
+  driverLicenseExpiryDate: '',
+  driverDob: '',
+  driverDlCodes: 'A, A1',
+  driverConditions: 'None',
+  driverAddress: '',
+  driverNationality: 'Filipino',
+  driverSex: '',
+  todaCertNo: '',
+  todaCertDate: '',
+  todaSignatory: '',
+  brgyClearanceNo: '',
+  brgyClearanceDate: '',
+  brgyIssuer: '',
+  orCrUrl: '',
+  crUrl: '',
+  orUrl: '',
+  licenseUrl: '',
+  licenseBackUrl: '',
+  todaEndorsementUrl: '',
+  brgyClearanceUrl: '',
+  cedulaUrl: '',
+  ...overrides
+});
 
 const STANDARD_DOC_IDS = ['crDocument', 'orDocument', 'orCrDocument', 'license', 'todaEndorsement', 'brgyClearance'];
 
@@ -141,9 +264,15 @@ const ApplyFranchise = () => {
   const focusParam = searchParams.get('focus');
   const initialStep = (stepParam >= 1 && stepParam <= 5) ? stepParam : 1;
 
+  const uidRef = useRef(getStoredUserId());
+  const franchisesAbortRef = useRef(null);
+  const filePreviewsRef = useRef({});
+
   const [myFranchises, setMyFranchises] = useState(() => {
     try {
-      const cached = localStorage.getItem('gtrams_cached_franchises');
+      const cacheKey = getScopedFranchisesCacheKey(getStoredUserId());
+      if (!cacheKey) return [];
+      const cached = localStorage.getItem(cacheKey);
       return cached ? JSON.parse(cached) : [];
     } catch {
       return [];
@@ -274,80 +403,77 @@ const ApplyFranchise = () => {
     } catch (e) { console.error(e); }
   }
   
-  const [formData, setFormData] = useState({
-    fullName: loggedInUserName, 
-    address: loggedInAddress, 
-    zone: loggedInAddress ? getZoneForBarangay(loggedInAddress) : '', 
-    made: '', make: '', motorNo: '', chassisNo: '', plateNo: loggedInPlateNo, 
-    todaName: loggedInToda,
-    dateApplied: new Date().toISOString().split('T')[0], 
-    cedulaDate: '', 
-    cedulaAddress: 'Gasan, Marinduque', 
-    cedulaSerialNo: '',
-    cedulaAmount: '55.00',
-    cedulaYear: String(new Date().getFullYear()),
-    cedulaPlaceIssued: 'Gasan, Marinduque',
-    cedulaFullName: '',
-    cedulaCitizenship: '',
-    cedulaCivilStatus: '',
-    cedulaProfession: '',
-    cedulaDob: '',
-    cedulaPlaceOfBirth: '',
-    cedulaSex: '',
-    cedulaHeight: '',
-    cedulaWeight: '',
-    cedulaTin: '',
-    orCrNo: '',
-    orNo: '',
-    orCrExpiryDate: '',
-    crNo: '',
-    orDate: '',
-    crDate: '',
-    color: '',
-    series: '',
-    yearModel: '',
-    fileNo: '',
-    vehicleType: 'Tricycle',
-    vehicleCategory: 'L4',
-    classification: 'For Hire / PUV',
-    bodyType: 'MOTORCYCLE WITH SIDECAR',
-    displacement: '',
-    grossWeight: '',
-    fuelType: 'GASOLINE',
-    passengerCapacity: '4',
-    registeredOwner: '',
-    ownerAddress: '',
-    numberOfUnits: 1,
-    isOperatorDriver: true,
-    driverName: '',
-    driverContact: '',
-    driverLicenseNo: '',
-    driverLicenseSerialNo: '',
-    driverLicenseExpiryDate: '',
-    driverDob: '',
-    driverDlCodes: 'A, A1',
-    driverConditions: 'None',
-    driverAddress: '',
-    driverNationality: 'Filipino',
-    driverSex: '',
-    todaCertNo: '',
-    todaCertDate: '',
-    todaSignatory: '',
-    brgyClearanceNo: '',
-    brgyClearanceDate: '',
-    brgyIssuer: '',
-    orCrUrl: '',
-    crUrl: '',
-    orUrl: '',
-    licenseUrl: '',
-    licenseBackUrl: '',
-    todaEndorsementUrl: '',
-    brgyClearanceUrl: '',
-    cedulaUrl: ''
-  });
+  const [formData, setFormData] = useState(() => getCleanFormDefaults(getStoredUserDefaults()));
   
   const [uploadedDocs, setUploadedDocs] = useState({});
   const [filePreviews, setFilePreviews] = useState({});
+
+  useEffect(() => {
+    filePreviewsRef.current = filePreviews;
+  }, [filePreviews]);
+
+  const revokePreviewBlobs = (previewsObj) => {
+    Object.values(previewsObj || {}).forEach(url => {
+      if (url && typeof url === 'string' && url.startsWith('blob:')) {
+        try {
+          URL.revokeObjectURL(url);
+        } catch {}
+      }
+    });
+  };
+
+  const resetFormToCleanDefaults = () => {
+    revokePreviewBlobs(filePreviewsRef.current);
+    setFilePreviews({});
+    setUploadedDocs({});
+    setAiScannedData({});
+    setAiScanning({
+      license: false,
+      licenseBack: false,
+      crDocument: false,
+      orDocument: false,
+      orCrDocument: false,
+      todaEndorsement: false,
+      brgyClearance: false,
+      cedulaDoc: false
+    });
+    setAiSuccess({
+      license: false,
+      licenseBack: false,
+      crDocument: false,
+      orDocument: false,
+      orCrDocument: false,
+      todaEndorsement: false,
+      brgyClearance: false,
+      cedulaDoc: false
+    });
+    setManualScanAlerts({
+      license: null,
+      licenseBack: null,
+      crDocument: null,
+      orDocument: null,
+      orCrDocument: null,
+      todaEndorsement: null,
+      brgyClearance: null,
+      cedulaDoc: null
+    });
+    setFormErrors({});
+    setDuplicateStatus({
+      plateNo: { checking: false, duplicate: false, message: '' },
+      motorNo: { checking: false, duplicate: false, message: '' },
+      chassisNo: { checking: false, duplicate: false, message: '' }
+    });
+    setDiscrepancyModal({ isOpen: false, discrepancies: [] });
+    setDraftResumeModal({ isOpen: false, draftData: null, savedTime: '', step: 1 });
+    setHasDraftRestored(false);
+    setIsAgreedToTerms(false);
+    setSelectedId(null);
+    setReapplyTarget(null);
+    setFocusField('');
+    setCurrentStep(1);
+    setTodaMembershipStatus(null);
+    setFormData(getCleanFormDefaults());
+  };
 
   // Sync step and formMode from searchParams
   useEffect(() => {
@@ -491,27 +617,11 @@ const ApplyFranchise = () => {
     return () => clearTimeout(timer);
   }, [formData.todaName, formData.fullName, formData.address, loggedInToda, formMode]);
 
-  const getCurrentUserId = () => {
-    try {
-      const u = JSON.parse(localStorage.getItem('user') || '{}');
-      if (u._id) return String(u._id);
-      if (u.id) return String(u.id);
-      if (u.contact) return String(u.contact);
-    } catch {}
-    const uid = localStorage.getItem('userId');
-    if (uid) return String(uid);
-    const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        if (payload.id) return String(payload.id);
-      } catch {}
-    }
-    return 'operator_user';
-  };
+  const getCurrentUserId = () => getStoredUserId();
 
-  const getDraftKey = () => {
-    const uid = getCurrentUserId();
+  const getDraftKey = (uidOverride) => {
+    const uid = uidOverride !== undefined ? uidOverride : getCurrentUserId();
+    if (!uid) return null;
     if (formMode === 'Renewal' && selectedId) {
       return `gtrams_renewal_draft_${uid}_${selectedId}`;
     }
@@ -552,7 +662,10 @@ const ApplyFranchise = () => {
 
   const handleSaveProgress = (isManual = true) => {
     if (!formMode || formMode === 'Re-apply') return;
-    const key = getDraftKey();
+    const uid = getCurrentUserId();
+    if (!uid || uid !== uidRef.current) return;
+    const key = getDraftKey(uid);
+    if (!key) return;
     const now = new Date();
     const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
@@ -582,7 +695,7 @@ const ApplyFranchise = () => {
         timeFormatted: timeStr,
         formMode,
         selectedId,
-        userId: getCurrentUserId()
+        userId: uid
       }).catch(err => console.error('Draft save error:', err));
 
       if (uploadedDocs && Object.keys(uploadedDocs).length > 0) {
@@ -619,17 +732,26 @@ const ApplyFranchise = () => {
   const formDataRef = useRef(formData);
   const currentStepRef = useRef(currentStep);
   const formModeRef = useRef(formMode);
+  const selectedIdRef = useRef(selectedId);
   const aiScannedDataRef = useRef(aiScannedData);
 
   useEffect(() => { formDataRef.current = formData; }, [formData]);
   useEffect(() => { currentStepRef.current = currentStep; }, [currentStep]);
   useEffect(() => { formModeRef.current = formMode; }, [formMode]);
+  useEffect(() => { selectedIdRef.current = selectedId; }, [selectedId]);
   useEffect(() => { aiScannedDataRef.current = aiScannedData; }, [aiScannedData]);
 
   useEffect(() => {
     const handleBeforeUnload = () => {
       if (formModeRef.current === 'New' || formModeRef.current === 'Renewal') {
-        const key = getDraftKey();
+        const mountedUid = uidRef.current;
+        const currentUid = getCurrentUserId();
+        if (!mountedUid || !currentUid || currentUid !== mountedUid) return;
+
+        const key = formModeRef.current === 'Renewal' && selectedIdRef.current
+          ? `gtrams_renewal_draft_${mountedUid}_${selectedIdRef.current}`
+          : `gtrams_apply_draft_${mountedUid}`;
+
         const dataToSave = formDataRef.current;
         const stepToSave = currentStepRef.current;
         const aiToSave = aiScannedDataRef.current;
@@ -653,7 +775,7 @@ const ApplyFranchise = () => {
             savedAt: now.toISOString(),
             timeFormatted: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             formMode: formModeRef.current,
-            userId: getCurrentUserId()
+            userId: mountedUid
           }).catch(() => {});
         }
       }
@@ -669,11 +791,7 @@ const ApplyFranchise = () => {
   // Cleanup object URLs on unmount
   useEffect(() => {
     return () => {
-      Object.values(filePreviews).forEach(url => {
-        if (url && typeof url === 'string' && url.startsWith('blob:')) {
-          URL.revokeObjectURL(url);
-        }
-      });
+      revokePreviewBlobs(filePreviewsRef.current);
     };
   }, []);
 
@@ -683,120 +801,100 @@ const ApplyFranchise = () => {
   };
 
   const fetchMyFranchises = async () => {
+    const reqToken = localStorage.getItem('token') || '';
+    const reqUid = getCurrentUserId();
+    const reqCacheKey = getScopedFranchisesCacheKey(reqUid);
+
+    if (!reqToken || !reqUid) {
+      setMyFranchises([]);
+      setIsLoading(false);
+      return;
+    }
+
+    if (franchisesAbortRef.current) {
+      franchisesAbortRef.current.abort();
+    }
+    const controller = new AbortController();
+    franchisesAbortRef.current = controller;
+
+    const isSameSession = () =>
+      !controller.signal.aborted &&
+      (localStorage.getItem('token') || '') === reqToken &&
+      getCurrentUserId() === reqUid;
+
     setIsLoading(true);
     try {
       const response = await fetch(import.meta.env.VITE_API_URL + '/api/v1/franchises/my-franchises', {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        headers: { 'Authorization': `Bearer ${reqToken}` },
+        signal: controller.signal
       });
+      if (!isSameSession()) return;
+
       if (response.ok) {
         const data = await response.json();
+        if (!isSameSession()) return;
         const list = Array.isArray(data) ? data : [];
         setMyFranchises(list);
         try {
-          localStorage.setItem('gtrams_cached_franchises', JSON.stringify(list));
+          localStorage.removeItem('gtrams_cached_franchises');
+          if (reqCacheKey) {
+            localStorage.setItem(reqCacheKey, JSON.stringify(list));
+          }
         } catch {}
       }
     } catch (error) {
+      if (error?.name === 'AbortError' || !isSameSession()) return;
       console.error('Error fetching units:', error);
     } finally {
-      setIsLoading(false);
+      if (isSameSession()) {
+        setIsLoading(false);
+      }
     }
   };
 
   const initFreshForm = () => {
+    const userDefaults = getStoredUserDefaults();
     navigate('/apply-franchise?mode=new&step=1');
     setCurrentStep(1);
     setHasDraftRestored(false);
     setUploadedDocs({});
+    revokePreviewBlobs(filePreviewsRef.current);
     setFilePreviews({});
     setAiScannedData({});
 
-    setFormData({ 
-      fullName: loggedInUserName, 
-      address: loggedInAddress, 
-      zone: loggedInAddress ? getZoneForBarangay(loggedInAddress) : '', 
-      made: '', make: '', motorNo: '', chassisNo: '', plateNo: loggedInPlateNo || (todaMembershipStatus?.matchedPlateNo ? String(todaMembershipStatus.matchedPlateNo).trim().toUpperCase() : ''), 
-      todaName: loggedInToda, 
-      dateApplied: new Date().toISOString().split('T')[0], 
-      cedulaDate: '', 
-      cedulaAddress: 'Gasan, Marinduque', 
-      cedulaSerialNo: '',
-      cedulaAmount: '55.00',
-      orCrNo: '',
-      orNo: '',
-      orCrExpiryDate: '',
-      crNo: '',
-      orDate: '',
-      crDate: '',
-      numberOfUnits: 1,
-      isOperatorDriver: true,
-      driverName: '',
-      driverContact: '',
-      driverLicenseNo: '',
-      driverLicenseSerialNo: '',
-      driverLicenseExpiryDate: '',
-      driverDob: '',
-      driverDlCodes: 'A, A1',
-      driverConditions: 'None',
-      driverAddress: '',
-      driverNationality: 'Filipino',
-      driverSex: '',
-      todaCertNo: '',
-      todaCertDate: '',
-      todaSignatory: '',
-      brgyClearanceNo: '',
-      brgyClearanceDate: '',
-      brgyIssuer: '',
-      color: '',
-      series: '',
-      yearModel: '',
-      fileNo: '',
-      vehicleType: 'Tricycle',
-      vehicleCategory: 'L4',
-      classification: 'For Hire / PUV',
-      bodyType: 'MOTORCYCLE WITH SIDECAR',
-      displacement: '',
-      grossWeight: '',
-      fuelType: 'GASOLINE',
-      passengerCapacity: '4',
-      registeredOwner: '',
-      ownerAddress: '',
-      cedulaYear: String(new Date().getFullYear()),
-      cedulaPlaceIssued: 'Gasan, Marinduque',
-      cedulaFullName: '',
-      cedulaCitizenship: 'Filipino',
-      cedulaCivilStatus: '',
-      cedulaProfession: '',
-      cedulaDob: '',
-      cedulaPlaceOfBirth: '',
-      cedulaSex: '',
-      cedulaHeight: '',
-      cedulaWeight: '',
-      cedulaTin: '',
-      cedulaDetails: null,
-      orCrUrl: '',
-      crUrl: '',
-      orUrl: '',
-      licenseUrl: '',
-      licenseBackUrl: '',
-      todaEndorsementUrl: '',
-      brgyClearanceUrl: '',
-      cedulaUrl: ''
-    });
+    setFormData(getCleanFormDefaults({
+      ...userDefaults,
+      plateNo: userDefaults.plateNo || (todaMembershipStatus?.matchedPlateNo ? String(todaMembershipStatus.matchedPlateNo).trim().toUpperCase() : ''),
+      cedulaCitizenship: 'Filipino'
+    }));
   };
 
   const handleStartNewApplication = async () => {
+    resetFormToCleanDefaults();
     setFormMode('New');
-    setSelectedId(null);
-    setFilePreviews({});
-    
+
     // Purge any legacy global un-scoped draft key to prevent cross-account leak
     localforage.removeItem('gtrams_apply_draft').catch(() => {});
     localStorage.removeItem('gtrams_apply_draft');
 
+    const currentUid = getCurrentUserId();
+    if (currentUid && currentUid !== uidRef.current) {
+      uidRef.current = currentUid;
+    }
+    const reqUid = uidRef.current;
+    if (!reqUid) {
+      initFreshForm();
+      return;
+    }
+
     try {
-      const userDraftKey = getDraftKey();
-      const savedDraft = await localforage.getItem(userDraftKey);
+      const userDraftKey = getDraftKey(reqUid);
+      const savedDraft = userDraftKey ? await localforage.getItem(userDraftKey) : null;
+      if (uidRef.current !== reqUid || getCurrentUserId() !== reqUid) return;
+      if (savedDraft?.userId && savedDraft.userId !== reqUid) {
+        initFreshForm();
+        return;
+      }
       
       const hasMeaningfulDraft = savedDraft && savedDraft.formData && (
         savedDraft.currentStep > 1 ||
@@ -823,41 +921,56 @@ const ApplyFranchise = () => {
       console.error('Error checking draft in IndexedDB', e);
     }
 
+    if (uidRef.current !== reqUid || getCurrentUserId() !== reqUid) return;
     initFreshForm();
   };
 
   const handleConfirmResumeDraft = async () => {
     if (!draftResumeModal.draftData) return;
+    const reqUid = uidRef.current;
+    if (!reqUid || reqUid !== getCurrentUserId() || (draftResumeModal.draftData.userId && draftResumeModal.draftData.userId !== reqUid)) {
+      setDraftResumeModal({ isOpen: false, draftData: null, savedTime: '', step: 1 });
+      initFreshForm();
+      return;
+    }
     const { formData: savedForm, currentStep: savedStep, aiScannedData: savedAiData } = draftResumeModal.draftData;
 
+    const key = getDraftKey(reqUid);
+    let savedFiles = null;
+
+    try {
+      savedFiles = key ? await localforage.getItem(`${key}_files`) : null;
+    } catch (filesErr) {
+      console.warn('Could not restore draft file blobs:', filesErr);
+    }
+
+    if (uidRef.current !== reqUid || getCurrentUserId() !== reqUid) {
+      return;
+    }
+
+    const userDefaults = getStoredUserDefaults();
     setFormData({
+      ...getCleanFormDefaults(),
       ...savedForm,
-      fullName: loggedInUserName || savedForm.fullName,
-      address: loggedInAddress || savedForm.address,
-      zone: savedForm.zone ? normalizeZone(savedForm.zone) : (loggedInAddress ? getZoneForBarangay(loggedInAddress) : ''),
-      todaName: loggedInToda || savedForm.todaName
+      fullName: userDefaults.fullName || savedForm.fullName,
+      address: userDefaults.address || savedForm.address,
+      zone: savedForm.zone ? normalizeZone(savedForm.zone) : (userDefaults.address ? getZoneForBarangay(userDefaults.address) : ''),
+      todaName: userDefaults.todaName || savedForm.todaName
     });
 
     if (savedAiData && typeof savedAiData === 'object') {
       setAiScannedData(savedAiData);
     }
 
-    const key = getDraftKey();
     const previews = {};
-
-    try {
-      const savedFiles = await localforage.getItem(`${key}_files`);
-      if (savedFiles && typeof savedFiles === 'object') {
-        setUploadedDocs(savedFiles);
-        Object.keys(savedFiles).forEach(k => {
-          const fileObj = savedFiles[k];
-          if (fileObj instanceof Blob || fileObj instanceof File) {
-            previews[k] = URL.createObjectURL(fileObj);
-          }
-        });
-      }
-    } catch (filesErr) {
-      console.warn('Could not restore draft file blobs:', filesErr);
+    if (savedFiles && typeof savedFiles === 'object') {
+      setUploadedDocs(savedFiles);
+      Object.keys(savedFiles).forEach(k => {
+        const fileObj = savedFiles[k];
+        if (fileObj instanceof Blob || fileObj instanceof File) {
+          previews[k] = URL.createObjectURL(fileObj);
+        }
+      });
     }
 
     if (!previews.crDocument && savedForm.crUrl) previews.crDocument = savedForm.crUrl;
@@ -868,6 +981,7 @@ const ApplyFranchise = () => {
     if (!previews.todaEndorsement && savedForm.todaEndorsementUrl) previews.todaEndorsement = savedForm.todaEndorsementUrl;
     if (!previews.brgyClearance && savedForm.brgyClearanceUrl) previews.brgyClearance = savedForm.brgyClearanceUrl;
     if (!previews.cedulaDoc && savedForm.cedulaUrl) previews.cedulaDoc = savedForm.cedulaUrl;
+    revokePreviewBlobs(filePreviewsRef.current);
     setFilePreviews(previews);
 
     const urlStep = parseInt(searchParams.get('step') || '0', 10);
@@ -882,9 +996,11 @@ const ApplyFranchise = () => {
   const handleDiscardDraft = async () => {
     const userDraftKey = getDraftKey();
     try {
-      await localforage.removeItem(userDraftKey);
+      if (userDraftKey) {
+        await localforage.removeItem(userDraftKey);
+        await localforage.removeItem(`${userDraftKey}_files`);
+      }
       await localforage.removeItem('gtrams_apply_draft');
-      await localforage.removeItem(`${userDraftKey}_files`);
       localStorage.removeItem('gtrams_apply_draft');
     } catch (err) {
       console.error('Error clearing draft:', err);
@@ -898,7 +1014,10 @@ const ApplyFranchise = () => {
   const handleClearDraft = async () => {
     const key = getDraftKey();
     try {
-      await localforage.removeItem(key);
+      if (key) {
+        await localforage.removeItem(key);
+        await localforage.removeItem(`${key}_files`);
+      }
       await localforage.removeItem('gtrams_apply_draft');
       localStorage.removeItem('gtrams_apply_draft');
       setHasDraftRestored(false);
@@ -1116,6 +1235,48 @@ const ApplyFranchise = () => {
     } else if (modeParam === 'new') {
       handleStartNewApplication();
     }
+    const handleSessionSwitch = () => {
+      const nextUid = getStoredUserId();
+      if (nextUid !== uidRef.current) {
+        if (franchisesAbortRef.current) {
+          franchisesAbortRef.current.abort();
+        }
+        uidRef.current = nextUid;
+        resetFormToCleanDefaults();
+        if (nextUid) {
+          try {
+            const cacheKey = getScopedFranchisesCacheKey(nextUid);
+            const cached = cacheKey ? localStorage.getItem(cacheKey) : null;
+            setMyFranchises(cached ? JSON.parse(cached) : []);
+          } catch {
+            setMyFranchises([]);
+          }
+          fetchMyFranchises();
+          if (formModeRef.current === 'New' || searchParams.get('mode') === 'new') {
+            handleStartNewApplication();
+          }
+        } else {
+          setMyFranchises([]);
+        }
+      }
+    };
+
+    const sessionInterval = setInterval(handleSessionSwitch, 1000);
+    window.addEventListener('storage', handleSessionSwitch);
+    window.addEventListener('focus', handleSessionSwitch);
+    window.addEventListener('gtrams-auth-change', handleSessionSwitch);
+    window.addEventListener('gtrams-auth-changed', handleSessionSwitch);
+
+    return () => {
+      clearInterval(sessionInterval);
+      if (franchisesAbortRef.current) {
+        franchisesAbortRef.current.abort();
+      }
+      window.removeEventListener('storage', handleSessionSwitch);
+      window.removeEventListener('focus', handleSessionSwitch);
+      window.removeEventListener('gtrams-auth-change', handleSessionSwitch);
+      window.removeEventListener('gtrams-auth-changed', handleSessionSwitch);
+    };
   }, []);
 
   const handleInputChange = (e) => {
@@ -2315,20 +2476,21 @@ const ApplyFranchise = () => {
       const data = await response.json();
 
       if (response.ok) {
+        const uid = getCurrentUserId();
+        const key = getDraftKey(uid);
         try {
-          const key = getDraftKey();
-          await localforage.removeItem(`${key}_files`);
+          if (key) await localforage.removeItem(`${key}_files`);
         } catch {}
         try {
-          const key = getDraftKey();
-          await localforage.removeItem(key);
+          if (key) await localforage.removeItem(key);
           await localforage.removeItem('gtrams_apply_draft');
-          const uid = getCurrentUserId();
-          await localforage.removeItem(`gtrams_apply_draft_${uid}`);
+          if (uid) {
+            await localforage.removeItem(`gtrams_apply_draft_${uid}`);
+            await localforage.removeItem(`gtrams_apply_draft_${uid}_files`);
+          }
         } catch {}
 
         localStorage.removeItem('gtrams_apply_draft');
-        localStorage.removeItem(DRAFT_STORAGE_KEY);
         localStorage.removeItem('reapply_target');
         setHasDraftRestored(false);
 

@@ -12,7 +12,27 @@ const TodaRoster = require('../models/todaModel');
  */
 exports.getNextBodyNumber = async (req, res) => {
     try {
+        const userRole = String(req.user?.role || '').toLowerCase().trim().replace(/[\s-]+/g, '_');
+        const isTodaPresident = userRole === 'toda_president';
+
         let todaAssociation = (req.query.todaAssociation || req.user?.todaAssociation || '').trim();
+        if (isTodaPresident) {
+            const assignedToda = String(req.user?.todaAssociation || '').trim();
+            if (!assignedToda || assignedToda.toUpperCase() === 'NON-TODA') {
+                return res.status(403).json({
+                    success: false,
+                    message: 'ACCESS DENIED: Your TODA President account does not have an assigned TODA association.'
+                });
+            }
+            if (req.query.todaAssociation && String(req.query.todaAssociation).trim().toUpperCase() !== assignedToda.toUpperCase()) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'ACCESS DENIED: You can only query body numbers for your own assigned TODA association.'
+                });
+            }
+            todaAssociation = assignedToda;
+        }
+
         if (!todaAssociation || todaAssociation === 'NON-TODA') {
             return res.status(400).json({
                 success: false,
@@ -53,12 +73,39 @@ exports.addIndividualMember = async (req, res) => {
         }
 
         const userRole = String(req.user?.role || '').toLowerCase().trim().replace(/[\s-]+/g, '_');
-        const isStaffOrAdmin = ['bplo_staff', 'admin', 'system_admin'].includes(userRole);
+        const isBploStaff = userRole === 'bplo_staff';
+        const isTodaPresident = userRole === 'toda_president';
+
+        if (!isBploStaff && !isTodaPresident) {
+            return res.status(403).json({
+                success: false,
+                message: 'ACCESS DENIED: Only BPLO Staff or a verified TODA President can add roster members.'
+            });
+        }
 
         let targetToda = String(todaAssociation || req.user?.todaAssociation || '').trim();
-        if (!isStaffOrAdmin) {
+        if (isTodaPresident) {
+            if (req.user?.isVerified === false) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'ACCESS DENIED: Your TODA President account must be verified.'
+                });
+            }
+            const assignedToda = String(req.user?.todaAssociation || '').trim();
+            if (!assignedToda || assignedToda.toUpperCase() === 'NON-TODA') {
+                return res.status(403).json({
+                    success: false,
+                    message: 'ACCESS DENIED: Your TODA President account does not have an assigned TODA association.'
+                });
+            }
+            if (todaAssociation && String(todaAssociation).trim().toUpperCase() !== assignedToda.toUpperCase()) {
+                return res.status(403).json({
+                    success: false,
+                    message: 'ACCESS DENIED: You can only add members to your own assigned TODA association.'
+                });
+            }
             // TODA President can only add to their own TODA
-            targetToda = String(req.user?.todaAssociation || '').trim();
+            targetToda = assignedToda;
         }
 
         if (!targetToda || targetToda.toUpperCase() === 'NON-TODA') {
@@ -246,9 +293,11 @@ exports.verifyTodaRoster = async (req, res) => {
 /**
  * Syncs extracted members from an approved submission into the TodaRoster collection
  */
-exports.syncApprovedRoster = async (submissionId) => {
+exports.syncApprovedRoster = async (submissionOrId) => {
     try {
-        const submission = await TodaSubmission.findById(submissionId);
+        const submission = (submissionOrId && typeof submissionOrId === 'object' && submissionOrId.extractedMembers)
+            ? submissionOrId
+            : await TodaSubmission.findById(submissionOrId);
         if (!submission || submission.status !== 'Approved') return;
 
         const todaAssociation = (submission.todaAssociation || '').trim();

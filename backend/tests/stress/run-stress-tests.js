@@ -43,6 +43,7 @@ async function main() {
     let paymentFranchiseId = null;
 
     const memoryProfiler = new MemoryProfiler();
+    let exitCode = 0;
 
     try {
         if (!externalTarget) {
@@ -252,13 +253,20 @@ async function main() {
         const reportPath = path.resolve(__dirname, '../../../STRESS_TEST_REPORT.md');
         generateMarkdownReport(reportData, reportPath);
 
+        const failedScenarios = scenarios.filter(s => s.passed === false);
         console.log('\n' + '='.repeat(80));
-        console.log(`✅ ALL STRESS TESTING SCENARIOS COMPLETED SUCCESSFULLY!`);
+        if (failedScenarios.length > 0) {
+            exitCode = 1;
+            console.error(`❌ STRESS TEST THRESHOLD FAILURE: ${failedScenarios.length} scenario(s) failed (${failedScenarios.map(s => s.name).join(', ')})`);
+        } else {
+            console.log(`✅ ALL STRESS TESTING SCENARIOS COMPLETED SUCCESSFULLY!`);
+        }
         console.log(`📄 Comprehensive Markdown Report generated at:`);
         console.log(`   ${reportPath}`);
         console.log('='.repeat(80) + '\n');
 
     } catch (err) {
+        exitCode = 1;
         console.error('❌ Error during stress testing execution:', err);
     } finally {
         if (serverInstance) {
@@ -270,7 +278,7 @@ async function main() {
         if (mongoServer) {
             await mongoServer.stop();
         }
-        process.exit(0);
+        process.exit(exitCode);
     }
 }
 

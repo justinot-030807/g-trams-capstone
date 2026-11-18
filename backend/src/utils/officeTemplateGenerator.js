@@ -236,27 +236,27 @@ function generateMtopFranchiseXlsx(franchise = {}) {
         franchise.ownerName ||
         franchise.operatorName ||
         (op.firstName ? `${op.firstName} ${op.middleName ? op.middleName.charAt(0) + '. ' : ''}${op.lastName || ''}` : op.name) ||
-        'APPLICANT NAME'
+        'N/A'
     ).toUpperCase().trim();
 
-    const rawBrgy = (franchise.barangay || op.barangay || franchise.address || op.address || 'POBLACION').toUpperCase().trim();
-    const address = rawBrgy.includes('GASAN') ? rawBrgy : `${rawBrgy}, GASAN, MARINDUQUE`;
+    const rawBrgy = (franchise.barangay || op.barangay || franchise.address || op.address || '').toUpperCase().trim();
+    const address = !rawBrgy ? 'N/A' : (rawBrgy.includes('GASAN') ? rawBrgy : `${rawBrgy}, GASAN, MARINDUQUE`);
 
-    const issuedParts = getOrdinalParts(franchise.issuedAt || franchise.approvedAt || franchise.updatedAt || new Date());
+    const issuedParts = getOrdinalParts(franchise.issuedAt || franchise.approvedAt || franchise.approvalDate || franchise.updatedAt || new Date());
     let validUntilParts;
     if (franchise.validUntil || franchise.expiryDate) {
         validUntilParts = getOrdinalParts(franchise.validUntil || franchise.expiryDate);
     } else {
-        const exp = new Date(franchise.issuedAt || Date.now());
+        const exp = new Date(franchise.issuedAt || franchise.approvalDate || Date.now());
         exp.setFullYear(exp.getFullYear() + 3);
         validUntilParts = getOrdinalParts(exp);
     }
 
-    const { yearPrefix, seqNo } = splitMtopNo(franchise.mtopNumber || franchise.franchiseNumber || franchise.bodyNumber, issuedParts.year);
+    const { yearPrefix, seqNo } = splitMtopNo(franchise.mtopNo || franchise.mtopNumber || franchise.franchiseNumber || franchise.bodyNumber, issuedParts.year);
     const isRenewal = String(franchise.applicationType || '').toLowerCase() === 'renewal';
 
-    let zone = (franchise.zone || franchise.todaZone || 'NORTH').toUpperCase().replace(/\s*ZONE\s*/i, '').trim();
-    if (!zone) zone = 'NORTH';
+    let zone = (franchise.zone || franchise.todaZone || '').toUpperCase().replace(/\s*ZONE\s*/i, '').trim();
+    if (!zone) zone = 'N/A';
 
     const replacements = {
         APPLICANT_NAME: applicantName,
@@ -267,11 +267,11 @@ function generateMtopFranchiseXlsx(franchise = {}) {
         IS_RENEWAL: isRenewal ? '/' : '',
         ZONE: zone,
         UNITS_TEXT: 'ONE (1) UNIT',
-        MAKE: (franchise.make || franchise.made || franchise.vehicleMake || 'KAWASAKI').toUpperCase(),
-        MODEL: String(franchise.yearModel || franchise.model || '2024').toUpperCase(),
+        MAKE: (franchise.make || franchise.made || franchise.vehicleMake || 'N/A').toUpperCase(),
+        MODEL: String(franchise.yearModel || franchise.model || 'N/A').toUpperCase(),
         MOTOR_NO: (franchise.motorNo || franchise.motorNumber || franchise.engineNumber || 'N/A').toUpperCase(),
         CHASSIS_NO: (franchise.chassisNo || franchise.chassisNumber || 'N/A').toUpperCase(),
-        PLATE_NO: (franchise.plateNo || franchise.plateNumber || 'FOR REG').toUpperCase(),
+        PLATE_NO: (franchise.plateNo || franchise.plateNumber || 'N/A').toUpperCase(),
         SC_NO: (franchise.sidecarNumber || franchise.bodyNumber || franchise.todaBodyNumber || '').toUpperCase(),
         VALID_FROM: issuedParts.shortDate,
         VALID_UNTIL: validUntilParts.shortDate,
@@ -298,14 +298,14 @@ function generateMtopApplicationXlsx(franchise = {}) {
     let middleName = (op.middleName || franchise.middleName || '').toUpperCase().trim();
 
     if (!familyName && !givenName) {
-        const full = (franchise.fullName || franchise.ownerName || franchise.operatorName || op.name || 'DELA CRUZ JUAN SANTOS').toUpperCase().trim();
-        const parts = full.split(/\s+/);
+        const full = (franchise.fullName || franchise.ownerName || franchise.operatorName || op.name || '').toUpperCase().trim();
+        const parts = full ? full.split(/\s+/) : [];
         if (parts.length === 1) {
             familyName = parts[0];
         } else if (parts.length === 2) {
             givenName = parts[0];
             familyName = parts[1];
-        } else {
+        } else if (parts.length > 2) {
             givenName = parts.slice(0, -2).join(' ');
             middleName = parts[parts.length - 2].replace('.', '');
             familyName = parts[parts.length - 1];
@@ -319,17 +319,18 @@ function generateMtopApplicationXlsx(franchise = {}) {
         `${givenName} ${middleName ? middleName.charAt(0) + '. ' : ''}${familyName}`
     ).toUpperCase().trim();
 
-    let zone = (franchise.zone || franchise.todaZone || 'CENTRAL').toUpperCase().replace(/\s*ZONE\s*/i, '').trim();
-    if (!zone) zone = 'CENTRAL';
+    let zone = (franchise.zone || franchise.todaZone || '').toUpperCase().replace(/\s*ZONE\s*/i, '').trim();
+    if (!zone) zone = 'N/A';
 
     const isRenewal = String(franchise.applicationType || '').toLowerCase() === 'renewal';
-    const rawBrgy = (franchise.barangay || op.barangay || franchise.address || op.address || 'POBLACION')
+    const rawBrgy = (franchise.barangay || op.barangay || franchise.address || op.address || '')
         .toUpperCase()
         .replace(/,?\s*GASAN.*$/i, '')
         .trim();
 
-    const filedParts = getOrdinalParts(franchise.createdAt || franchise.submittedAt || new Date());
-    const ctcDateParts = getOrdinalParts(franchise.ctcDateIssued || franchise.createdAt || new Date());
+    const filedParts = getOrdinalParts(franchise.dateApplied || franchise.createdAt || franchise.submittedAt || new Date());
+    const rawCtcDate = franchise.cedulaDate || franchise.ctcDateIssued;
+    const ctcDateStr = rawCtcDate && !isNaN(new Date(rawCtcDate).getTime()) ? getOrdinalParts(rawCtcDate).shortDate : 'N/A';
 
     const replacements = {
         FAMILY_NAME: familyName || 'N/A',
@@ -338,7 +339,7 @@ function generateMtopApplicationXlsx(franchise = {}) {
         ZONE: zone,
         IS_NEW: isRenewal ? '' : '/',
         IS_RENEWAL: isRenewal ? '/' : '',
-        BARANGAY: rawBrgy || 'POBLACION',
+        BARANGAY: rawBrgy || 'N/A',
         MUNICIPALITY: 'GASAN',
         PROVINCE: 'MARINDUQUE',
         OCCUPATION: (franchise.occupation || op.occupation || 'TRICYCLE OPERATOR').toUpperCase(),
@@ -346,19 +347,19 @@ function generateMtopApplicationXlsx(franchise = {}) {
         IS_PARTNERSHIP: '',
         IS_COOPERATIVE: '',
         UNITS_APPLIED: 'One (1) unit',
-        MAKE: (franchise.make || franchise.made || franchise.vehicleMake || 'KAWASAKI').toUpperCase(),
-        MODEL: String(franchise.yearModel || franchise.model || '2024').toUpperCase(),
+        MAKE: (franchise.make || franchise.made || franchise.vehicleMake || 'N/A').toUpperCase(),
+        MODEL: String(franchise.yearModel || franchise.model || 'N/A').toUpperCase(),
         MOTOR_NO: (franchise.motorNo || franchise.motorNumber || franchise.engineNumber || 'N/A').toUpperCase(),
         CHASSIS_NO: (franchise.chassisNo || franchise.chassisNumber || 'N/A').toUpperCase(),
-        PLATE_NO: (franchise.plateNo || franchise.plateNumber || 'FOR REG').toUpperCase(),
+        PLATE_NO: (franchise.plateNo || franchise.plateNumber || 'N/A').toUpperCase(),
         SC_NO: (franchise.sidecarNumber || franchise.bodyNumber || franchise.todaBodyNumber || '').toUpperCase(),
         DATE_FILED: filedParts.shortDate,
-        APPLICANT_FULL_NAME: fullName,
+        APPLICANT_FULL_NAME: fullName || 'N/A',
         SWORN_DAY: `${filedParts.day}${filedParts.ordinal}`,
         SWORN_MONTH: filedParts.month.toUpperCase(),
         SWORN_YEAR: filedParts.year,
-        CTC_NO: (franchise.ctcNumber || franchise.cedulaNo || franchise.cedulaNumber || '27664282').toUpperCase(),
-        CTC_DATE: ctcDateParts.shortDate,
+        CTC_NO: (franchise.cedulaSerialNo || franchise.ctcNumber || franchise.cedulaNo || franchise.cedulaNumber || 'N/A').toUpperCase(),
+        CTC_DATE: ctcDateStr,
     };
 
     return modifyZipBuffer(zipBuf, {
@@ -421,7 +422,7 @@ function generateCancellationDocx(franchise = {}) {
         ISSUED_MONTH: cancelParts.month,
         ISSUED_YEAR: cancelParts.year,
         OR_AMOUNT: 'P50.00',
-        OR_NO: franchise.cancellationOrNumber || franchise.officialReceiptNo || franchise.orNumber || '7366968',
+        OR_NO: franchise.cancellationOrNumber || franchise.officialReceiptNo || franchise.orNumber || 'N/A',
         OR_DATE: orDateParts.longDate,
     };
 

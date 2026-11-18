@@ -7,10 +7,24 @@ const protect = async (req, res, next) => {
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
         try {
             token = req.headers.authorization.split(' ')[1];
-            const decoded = jwt.verify(token, process.env.JWT_SECRET);
-            req.user = await User.findById(decoded.id).select('-password');
+            const jwtSecret = process.env.JWT_SECRET;
+            if (!jwtSecret) {
+                throw new Error('JWT_SECRET is not configured on the server');
+            }
+            const decoded = jwt.verify(token, jwtSecret, { algorithms: ['HS256'] });
+            if (
+                (decoded.tokenType !== undefined && decoded.tokenType !== 'access') ||
+                (decoded.purpose !== undefined && decoded.purpose !== 'access')
+            ) {
+                return res.status(401).json({ message: 'Not authorized, invalid token type' });
+            }
+            req.user = await User.findById(decoded.id).select('-password -otp -otpExpire -otpAttempts -otpPurpose -otpRecipient');
             if (!req.user) {
                 return res.status(401).json({ message: 'Not authorized, user not found' });
+            }
+
+            if (typeof decoded.tokenVersion !== 'number' || (req.user.tokenVersion || 0) !== decoded.tokenVersion) {
+                return res.status(401).json({ message: 'Session expired due to security update. Please log in again.' });
             }
 
             // Block deactivated accounts

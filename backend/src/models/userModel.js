@@ -38,6 +38,10 @@ const userSchema = new mongoose.Schema({
     otp: { type: String },
     otpExpire: { type: Date },
     otpAttempts: { type: Number, default: 0 },
+    otpPurpose: { type: String, enum: ['register', 'reset', ''], default: '' },
+    otpRecipient: { type: String, default: '' },
+    tokenVersion: { type: Number, default: 0 },
+    passwordChangedAt: { type: Date, default: null },
     failedLoginAttempts: { type: Number, default: 0 },
     lockUntil: { type: Date, default: null },
     isActive: { type: Boolean, default: true },
@@ -53,11 +57,15 @@ const userSchema = new mongoose.Schema({
 userSchema.index({ recoveryEmail: 1 }, { sparse: true });
 userSchema.index({ recoveryPhone: 1 }, { sparse: true });
 
-userSchema.pre('save', async function () {
-    if (!this.isModified('password')) return;
+userSchema.statics.hashPassword = async function (plainPassword) {
     const saltRounds = process.env.NODE_ENV === 'test' ? 10 : 12;
     const salt = await bcrypt.genSalt(saltRounds);
-    this.password = await bcrypt.hash(this.password, salt);
+    return await bcrypt.hash(plainPassword, salt);
+};
+
+userSchema.pre('save', async function () {
+    if (!this.isModified('password')) return;
+    this.password = await this.constructor.hashPassword(this.password);
 });
 
 userSchema.methods.matchPassword = async function (enteredPassword) {

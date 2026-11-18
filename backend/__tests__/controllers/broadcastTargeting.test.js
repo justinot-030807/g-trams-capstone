@@ -43,7 +43,7 @@ beforeAll(async () => {
         isVerified: true,
         isActive: true,
     });
-    adminToken = jwt.sign({ id: adminUser._id, role: adminUser.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    adminToken = jwt.sign({ id: adminUser._id, role: adminUser.role, tokenVersion: adminUser.tokenVersion || 0 }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
     // Create Operator (Normal)
     operatorUser = await User.create({
@@ -56,7 +56,7 @@ beforeAll(async () => {
         isVerified: true,
         isActive: true,
     });
-    operatorToken = jwt.sign({ id: operatorUser._id, role: operatorUser.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    operatorToken = jwt.sign({ id: operatorUser._id, role: operatorUser.role, tokenVersion: operatorUser.tokenVersion || 0 }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
     // Create TODA President
     presidentUser = await User.create({
@@ -70,7 +70,7 @@ beforeAll(async () => {
         isVerified: true,
         isActive: true,
     });
-    presidentToken = jwt.sign({ id: presidentUser._id, role: presidentUser.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    presidentToken = jwt.sign({ id: presidentUser._id, role: presidentUser.role, tokenVersion: presidentUser.tokenVersion || 0 }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
     // Create Operators for Scenario 4 (3 BATODA, 3 GT TODA)
     for (let i = 0; i < 3; i++) {

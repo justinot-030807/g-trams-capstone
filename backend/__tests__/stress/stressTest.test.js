@@ -54,7 +54,7 @@ beforeAll(async () => {
     isVerified: true,
     isActive: true
   });
-  adminToken = jwt.sign({ id: adminUser._id, role: adminUser.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+  adminToken = jwt.sign({ id: adminUser._id, role: adminUser.role, tokenVersion: adminUser.tokenVersion || 0 }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
   bploUser = await User.create({
     name: 'BPLO Stress Test',
@@ -66,7 +66,7 @@ beforeAll(async () => {
     isVerified: true,
     isActive: true
   });
-  bploToken = jwt.sign({ id: bploUser._id, role: bploUser.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+  bploToken = jwt.sign({ id: bploUser._id, role: bploUser.role, tokenVersion: bploUser.tokenVersion || 0 }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
   operatorUser = await User.create({
     name: 'Operator Stress Test',
@@ -79,7 +79,7 @@ beforeAll(async () => {
     isActive: true,
     todaAssociation: 'BATODA'
   });
-  operatorToken = jwt.sign({ id: operatorUser._id, role: operatorUser.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+  operatorToken = jwt.sign({ id: operatorUser._id, role: operatorUser.role, tokenVersion: operatorUser.tokenVersion || 0 }, process.env.JWT_SECRET, { expiresIn: '1d' });
 });
 
 afterAll(async () => {
@@ -123,7 +123,7 @@ describe('GTRAMS API Stress Tests', () => {
     // All try to submit with the SAME plate number at the same millisecond
     const sharedPlate = `RACE-PLATE-${Date.now()}`;
     const submitPromises = operators.map((op, idx) => {
-      const token = jwt.sign({ id: op._id, role: op.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+      const token = jwt.sign({ id: op._id, role: op.role, tokenVersion: op.tokenVersion || 0 }, process.env.JWT_SECRET, { expiresIn: '1d' });
       return request(app)
         .post('/api/v1/franchises')
         .set('Authorization', `Bearer ${token}`)

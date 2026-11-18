@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { useSocket } from '../context/SocketContext';
+import { unsubscribeFromPush } from '../utils/pushNotification';
 
 const Sidebar = ({ isOpen, onClose }) => {
   const { t } = useLanguage() || { t: (_, def) => def };
@@ -250,13 +251,6 @@ const Sidebar = ({ isOpen, onClose }) => {
       name: 'System Reports', 
       path: '/system-reports', 
       icon: <Printer size={18} /> 
-    },
-    { 
-      type: 'link', 
-      name: 'Communications & Chat', 
-      path: '/admin/tickets', 
-      icon: <MessageSquare size={18} />,
-      badge: chatUnreadCount > 0 ? chatUnreadCount : null
     },
     { 
       type: 'link', 
@@ -563,8 +557,11 @@ const Sidebar = ({ isOpen, onClose }) => {
 
           <div className="relative group/logout w-full flex justify-center">
             <button 
-              onClick={() => {
+              onClick={async () => {
+                await unsubscribeFromPush().catch(() => {});
                 localStorage.clear();
+                window.dispatchEvent(new Event('gtrams-auth-changed'));
+                window.dispatchEvent(new Event('gtrams-auth-change'));
                 window.location.href = '/login';
               }}
               title={!isOpen ? t('nav.logOut', 'Log Out') : undefined}

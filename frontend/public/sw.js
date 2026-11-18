@@ -1,28 +1,6 @@
-importScripts('https://storage.googleapis.com/workbox-cdn/releases/6.4.1/workbox-sw.js');
-
-if (typeof workbox !== 'undefined') {
-  const bgSyncPlugin = new workbox.backgroundSync.BackgroundSyncPlugin('gtrams-form-queue', {
-    maxRetentionTime: 24 * 60, // Retry for max of 24 Hours (specified in minutes)
-  });
-
-  workbox.routing.registerRoute(
-    /\/api\/v1\/franchises/,
-    new workbox.strategies.NetworkOnly({
-      plugins: [bgSyncPlugin],
-    }),
-    'POST'
-  );
-  workbox.routing.registerRoute(
-    /\/api\/v1\/franchises/,
-    new workbox.strategies.NetworkOnly({
-      plugins: [bgSyncPlugin],
-    }),
-    'PUT'
-  );
-}
-
 // G-TRAMS Official Service Worker (PWA)
-const CACHE_NAME = 'gtrams-cache-v2';
+// Authenticated API mutations and private document assets are never queued or cached.
+const CACHE_NAME = 'gtrams-cache-v3';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -107,8 +85,23 @@ self.addEventListener('push', (event) => {
     }
   }
 
+  const rawTitle = String(data.title || 'GTRAMS');
+  const rawBody = String(data.body || data.message || '');
+  const combinedText = `${rawTitle} ${rawBody}`;
+  const hasSensitivePaymentOrReceipt =
+    /(₱|\bphp\b|\bpesos?\b|official\s*receipt|\bo\.?r\.?\s*(?:no\.?|number|#|:|-)|or#\s*[a-z0-9-]+|\bOR[-:\s#]*[A-Z0-9-]*\d+[A-Z0-9-]*|receipt(?:\s*(?:no\.?|number|#|:|-))?|e-?resibo|resibo|payer\s*:|amount\s*(?:paid|due)|payment\s*(?:confirmed|received|recorded)|cashier|treasury)/i.test(combinedText) ||
+    /\bOR\b/.test(combinedText);
+  const isSensitivePayload =
+    Boolean(data.sensitive) ||
+    hasSensitivePaymentOrReceipt;
+
+  const displayTitle = isSensitivePayload ? 'G-TRAMS Account Update' : rawTitle;
+  const displayBody = isSensitivePayload
+    ? 'You have a new G-TRAMS account update. Open the app to view details.'
+    : (rawBody || 'You have a new G-TRAMS account update. Open the app to view details.');
+
   const options = {
-    body: data.body || data.message,
+    body: displayBody,
     icon: data.icon || '/icons/icon-192x192.png',
     badge: data.badge || '/icons/favicon-32x32.png',
     vibrate: [150, 80, 150],
@@ -122,7 +115,7 @@ self.addEventListener('push', (event) => {
   };
 
   event.waitUntil(
-    self.registration.showNotification(data.title || 'GTRAMS', options)
+    self.registration.showNotification(displayTitle, options)
   );
 });
 

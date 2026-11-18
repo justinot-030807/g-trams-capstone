@@ -21,6 +21,12 @@ function normalizePhoneNumber(raw) {
     return clean;
 }
 
+function maskPhoneNumber(phone) {
+    const str = String(phone || '').trim();
+    if (str.length <= 4) return '***';
+    return `${str.slice(0, 4)}****${str.slice(-2)}`;
+}
+
 /**
  * Dispatches an automated 30-day expiration SMS alert (live or simulated)
  * and records the dispatch in the SmsLog audit database.
@@ -49,8 +55,8 @@ async function dispatchExpirationSms({
             (process.env.SEMAPHORE_API_KEY && !['mock_key', 'test_key'].includes(process.env.SEMAPHORE_API_KEY))
         );
 
-        // If TextBee or Semaphore API key is present
-        if (hasLiveSmsKey && !skipGatewaySend) {
+        // If TextBee or Semaphore API key is present and this is not a simulated-only or skipped call
+        if (hasLiveSmsKey && !skipGatewaySend && !simulated) {
             try {
                 const smsRes = await sendSms({
                     phone: recipientPhone,
@@ -63,8 +69,6 @@ async function dispatchExpirationSms({
                 console.warn('[notificationService] SMS gateway call failed, logging as simulated fallback:', apiErr.message);
                 status = 'SIMULATED';
             }
-        } else if (hasLiveSmsKey && skipGatewaySend) {
-            status = 'DELIVERED';
         }
 
         // Create timestamped audit record
@@ -82,7 +86,7 @@ async function dispatchExpirationSms({
             dispatchedAt: now
         });
 
-        console.log(`[SMS DISPATCH] ${status} alert sent to ${recipientPhone} (${recipientName}, Unit ${plateNo}): "${message}"`);
+        console.log(`[SMS DISPATCH] ${status} alert logged for ${maskPhoneNumber(recipientPhone)} (Unit ${plateNo})`);
 
         // Broadcast real-time socket event to active admin/staff dashboards
         try {
@@ -169,7 +173,8 @@ async function simulateTestDispatch({
         franchise: fakeFranchise,
         daysRemaining,
         simulated: true,
-        customPhone: phone
+        customPhone: phone,
+        skipGatewaySend: true
     });
 }
 

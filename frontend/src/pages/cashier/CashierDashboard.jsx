@@ -13,6 +13,7 @@ const CashierDashboard = () => {
   const navigate = useNavigate();
   const [queue, setQueue] = useState([]);
   const [paidList, setPaidList] = useState([]);
+  const [allRecords, setAllRecords] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('pending'); // 'pending' | 'completed'
@@ -37,16 +38,73 @@ const CashierDashboard = () => {
   // Daily Treasury Remittance Modal State
   const [isRemittanceModalOpen, setIsRemittanceModalOpen] = useState(false);
 
+  const sanitizeCsvCell = (value) => {
+    const str = String(value ?? '');
+    const trimmedLeading = str.replace(/^[\s\u0000-\u001F\u00A0]+/, '');
+    const isFormula =
+      /^[=+\-@\t\r\n\uFF1D\uFF0B\uFF0D\uFF20]/.test(str) ||
+      /^[=+\-@\uFF1D\uFF0B\uFF0D\uFF20]/.test(trimmedLeading);
+    const neutralized = isFormula ? `'${str}` : str;
+    return `"${neutralized.replace(/"/g, '""')}"`;
+  };
+
+  const hasValidAmount = (val) =>
+    val !== undefined && val !== null && val !== '' && Number.isFinite(Number(val)) && Number(val) > 0;
+
+  const formatAmountDisplay = (val) =>
+    hasValidAmount(val) ? `₱${Number(val).toFixed(2)}` : 'N/A';
+
   const todayPaidRecords = useMemo(() => {
-    const today = new Date().toISOString().substring(0, 10);
-    const records = paidList.filter(item => {
-      if (!item.paymentDate) return false;
-      const d = new Date(item.paymentDate);
-      if (isNaN(d.getTime())) return false;
-      return d.toISOString().substring(0, 10) === today;
-    });
-    return records.length > 0 ? records : paidList.slice(0, 50);
-  }, [paidList]);
+    const manilaDateFmt = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila' });
+    const today = manilaDateFmt.format(new Date());
+    const toManilaDate = (val) => {
+      if (!val) return null;
+      const d = new Date(val);
+      if (isNaN(d.getTime())) return null;
+      return manilaDateFmt.format(d);
+    };
+
+    const seenIds = new Set();
+    const seenOrs = new Set();
+    const records = [];
+    const sourceList = allRecords.length > 0 ? allRecords : [...paidList, ...queue];
+
+    for (const item of sourceList) {
+      if (!item || (item._id && seenIds.has(String(item._id)))) continue;
+      if (item._id) seenIds.add(String(item._id));
+
+      if (item.paymentStatus === 'Paid' && toManilaDate(item.paymentDate) === today) {
+        const orKey = (item.officialReceiptNo || '').trim().toUpperCase();
+        if (orKey) seenOrs.add(orKey);
+        records.push(item);
+      }
+
+      if (Array.isArray(item.paymentHistory)) {
+        for (let idx = 0; idx < item.paymentHistory.length; idx++) {
+          const hist = item.paymentHistory[idx];
+          if (!hist || toManilaDate(hist.paymentDate) !== today) continue;
+          const histOr = (hist.officialReceiptNo || '').trim().toUpperCase();
+          if (histOr && seenOrs.has(histOr)) continue;
+          if (histOr) seenOrs.add(histOr);
+          records.push({
+            ...item,
+            _id: `${item._id || 'hist'}_term_${idx}_${histOr || hist.paymentDate}`,
+            officialReceiptNo: hist.officialReceiptNo || '',
+            payerName: hist.payerName || item.payerName || '',
+            amountPaid: hist.amountPaid,
+            paymentMethod: hist.paymentMethod || item.paymentMethod || '',
+            paymentDate: hist.paymentDate,
+            cashierName: hist.cashierName || '',
+            paymentRemarks: hist.paymentRemarks || '',
+            mtopNo: hist.mtopNo || item.mtopNo || '',
+            isHistoricalTerm: true
+          });
+        }
+      }
+    }
+
+    return records;
+  }, [allRecords, paidList, queue]);
 
   const handleExportRemittanceCSV = () => {
     if (todayPaidRecords.length === 0) {
@@ -56,14 +114,14 @@ const CashierDashboard = () => {
 
     const headers = ['Official Receipt No', 'Payer Full Name', 'Plate Number', 'TODA Association', 'Amount Paid (PHP)', 'Payment Method', 'Payment Timestamp', 'Collecting Cashier'];
     const rows = todayPaidRecords.map(item => [
-      item.officialReceiptNo || 'PENDING',
-      `"${(item.fullName || item.payerName || '').replace(/^[=+\-@]/, "'$&").replace(/"/g, '""')}"`,
-      item.plateNo || 'PENDING',
-      `"${(item.todaName || 'NON-TODA').replace(/"/g, '""')}"`,
-      item.amountPaid || 500,
-      item.paymentMethod || 'Cash',
-      item.paymentDate ? new Date(item.paymentDate).toLocaleString('en-PH') : 'N/A',
-      `"${(item.cashierName || currentCashierName).replace(/"/g, '""')}"`
+      sanitizeCsvCell(item.officialReceiptNo || 'PENDING'),
+      sanitizeCsvCell(item.payerName || item.fullName || ''),
+      sanitizeCsvCell(item.plateNo || 'PENDING'),
+      sanitizeCsvCell(item.todaName || 'NON-TODA'),
+      hasValidAmount(item.amountPaid) ? Number(item.amountPaid) : sanitizeCsvCell(''),
+      sanitizeCsvCell(item.paymentMethod || 'N/A'),
+      sanitizeCsvCell(item.paymentDate ? new Date(item.paymentDate).toLocaleString('en-PH', { timeZone: 'Asia/Manila' }) : 'N/A'),
+      sanitizeCsvCell(item.cashierName || 'N/A')
     ]);
 
     const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
@@ -71,7 +129,7 @@ const CashierDashboard = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `GTRAMS_Treasury_Daily_Remittance_${new Date().toISOString().substring(0, 10)}.csv`;
+    a.download = `GTRAMS_Treasury_Daily_Remittance_${new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila' }).format(new Date())}.csv`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -102,12 +160,17 @@ const CashierDashboard = () => {
       });
       if (res.ok) {
         const data = await res.json();
+        const isPayable = (f) => f && f.status === 'For Payment' && f.paymentStatus !== 'Paid' && !f.isArchived;
         if (Array.isArray(data)) {
-          setQueue(data.filter(f => f.paymentStatus !== 'Paid' && (f.status === 'For Payment' || f.status === 'Ready for Pickup')));
+          setAllRecords(data);
+          setQueue(data.filter(isPayable));
           setPaidList(data.filter(f => f.paymentStatus === 'Paid'));
         } else {
-          setQueue(data.pendingQueue || []);
-          setPaidList(data.recentlyPaid || []);
+          const pendingSource = Array.isArray(data.pendingQueue) ? data.pendingQueue : (Array.isArray(data.all) ? data.all : []);
+          const recentlyPaidSource = Array.isArray(data.recentlyPaid) ? data.recentlyPaid : [];
+          setAllRecords(Array.isArray(data.all) ? data.all : [...pendingSource, ...recentlyPaidSource]);
+          setQueue(pendingSource.filter(isPayable));
+          setPaidList(recentlyPaidSource);
         }
       } else {
         showToast('Failed to load cashier payment queue.', 'error');
@@ -242,14 +305,8 @@ const CashierDashboard = () => {
 
   // Metrics
   const totalTodayCollected = useMemo(() => {
-    const today = new Date().toISOString().substring(0, 10);
-    return paidList.filter(item => {
-      if (!item.paymentDate) return false;
-      const d = new Date(item.paymentDate);
-      if (isNaN(d.getTime())) return false;
-      return d.toISOString().substring(0, 10) === today;
-    }).reduce((sum, item) => sum + (item.amountPaid || 500), 0);
-  }, [paidList]);
+    return todayPaidRecords.reduce((sum, item) => sum + (hasValidAmount(item.amountPaid) ? Number(item.amountPaid) : 0), 0);
+  }, [todayPaidRecords]);
 
   return (
     <MainLayout>
@@ -325,7 +382,7 @@ const CashierDashboard = () => {
               <p className="text-2xl sm:text-3xl font-bold text-[#1F1D1B] dark:text-white mt-2">
                 {queue.length}
               </p>
-              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1">Ready for pickup & fee settlement</p>
+              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1">Applications queued for fee settlement</p>
             </div>
 
             <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4 sm:p-5 shadow-sm">
@@ -528,7 +585,7 @@ const CashierDashboard = () => {
                           </div>
                           <div className="text-right shrink-0">
                             <span className="font-bold text-sm font-mono tabular-nums text-[#1F1D1B] dark:text-white">
-                              ₱{(item.amountPaid || standardFranchiseFee).toFixed(2)}
+                              {formatAmountDisplay(item.amountPaid)}
                             </span>
                             <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">{dt.dateFormatted}</p>
                           </div>
@@ -636,7 +693,7 @@ const CashierDashboard = () => {
                                   {item.officialReceiptNo || 'OR-PAID'}
                                 </span>
                                 <div className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] uppercase font-semibold">
-                                  Cashier: {item.cashierName || 'Municipal Treasury'}
+                                  Cashier: {item.cashierName || 'N/A'}
                                 </div>
                               </div>
                             </td>
@@ -660,10 +717,10 @@ const CashierDashboard = () => {
                             <td className="py-3.5 px-4">
                               <div>
                                 <span className="font-bold text-[#1F1D1B] dark:text-white text-sm font-mono tabular-nums">
-                                  ₱{(item.amountPaid || standardFranchiseFee).toFixed(2)}
+                                  {formatAmountDisplay(item.amountPaid)}
                                 </span>
                                 <span className="block text-[10px] text-emerald-700 dark:text-emerald-400 font-bold uppercase tracking-tight">
-                                  Paid via {item.paymentMethod || 'Cash'}
+                                  Paid via {item.paymentMethod || 'N/A'}
                                 </span>
                               </div>
                             </td>
@@ -942,23 +999,23 @@ const CashierDashboard = () => {
                 </thead>
                 <tbody className="divide-y divide-[#E4E1DC] font-medium text-[#1F1D1B]">
                   {(() => {
-                    const paidTotal = Number(receiptData.amountPaid || standardFranchiseFee || 500);
-                    const filingFee = paidTotal === 500 ? 300 : Number((paidTotal * 0.6).toFixed(2));
-                    const permitFee = paidTotal === 500 ? 150 : Number((paidTotal * 0.3).toFixed(2));
-                    const stickerFee = Number((paidTotal - filingFee - permitFee).toFixed(2));
+                    const paidTotal = hasValidAmount(receiptData.amountPaid) ? Number(receiptData.amountPaid) : null;
+                    const filingFee = paidTotal === null ? null : (paidTotal === 500 ? 300 : Number((paidTotal * 0.6).toFixed(2)));
+                    const permitFee = paidTotal === null ? null : (paidTotal === 500 ? 150 : Number((paidTotal * 0.3).toFixed(2)));
+                    const stickerFee = paidTotal === null ? null : Number((paidTotal - filingFee - permitFee).toFixed(2));
                     return (
                       <>
                         <tr>
                           <td className="py-2 px-3">Franchise Filing &amp; Inspection Fee</td>
-                          <td className="py-2 px-3 text-right font-mono">₱{filingFee.toFixed(2)}</td>
+                          <td className="py-2 px-3 text-right font-mono">{filingFee !== null ? `₱${filingFee.toFixed(2)}` : 'N/A'}</td>
                         </tr>
                         <tr>
                           <td className="py-2 px-3">Mayor's Permit &amp; Supervision Fee</td>
-                          <td className="py-2 px-3 text-right font-mono">₱{permitFee.toFixed(2)}</td>
+                          <td className="py-2 px-3 text-right font-mono">{permitFee !== null ? `₱${permitFee.toFixed(2)}` : 'N/A'}</td>
                         </tr>
                         <tr>
                           <td className="py-2 px-3">Official Regulatory Sticker &amp; Seal</td>
-                          <td className="py-2 px-3 text-right font-mono">₱{stickerFee.toFixed(2)}</td>
+                          <td className="py-2 px-3 text-right font-mono">{stickerFee !== null ? `₱${stickerFee.toFixed(2)}` : 'N/A'}</td>
                         </tr>
                       </>
                     );
@@ -968,7 +1025,7 @@ const CashierDashboard = () => {
                   <tr>
                     <td className="py-2.5 px-3 uppercase text-[#1F1D1B]">Total Amount Paid:</td>
                     <td className="py-2.5 px-3 text-right text-sm text-[#9E2A2B] font-mono">
-                      ₱{Number(receiptData.amountPaid || standardFranchiseFee || 500).toFixed(2)}
+                      {formatAmountDisplay(receiptData.amountPaid)}
                     </td>
                   </tr>
                 </tfoot>
@@ -979,12 +1036,16 @@ const CashierDashboard = () => {
             <div className="flex items-center justify-between text-xs pt-2">
               <div>
                 <p className="text-[#6B6761] text-[10px] uppercase font-bold">Payment Method</p>
-                <p className="font-bold text-[#1F1D1B]">Cash (Over-the-Counter)</p>
+                <p className="font-bold text-[#1F1D1B]">
+                  {receiptData.paymentMethod === 'Cash'
+                    ? 'Cash (Over-the-Counter)'
+                    : (receiptData.paymentMethod || 'N/A')}
+                </p>
               </div>
               <div className="text-right">
                 <p className="text-[#6B6761] text-[10px] uppercase font-bold">Collecting Officer</p>
                 <p className="font-bold text-[#1F1D1B] border-b border-[#6B6761] pb-0.5">
-                  {receiptData.cashierName || currentCashierName}
+                  {receiptData.cashierName || 'N/A'}
                 </p>
                 <p className="text-[10px] text-[#6B6761]">Municipal Treasury Staff</p>
               </div>
@@ -1049,7 +1110,7 @@ const CashierDashboard = () => {
               <div className="p-3 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27]">
                 <p className="text-[10px] font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">Total Collection Remitted</p>
                 <p className="text-lg font-mono font-bold text-emerald-700 dark:text-emerald-400 mt-0.5">
-                  ₱{todayPaidRecords.reduce((sum, r) => sum + Number(r.amountPaid || standardFranchiseFee || 500), 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
+                  ₱{todayPaidRecords.reduce((sum, r) => sum + (hasValidAmount(r.amountPaid) ? Number(r.amountPaid) : 0), 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
                 </p>
               </div>
               <div className="p-3 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27]">
@@ -1076,13 +1137,13 @@ const CashierDashboard = () => {
                   {todayPaidRecords.map((item, idx) => (
                     <tr key={idx} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50">
                       <td className="p-2.5 pl-3 font-mono font-bold text-[#9E2A2B] dark:text-[#D4AF37]">{item.officialReceiptNo || 'N/A'}</td>
-                      <td className="p-2.5 font-medium text-[#1F1D1B] dark:text-[#F6F5F3]">{item.fullName || item.payerName || 'Operator'}</td>
+                      <td className="p-2.5 font-medium text-[#1F1D1B] dark:text-[#F6F5F3]">{item.payerName || item.fullName || 'Operator'}</td>
                       <td className="p-2.5 font-mono text-[#6B6761] dark:text-[#A8A29E]">{item.plateNo || '—'}</td>
                       <td className="p-2.5 text-[#6B6761] dark:text-[#A8A29E]">
                         {item.paymentDate ? new Date(item.paymentDate).toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' }) : '—'}
                       </td>
                       <td className="p-2.5 pr-3 text-right font-mono font-bold text-emerald-700 dark:text-emerald-400">
-                        ₱{Number(item.amountPaid || standardFranchiseFee || 500).toFixed(2)}
+                        {formatAmountDisplay(item.amountPaid)}
                       </td>
                     </tr>
                   ))}

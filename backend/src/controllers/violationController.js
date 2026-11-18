@@ -207,7 +207,9 @@ const recordViolation = async (req, res) => {
             status: 'Active'
         });
 
-        const offenseNumber = priorActiveCount + 1;
+        const currentTrackedCount = Number(franchise.activeViolationCount || 0);
+        const baseCount = Math.max(priorActiveCount, currentTrackedCount);
+        const offenseNumber = baseCount + 1;
 
         // Progressive Discipline Engine Decision
         let sanctionType = 'Warning';
@@ -257,26 +259,10 @@ const recordViolation = async (req, res) => {
             evidenceUrl = req.body.evidenceUrl;
         }
 
-        // Update target franchise status and suspension fields
-        franchise.status = resultingStatus;
-        franchise.currentSanction = `${sanctionType} (${offenseNumber}${offenseNumber === 1 ? 'st' : offenseNumber === 2 ? 'nd' : offenseNumber === 3 ? 'rd' : 'th'} Offense)`;
-        franchise.activeViolationCount = priorActiveCount + 1;
-
-        if (resultingStatus === 'Suspended') {
-            franchise.suspensionEndDate = suspensionEndDate;
-            franchise.suspensionReason = `${violationType} (2nd Offense)`;
-        } else if (resultingStatus === 'Revoked') {
-            franchise.cancelReason = isGrave 
-                ? `Revoked due to Grave Violation: ${violationType}`
-                : `Revoked due to 3rd Offense Violation: ${violationType}`;
-            if (evidenceUrl) franchise.evidenceUrl = evidenceUrl;
-        }
-
-        await franchise.save();
-
         const operatorRef = franchise.operator?._id || franchise.operator || null;
+        const sanctionLabel = `${sanctionType} (${offenseNumber}${offenseNumber === 1 ? 'st' : offenseNumber === 2 ? 'nd' : offenseNumber === 3 ? 'rd' : 'th'} Offense)`;
 
-        // Save new violation record
+        // Save new violation record cleanly, then atomically update the franchise with rollback on conflict/failure
         const violation = await Violation.create({
             operator: operatorRef,
             franchise: franchise._id,
@@ -302,6 +288,57 @@ const recordViolation = async (req, res) => {
             recordedByName: req.user?.name || 'BPLO Staff',
             status: 'Active'
         });
+
+        const franchiseSetFields = {
+            status: resultingStatus,
+            currentSanction: sanctionLabel
+        };
+        if (resultingStatus === 'Suspended') {
+            franchiseSetFields.suspensionEndDate = suspensionEndDate;
+            franchiseSetFields.suspensionReason = `${violationType} (2nd Offense)`;
+        } else if (resultingStatus === 'Revoked') {
+            franchiseSetFields.cancelReason = isGrave
+                ? `Revoked due to Grave Violation: ${violationType}`
+                : `Revoked due to 3rd Offense Violation: ${violationType}`;
+            if (evidenceUrl) franchiseSetFields.evidenceUrl = evidenceUrl;
+        }
+
+        let updatedFranchise;
+        const activeCountFilter = currentTrackedCount === 0
+            ? { $or: [{ activeViolationCount: 0 }, { activeViolationCount: null }, { activeViolationCount: { $exists: false } }] }
+            : { activeViolationCount: currentTrackedCount };
+
+        try {
+            updatedFranchise = await Franchise.findOneAndUpdate(
+                { _id: franchise._id, ...activeCountFilter },
+                {
+                    $inc: { activeViolationCount: 1 },
+                    $set: franchiseSetFields
+                },
+                { returnDocument: 'after' }
+            );
+        } catch (updateErr) {
+            try {
+                await Violation.findByIdAndDelete(violation._id);
+            } catch (cleanupErr) {
+                console.error(`[ViolationController] CRITICAL: Failed to delete Violation ${violation._id} after Franchise update error:`, cleanupErr);
+                throw cleanupErr;
+            }
+            throw updateErr;
+        }
+
+        if (!updatedFranchise) {
+            try {
+                await Violation.findByIdAndDelete(violation._id);
+            } catch (cleanupErr) {
+                console.error(`[ViolationController] CRITICAL: Failed to delete Violation ${violation._id} after 409 conflict:`, cleanupErr);
+                throw cleanupErr;
+            }
+            return res.status(409).json({
+                success: false,
+                message: 'Concurrent violation update detected on this franchise. Please refresh and try again.'
+            });
+        }
 
         // Notify Operator in real-time
         try {
@@ -361,10 +398,10 @@ const recordViolation = async (req, res) => {
             message: `Violation recorded as ${offenseNumber}${offenseNumber === 1 ? 'st' : offenseNumber === 2 ? 'nd' : offenseNumber === 3 ? 'rd' : 'th'} Offense. Sanction applied: ${sanctionType} (${resultingStatus}).`,
             violation,
             franchise: {
-                _id: franchise._id,
-                status: franchise.status,
-                currentSanction: franchise.currentSanction,
-                suspensionEndDate: franchise.suspensionEndDate
+                _id: updatedFranchise._id,
+                status: updatedFranchise.status,
+                currentSanction: updatedFranchise.currentSanction,
+                suspensionEndDate: updatedFranchise.suspensionEndDate
             }
         });
     } catch (error) {

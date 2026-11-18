@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/MainLayout';
+import { unsubscribeFromPush } from '../../utils/pushNotification';
 import { 
   Sliders, User, Lock, Camera, Save, Loader2, 
   CheckCircle2, AlertCircle, Moon, Sun, Globe, Clock, 
@@ -14,6 +16,7 @@ import { SettingsSkeleton, TableRowsSkeleton } from '../../components/skeleton';
 import PageHeader from '../../components/common/PageHeader';
 
 const AdminSettings = () => {
+  const navigate = useNavigate();
   const { language, setLanguage, t } = useLanguage();
   const { theme, setTheme, isDark } = useTheme();
   const { confirm } = useConfirm();
@@ -838,11 +841,11 @@ const AdminSettings = () => {
         }
       } 
       else if (type === 'password') {
-        const token = localStorage.getItem('token');
+        const reqToken = localStorage.getItem('token');
         const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/change-password`, {
           method: 'PUT',
           headers: {
-            'Authorization': `Bearer ${token}`,
+            'Authorization': `Bearer ${reqToken}`,
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
@@ -852,9 +855,31 @@ const AdminSettings = () => {
         });
 
         if (res.ok) {
+          const data = await res.json().catch(() => ({}));
+          if (!reqToken || localStorage.getItem('token') !== reqToken) {
+            return;
+          }
           setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-          showToast('Admin password changed successfully!', 'success');
+          if (data?.token) {
+            localStorage.setItem('token', data.token);
+            window.dispatchEvent(new Event('gtrams-auth-changed'));
+            window.dispatchEvent(new Event('gtrams-auth-change'));
+            showToast('Admin password changed successfully! Your session has been refreshed.', 'success');
+          } else {
+            await unsubscribeFromPush().catch(() => {});
+            localStorage.removeItem('token');
+            localStorage.removeItem('role');
+            localStorage.removeItem('user');
+            localStorage.removeItem('userId');
+            localStorage.removeItem('name');
+            window.dispatchEvent(new Event('gtrams-auth-changed'));
+            window.dispatchEvent(new Event('gtrams-auth-change'));
+            navigate('/login');
+          }
         } else {
+          if (!reqToken || localStorage.getItem('token') !== reqToken) {
+            return;
+          }
           const errData = await res.json().catch(() => ({}));
           showToast(errData.message || 'Failed to change password.', 'error');
         }

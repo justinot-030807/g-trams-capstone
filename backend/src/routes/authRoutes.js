@@ -49,7 +49,7 @@ router.post('/verify-roster', registerLimiter, validate(verifyRosterSchema), ver
 // Google OAuth route
 router.post('/google', googleAuthLimiter, validate(googleAuthSchema), googleAuth);
 router.get('/google-client-id', (req, res) => {
-    const clientId = process.env.GOOGLE_CLIENT_ID || process.env.VITE_GOOGLE_CLIENT_ID || '';
+    const clientId = process.env.GOOGLE_CLIENT_ID || '';
     res.status(200).json({ clientId });
 });
 

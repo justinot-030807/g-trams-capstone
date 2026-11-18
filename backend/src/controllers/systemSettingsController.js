@@ -16,78 +16,80 @@ const getServerTime = (req, res) => {
   });
 };
 
-// Get system settings
+const DEFAULT_ANNOUNCEMENTS = [
+  {
+    title: 'Franchise Renewal Schedule',
+    desc: 'All registered tricycle operators must complete annual MTOP renewal before designated deadline to maintain active status.',
+    type: 'alert',
+    date: 'Annual Cycle',
+    isActive: true
+  },
+  {
+    title: 'Digital MTOP & QR Verification',
+    desc: 'Approved operators can now view and download their digitally signed MTOP certificates with verifiable QR codes directly from their dashboard.',
+    type: 'info',
+    date: 'Portal Update',
+    isActive: true
+  },
+  {
+    title: 'Online Application Support',
+    desc: 'Municipal Tricycle Franchising staff are available to assist operators with online registration, document scanning, and route zoning inquiries.',
+    type: 'event',
+    date: 'Advisory',
+    isActive: true
+  }
+];
+
+const DEFAULT_VIOLATION_POLICY = {
+  types: [
+    { code: 'OVERCHARGING', name: 'Overcharging of fare', severity: 'Medium', isGrave: false, defaultFine: 500, suspensionDays: 15, isActive: true },
+    { code: 'REFUSAL_CONVEY', name: 'Refusal to convey passengers', severity: 'Medium', isGrave: false, defaultFine: 500, suspensionDays: 15, isActive: true },
+    { code: 'DISCOURTEOUS', name: 'Arrogant/Discourteous behavior', severity: 'Low', isGrave: false, defaultFine: 300, suspensionDays: 7, isActive: true },
+    { code: 'NO_FRANCHISE', name: 'Operating without valid franchise / Colorum', severity: 'Grave', isGrave: true, defaultFine: 2000, suspensionDays: 30, isActive: true },
+    { code: 'OUT_OF_LINE', name: 'Out of line operation', severity: 'Medium', isGrave: false, defaultFine: 500, suspensionDays: 15, isActive: true },
+    { code: 'RECKLESS_DRIVING', name: 'Reckless or dangerous driving', severity: 'High', isGrave: false, defaultFine: 1000, suspensionDays: 30, isActive: true },
+    { code: 'OTHER', name: 'Other municipal ordinance violation', severity: 'Low', isGrave: false, defaultFine: 300, suspensionDays: 7, isActive: true }
+  ],
+  tiers: {
+    firstOffense: { sanction: 'Warning', resultingStatus: 'Active - Under Warning', description: 'Official Warning recorded in municipal database; franchise remains operational.' },
+    secondOffense: { sanction: 'Suspension', resultingStatus: 'Suspended', defaultFine: 500, defaultSuspensionDays: 15, description: 'Temporary suspension of franchise operations and imposition of administrative fine.' },
+    thirdOffense: { sanction: 'Revocation', resultingStatus: 'Revoked', description: 'Immediate and permanent revocation of MTOP franchise and permit.' },
+    graveViolation: { sanction: 'Revocation', resultingStatus: 'Revoked', description: 'Direct revocation regardless of prior offense count due to critical offense severity.' }
+  }
+};
+
+// Get system settings (read-only; never mutates existing database settings)
 const getSettings = async (req, res) => {
   try {
-    let settings = await SystemSettings.findOne().sort({ updatedAt: -1, createdAt: -1 });
+    const existing = await SystemSettings.findOne().sort({ updatedAt: -1, createdAt: -1 }).lean();
 
-    if (!settings) {
-      settings = await SystemSettings.create({
-        validityNew: 3,
-        validityRenew: 1,
-        expiryWarningDays: 30,
-        fiscalYear: new Date().getFullYear().toString(),
-        franchiseFee: 500,
-        penaltyRate: 50,
-        baseFare: 15,
-        farePerKm: 2.5,
-        maxUnitsPerOperator: 2,
-        requiredDocs: ['OR / CR ng Motor', "Driver's License", 'TODA Endorsement', 'Barangay Clearance'],
-        maintenanceMode: false,
-        maintenanceMessage: 'G-TRAMS portal is currently undergoing scheduled system maintenance. Please check back later.'
-      });
-    }
+    const settings = existing ? { ...existing } : {
+      validityNew: 3,
+      validityRenew: 1,
+      expiryWarningDays: 30,
+      fiscalYear: new Date().getFullYear().toString(),
+      franchiseFee: 500,
+      penaltyRate: 50,
+      baseFare: 15,
+      farePerKm: 2.5,
+      maxUnitsPerOperator: 2,
+      requiredDocs: ['OR / CR ng Motor', "Driver's License", 'TODA Endorsement', 'Barangay Clearance'],
+      maintenanceMode: false,
+      maintenanceMessage: 'G-TRAMS portal is currently undergoing scheduled system maintenance. Please check back later.',
+      announcements: DEFAULT_ANNOUNCEMENTS,
+      violationPolicy: DEFAULT_VIOLATION_POLICY
+    };
 
-    if (settings && (settings.maxUnitsPerOperator === undefined || settings.maxUnitsPerOperator === null)) {
+    if (settings.maxUnitsPerOperator === undefined || settings.maxUnitsPerOperator === null) {
       settings.maxUnitsPerOperator = 2;
     }
 
-    if (!settings.announcements || !Array.isArray(settings.announcements) || settings.announcements.length === 0) {
-      settings.announcements = [
-        {
-          title: 'Franchise Renewal Schedule',
-          desc: 'All registered tricycle operators must complete annual MTOP renewal before designated deadline to maintain active status.',
-          type: 'alert',
-          date: 'Annual Cycle',
-          isActive: true
-        },
-        {
-          title: 'Digital MTOP & QR Verification',
-          desc: 'Approved operators can now view and download their digitally signed MTOP certificates with verifiable QR codes directly from their dashboard.',
-          type: 'info',
-          date: 'Portal Update',
-          isActive: true
-        },
-        {
-          title: 'Online Application Support',
-          desc: 'Municipal Tricycle Franchising staff are available to assist operators with online registration, document scanning, and route zoning inquiries.',
-          type: 'event',
-          date: 'Advisory',
-          isActive: true
-        }
-      ];
-      await settings.save();
+    if (!settings.announcements || !Array.isArray(settings.announcements)) {
+      settings.announcements = DEFAULT_ANNOUNCEMENTS;
     }
 
     if (!settings.violationPolicy || !Array.isArray(settings.violationPolicy.types) || settings.violationPolicy.types.length === 0) {
-      settings.violationPolicy = {
-        types: [
-          { code: 'OVERCHARGING', name: 'Overcharging of fare', severity: 'Medium', isGrave: false, defaultFine: 500, suspensionDays: 15, isActive: true },
-          { code: 'REFUSAL_CONVEY', name: 'Refusal to convey passengers', severity: 'Medium', isGrave: false, defaultFine: 500, suspensionDays: 15, isActive: true },
-          { code: 'DISCOURTEOUS', name: 'Arrogant/Discourteous behavior', severity: 'Low', isGrave: false, defaultFine: 300, suspensionDays: 7, isActive: true },
-          { code: 'NO_FRANCHISE', name: 'Operating without valid franchise / Colorum', severity: 'Grave', isGrave: true, defaultFine: 2000, suspensionDays: 30, isActive: true },
-          { code: 'OUT_OF_LINE', name: 'Out of line operation', severity: 'Medium', isGrave: false, defaultFine: 500, suspensionDays: 15, isActive: true },
-          { code: 'RECKLESS_DRIVING', name: 'Reckless or dangerous driving', severity: 'High', isGrave: false, defaultFine: 1000, suspensionDays: 30, isActive: true },
-          { code: 'OTHER', name: 'Other municipal ordinance violation', severity: 'Low', isGrave: false, defaultFine: 300, suspensionDays: 7, isActive: true }
-        ],
-        tiers: {
-          firstOffense: { sanction: 'Warning', resultingStatus: 'Active - Under Warning', description: 'Official Warning recorded in municipal database; franchise remains operational.' },
-          secondOffense: { sanction: 'Suspension', resultingStatus: 'Suspended', defaultFine: 500, defaultSuspensionDays: 15, description: 'Temporary suspension of franchise operations and imposition of administrative fine.' },
-          thirdOffense: { sanction: 'Revocation', resultingStatus: 'Revoked', description: 'Immediate and permanent revocation of MTOP franchise and permit.' },
-          graveViolation: { sanction: 'Revocation', resultingStatus: 'Revoked', description: 'Direct revocation regardless of prior offense count due to critical offense severity.' }
-        }
-      };
-      await settings.save();
+      settings.violationPolicy = DEFAULT_VIOLATION_POLICY;
     }
 
     res.status(200).json({ success: true, data: settings });

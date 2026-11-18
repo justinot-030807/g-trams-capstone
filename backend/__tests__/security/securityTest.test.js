@@ -15,7 +15,7 @@ let mongoServer;
 
 // Utility to create a valid JWT for testing
 const createToken = (user, secret = process.env.JWT_SECRET, expiresIn = '1d') => {
-  return jwt.sign({ id: user._id, role: user.role }, secret, { expiresIn });
+  return jwt.sign({ id: user._id, role: user.role, tokenVersion: user.tokenVersion || 0 }, secret, { expiresIn });
 };
 
 beforeAll(async () => {
@@ -216,8 +216,8 @@ describe('Security and Edge Case Test Suite', () => {
           contact: { "$gt": "" },
           password: { "$gt": "" }
         });
-      // Should fail validation or authentication
-      expect(res.status).not.toBe(200);
+      // Should fail validation or authentication (never 200 or 500)
+      expect([400, 401]).toContain(res.status);
       expect(res.body.token).toBeUndefined();
     });
 
@@ -225,7 +225,8 @@ describe('Security and Edge Case Test Suite', () => {
       const res = await request(app)
         .post('/api/v1/auth/register')
         .send({ name: { "$ne": null }, contact: "0999", password: "pwd", address: "addr" });
-      expect([400, 500]).toContain(res.status);
+      expect(res.status).toBeLessThan(500);
+      expect(res.status).toBe(400);
     });
 
     it('Query params with injection should be handled', async () => {
@@ -307,7 +308,7 @@ describe('Security and Edge Case Test Suite', () => {
       const res = await request(app)
         .get('/api/v1/franchises/INVALID_ID')
         .set('Authorization', `Bearer ${bploToken}`);
-      expect([400, 404, 500]).toContain(res.status);
+      expect([400, 404]).toContain(res.status);
     });
 
     it('PUT invalid ID should return 400 or 404', async () => {
@@ -315,7 +316,7 @@ describe('Security and Edge Case Test Suite', () => {
         .put('/api/v1/franchises/not-a-valid-id/status')
         .set('Authorization', `Bearer ${bploToken}`)
         .send({ status: 'Active' });
-      expect([400, 404, 500]).toContain(res.status);
+      expect([400, 404]).toContain(res.status);
     });
 
     it('System Admin should be strictly forbidden from updating franchise status (RBAC 403)', async () => {
@@ -416,6 +417,217 @@ describe('Security and Edge Case Test Suite', () => {
       
       if (res.status === 200) {
         expect(res.body.password).toBeUndefined();
+      }
+    });
+  });
+
+  describe('11. RE-AUDIT SECURITY REGRESSIONS (H-01, M-01, H-03, H-04, H-10)', () => {
+    it('H-01: Reset OTP must be rejected by /auth/verify-otp', async () => {
+      const forgotRes = await request(app)
+        .post('/api/v1/auth/forgot-password')
+        .send({ contact: '09123456781' });
+
+      expect(forgotRes.status).toBe(200);
+      expect(forgotRes.body.testOtp).toMatch(/^\d{6}$/);
+
+      const verifyRes = await request(app)
+        .post('/api/v1/auth/verify-otp')
+        .send({
+          contact: '09123456781',
+          otp: forgotRes.body.testOtp
+        });
+
+      expect(verifyRes.status).toBe(400);
+      expect(verifyRes.body.token).toBeUndefined();
+
+      // Reset challenge remains intact for actual reset-password flow
+      const opAfter = await User.findById(operatorId);
+      expect(opAfter.otpPurpose).toBe('reset');
+      expect(opAfter.otp).toMatch(/^[a-f0-9]{64}$/);
+    });
+
+    it('H-01: Register OTP must be rejected by /auth/reset-password', async () => {
+      const regRes = await request(app)
+        .post('/api/v1/auth/register')
+        .send({
+          name: 'Unverified Op',
+          contact: '09198887766',
+          password: 'Password123!',
+          address: 'Bahi'
+        });
+
+      expect(regRes.status).toBe(201);
+      expect(regRes.body.testOtp).toMatch(/^\d{6}$/);
+
+      const resetRes = await request(app)
+        .post('/api/v1/auth/reset-password')
+        .send({
+          contact: '09198887766',
+          otp: regRes.body.testOtp,
+          newPassword: 'NewPassword123!'
+        });
+
+      expect(resetRes.status).toBe(400);
+      const target = await User.findOne({ contact: '09198887766' });
+      expect(target.isVerified).toBe(false);
+    });
+
+    it('M-01: Tokens missing numeric tokenVersion or carrying stale tokenVersion are rejected with 401', async () => {
+      const tokenWithoutVersion = jwt.sign(
+        { id: operatorId, role: 'operator' },
+        process.env.JWT_SECRET,
+        { expiresIn: '1h' }
+      );
+      const missingVerRes = await request(app)
+        .get('/api/v1/auth/profile')
+        .set('Authorization', `Bearer ${tokenWithoutVersion}`);
+      expect(missingVerRes.status).toBe(401);
+
+      const tokenNonNumericVersion = jwt.sign(
+        { id: operatorId, role: 'operator', tokenVersion: '0' },
+        process.env.JWT_SECRET,
+        { expiresIn: '1h' }
+      );
+      const nonNumericRes = await request(app)
+        .get('/api/v1/auth/profile')
+        .set('Authorization', `Bearer ${tokenNonNumericVersion}`);
+      expect(nonNumericRes.status).toBe(401);
+
+      // Changing password rotates tokenVersion and invalidates old token
+      const changeRes = await request(app)
+        .put('/api/v1/auth/change-password')
+        .set('Authorization', `Bearer ${operatorToken}`)
+        .send({ oldPassword: 'password123', newPassword: 'NewPassword123!' });
+      expect(changeRes.status).toBe(200);
+      expect(changeRes.body.token).toBeDefined();
+
+      const staleRes = await request(app)
+        .get('/api/v1/auth/profile')
+        .set('Authorization', `Bearer ${operatorToken}`);
+      expect(staleRes.status).toBe(401);
+
+      const freshRes = await request(app)
+        .get('/api/v1/auth/profile')
+        .set('Authorization', `Bearer ${changeRes.body.token}`);
+      expect(freshRes.status).toBe(200);
+    });
+
+    it('H-03: Operator PUT /franchises/:id cannot overwrite payment, OR, MTOP, or approval status fields', async () => {
+      const franchise = await Franchise.create({
+        operator: operatorId,
+        fullName: 'Operator One',
+        address: 'Addr',
+        zone: '1',
+        made: 'Honda',
+        make: 'Tricycle',
+        motorNo: 'H03-MTR-1',
+        chassisNo: 'H03-CHS-1',
+        plateNo: 'H03-PLT-1',
+        todaName: 'BATODA',
+        status: 'Pending',
+        paymentStatus: 'Unpaid',
+        applicationType: 'New',
+        cedulaDate: new Date(),
+        cedulaAddress: 'Addr',
+        cedulaSerialNo: '123'
+      });
+
+      const updateRes = await request(app)
+        .put(`/api/v1/franchises/${franchise._id}`)
+        .set('Authorization', `Bearer ${operatorToken}`)
+        .send({
+          address: 'Updated Safe Addr',
+          status: 'Active',
+          paymentStatus: 'Paid',
+          officialReceiptNo: 'OR-FORGED-999',
+          amountPaid: 1,
+          mtopNo: 'MTOP-FORGED-999'
+        });
+
+      expect(updateRes.status).toBe(200);
+      const reloaded = await Franchise.findById(franchise._id);
+      expect(reloaded.address).toBe('Updated Safe Addr');
+      expect(reloaded.status).toBe('Pending');
+      expect(reloaded.paymentStatus).toBe('Unpaid');
+      expect(reloaded.officialReceiptNo || '').toBe('');
+      expect(reloaded.mtopNo || '').toBe('');
+    });
+
+    it('H-04: Cashier payment rejects non-"For Payment" statuses and cashier queue excludes unpaid "Ready for Pickup"', async () => {
+      const cashier = await User.create({
+        name: 'Cashier User',
+        contact: '09123456789',
+        email: 'cashier.sec@example.com',
+        password: 'password123',
+        role: 'cashier',
+        address: 'Treasury Office',
+        isVerified: true,
+        isActive: true
+      });
+      const cashierToken = createToken(cashier);
+
+      const readyPickupUnpaid = await Franchise.create({
+        operator: operatorId,
+        fullName: 'Operator One',
+        address: 'Addr',
+        zone: '1',
+        made: 'Honda',
+        make: 'Tricycle',
+        motorNo: 'H04-MTR-1',
+        chassisNo: 'H04-CHS-1',
+        plateNo: 'H04-PLT-1',
+        todaName: 'BATODA',
+        status: 'Ready for Pickup',
+        paymentStatus: 'Unpaid',
+        applicationType: 'New',
+        cedulaDate: new Date(),
+        cedulaAddress: 'Addr',
+        cedulaSerialNo: '123'
+      });
+
+      const queueRes = await request(app)
+        .get('/api/v1/franchises/cashier-queue')
+        .set('Authorization', `Bearer ${cashierToken}`);
+      expect(queueRes.status).toBe(200);
+      const queuedIds = [...(queueRes.body.pendingQueue || []), ...(queueRes.body.all || [])].map(f => String(f._id));
+      expect(queuedIds).not.toContain(String(readyPickupUnpaid._id));
+
+      const payRes = await request(app)
+        .post(`/api/v1/franchises/${readyPickupUnpaid._id}/pay`)
+        .set('Authorization', `Bearer ${cashierToken}`)
+        .send({
+          officialReceiptNo: 'OR-2026-0001',
+          amountPaid: 500,
+          paymentMethod: 'Cash'
+        });
+
+      expect(payRes.status).toBe(400);
+      const reloaded = await Franchise.findById(readyPickupUnpaid._id);
+      expect(reloaded.paymentStatus).toBe('Unpaid');
+      expect(reloaded.officialReceiptNo || '').toBe('');
+    });
+
+    it('H-10: SSRF redirect protection blocks 302 redirects to loopback/metadata IPs', async () => {
+      const axios = require('axios');
+      const dns = require('dns');
+      const { fetchImageAsBase64 } = require('../../src/services/documentVerificationService');
+
+      const lookupSpy = jest.spyOn(dns.promises, 'lookup').mockResolvedValue([
+        { address: '93.184.216.34', family: 4 }
+      ]);
+      const axiosSpy = jest.spyOn(axios, 'get').mockResolvedValueOnce({
+        status: 302,
+        headers: { location: 'http://169.254.169.254/latest/meta-data/' }
+      });
+
+      try {
+        const result = await fetchImageAsBase64('https://example.com/safe-looking.jpg');
+        expect(result).toBeNull();
+        expect(axiosSpy).toHaveBeenCalledTimes(1);
+        expect(axiosSpy.mock.calls[0][1].maxRedirects).toBe(0);
+      } finally {
+        axiosSpy.mockRestore();
+        lookupSpy.mockRestore();
       }
     });
   });

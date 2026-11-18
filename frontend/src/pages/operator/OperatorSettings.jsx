@@ -504,11 +504,11 @@ const OperatorSettings = () => {
 
     setIsProcessing(true);
     try {
-      const token = localStorage.getItem('token');
+      const reqToken = localStorage.getItem('token');
       const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/v1/auth/change-password`, {
         method: 'PUT',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${reqToken}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
@@ -518,15 +518,29 @@ const OperatorSettings = () => {
       });
 
       if (res.ok) {
+        const data = await res.json().catch(() => ({}));
+        if (!reqToken || localStorage.getItem('token') !== reqToken) {
+          return;
+        }
         setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
         setIsPasswordModalOpen(false);
-        setFeedbackModal({
-          isOpen: true,
-          type: 'success',
-          title: 'Password Changed',
-          message: 'Your account password has been updated successfully. Please use your new password next time you log in.'
-        });
+        if (data?.token) {
+          localStorage.setItem('token', data.token);
+          window.dispatchEvent(new Event('gtrams-auth-changed'));
+          window.dispatchEvent(new Event('gtrams-auth-change'));
+          setFeedbackModal({
+            isOpen: true,
+            type: 'success',
+            title: 'Password Changed',
+            message: 'Your account password has been updated successfully and your active session has been refreshed.'
+          });
+        } else {
+          await handleLogout();
+        }
       } else {
+        if (!reqToken || localStorage.getItem('token') !== reqToken) {
+          return;
+        }
         const errData = await res.json().catch(() => ({}));
         showToast(errData.message || 'Failed to change password. Please verify your current password.', 'error');
       }
@@ -678,14 +692,29 @@ const OperatorSettings = () => {
   };
 
   // Logout Handler
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await unsubscribeFromPush().catch(() => {});
+    try {
+      Object.keys(localStorage).forEach((key) => {
+        if (
+          key.startsWith('gtrams_cached_franchises') ||
+          key.startsWith('gtrams_apply_draft') ||
+          key.startsWith('gtrams_renewal_draft')
+        ) {
+          localStorage.removeItem(key);
+        }
+      });
+    } catch {}
     localStorage.removeItem('token');
     localStorage.removeItem('role');
     localStorage.removeItem('user');
     localStorage.removeItem('userId');
     localStorage.removeItem('name');
-    localStorage.removeItem('gtrams_apply_draft');
     localStorage.removeItem('reapply_target');
+    localStorage.removeItem('gtrams_all_notifs_read_at');
+    localStorage.removeItem('gtrams_cached_notifications');
+    window.dispatchEvent(new Event('gtrams-auth-changed'));
+    window.dispatchEvent(new Event('gtrams-auth-change'));
     navigate('/login');
   };
 

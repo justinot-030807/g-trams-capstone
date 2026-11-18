@@ -37,7 +37,7 @@ beforeAll(async () => {
         todaAssociation: 'BATODA'
     });
     operatorToken = jwt.sign(
-        { id: operatorUser._id, role: operatorUser.role },
+        { id: operatorUser._id, role: operatorUser.role, tokenVersion: operatorUser.tokenVersion || 0 },
         process.env.JWT_SECRET,
         { expiresIn: '1d' }
     );
@@ -54,7 +54,7 @@ beforeAll(async () => {
         isActive: true
     });
     adminToken = jwt.sign(
-        { id: adminUser._id, role: adminUser.role },
+        { id: adminUser._id, role: adminUser.role, tokenVersion: adminUser.tokenVersion || 0 },
         process.env.JWT_SECRET,
         { expiresIn: '1d' }
     );

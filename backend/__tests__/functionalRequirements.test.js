@@ -62,7 +62,7 @@ beforeAll(async () => {
         isActive: true
     });
     await adminUser.save();
-    adminToken = jwt.sign({ id: adminUser._id, role: adminUser.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    adminToken = jwt.sign({ id: adminUser._id, role: adminUser.role, tokenVersion: adminUser.tokenVersion || 0 }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
     // Seed BPLO staff user (for franchise operations)
     bploUser = new User({
@@ -76,7 +76,7 @@ beforeAll(async () => {
         isActive: true
     });
     await bploUser.save();
-    bploToken = jwt.sign({ id: bploUser._id, role: bploUser.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    bploToken = jwt.sign({ id: bploUser._id, role: bploUser.role, tokenVersion: bploUser.tokenVersion || 0 }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
     // Seed Cashier user (for treasury payment collection)
     cashierUser = new User({
@@ -90,7 +90,7 @@ beforeAll(async () => {
         isActive: true
     });
     await cashierUser.save();
-    cashierToken = jwt.sign({ id: cashierUser._id, role: cashierUser.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    cashierToken = jwt.sign({ id: cashierUser._id, role: cashierUser.role, tokenVersion: cashierUser.tokenVersion || 0 }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
     // Seed operator user
     operatorUser = new User({
@@ -105,7 +105,7 @@ beforeAll(async () => {
         todaAssociation: 'BATODA'
     });
     await operatorUser.save();
-    operatorToken = jwt.sign({ id: operatorUser._id, role: operatorUser.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    operatorToken = jwt.sign({ id: operatorUser._id, role: operatorUser.role, tokenVersion: operatorUser.tokenVersion || 0 }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
     // Seed TODA president user
     presidentUser = new User({
@@ -120,7 +120,7 @@ beforeAll(async () => {
         todaAssociation: 'BATODA'
     });
     await presidentUser.save();
-    presidentToken = jwt.sign({ id: presidentUser._id, role: presidentUser.role }, process.env.JWT_SECRET, { expiresIn: '1d' });
+    presidentToken = jwt.sign({ id: presidentUser._id, role: presidentUser.role, tokenVersion: presidentUser.tokenVersion || 0 }, process.env.JWT_SECRET, { expiresIn: '1d' });
 
 }, 60000);
 
@@ -445,6 +445,7 @@ describe('Module 3: Manage Account Profile', () => {
 
         expect(res.status).toBe(200);
         expect(res.body.message).toContain('changed successfully');
+        expect(res.body.token).toBeDefined();
 
         // Verify new password works
         const loginRes = await request(app)
@@ -452,11 +453,13 @@ describe('Module 3: Manage Account Profile', () => {
             .send({ contact: '09171234567', password: 'NewOperator456!' });
         expect(loginRes.status).toBe(200);
 
-        // Restore original password
-        await request(app)
+        // Restore original password using rotated token and refresh operatorToken
+        const restoreRes = await request(app)
             .put('/api/v1/auth/change-password')
-            .set('Authorization', `Bearer ${operatorToken}`)
+            .set('Authorization', `Bearer ${res.body.token}`)
             .send({ oldPassword: 'NewOperator456!', newPassword: 'Operator123!' });
+        expect(restoreRes.status).toBe(200);
+        operatorToken = restoreRes.body.token;
     });
 
     it('M3-04: Should reject password change with wrong old password', async () => {

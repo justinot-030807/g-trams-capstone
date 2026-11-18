@@ -48,17 +48,20 @@ function getManilaEndOfDay(date = new Date()) {
 }
 
 /**
- * Computes franchise expiration date (default 1 year) ending at 23:59:59.999 Manila time
+ * Computes franchise expiration date (default 3 years) ending at 23:59:59.999 Manila time
  */
-function computeManilaExpiryDate(startDate = new Date(), years = 1) {
+function computeManilaExpiryDate(startDate = new Date(), years = 3) {
     const d = new Date(startDate);
     if (isNaN(d.getTime())) return null;
+
+    const parsedYears = Number(years);
+    const validYears = Number.isFinite(parsedYears) && parsedYears > 0 ? Math.floor(parsedYears) : 3;
 
     const dateStr = getManilaDateString(d);
     if (!dateStr) return null;
 
     const [yearStr, monthStr, dayStr] = dateStr.split('-');
-    const targetYear = parseInt(yearStr, 10) + years;
+    const targetYear = parseInt(yearStr, 10) + validYears;
 
     // Handle leap year edge case (Feb 29 -> Feb 28 on non-leap target year)
     let safeDay = dayStr;

@@ -3,6 +3,25 @@ dns.setServers(['8.8.8.8', '1.1.1.1']);
 const mongoose = require('mongoose');
 require('dotenv').config({ path: __dirname + '/../.env' });
 
+if (process.env.NODE_ENV === 'production' && process.env.ALLOW_PROD_SCRIPT !== 'true') {
+  console.error('Refusing to run inspect_and_cleanup_demo in production without ALLOW_PROD_SCRIPT=true.');
+  process.exit(1);
+}
+
+const mongoUri = String(process.env.MONGO_URI || '').trim();
+if (!mongoUri) {
+  console.error('Refusing to run inspect_and_cleanup_demo: MONGO_URI is not set.');
+  process.exit(1);
+}
+if (/prod|production|live/i.test(mongoUri) && process.env.ALLOW_PROD_SCRIPT !== 'true') {
+  console.error('Refusing to run inspect_and_cleanup_demo: MONGO_URI appears to target a production database without ALLOW_PROD_SCRIPT=true.');
+  process.exit(1);
+}
+if (process.env.CONFIRM_SCRIPT_RUN !== 'true' && !/localhost|127\.0\.0\.1|test|dev|staging|demo|sandbox/i.test(mongoUri) && process.env.ALLOW_PROD_SCRIPT !== 'true') {
+  console.error('Refusing to run destructive cleanup script against an unrecognized remote MONGO_URI without CONFIRM_SCRIPT_RUN=true.');
+  process.exit(1);
+}
+
 const User = require('../src/models/userModel');
 const Franchise = require('../src/models/franchiseModel');
 const TodaSubmission = require('../src/models/todaSubmission');

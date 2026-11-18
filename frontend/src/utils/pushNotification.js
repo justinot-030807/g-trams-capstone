@@ -150,18 +150,18 @@ export async function subscribeToPush(preferences = {}) {
  * Unsubscribe current device from Web Push Notifications
  */
 export async function unsubscribeFromPush() {
-  if (!isPushSupported()) return;
+  localStorage.removeItem('gtrams_push_subscribed');
+  if (!isPushSupported()) return { success: true };
 
   try {
+    const token = localStorage.getItem('token');
     const reg = await getReadyServiceWorker(3000);
     if (reg && reg.pushManager) {
       const subscription = await reg.pushManager.getSubscription();
       if (subscription) {
         const endpoint = subscription.endpoint;
-        await subscription.unsubscribe();
 
-        // Notify backend
-        const token = localStorage.getItem('token');
+        // Notify backend while token is still valid, then unsubscribe locally
         if (token) {
           await fetch(`${API_BASE}/api/v1/push/unsubscribe`, {
             method: 'POST',
@@ -172,9 +172,10 @@ export async function unsubscribeFromPush() {
             body: JSON.stringify({ endpoint })
           }).catch(() => {});
         }
+
+        await subscription.unsubscribe();
       }
     }
-    localStorage.removeItem('gtrams_push_subscribed');
     return { success: true };
   } catch (err) {
     console.error('Error during push unsubscribe:', err);
