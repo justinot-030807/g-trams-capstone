@@ -174,7 +174,7 @@ const AdminTickets = () => {
                   placeholder="Search tickets..." 
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="w-full pl-9 pr-3.5 py-2 bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3] placeholder-[#6B6761] dark:placeholder-[#A8A29E] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] transition-colors"
+                  className="w-full pl-9 pr-3.5 py-2 bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3] placeholder-[#6B6761] dark:placeholder-[#A8A29E] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] transition-colors"
                 />
               </div>
             </div>
@@ -205,7 +205,7 @@ const AdminTickets = () => {
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <p className="text-sm font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] truncate">{ticket.operator?.name || 'Unknown'}</p>
-                          <p className="text-[11px] font-mono text-[#6B6761] dark:text-[#A8A29E]">
+                          <p className="text-[11px] font-mono tabular-nums text-[#6B6761] dark:text-[#A8A29E]">
                             {ticket.contactNumber || 'No contact'} • {new Date(ticket.createdAt).toLocaleDateString()}
                           </p>
                         </div>
@@ -245,13 +245,13 @@ const AdminTickets = () => {
                     </thead>
                     <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
                       {filteredTickets.map(ticket => (
-                        <tr key={ticket._id} className="hover:bg-[#F6F5F3]/60 dark:hover:bg-[#14110F]/60 transition-colors">
+                        <tr key={ticket._id} className="hover:bg-[#FAF9F7] dark:hover:bg-[#14110F]/60 transition-colors">
                           <td className="p-3.5 text-xs text-[#6B6761] dark:text-[#A8A29E] font-mono tabular-nums">
                             {new Date(ticket.createdAt).toLocaleDateString()}
                           </td>
                           <td className="p-3.5">
                             <p className="text-sm font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{ticket.operator?.name || 'Unknown'}</p>
-                            <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-mono">{ticket.contactNumber}</p>
+                            <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-mono tabular-nums">{ticket.contactNumber}</p>
                           </td>
                           <td className="p-3.5">
                             <p className="text-sm font-medium text-[#1F1D1B] dark:text-[#F6F5F3]">{ticket.subject}</p>
@@ -296,7 +296,7 @@ const AdminTickets = () => {
           onClick={() => setSelectedTicket(null)}
         >
           <div
-            className="bg-white dark:bg-[#1C1917] rounded-lg w-full max-w-lg overflow-hidden border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xl"
+            className="bg-white dark:bg-[#1C1917] rounded-xl w-full max-w-lg overflow-hidden border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="p-4 sm:p-5 border-b border-[#E4E1DC] dark:border-[#2E2A27] flex justify-between items-center bg-[#F6F5F3] dark:bg-[#14110F]">
@@ -318,7 +318,7 @@ const AdminTickets = () => {
                 <div className="flex justify-between items-start mb-2">
                   <div>
                     <h4 className="font-semibold text-sm text-[#1F1D1B] dark:text-[#F6F5F3]">{selectedTicket.operator?.name || 'Unknown'}</h4>
-                    <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-mono">{selectedTicket.contactNumber}</p>
+                    <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-mono tabular-nums">{selectedTicket.contactNumber}</p>
                   </div>
                   <span className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-mono tabular-nums">{new Date(selectedTicket.createdAt).toLocaleString()}</span>
                 </div>
@@ -345,7 +345,7 @@ const AdminTickets = () => {
                   <textarea 
                     rows="3" 
                     placeholder="Type your response here. This will be sent as a notification to the operator."
-                    className="w-full bg-white dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3 text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] resize-none"
+                    className="w-full bg-white dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3 text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] resize-none"
                     value={adminResponse}
                     onChange={(e) => setAdminResponse(e.target.value)}
                   ></textarea>

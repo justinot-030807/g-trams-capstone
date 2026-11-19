@@ -1018,7 +1018,7 @@ const OperatorDashboard = () => {
             user={currentUserProfile}
             profilePicUrl={profilePic}
             dismissible
-            onAction={(stepId) => navigate(`/operator-settings?setup=${stepId}`)}
+            onAction={(stepId) => navigate(`/operator/settings?setup=${stepId}`)}
           />
         </div>
       )}

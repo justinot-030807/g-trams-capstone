@@ -72,7 +72,7 @@ const SplashScreen = () => {
   return (
     <div
       aria-hidden="true"
-      className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white dark:bg-slate-950 select-none transition-all duration-500 ease-in-out ${
+      className={`fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-[#F6F5F3] dark:bg-[#14110F] select-none transition-all duration-500 ease-in-out ${
         isExiting ? 'opacity-0 scale-[1.03] pointer-events-none' : 'opacity-100 scale-100'
       }`}
     >
@@ -102,21 +102,21 @@ const SplashScreen = () => {
               : 'opacity-0 scale-90 translate-y-2'
           }`}
         >
-          <h1 className="text-2xl sm:text-3xl font-black tracking-[0.25em] text-[#9E2A2B] dark:text-[#e84c58] font-sans">
+          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-[0.25em] text-[#9E2A2B] dark:text-[#D4AF37] font-sans">
             GTRAMS
           </h1>
         </div>
 
         {/* Maroon Loading Bar */}
         <div
-          className={`w-44 sm:w-52 h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden border border-slate-200/80 dark:border-slate-700/60 shadow-inner mt-2 transition-all duration-700 delay-200 ease-out transform ${
+          className={`w-44 sm:w-52 h-1.5 bg-[#E4E1DC] dark:bg-[#2E2A27] rounded-full overflow-hidden border border-[#E4E1DC] dark:border-[#2E2A27] mt-2 transition-all duration-700 delay-200 ease-out transform ${
             isEntering
               ? 'opacity-100 scale-100'
               : 'opacity-0 scale-95'
           }`}
         >
           <div
-            className="h-full bg-[#9E2A2B] dark:bg-[#e84c58] rounded-full transition-all duration-500 ease-out shadow-sm"
+            className="h-full bg-[#9E2A2B] dark:bg-[#D4AF37] rounded-full transition-all duration-500 ease-out"
             style={{ width: `${progress}%` }}
           />
         </div>

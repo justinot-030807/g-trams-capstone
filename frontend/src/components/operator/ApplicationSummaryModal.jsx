@@ -102,7 +102,7 @@ const ApplicationSummaryModal = ({
                       ? 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700'
                       : data.status === 'Cancelled' || data.status === 'Revoked'
                       ? 'bg-red-50 dark:bg-red-950/60 text-red-700 dark:text-red-300 border-red-300 dark:border-red-700'
-                      : 'bg-purple-50 dark:bg-purple-950/60 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-700'
+                      : 'bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#F5E6B3] border-[#9E2A2B]/25 dark:border-[#D4AF37]/35'
                   }`}>
                     {data.status}
                   </span>
@@ -443,13 +443,13 @@ const ApplicationSummaryModal = ({
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-center justify-between pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
-              <h4 className="font-bold text-sm text-[#1F1D1B] dark:text-white truncate">{docPreview.label}</h4>
+              <h4 className="font-bold text-sm text-[#1F1D1B] dark:text-[#F6F5F3] truncate">{docPreview.label}</h4>
               <div className="flex items-center gap-2">
                 <a 
                   href={docPreview.url} 
                   target="_blank" 
                   rel="noopener noreferrer" 
-                  className="p-1.5 rounded-lg text-slate-500 hover:text-[#9E2A2B] dark:hover:text-[#D4AF37] transition-colors"
+                  className="p-1.5 rounded-lg text-[#6B6761] dark:text-[#A8A29E] hover:text-[#9E2A2B] dark:hover:text-[#D4AF37] transition-colors"
                   title="Open in new window"
                 >
                   <ExternalLink size={16} />
@@ -457,14 +457,14 @@ const ApplicationSummaryModal = ({
                 <button
                   type="button"
                   onClick={() => setDocPreview(null)}
-                  className="p-1.5 rounded-lg text-slate-500 hover:text-black dark:hover:text-white transition-colors cursor-pointer"
+                  className="p-1.5 rounded-lg text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3] transition-colors cursor-pointer"
                   title="Close preview"
                 >
                   <X size={18} />
                 </button>
               </div>
             </div>
-            <div className="flex-1 overflow-auto flex items-center justify-center py-4 bg-slate-50 dark:bg-black/30 rounded-lg mt-3">
+            <div className="flex-1 overflow-auto flex items-center justify-center py-4 bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg mt-3">
               {docPreview.url.endsWith('.pdf') ? (
                 <iframe src={docPreview.url} title={docPreview.label} className="w-full h-[60vh] rounded" />
               ) : (

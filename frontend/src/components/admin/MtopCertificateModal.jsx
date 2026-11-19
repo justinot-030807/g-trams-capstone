@@ -168,7 +168,7 @@ const MtopCertificateModal = ({ isOpen, onClose, unit, isECopy = false }) => {
                 <Award size={18} />
               </div>
               <div>
-                <h3 className="font-black text-xs sm:text-sm tracking-wide flex items-center gap-2">
+                <h3 className="font-extrabold text-xs sm:text-sm tracking-wide flex items-center gap-2">
                   {isECopy ? 'Electronic Copy (Approved MTOP)' : 'Official MTOP Certificate (1:1 LGU Template)'}
                   <span className="text-xs font-bold px-2 py-0.5 rounded-full border bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
                     {isECopy ? 'Approved E-Copy' : (unit.status || 'Active Franchise')}
@@ -184,7 +184,7 @@ const MtopCertificateModal = ({ isOpen, onClose, unit, isECopy = false }) => {
               {/* Toggle QR Stamp */}
               <button
                 onClick={() => setShowQrStamp(prev => !prev)}
-                className={`flex items-center gap-1.5 px-2.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer shrink-0 ${
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 sm:py-2 rounded-lg text-xs font-bold border transition-all cursor-pointer shrink-0 ${
                   showQrStamp
                     ? 'bg-white/10 text-white border-white/25'
                     : 'bg-transparent text-white/50 border-white/10 hover:text-white'
@@ -199,7 +199,7 @@ const MtopCertificateModal = ({ isOpen, onClose, unit, isECopy = false }) => {
               <button
                 onClick={handleDownloadExcel}
                 disabled={isDownloadingExcel}
-                className="flex items-center gap-1.5 bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all shadow-md disabled:opacity-50 cursor-pointer shrink-0"
+                className="flex items-center gap-1.5 bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg text-xs font-bold transition-all shadow-md disabled:opacity-50 cursor-pointer shrink-0"
                 title="Download populated original Gasan LGU Excel (.xlsx) file"
               >
                 {isDownloadingExcel ? <Loader2 size={14} className="animate-spin" /> : <FileSpreadsheet size={14} />}
@@ -211,7 +211,7 @@ const MtopCertificateModal = ({ isOpen, onClose, unit, isECopy = false }) => {
               <button
                 onClick={handleDownloadImage}
                 disabled={isDownloading}
-                className="flex items-center gap-1.5 bg-[#D4AF37] hover:bg-[#c29e2f] active:scale-95 text-slate-950 px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-black transition-all shadow-md disabled:opacity-50 cursor-pointer shrink-0"
+                className="flex items-center gap-1.5 bg-[#D4AF37] hover:bg-[#c29e2f] active:scale-95 text-[#14110F] px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg text-xs font-extrabold transition-all shadow-md disabled:opacity-50 cursor-pointer shrink-0"
                 title="Download high-resolution PNG image"
               >
                 {isDownloading ? (
@@ -235,7 +235,7 @@ const MtopCertificateModal = ({ isOpen, onClose, unit, isECopy = false }) => {
               {/* Print MTOP Button */}
               <button
                 onClick={handlePrint}
-                className="flex items-center gap-1.5 bg-[#9E2A2B] hover:bg-[#922029] active:scale-95 text-white px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer shrink-0"
+                className="flex items-center gap-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] active:scale-95 text-white px-2.5 sm:px-3.5 py-1.5 sm:py-2 rounded-lg text-xs font-bold transition-all shadow-md cursor-pointer shrink-0"
                 title="Print or Save as PDF (1 Page)"
               >
                 <Printer size={14} />
@@ -245,7 +245,7 @@ const MtopCertificateModal = ({ isOpen, onClose, unit, isECopy = false }) => {
 
               <button
                 onClick={onClose}
-                className="text-white/60 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition-colors cursor-pointer shrink-0"
+                className="text-white/60 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer shrink-0"
                 title="Close Preview (Esc)"
               >
                 <X size={18} />
@@ -323,7 +323,7 @@ const MtopCertificateModal = ({ isOpen, onClose, unit, isECopy = false }) => {
               {isECopy && (
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none z-30 overflow-hidden">
                   <div className="transform -rotate-25 border-4 sm:border-8 border-emerald-600/30 rounded-2xl px-12 py-5 text-center bg-emerald-500/[0.03]">
-                    <span className="text-5xl sm:text-6xl font-black font-sans tracking-widest text-emerald-600/35 uppercase block">
+                    <span className="text-5xl sm:text-6xl font-extrabold font-sans tracking-widest text-emerald-600/35 uppercase block">
                       APPROVED
                     </span>
                     <span className="text-xs sm:text-sm font-bold font-sans tracking-widest text-emerald-700/40 uppercase mt-1 block">
@@ -516,13 +516,13 @@ const MtopCertificateModal = ({ isOpen, onClose, unit, isECopy = false }) => {
 
                   {/* Optional Digital QR Verification Stamp (Bottom-Left, does not alter centered LGU signatory layout) */}
                   {showQrStamp && (
-                    <div className="absolute bottom-0 left-0 flex items-center gap-2 bg-white/90 border border-slate-300 rounded p-1.5">
+                    <div className="absolute bottom-0 left-0 flex items-center gap-2 bg-white/90 border border-[#E4E1DC] rounded p-1.5">
                       <QRCodeSVG
                         value={`${window.location.origin}/verify/${unit._id || unit.id || ''}`}
                         size={48}
                         level="M"
                       />
-                      <div className="text-left text-[7.5pt] leading-tight text-slate-700 font-sans">
+                      <div className="text-left text-[7.5pt] leading-tight text-[#1F1D1B] font-sans">
                         <div className="font-bold text-black">G-TRAMS VERIFIED</div>
                         <div>MTOP No: {mtopYearPrefix}{mtopSeqNo}</div>
                         <div>Plate: {plateVal}</div>

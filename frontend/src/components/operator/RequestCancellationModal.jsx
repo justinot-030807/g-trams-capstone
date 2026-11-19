@@ -148,7 +148,7 @@ const RequestCancellationModal = ({ isOpen, onClose, unit, onSuccess }) => {
             type="button"
             disabled={isSubmitting}
             onClick={onClose}
-            className="text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3] p-1.5 rounded-md hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            className="text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3] p-1.5 rounded-md hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] transition-colors cursor-pointer"
             title="Close"
           >
             <X size={18} />

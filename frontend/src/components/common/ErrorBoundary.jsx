@@ -49,18 +49,18 @@ class ErrorBoundary extends React.Component {
       const isChunk = this.state.isChunkError;
 
       return (
-        <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900 p-4 text-center">
-          <div className="bg-white dark:bg-slate-800 p-8 rounded-3xl shadow-lg border border-slate-200 dark:border-slate-700 max-w-md w-full">
-            <h1 className="text-xl font-bold text-red-600 dark:text-red-400 mb-2">
+        <div className="min-h-screen flex items-center justify-center bg-[#F6F5F3] dark:bg-[#14110F] p-4 text-center">
+          <div className="bg-white dark:bg-[#1C1917] p-7 sm:p-8 rounded-xl shadow-lg border border-[#E4E1DC] dark:border-[#2E2A27] max-w-md w-full">
+            <h1 className="text-xl font-bold text-[#9E2A2B] dark:text-[#F6F5F3] tracking-[-0.02em] mb-2">
               {isChunk ? 'New Update Available' : 'Something went wrong.'}
             </h1>
-            <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">
+            <p className="text-sm text-[#6B6761] dark:text-[#A8A29E] mb-4 leading-relaxed">
               {isChunk
                 ? 'A new version of G-TRAMS has been deployed. Please refresh the page to load the latest update.'
                 : 'An unexpected error occurred in the application.'}
             </p>
             {this.state.error?.message && !isChunk && (
-              <details className="mb-5 text-left p-3 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 text-xs text-red-600 dark:text-red-400">
+              <details className="mb-5 text-left p-3 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs text-[#B91C1C] dark:text-red-400">
                 <summary className="cursor-pointer font-bold select-none">Show Error Details</summary>
                 <p className="mt-2 font-mono break-all leading-relaxed whitespace-pre-wrap">{String(this.state.error?.message || this.state.error)}</p>
               </details>
@@ -68,7 +68,7 @@ class ErrorBoundary extends React.Component {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5">
               <button 
                 onClick={() => window.location.reload()}
-                className="w-full sm:w-auto px-5 py-2.5 bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 font-bold text-sm rounded-xl transition-all cursor-pointer"
+                className="w-full sm:w-auto px-5 py-2.5 min-h-[44px] bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-[#14110F] font-bold text-sm rounded-lg transition-colors cursor-pointer"
               >
                 Refresh Page
               </button>
@@ -81,7 +81,7 @@ class ErrorBoundary extends React.Component {
                   } catch {}
                   window.location.href = '/login';
                 }}
-                className="w-full sm:w-auto px-4 py-2.5 bg-slate-200 hover:bg-slate-300 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 font-bold text-sm rounded-xl transition-all cursor-pointer"
+                className="w-full sm:w-auto px-4 py-2.5 min-h-[44px] bg-[#F6F5F3] hover:bg-[#E4E1DC] dark:bg-[#2E2A27] dark:hover:bg-[#3D3834] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] font-bold text-sm rounded-lg transition-colors cursor-pointer"
               >
                 Sign In Again
               </button>

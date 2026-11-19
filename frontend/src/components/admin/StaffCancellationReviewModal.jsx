@@ -105,7 +105,7 @@ const StaffCancellationReviewModal = ({
             type="button"
             disabled={isProcessing}
             onClick={onClose}
-            className="text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3] p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer shrink-0"
+            className="text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3] p-1.5 rounded-lg hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] transition-colors cursor-pointer shrink-0"
           >
             <X size={20} />
           </button>
@@ -182,18 +182,18 @@ const StaffCancellationReviewModal = ({
                     <button
                       type="button"
                       onClick={handleZoomOut}
-                      className="p-1.5 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors"
+                      className="p-1.5 rounded bg-[#F6F5F3] hover:bg-[#E4E1DC] dark:bg-[#25211E] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] transition-colors cursor-pointer"
                       title="Zoom Out"
                     >
                       <ZoomOut size={14} />
                     </button>
-                    <span className="text-[11px] font-mono font-semibold px-1 text-slate-600 dark:text-slate-400">
+                    <span className="text-[11px] font-mono tabular-nums font-semibold px-1 text-[#6B6761] dark:text-[#A8A29E]">
                       {Math.round(zoomLevel * 100)}%
                     </span>
                     <button
                       type="button"
                       onClick={handleZoomIn}
-                      className="p-1.5 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors"
+                      className="p-1.5 rounded bg-[#F6F5F3] hover:bg-[#E4E1DC] dark:bg-[#25211E] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] transition-colors cursor-pointer"
                       title="Zoom In"
                     >
                       <ZoomIn size={14} />
@@ -201,7 +201,7 @@ const StaffCancellationReviewModal = ({
                     <button
                       type="button"
                       onClick={handleRotate}
-                      className="p-1.5 rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors ml-1"
+                      className="p-1.5 rounded bg-[#F6F5F3] hover:bg-[#E4E1DC] dark:bg-[#25211E] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] transition-colors ml-1 cursor-pointer"
                       title="Rotate 90 degrees"
                     >
                       <RotateCw size={14} />
@@ -209,7 +209,7 @@ const StaffCancellationReviewModal = ({
                     <button
                       type="button"
                       onClick={handleResetView}
-                      className="px-2 py-1 text-[10px] font-semibold rounded bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 transition-colors ml-1"
+                      className="px-2 py-1 text-[10px] font-semibold rounded bg-[#F6F5F3] hover:bg-[#E4E1DC] dark:bg-[#25211E] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] transition-colors ml-1 cursor-pointer"
                     >
                       Reset
                     </button>
@@ -232,7 +232,7 @@ const StaffCancellationReviewModal = ({
             </div>
 
             {/* Document Viewer Frame */}
-            <div className="relative min-h-[350px] max-h-[480px] overflow-auto p-4 flex items-center justify-center bg-slate-900/10 dark:bg-black/30">
+            <div className="relative min-h-[350px] max-h-[480px] overflow-auto p-4 flex items-center justify-center bg-[#1F1D1B]/10 dark:bg-black/30">
               {letterUrl ? (
                 isPdf ? (
                   <iframe
@@ -295,7 +295,7 @@ const StaffCancellationReviewModal = ({
                 <button
                   type="button"
                   onClick={() => setShowRejectPrompt(false)}
-                  className="px-3 py-1.5 text-xs font-medium rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200"
+                  className="px-3 py-1.5 text-xs font-medium rounded-lg bg-[#F6F5F3] dark:bg-[#25211E] text-[#1F1D1B] dark:text-[#F6F5F3] hover:bg-[#E4E1DC] dark:hover:bg-[#2E2A27] border border-[#E4E1DC] dark:border-[#2E2A27] transition-colors cursor-pointer"
                 >
                   Cancel Rejection
                 </button>

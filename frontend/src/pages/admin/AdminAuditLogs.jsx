@@ -173,7 +173,7 @@ const AdminAuditLogs = () => {
         title="System Security & Audit Logs"
         subtitle="Detailed immutable record of administrative actions, franchise status transitions, payments, violations, and TODA verifications"
         badge={
-          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#9E2A2B]/10 text-[#9E2A2B] dark:bg-[#D4AF37]/15 dark:text-[#D4AF37] border border-[#9E2A2B]/20">
+          <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold tabular-nums bg-[#9E2A2B]/10 text-[#9E2A2B] dark:bg-[#D4AF37]/15 dark:text-[#D4AF37] border border-[#9E2A2B]/20">
             <Shield size={12} />
             <span>{pagination.totalRecords.toLocaleString()} Logged Events</span>
           </span>
@@ -191,7 +191,7 @@ const AdminAuditLogs = () => {
       />
 
       {/* 2. FILTER & SEARCH BAR */}
-      <div className="bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] p-3.5 mb-5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+      <div className="bg-white dark:bg-[#1C1917] rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] p-3.5 mb-5 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <div className="relative flex-1">
           <Search
             size={15}
@@ -202,7 +202,7 @@ const AdminAuditLogs = () => {
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search by actor name, operator, plate no., MTOP no., O.R. no., action, or remarks..."
-            className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] placeholder-[#6B6761] dark:placeholder-[#A8A29E] focus:outline-none focus:border-[#9E2A2B]"
+            className="w-full pl-9 pr-3 py-1.5 text-xs rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] placeholder-[#6B6761] dark:placeholder-[#A8A29E] focus:outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37]"
           />
         </div>
 
@@ -218,7 +218,7 @@ const AdminAuditLogs = () => {
                 setTargetType(e.target.value);
                 setPage(1);
               }}
-              className="appearance-none pl-2.5 pr-8 py-1.5 text-xs font-medium rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] focus:outline-none focus:border-[#9E2A2B] cursor-pointer"
+              className="appearance-none pl-2.5 pr-8 py-1.5 text-xs font-medium rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] focus:outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] cursor-pointer"
             >
               <option value="All">All Categories</option>
               <option value="Franchise">Franchise</option>
@@ -276,7 +276,7 @@ const AdminAuditLogs = () => {
                         {roleLabel.includes('LLSA I') ? 'LLSA I (Franchising Staff)' : roleLabel} • {cleanText(log.targetType, 'General')}
                       </p>
                     </div>
-                    <span className="font-mono text-[11px] text-[#6B6761] dark:text-[#A8A29E] shrink-0 text-right">
+                    <span className="font-mono tabular-nums text-[11px] text-[#6B6761] dark:text-[#A8A29E] shrink-0 text-right">
                       {log.createdAt
                         ? new Date(log.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
                         : '—'}
@@ -288,7 +288,7 @@ const AdminAuditLogs = () => {
                   </p>
 
                   <div className="flex items-center justify-between gap-2 pt-1">
-                    <span className="font-mono text-[10px] text-[#6B6761] dark:text-[#A8A29E] truncate">
+                    <span className="font-mono tabular-nums text-[10px] text-[#6B6761] dark:text-[#A8A29E] truncate">
                       IP: {cleanText(log.ipAddress, '127.0.0.1')}
                     </span>
                     <button
@@ -354,7 +354,7 @@ const AdminAuditLogs = () => {
                     >
                       {/* Timestamp & IP */}
                       <td className="py-3 px-3 whitespace-nowrap align-top">
-                        <div className="flex items-center gap-1.5 text-[#1F1D1B] dark:text-[#F6F5F3] font-mono text-xs font-medium">
+                        <div className="flex items-center gap-1.5 text-[#1F1D1B] dark:text-[#F6F5F3] font-mono tabular-nums text-xs font-medium">
                           <Clock size={12} className="text-[#6B6761] dark:text-[#A8A29E] shrink-0" />
                           <span>
                             {log.createdAt
@@ -366,7 +366,7 @@ const AdminAuditLogs = () => {
                               : '—'}
                           </span>
                         </div>
-                        <span className="text-[11px] font-mono text-[#6B6761] dark:text-[#A8A29E] pl-4 block">
+                        <span className="text-[11px] font-mono tabular-nums text-[#6B6761] dark:text-[#A8A29E] pl-4 block">
                           {log.createdAt
                             ? new Date(log.createdAt).toLocaleTimeString('en-US', {
                                 hour: '2-digit',
@@ -376,7 +376,7 @@ const AdminAuditLogs = () => {
                             : ''}
                         </span>
                         <span 
-                          className="text-[10px] font-mono text-[#6B6761] dark:text-[#A8A29E] pl-4 mt-0.5 block max-w-[130px] truncate"
+                          className="text-[10px] font-mono tabular-nums text-[#6B6761] dark:text-[#A8A29E] pl-4 mt-0.5 block max-w-[130px] truncate"
                           title={`IP: ${cleanText(log.ipAddress, '127.0.0.1')}`}
                         >
                           IP: {cleanText(log.ipAddress, '127.0.0.1')}
@@ -416,7 +416,7 @@ const AdminAuditLogs = () => {
                             {cleanText(log.targetType, 'General')}
                           </span>
                           {log.targetId && (
-                            <span className="font-mono text-[10px] px-1.5 py-0.5 rounded bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                            <span className="font-mono tabular-nums text-[10px] px-1.5 py-0.5 rounded bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27]">
                               #{String(log.targetId).slice(-6).toUpperCase()}
                             </span>
                           )}
@@ -434,12 +434,12 @@ const AdminAuditLogs = () => {
                             </span>
                           )}
                           {info.plateNo && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] font-mono text-[11px] font-semibold">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] font-mono tabular-nums text-[11px] font-semibold">
                               <span>Plate: {info.plateNo}</span>
                             </span>
                           )}
                           {info.mtopNo && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] font-mono text-[11px] font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] font-mono tabular-nums text-[11px] font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
                               <span>MTOP: {info.mtopNo}</span>
                             </span>
                           )}
@@ -462,7 +462,7 @@ const AdminAuditLogs = () => {
                             </span>
                           )}
                           {info.orNo && (
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#FFFBEB] dark:bg-[#B45309]/20 border border-[#B45309]/25 text-[#B45309] dark:text-[#FBBF24] font-mono text-[11px] font-semibold">
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#FFFBEB] dark:bg-[#B45309]/20 border border-[#B45309]/25 text-[#B45309] dark:text-[#FBBF24] font-mono tabular-nums text-[11px] font-semibold">
                               <span>OR# {info.orNo}</span>
                               {info.amountPaid !== null && <span>(₱{info.amountPaid.toLocaleString()})</span>}
                             </span>
@@ -501,9 +501,9 @@ const AdminAuditLogs = () => {
         <div className="px-4 py-3 border-t border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3]/40 dark:bg-[#14110F]/40 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-[#6B6761] dark:text-[#A8A29E]">
           <div className="flex items-center gap-2">
             <span>
-              Showing <strong className="text-[#1F1D1B] dark:text-[#F6F5F3]">{startRecord}</strong> to{' '}
-              <strong className="text-[#1F1D1B] dark:text-[#F6F5F3]">{endRecord}</strong> of{' '}
-              <strong className="text-[#1F1D1B] dark:text-[#F6F5F3]">{pagination.totalRecords}</strong> entries
+              Showing <strong className="text-[#1F1D1B] dark:text-[#F6F5F3] tabular-nums">{startRecord}</strong> to{' '}
+              <strong className="text-[#1F1D1B] dark:text-[#F6F5F3] tabular-nums">{endRecord}</strong> of{' '}
+              <strong className="text-[#1F1D1B] dark:text-[#F6F5F3] tabular-nums">{pagination.totalRecords}</strong> entries
             </span>
             <span className="text-[#E4E1DC] dark:text-[#2E2A27]">|</span>
             <label className="flex items-center gap-1.5">
@@ -533,7 +533,7 @@ const AdminAuditLogs = () => {
               <ChevronLeft size={14} />
               <span>Prev</span>
             </button>
-            <span className="px-2 font-mono text-xs">
+            <span className="px-2 font-mono tabular-nums text-xs">
               Page <strong className="text-[#1F1D1B] dark:text-[#F6F5F3]">{pagination.currentPage}</strong> of{' '}
               {pagination.totalPages || 1}
             </span>
@@ -567,7 +567,7 @@ const AdminAuditLogs = () => {
           >
             <div
               onClick={(e) => e.stopPropagation()}
-              className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg w-full max-w-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]"
+              className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-xl w-full max-w-2xl shadow-xl overflow-hidden flex flex-col max-h-[90vh]"
             >
               {/* Modal Header */}
               <div className="p-4 sm:p-5 bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] flex items-start justify-between gap-3">
@@ -580,13 +580,13 @@ const AdminAuditLogs = () => {
                       <span className={`px-2 py-0.5 rounded text-xs font-mono font-bold border ${getActionBadgeColor(selectedLog.action)}`}>
                         {selectedLog.action}
                       </span>
-                      <span className="text-xs font-mono text-[#6B6761] dark:text-[#A8A29E]">
+                      <span className="text-xs font-mono tabular-nums text-[#6B6761] dark:text-[#A8A29E]">
                         ID: {selectedLog._id}
                       </span>
                     </div>
                     <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1">
                       Recorded on{' '}
-                      <strong className="text-[#1F1D1B] dark:text-[#F6F5F3]">
+                      <strong className="text-[#1F1D1B] dark:text-[#F6F5F3] tabular-nums">
                         {selectedLog.createdAt
                           ? new Date(selectedLog.createdAt).toLocaleString('en-US', {
                               dateStyle: 'full',
@@ -601,6 +601,7 @@ const AdminAuditLogs = () => {
                   type="button"
                   onClick={() => setSelectedLog(null)}
                   className="p-1.5 rounded-lg text-[#6B6761] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3] hover:bg-[#E4E1DC]/50 dark:hover:bg-[#2E2A27] cursor-pointer"
+                  aria-label="Close audit event details"
                 >
                   <X size={18} />
                 </button>

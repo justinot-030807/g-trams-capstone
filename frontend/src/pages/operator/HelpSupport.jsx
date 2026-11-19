@@ -332,15 +332,15 @@ const HelpSupport = () => {
               <ul className="space-y-2 text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3]">
                 <li className="flex justify-between border-b border-[#E4E1DC] dark:border-[#2E2A27] pb-2">
                   <span className="font-semibold">Annual Franchise Fee</span>
-                  <span>₱500.00</span>
+                  <span className="font-mono tabular-nums">₱500.00</span>
                 </li>
                 <li className="flex justify-between border-b border-[#E4E1DC] dark:border-[#2E2A27] pb-2 pt-1">
                   <span className="font-semibold">New Application Fee</span>
-                  <span>₱500.00</span>
+                  <span className="font-mono tabular-nums">₱500.00</span>
                 </li>
                 <li className="flex justify-between pt-1">
                   <span className="font-semibold">Late Penalty (per month)</span>
-                  <span className="text-[#B91C1C] font-bold">₱50.00</span>
+                  <span className="text-[#B91C1C] dark:text-red-400 font-bold font-mono tabular-nums">₱50.00</span>
                 </li>
               </ul>
               <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-3 font-medium italic">
@@ -358,7 +358,7 @@ const HelpSupport = () => {
             </div>
             <div>
               <div className="flex items-center justify-center sm:justify-start gap-2">
-                <span className="bg-[#D4AF37] text-[#14110F] text-[9px] font-black px-2 py-0.5 rounded tracking-widest uppercase">
+                <span className="bg-[#D4AF37] text-[#14110F] text-[11px] font-extrabold px-2 py-0.5 rounded tracking-wider uppercase">
                   LEGAL &amp; PRIVACY
                 </span>
                 <span className="text-xs text-[#EAE7E1] font-medium">

@@ -160,8 +160,8 @@ const LandingGuideCarousel = () => {
       className="w-full max-w-6xl mx-auto px-2 sm:px-6 lg:px-8 py-16 sm:py-24 border-t border-[#E4E1DC] dark:border-[#2E2A27] relative z-10 overflow-hidden"
     >
       <div className="text-center mb-10 sm:mb-16 px-4">
-        <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-[#1F1D1B] dark:text-[#F6F5F3] tracking-tight uppercase mb-3">
-          Citizen's <span className="text-[#9E2A2B] dark:text-[#F5E6B3]">Charter</span>
+        <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold text-[#1F1D1B] dark:text-[#F6F5F3] tracking-[-0.025em] mb-3">
+          Citizen&apos;s <span className="text-[#9E2A2B] dark:text-[#F5E6B3]">Charter</span>
         </h2>
         <p className="text-[#6B6761] dark:text-[#A8A29E] text-xs sm:text-base max-w-2xl mx-auto font-medium">
           Simplifying the motorized tricycle franchise application process in Gasan. Follow this 5-step digital flow.
@@ -192,7 +192,7 @@ const LandingGuideCarousel = () => {
                   filter: styles.filter,
                 }}
                 transition={{ duration: 0.65, ease: [0.22, 1, 0.36, 1] }}
-                className="absolute w-[250px] xs:w-[275px] sm:w-[330px] min-h-[290px] sm:min-h-[340px] flex flex-col items-center justify-center p-5 sm:p-8 rounded-lg bg-[#9E2A2B] text-white border border-[#D4AF37] shadow-md text-center cursor-pointer select-none shrink-0"
+                className="absolute w-[250px] xs:w-[275px] sm:w-[330px] min-h-[290px] sm:min-h-[340px] flex flex-col items-center justify-center p-5 sm:p-8 rounded-xl bg-[#9E2A2B] text-white border border-[#D4AF37] shadow-md text-center cursor-pointer select-none shrink-0"
                 onClick={() => {
                   pauseInteraction();
                   setCurrentIndex(index);
@@ -200,7 +200,7 @@ const LandingGuideCarousel = () => {
                 }}
               >
                 {/* Step Badge */}
-                <div className="absolute -top-4 w-9 h-9 sm:w-10 sm:h-10 bg-[#D4AF37] text-[#1C1917] rounded-full flex items-center justify-center font-black text-base sm:text-lg border-2 border-white shadow-sm">
+                <div className="absolute -top-4 w-9 h-9 sm:w-10 sm:h-10 bg-[#D4AF37] text-[#1C1917] rounded-full flex items-center justify-center font-mono font-extrabold tabular-nums text-base sm:text-lg border-2 border-white shadow-sm">
                   {step.id}
                 </div>
 

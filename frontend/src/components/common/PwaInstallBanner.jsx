@@ -106,7 +106,7 @@ const PwaInstallBanner = () => {
                 LGU Mobile App
               </span>
             </div>
-            <h4 className="text-sm font-black text-white leading-tight">Install G-TRAMS App</h4>
+            <h4 className="text-sm font-extrabold text-white leading-tight">Install G-TRAMS App</h4>
             <p className="text-xs text-white/85 font-medium leading-tight mt-1">
               Add to your phone for quick offline access and franchise notifications.
             </p>
@@ -122,7 +122,7 @@ const PwaInstallBanner = () => {
 
               <button
                 onClick={handleDismiss}
-                className="text-white/70 hover:text-white text-xs font-semibold px-2 py-1.5 transition-colors cursor-pointer"
+                className="text-white/75 hover:text-white text-xs font-semibold px-2 py-1.5 transition-colors cursor-pointer"
               >
                 Later
               </button>
@@ -131,8 +131,9 @@ const PwaInstallBanner = () => {
 
           <button
             onClick={handleDismiss}
-            className="text-white/60 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors shrink-0 cursor-pointer"
+            className="text-white/70 hover:text-white p-1 rounded-lg hover:bg-white/10 transition-colors shrink-0 cursor-pointer"
             title="Close"
+            aria-label="Dismiss install banner"
           >
             <X size={16} />
           </button>
@@ -141,45 +142,50 @@ const PwaInstallBanner = () => {
 
       {/* iOS Instructions Modal */}
       {showIOSModal && (
-        <div className="fixed inset-0 z-[1000] bg-slate-950/80 backdrop-blur-sm flex items-end sm:items-center justify-center p-4">
-          <div className="bg-white dark:bg-slate-900 rounded-3xl p-6 max-w-sm w-full shadow-2xl border border-slate-200 dark:border-slate-800 text-slate-900 dark:text-white">
-            <div className="flex items-center justify-between mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
+        <div
+          className="fixed inset-0 z-[1000] bg-black/70 backdrop-blur-sm flex items-end sm:items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="bg-white dark:bg-[#1C1917] rounded-xl p-6 max-w-sm w-full shadow-xl border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3]">
+            <div className="flex items-center justify-between mb-4 border-b border-[#E4E1DC] dark:border-[#2E2A27] pb-3">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/30 flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37]">
+                <div className="w-8 h-8 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/25 flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37]">
                   <Smartphone size={18} />
                 </div>
-                <h3 className="font-extrabold text-sm">Install on iPhone / iPad</h3>
+                <h3 className="font-bold text-sm">Install on iPhone / iPad</h3>
               </div>
               <button 
                 onClick={() => setShowIOSModal(false)}
-                className="text-slate-600 dark:text-slate-400 hover:text-slate-600 dark:hover:text-white p-1"
+                aria-label="Close iOS instructions"
+                className="text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3] p-1.5 rounded-lg hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] cursor-pointer"
               >
                 <X size={18} />
               </button>
             </div>
 
-            <p className="text-xs text-slate-600 dark:text-slate-300 mb-4 leading-relaxed font-medium">
+            <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mb-4 leading-relaxed font-medium">
               Safari on iOS requires manual installation. Follow these 2 easy steps:
             </p>
 
             <div className="space-y-3 mb-5">
-              <div className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-100 dark:border-slate-800">
-                <div className="w-7 h-7 rounded-xl bg-blue-100 dark:bg-blue-900/40 text-blue-600 flex items-center justify-center shrink-0 mt-0.5">
+              <div className="flex items-start gap-3 p-3 bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
+                <div className="w-7 h-7 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0 mt-0.5">
                   <Share2 size={14} />
                 </div>
                 <div className="text-xs">
-                  <p className="font-bold text-slate-800 dark:text-slate-200">1. Tap the Share Button</p>
-                  <p className="text-slate-500 dark:text-slate-600 dark:text-slate-400 text-xs">Located at the bottom bar of your Safari browser.</p>
+                  <p className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">1. Tap the Share Button</p>
+                  <p className="text-[#6B6761] dark:text-[#A8A29E] text-xs mt-0.5">Located at the bottom bar of your Safari browser.</p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 p-3 bg-slate-50 dark:bg-slate-800/60 rounded-2xl border border-slate-100 dark:border-slate-800">
-                <div className="w-7 h-7 rounded-xl bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5">
+              <div className="flex items-start gap-3 p-3 bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
+                <div className="w-7 h-7 rounded-lg bg-emerald-50 dark:bg-emerald-950/60 text-[#15803D] dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5">
                   <PlusSquare size={14} />
                 </div>
                 <div className="text-xs">
-                  <p className="font-bold text-slate-800 dark:text-slate-200">2. Tap "Add to Home Screen"</p>
-                  <p className="text-slate-500 dark:text-slate-600 dark:text-slate-400 text-xs">Scroll down the share options and tap "Add to Home Screen".</p>
+                  <p className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">2. Tap "Add to Home Screen"</p>
+                  <p className="text-[#6B6761] dark:text-[#A8A29E] text-xs mt-0.5">Scroll down the share options and tap "Add to Home Screen".</p>
                 </div>
               </div>
             </div>
@@ -189,7 +195,7 @@ const PwaInstallBanner = () => {
                 setShowIOSModal(false);
                 setShowBanner(false);
               }}
-              className="w-full bg-[#9E2A2B] text-white py-2.5 rounded-xl font-bold text-xs hover:bg-[#631419] transition-all shadow-md cursor-pointer flex items-center justify-center gap-1.5"
+              className="w-full bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-[#14110F] py-2.5 min-h-[44px] rounded-lg font-bold text-xs transition-colors shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
             >
               <Check size={14} />
               <span>Got it, thanks!</span>

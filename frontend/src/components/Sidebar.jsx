@@ -387,8 +387,8 @@ const Sidebar = ({ isOpen, onClose }) => {
             </div>
             {isOpen && (
               <div className="flex flex-col min-w-0">
-                <span className="text-white font-semibold text-sm tracking-normal whitespace-nowrap">G-TRAMS</span>
-                <span className="text-white/70 dark:text-[#A8A29E] text-xs font-normal truncate whitespace-nowrap">Municipality of Gasan</span>
+                <span className="text-white font-bold text-sm tracking-[-0.015em] whitespace-nowrap">G-TRAMS</span>
+                <span className="text-white/75 dark:text-[#A8A29E] text-[11px] font-medium truncate whitespace-nowrap">Municipality of Gasan</span>
               </div>
             )}
           </div>

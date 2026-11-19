@@ -78,12 +78,12 @@ const AccountDeactivated = () => {
         />
       )}
 
-      <div className="w-full max-w-md bg-white dark:bg-[#1C1917] rounded-lg shadow-xl overflow-hidden border border-[#E4E1DC] dark:border-[#2E2A27]">
+      <div className="w-full max-w-md bg-white dark:bg-[#1C1917] rounded-xl shadow-xl overflow-hidden border border-[#E4E1DC] dark:border-[#2E2A27]">
         <div className="bg-red-500/10 p-5 sm:p-6 flex flex-col items-center text-center border-b border-red-500/20">
-          <div className="w-14 h-14 bg-red-500/20 rounded-full flex items-center justify-center mb-3">
+          <div className="w-14 h-14 bg-red-500/20 rounded-xl flex items-center justify-center mb-3">
             <ShieldAlert size={28} className="text-[#B91C1C]" />
           </div>
-          <h1 className="text-lg font-bold text-[#B91C1C] mb-1.5">Account Deactivated</h1>
+          <h1 className="text-lg font-bold text-[#B91C1C] tracking-[-0.02em] mb-1.5">Account Deactivated</h1>
           <p className="text-xs text-[#1F1D1B] dark:text-[#EAE7E1] font-medium bg-white/70 dark:bg-black/30 px-3.5 py-1.5 rounded-md border border-red-500/20">
             Dahilan: {reason || 'No reason provided'}
           </p>
@@ -92,16 +92,16 @@ const AccountDeactivated = () => {
         <div className="p-5 sm:p-6">
           {appealStatus === 'pending' ? (
             <div className="text-center py-4">
-              <div className="inline-flex items-center justify-center w-12 h-12 bg-amber-500/15 rounded-full mb-3">
+              <div className="inline-flex items-center justify-center w-12 h-12 bg-amber-500/15 rounded-xl mb-3">
                 <AlertCircle size={22} className="text-amber-700 dark:text-amber-400" />
               </div>
-              <h2 className="text-base font-bold text-[#1F1D1B] dark:text-white mb-1.5">Kasalukuyang Sinusuri ang Apela</h2>
+              <h2 className="text-base font-bold text-[#1F1D1B] dark:text-[#F6F5F3] mb-1.5">Kasalukuyang Sinusuri ang Apela</h2>
               <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mb-6 leading-relaxed">
                 Naipasa na ang inyong apela at kasalukuyan itong sinusuri ng Municipal Administrator. Magpapadala ng abiso sa inyong rehistradong contact number.
               </p>
               <Link 
                 to="/login"
-                className="inline-flex items-center gap-2 text-[#9E2A2B] dark:text-[#D4AF37] font-bold text-xs uppercase tracking-wider hover:underline min-h-[44px]"
+                className="inline-flex items-center gap-2 text-[#9E2A2B] dark:text-[#D4AF37] font-bold text-xs tracking-wide hover:underline min-h-[44px]"
               >
                 <ArrowLeft size={16} /> Bumalik sa Log In
               </Link>
@@ -113,7 +113,7 @@ const AccountDeactivated = () => {
               </p>
 
               <div>
-                <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase mb-1.5">
+                <label className="block text-[13px] font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
                   Mensahe ng Apela (Appeal Message)
                 </label>
                 <div className="relative">
@@ -131,8 +131,8 @@ const AccountDeactivated = () => {
               </div>
 
               <div>
-                <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase mb-1.5">
-                  Verify Password
+                <label className="block text-[13px] font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                  Verify password
                 </label>
                 <div className="relative">
                   <div className="absolute top-1/2 -translate-y-1/2 left-3 text-[#6B6761] dark:text-[#A8A29E]">

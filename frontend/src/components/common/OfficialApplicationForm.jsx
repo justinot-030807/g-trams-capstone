@@ -150,7 +150,7 @@ const OfficialApplicationForm = ({
               <FileText size={17} />
             </div>
             <div>
-              <h4 className="text-xs sm:text-sm font-black tracking-wide text-white uppercase flex items-center gap-2">
+              <h4 className="text-xs sm:text-sm font-extrabold tracking-wide text-white uppercase flex items-center gap-2">
                 Official MTOP Application Form (1:1 LGU Template)
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                   Ord. No. 48 s. 1999
@@ -167,7 +167,7 @@ const OfficialApplicationForm = ({
               type="button"
               onClick={handleDownloadExcel}
               disabled={isDownloadingExcel}
-              className="flex items-center gap-1.5 bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-md disabled:opacity-50 cursor-pointer shrink-0"
+              className="flex items-center gap-1.5 bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-md disabled:opacity-50 cursor-pointer shrink-0"
               title="Download populated original Gasan LGU Application Form (.xlsx)"
             >
               {isDownloadingExcel ? <Loader2 size={14} className="animate-spin" /> : <FileSpreadsheet size={14} />}
@@ -178,7 +178,7 @@ const OfficialApplicationForm = ({
             <button
               type="button"
               onClick={handlePrint}
-              className="flex items-center gap-1.5 bg-[#9E2A2B] hover:bg-[#851e20] active:scale-95 text-white px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer shrink-0"
+              className="flex items-center gap-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] active:scale-95 text-white px-3 sm:px-4 py-2 rounded-lg text-xs font-bold transition-all shadow-md cursor-pointer shrink-0"
               title="Print or Save Application Form as PDF"
             >
               <Printer size={15} />

@@ -1056,8 +1056,8 @@ const ValidateTODA = () => {
         });
 
         return (
-          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-white dark:bg-[#1A1816] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-2xl rounded-2xl max-w-2xl w-full p-4 sm:p-5 space-y-4 overflow-hidden">
+          <div role="dialog" aria-modal="true" className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-2xl rounded-xl max-w-2xl w-full p-4 sm:p-5 space-y-4 overflow-hidden">
               {/* Header */}
               <div className="flex items-center justify-between pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
                 <div className="flex items-center gap-2.5">
@@ -1076,15 +1076,16 @@ const ValidateTODA = () => {
                 <button
                   type="button"
                   onClick={() => { setSelectedSubmissionOCR(null); setOcrModalSearch(''); }}
-                  className="w-8 h-8 rounded-lg flex items-center justify-center text-[#6B6761] hover:text-[#1F1D1B] dark:text-[#A8A29E] dark:hover:text-white hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] transition-colors cursor-pointer"
+                  className="w-8 h-8 rounded-lg flex items-center justify-center text-[#6B6761] hover:text-[#1F1D1B] dark:text-[#A8A29E] dark:hover:text-[#F6F5F3] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] transition-colors cursor-pointer"
                   title="Close modal"
+                  aria-label="Close modal"
                 >
                   <X size={16} />
                 </button>
               </div>
 
               {/* Document Overview Card */}
-              <div className="bg-gradient-to-br from-[#F6F5F3] via-white to-[#F6F5F3] dark:from-[#14110F] dark:via-[#1A1816] dark:to-[#14110F] p-3 sm:p-3.5 rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] space-y-2">
+              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-3 sm:p-3.5 rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] space-y-2">
                 <div className="flex items-start sm:items-center justify-between gap-2 flex-wrap">
                   <div className="flex items-center gap-2 min-w-0">
                     <FileText size={16} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" />
@@ -1232,7 +1233,7 @@ const ValidateTODA = () => {
                     type="button"
                     onClick={() => handleRescan(selectedSubmissionOCR._id)}
                     disabled={isRescanning}
-                    className="inline-flex items-center gap-1 text-xs font-bold text-[#6B6761] hover:text-[#1F1D1B] dark:text-[#A8A29E] dark:hover:text-white cursor-pointer"
+                    className="inline-flex items-center gap-1 text-xs font-bold text-[#6B6761] hover:text-[#1F1D1B] dark:text-[#A8A29E] dark:hover:text-[#F6F5F3] cursor-pointer"
                   >
                     <RefreshCw size={12} className={isRescanning ? 'animate-spin' : ''} />
                     <span>Re-scan AI OCR</span>

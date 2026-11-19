@@ -365,21 +365,22 @@ const ManageRevocations = () => {
     <MainLayout>
       {/* EVIDENCE VIEWER MODAL */}
       {previewDoc && (
-        <div className="fixed inset-0 z-[200] bg-slate-900/95 flex flex-col items-center justify-center p-4 md:p-8 backdrop-blur-sm animate-in fade-in">
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-[200] bg-[#14110F]/95 flex flex-col items-center justify-center p-4 md:p-8 backdrop-blur-sm animate-in fade-in">
           <div className="flex justify-between items-center w-full max-w-4xl mb-3">
-            <h3 className="text-white font-bold text-base flex items-center gap-2">
+            <h3 className="text-[#F6F5F3] font-bold text-base flex items-center gap-2">
               <Eye size={18} /> Documentary Evidence Viewer
             </h3>
             <button 
               onClick={() => setPreviewDoc(null)} 
-              className="text-white hover:text-red-400 transition-colors bg-white/10 p-1.5 rounded-lg cursor-pointer"
+              className="text-[#F6F5F3] hover:text-red-400 transition-colors bg-white/10 p-1.5 rounded-lg cursor-pointer"
+              aria-label="Close evidence viewer"
             >
               <X size={20} />
             </button>
           </div>
           <iframe 
             src={previewDoc} 
-            className="w-full max-w-4xl h-[75vh] md:h-[82vh] bg-white rounded-lg shadow-2xl" 
+            className="w-full max-w-4xl h-[75vh] md:h-[82vh] bg-white rounded-xl shadow-2xl" 
             title="Evidence Document" 
           />
         </div>
@@ -393,39 +394,39 @@ const ManageRevocations = () => {
 
       {/* PROGRESSIVE ENGINE SUMMARY METRICS */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-5">
-        <div className="p-4 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm">
+        <div className="p-4 rounded-xl bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm">
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E]">Active Units</span>
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
           </div>
-          <p className="text-xl sm:text-2xl font-bold text-[#1F1D1B] dark:text-[#F6F5F3] tabular-nums">{activeCount}</p>
+          <p className="text-xl sm:text-2xl font-bold font-mono text-[#1F1D1B] dark:text-[#F6F5F3] tabular-nums">{activeCount}</p>
           <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mt-0.5">Good Standing</p>
         </div>
 
-        <div className="p-4 rounded-lg bg-white dark:bg-[#1C1917] border border-amber-200 dark:border-amber-900/40 shadow-sm">
+        <div className="p-4 rounded-xl bg-white dark:bg-[#1C1917] border border-amber-200 dark:border-amber-900/40 shadow-sm">
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-xs font-semibold text-amber-800 dark:text-amber-300">Under Warning</span>
             <span className="w-2 h-2 rounded-full bg-amber-500" />
           </div>
-          <p className="text-xl sm:text-2xl font-bold text-amber-700 dark:text-amber-400 tabular-nums">{warningCount}</p>
+          <p className="text-xl sm:text-2xl font-bold font-mono text-amber-700 dark:text-amber-400 tabular-nums">{warningCount}</p>
           <p className="text-[11px] text-amber-700 dark:text-amber-400 font-medium mt-0.5">1st Offense Notice</p>
         </div>
 
-        <div className="p-4 rounded-lg bg-white dark:bg-[#1C1917] border border-orange-200 dark:border-orange-900/40 shadow-sm">
+        <div className="p-4 rounded-xl bg-white dark:bg-[#1C1917] border border-orange-200 dark:border-orange-900/40 shadow-sm">
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-xs font-semibold text-orange-800 dark:text-orange-300">Suspended</span>
             <span className="w-2 h-2 rounded-full bg-orange-500" />
           </div>
-          <p className="text-xl sm:text-2xl font-bold text-orange-700 dark:text-orange-400 tabular-nums">{suspendedCount}</p>
+          <p className="text-xl sm:text-2xl font-bold font-mono text-orange-700 dark:text-orange-400 tabular-nums">{suspendedCount}</p>
           <p className="text-[11px] text-orange-700 dark:text-orange-400 font-medium mt-0.5">2nd Offense Penalty</p>
         </div>
 
-        <div className="p-4 rounded-lg bg-white dark:bg-[#1C1917] border border-red-200 dark:border-red-900/40 shadow-sm">
+        <div className="p-4 rounded-xl bg-white dark:bg-[#1C1917] border border-red-200 dark:border-red-900/40 shadow-sm">
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-xs font-semibold text-red-800 dark:text-red-300">Revoked</span>
             <span className="w-2 h-2 rounded-full bg-red-500" />
           </div>
-          <p className="text-xl sm:text-2xl font-bold text-red-700 dark:text-red-400 tabular-nums">{revokedCount}</p>
+          <p className="text-xl sm:text-2xl font-bold font-mono text-red-700 dark:text-red-400 tabular-nums">{revokedCount}</p>
           <p className="text-[11px] text-red-700 dark:text-red-400 font-medium mt-0.5">3rd Offense / Grave</p>
         </div>
       </div>

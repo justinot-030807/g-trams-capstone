@@ -32,7 +32,7 @@ const UserManagement = () => {
 
   // Calculate real-time activity status using server presence + fallback
   const getActivityStatus = (user) => {
-    if (!user) return { statusText: 'Offline', timeText: '', isOnline: false, isPulsing: false, badgeClass: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-400 border-slate-200 dark:border-slate-700', dotClass: 'bg-slate-400' };
+    if (!user) return { statusText: 'Offline', timeText: '', isOnline: false, isPulsing: false, badgeClass: 'bg-[#F6F5F3] text-[#6B6761] dark:bg-[#2E2A27] dark:text-[#A8A29E] border-[#E4E1DC] dark:border-[#2E2A27]', dotClass: 'bg-[#6B6761] dark:bg-[#A8A29E]' };
     
     const { lastActive, isActive, isOnline: serverOnline, lastActiveSecondsAgo } = user;
 
@@ -62,7 +62,7 @@ const UserManagement = () => {
         timeText: 'Active now',
         isOnline: true,
         isPulsing: true,
-        badgeClass: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border-emerald-300 dark:border-emerald-700 font-black',
+        badgeClass: 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border-emerald-300 dark:border-emerald-700 font-extrabold',
         dotClass: 'bg-emerald-500'
       };
     }
@@ -100,8 +100,8 @@ const UserManagement = () => {
         timeText: 'No recent activity',
         isOnline: false,
         isPulsing: false,
-        badgeClass: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-500 border-slate-200 dark:border-slate-700',
-        dotClass: 'bg-slate-400'
+        badgeClass: 'bg-[#F6F5F3] text-[#6B6761] dark:bg-[#2E2A27] dark:text-[#A8A29E] border-[#E4E1DC] dark:border-[#2E2A27]',
+        dotClass: 'bg-[#6B6761] dark:bg-[#A8A29E]'
       };
     }
 
@@ -112,8 +112,8 @@ const UserManagement = () => {
         timeText: `${diffMin}m ago`,
         isOnline: false,
         isPulsing: false,
-        badgeClass: 'bg-slate-100 text-slate-700 dark:bg-slate-800/80 dark:text-slate-300 border-slate-200 dark:border-slate-700',
-        dotClass: 'bg-slate-400'
+        badgeClass: 'bg-[#F6F5F3] text-[#1F1D1B] dark:bg-[#2E2A27]/80 dark:text-[#F6F5F3] border-[#E4E1DC] dark:border-[#2E2A27]',
+        dotClass: 'bg-[#6B6761] dark:bg-[#A8A29E]'
       };
     }
 
@@ -124,8 +124,8 @@ const UserManagement = () => {
         timeText: `${diffHours}h ago`,
         isOnline: false,
         isPulsing: false,
-        badgeClass: 'bg-slate-100 text-slate-700 dark:bg-slate-800/80 dark:text-slate-300 border-slate-200 dark:border-slate-700',
-        dotClass: 'bg-slate-400'
+        badgeClass: 'bg-[#F6F5F3] text-[#1F1D1B] dark:bg-[#2E2A27]/80 dark:text-[#F6F5F3] border-[#E4E1DC] dark:border-[#2E2A27]',
+        dotClass: 'bg-[#6B6761] dark:bg-[#A8A29E]'
       };
     }
 
@@ -135,8 +135,8 @@ const UserManagement = () => {
       timeText: diffDays === 1 ? 'Yesterday' : `${diffDays}d ago`,
       isOnline: false,
       isPulsing: false,
-      badgeClass: 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-500 border-slate-200 dark:border-slate-700',
-      dotClass: 'bg-slate-400'
+      badgeClass: 'bg-[#F6F5F3] text-[#6B6761] dark:bg-[#2E2A27] dark:text-[#A8A29E] border-[#E4E1DC] dark:border-[#2E2A27]',
+      dotClass: 'bg-[#6B6761] dark:bg-[#A8A29E]'
     };
   };
 
@@ -595,7 +595,7 @@ const UserManagement = () => {
                         <p className={`font-semibold text-sm truncate ${user.isActive === false ? 'text-red-700 dark:text-red-400 line-through' : 'text-[#1F1D1B] dark:text-[#F6F5F3]'}`}>
                           {user.name}
                         </p>
-                        <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] font-mono truncate">
+                        <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] font-mono tabular-nums truncate">
                           {user.contact}
                         </p>
                       </div>
@@ -612,12 +612,12 @@ const UserManagement = () => {
                       {user.todaAssociation || 'NON-TODA'}
                     </span>
                     {user.bodyNumber && (
-                      <span className="text-[11px] font-mono font-bold px-2 py-0.5 rounded bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                      <span className="text-[11px] font-mono tabular-nums font-bold px-2 py-0.5 rounded bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27]">
                         #{user.bodyNumber}
                       </span>
                     )}
                     {!(isAdminUser || isStaffOrCashier) && (
-                      <span className={`px-2 py-0.5 rounded text-[11px] font-mono font-semibold border ${
+                      <span className={`px-2 py-0.5 rounded text-[11px] font-mono tabular-nums font-semibold border ${
                         isMaxUnits
                           ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800/60'
                           : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E] border-[#E4E1DC] dark:border-[#2E2A27]'
@@ -771,13 +771,13 @@ const UserManagement = () => {
 
                       {/* Contact & TODA */}
                       <td className="py-3.5 px-3">
-                        <p className="text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] font-mono">{user.contact}</p>
+                        <p className="text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] font-mono tabular-nums">{user.contact}</p>
                         <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
                           <p className="text-[11px] font-semibold text-[#9E2A2B] dark:text-[#D4AF37] uppercase tracking-wider bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 inline-block px-1.5 py-0.5 rounded border border-[#9E2A2B]/20 dark:border-[#9E2A2B]/30">
                             {user.todaAssociation || 'NON-TODA'}
                           </p>
                           {user.bodyNumber && (
-                            <span className="text-[11px] font-mono font-bold px-1.5 py-0.5 rounded bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                            <span className="text-[11px] font-mono tabular-nums font-bold px-1.5 py-0.5 rounded bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27]">
                               #{user.bodyNumber}
                             </span>
                           )}
@@ -1199,7 +1199,7 @@ const UserManagement = () => {
                   onClick={confirmAndSaveRole} 
                   disabled={hasRoleConflict || !adminPasswordInput.trim()}
                   className={`flex-1 py-2 rounded-lg font-semibold text-white transition-colors text-xs shadow-sm cursor-pointer ${
-                    hasRoleConflict || !adminPasswordInput.trim() ? 'bg-gray-400 cursor-not-allowed' : 'bg-[#9E2A2B] hover:bg-[#7A1B22]'
+                    hasRoleConflict || !adminPasswordInput.trim() ? 'bg-[#6B6761] opacity-60 cursor-not-allowed' : 'bg-[#9E2A2B] hover:bg-[#7A1B22]'
                   }`}
                 >
                   Yes, Change It
@@ -1280,7 +1280,7 @@ const UserManagement = () => {
                 <Phone className="text-[#6B6761] dark:text-[#A8A29E] mt-0.5" size={16} />
                 <div>
                   <p className="text-[11px] font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">Contact Details</p>
-                  <p className="text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] font-mono">{selectedUser.contact}</p>
+                  <p className="text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] font-mono tabular-nums">{selectedUser.contact}</p>
                 </div>
               </div>
 
@@ -1293,7 +1293,7 @@ const UserManagement = () => {
                       {selectedUser.todaAssociation || 'NON-TODA'}
                     </span>
                     {selectedUser.bodyNumber && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-mono font-bold bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-xs font-mono tabular-nums font-bold bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27]">
                         Body No. #{selectedUser.bodyNumber}
                       </span>
                     )}
@@ -1321,7 +1321,7 @@ const UserManagement = () => {
                         <ShieldCheck size={13} /> {String(selectedUser.contact || '').includes('@') ? 'Verified (Email OTP)' : 'Verified (SMS OTP)'}
                       </span>
                     ) : (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#F3F4F6] text-[#4B5563] border-[#E5E7EB] dark:bg-[#1F2937]/60 dark:text-[#9CA3AF] dark:border-[#374151] text-xs font-medium">
+                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded border bg-[#F6F5F3] text-[#6B6761] border-[#E4E1DC] dark:bg-[#14110F] dark:text-[#A8A29E] dark:border-[#2E2A27] text-xs font-medium">
                         Unverified Account
                       </span>
                     )}
@@ -1367,7 +1367,7 @@ const UserManagement = () => {
                   <h4 className="text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] uppercase tracking-wider">
                     Assigned Tricycle Units
                   </h4>
-                  <span className="px-2 py-0.5 rounded text-xs font-semibold border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#F6F5F3]">
+                  <span className="px-2 py-0.5 rounded text-xs font-mono tabular-nums font-semibold border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-[#1F1D1B] dark:text-[#F6F5F3]">
                     {selectedUser.unitsCount || 0} / 2 Units {(selectedUser.unitsCount || 0) >= 2 ? '(MAX)' : ''}
                   </span>
                 </div>
@@ -1378,7 +1378,7 @@ const UserManagement = () => {
                       <div key={unit._id || idx} className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-3">
                         <div className="flex items-center justify-between mb-1.5">
                           <span className="font-semibold text-xs text-[#1F1D1B] dark:text-[#F6F5F3]">
-                            Plate No: <span className="font-mono">{unit.plateNo || 'Pending Plate'}</span>
+                            Plate No: <span className="font-mono tabular-nums">{unit.plateNo || 'Pending Plate'}</span>
                           </span>
                           <span className="text-[10px] font-semibold px-2 py-0.5 rounded border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] uppercase">
                             {unit.status || 'Active'}
@@ -1395,11 +1395,11 @@ const UserManagement = () => {
                           </div>
                           <div>
                             <span>Motor No:</span>{' '}
-                            <span className="font-mono text-[#1F1D1B] dark:text-[#F6F5F3]">{unit.motorNo || 'N/A'}</span>
+                            <span className="font-mono tabular-nums text-[#1F1D1B] dark:text-[#F6F5F3]">{unit.motorNo || 'N/A'}</span>
                           </div>
                           <div>
                             <span>Chassis No:</span>{' '}
-                            <span className="font-mono text-[#1F1D1B] dark:text-[#F6F5F3]">{unit.chassisNo || 'N/A'}</span>
+                            <span className="font-mono tabular-nums text-[#1F1D1B] dark:text-[#F6F5F3]">{unit.chassisNo || 'N/A'}</span>
                           </div>
                         </div>
                       </div>

@@ -135,7 +135,7 @@ const OfficialCancellationLetterModal = ({
               <FileText size={17} />
             </div>
             <div>
-              <h4 className="text-xs sm:text-sm font-black tracking-wide text-white uppercase flex items-center gap-2">
+              <h4 className="text-xs sm:text-sm font-extrabold tracking-wide text-white uppercase flex items-center gap-2">
                 Official Franchise Cancellation Letter (1:1 LGU Template)
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/30">
                   OVM Certified
@@ -151,7 +151,7 @@ const OfficialCancellationLetterModal = ({
             <button
               onClick={handleDownloadDocx}
               disabled={isDownloadingDocx}
-              className="flex items-center gap-1.5 bg-blue-700 hover:bg-blue-800 active:scale-95 text-white px-3 py-2 rounded-xl text-xs font-bold transition-all shadow-md disabled:opacity-50 cursor-pointer shrink-0"
+              className="flex items-center gap-1.5 bg-blue-700 hover:bg-blue-800 active:scale-95 text-white px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-md disabled:opacity-50 cursor-pointer shrink-0"
               title="Download populated original Gasan LGU Word (.docx) file"
             >
               {isDownloadingDocx ? <Loader2 size={14} className="animate-spin" /> : <Download size={14} />}
@@ -161,7 +161,7 @@ const OfficialCancellationLetterModal = ({
 
             <button
               onClick={handlePrint}
-              className="flex items-center gap-1.5 bg-[#9E2A2B] hover:bg-[#851e20] active:scale-95 text-white px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer shrink-0"
+              className="flex items-center gap-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] active:scale-95 text-white px-3 sm:px-4 py-2 rounded-lg text-xs font-bold transition-all shadow-md cursor-pointer shrink-0"
             >
               <Printer size={14} />
               <span className="hidden sm:inline">Print / Save PDF</span>
@@ -170,7 +170,7 @@ const OfficialCancellationLetterModal = ({
 
             <button
               onClick={onClose}
-              className="text-white/60 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition-colors cursor-pointer"
+              className="text-white/60 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
             >
               <X size={18} />
             </button>

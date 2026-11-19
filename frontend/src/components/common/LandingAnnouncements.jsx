@@ -91,8 +91,8 @@ const LandingAnnouncements = () => {
     >
       <motion.div variants={cardVariants} className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 gap-4">
         <div>
-          <h2 className="text-xl sm:text-2xl md:text-3xl font-black text-[#1F1D1B] dark:text-[#F6F5F3] tracking-tight uppercase mb-2">
-            Municipal <span className="text-[#9E2A2B]">Bulletin Board</span>
+          <h2 className="text-xl sm:text-2xl md:text-3xl font-extrabold text-[#1F1D1B] dark:text-[#F6F5F3] tracking-[-0.025em] mb-2">
+            Municipal <span className="text-[#9E2A2B] dark:text-[#D4AF37]">Bulletin Board</span>
           </h2>
           <p className="text-[#6B6761] dark:text-[#A8A29E] text-xs sm:text-sm font-medium">
             Official municipal advisories, renewal schedules, and system announcements from the LGU of Gasan.

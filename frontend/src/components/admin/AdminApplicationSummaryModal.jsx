@@ -99,7 +99,7 @@ const AdminApplicationSummaryModal = ({
             </div>
             <div className="min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <h3 id="admin-summary-modal-title" className="font-semibold text-base text-[#1F1D1B] dark:text-white truncate">
+                <h3 id="admin-summary-modal-title" className="font-semibold text-base text-[#1F1D1B] dark:text-[#F6F5F3] truncate">
                   Application Summary
                 </h3>
                 <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border shrink-0 ${
@@ -109,7 +109,7 @@ const AdminApplicationSummaryModal = ({
                     ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700'
                     : franchise.status === 'Cancelled'
                     ? 'bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 border-red-300 dark:border-red-700'
-                    : 'bg-purple-50 dark:bg-purple-950/50 text-purple-700 dark:text-purple-300 border-purple-300 dark:border-purple-700'
+                    : 'bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#F5E6B3] border-[#9E2A2B]/25 dark:border-[#D4AF37]/35'
                 }`}>
                   {getStatusDisplay(franchise.status)}
                 </span>
@@ -458,7 +458,7 @@ const AdminApplicationSummaryModal = ({
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
               <div>
                 <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-semibold">Amount Payable</span>
-                <span className="font-mono font-semibold text-[#1F1D1B] dark:text-white">₱{effectiveFee.toFixed(2)}</span>
+                <span className="font-mono font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">₱{effectiveFee.toFixed(2)}</span>
               </div>
               <div>
                 <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-semibold">Official Receipt (OR)</span>

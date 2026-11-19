@@ -16,8 +16,9 @@ export function Toaster() {
       closeButton
       toastOptions={{
         style: {
-          fontFamily: '"IBM Plex Sans", system-ui, sans-serif',
-          borderRadius: '10px',
+          fontFamily: '"Manrope", system-ui, -apple-system, sans-serif',
+          borderRadius: '12px',
+          border: resolvedTheme === 'dark' ? '1px solid #2E2A27' : '1px solid #E4E1DC',
         },
       }}
     />

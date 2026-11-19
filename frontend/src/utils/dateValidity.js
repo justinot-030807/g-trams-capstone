@@ -23,7 +23,7 @@ export const evaluateDocumentValidity = (dateInput) => {
       daysLeft: null,
       isExpired: false,
       isExpiringSoon: false,
-      badgeColor: 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
+      badgeColor: 'bg-[#F6F5F3] text-[#6B6761] border-[#E4E1DC] dark:bg-[#25211E] dark:text-[#A8A29E] dark:border-[#2E2A27]'
     };
   }
 
@@ -35,7 +35,7 @@ export const evaluateDocumentValidity = (dateInput) => {
       daysLeft: null,
       isExpired: false,
       isExpiringSoon: false,
-      badgeColor: 'bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-400 dark:border-slate-700'
+      badgeColor: 'bg-[#F6F5F3] text-[#6B6761] border-[#E4E1DC] dark:bg-[#25211E] dark:text-[#A8A29E] dark:border-[#2E2A27]'
     };
   }
 

@@ -65,8 +65,8 @@ export const renderFormattedAnnouncement = (text) => {
           const content = trimmed.replace(/^[•\-*]\s*/, '');
           return (
             <div key={idx} className="flex items-start gap-2 pl-2">
-              <span className="text-[#9E2A2B] dark:text-[#D4AF37] font-black text-sm shrink-0 leading-none mt-0.5">•</span>
-              <span className="flex-1 text-[#1F1D1B] dark:text-[#EAE7E1]">{parseBoldText(content)}</span>
+              <span className="text-[#9E2A2B] dark:text-[#D4AF37] font-extrabold text-sm shrink-0 leading-none mt-0.5">•</span>
+              <span className="flex-1 text-[#1F1D1B] dark:text-[#F6F5F3]">{parseBoldText(content)}</span>
             </div>
           );
         }

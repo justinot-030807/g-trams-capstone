@@ -256,7 +256,7 @@ const CashierSettings = () => {
           toast.type === 'error' 
             ? 'bg-red-600 text-white' 
             : toast.type === 'info'
-            ? 'bg-blue-600 text-white'
+            ? 'bg-[#1F1D1B] dark:bg-[#2E2A27] text-[#F6F5F3]'
             : 'bg-emerald-700 text-white'
         }`}>
           {toast.type === 'error' ? <X size={16} /> : <CheckCircle2 size={16} />}
@@ -273,7 +273,7 @@ const CashierSettings = () => {
             </div>
             <div>
               <div className="flex items-center gap-2 flex-wrap">
-                <h1 className="text-lg sm:text-xl font-bold tracking-tight uppercase">
+                <h1 className="text-lg sm:text-xl font-bold tracking-[-0.02em] uppercase">
                   Cashier Settings &amp; Archive
                 </h1>
                 <span className="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-[#9E2A2B] text-white">
@@ -335,7 +335,11 @@ const CashierSettings = () => {
           >
             <Archive size={15} />
             <span>Payment Archive</span>
-            <span className="ml-1 text-[10px] px-1.5 py-0.5 rounded-full bg-white/20 dark:bg-white/10">
+            <span className={`ml-1 text-[10px] font-mono tabular-nums px-1.5 py-0.5 rounded-full ${
+              activeTab === 'archive'
+                ? 'bg-white/20 text-white'
+                : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27]'
+            }`}>
               {archiveList.length}
             </span>
           </button>
@@ -470,7 +474,7 @@ const CashierSettings = () => {
                 <button
                   type="button"
                   onClick={() => toggleTheme()}
-                  className="px-4 py-2 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] text-xs font-bold flex items-center gap-2 text-[#1F1D1B] dark:text-[#EAE7E1] cursor-pointer min-h-[40px]"
+                  className="px-4 py-2 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-xs font-bold flex items-center gap-2 text-[#1F1D1B] dark:text-[#EAE7E1] cursor-pointer min-h-[40px]"
                 >
                   {isDark ? <Moon size={15} className="text-amber-300" /> : <Sun size={15} className="text-amber-500" />}
                   <span>{isDark ? 'Dark Mode (Active)' : 'Light Mode (Active)'}</span>
@@ -535,6 +539,9 @@ const CashierSettings = () => {
 
               <button
                 type="button"
+                role="switch"
+                aria-checked={autoPrintReceipt}
+                aria-label="Auto-Prompt Receipt Print"
                 onClick={handleToggleAutoPrint}
                 className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
                   autoPrintReceipt ? 'bg-[#9E2A2B]' : 'bg-[#E4E1DC] dark:bg-[#2E2A27]'
@@ -561,9 +568,12 @@ const CashierSettings = () => {
 
               <button
                 type="button"
+                role="switch"
+                aria-checked={soundAlert}
+                aria-label="Queue Arrival Sound Alert"
                 onClick={handleToggleSound}
                 className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-                  soundAlert ? 'bg-[#9E2A2B]' : 'bg-[#E4E1DC] dark:border-[#2E2A27] bg-[#E4E1DC] dark:bg-[#2E2A27]'
+                  soundAlert ? 'bg-[#9E2A2B]' : 'bg-[#E4E1DC] dark:bg-[#2E2A27]'
                 }`}
               >
                 <span
@@ -598,7 +608,7 @@ const CashierSettings = () => {
         <div className="space-y-4">
           {/* Summary Metric Strip */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-            <div className="bg-white dark:bg-[#1C1917] p-4 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm flex items-center gap-3">
+            <div className="bg-white dark:bg-[#1C1917] p-4 rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800 flex items-center justify-center shrink-0">
                 <CheckCircle2 size={20} />
               </div>
@@ -606,13 +616,13 @@ const CashierSettings = () => {
                 <p className="text-[11px] font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">
                   Settled Records
                 </p>
-                <p className="text-lg sm:text-xl font-bold font-mono text-[#1F1D1B] dark:text-[#F6F5F3]">
+                <p className="text-lg sm:text-xl font-bold font-mono tabular-nums text-[#1F1D1B] dark:text-[#F6F5F3]">
                   {filteredArchive.length}
                 </p>
               </div>
             </div>
 
-            <div className="bg-white dark:bg-[#1C1917] p-4 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm flex items-center gap-3">
+            <div className="bg-white dark:bg-[#1C1917] p-4 rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-800 flex items-center justify-center shrink-0">
                 <DollarSign size={20} />
               </div>
@@ -620,13 +630,13 @@ const CashierSettings = () => {
                 <p className="text-[11px] font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">
                   Total Collected
                 </p>
-                <p className="text-lg sm:text-xl font-bold font-mono text-[#9E2A2B] dark:text-[#D4AF37]">
+                <p className="text-lg sm:text-xl font-bold font-mono tabular-nums text-[#9E2A2B] dark:text-[#D4AF37]">
                   ₱{Number(totalAmountCollected || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
               </div>
             </div>
 
-            <div className="bg-white dark:bg-[#1C1917] p-4 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm flex items-center gap-3">
+            <div className="bg-white dark:bg-[#1C1917] p-4 rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm flex items-center gap-3">
               <div className="w-10 h-10 rounded-lg bg-[#FDF2F4] dark:bg-[#2E1A1B] text-[#9E2A2B] dark:text-[#F5E6B3] border border-[#F8C5CA] dark:border-[#5C2427] flex items-center justify-center shrink-0">
                 <FileText size={20} />
               </div>
@@ -634,7 +644,7 @@ const CashierSettings = () => {
                 <p className="text-[11px] font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">
                   Standard Fee Rate
                 </p>
-                <p className="text-lg sm:text-xl font-bold font-mono text-[#1F1D1B] dark:text-[#F6F5F3]">
+                <p className="text-lg sm:text-xl font-bold font-mono tabular-nums text-[#1F1D1B] dark:text-[#F6F5F3]">
                   ₱{standardFranchiseFee.toFixed(2)} / MTOP
                 </p>
               </div>
@@ -726,17 +736,17 @@ const CashierSettings = () => {
                       <div key={item._id} className="p-4 space-y-2.5 bg-white dark:bg-[#1C1917]">
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
-                            <span className="font-mono font-bold text-xs text-[#9E2A2B] dark:text-[#F5E6B3]">
+                            <span className="font-mono tabular-nums font-bold text-xs text-[#9E2A2B] dark:text-[#F5E6B3]">
                               OR #{item.officialReceiptNo || '—'}
                             </span>
                             <p className="font-bold text-sm text-[#1F1D1B] dark:text-[#F6F5F3] truncate">
                               {item.fullName || (item.operator && item.operator.name) || 'Unknown Operator'}
                             </p>
-                            <p className="text-xs font-mono text-[#6B6761] dark:text-[#A8A29E]">
+                            <p className="text-xs font-mono tabular-nums text-[#6B6761] dark:text-[#A8A29E]">
                               {item.plateNo || '—'} &bull; {dateStr}
                             </p>
                           </div>
-                          <span className="font-mono font-bold text-sm text-emerald-700 dark:text-emerald-400 shrink-0">
+                          <span className="font-mono tabular-nums font-bold text-sm text-emerald-700 dark:text-emerald-400 shrink-0">
                             ₱{parseFloat(item.amountPaid || standardFranchiseFee).toFixed(2)}
                           </span>
                         </div>
@@ -774,23 +784,23 @@ const CashierSettings = () => {
                         const timeStr = payDate.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
 
                         return (
-                          <tr key={item._id} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50 transition-colors">
-                            <td className="py-3.5 px-4 font-mono font-bold text-[#9E2A2B] dark:text-[#D4AF37]">
+                          <tr key={item._id} className="hover:bg-[#FAF9F7] dark:hover:bg-[#14110F]/50 transition-colors">
+                            <td className="py-3.5 px-4 font-mono tabular-nums font-bold text-[#9E2A2B] dark:text-[#D4AF37]">
                               {item.officialReceiptNo || '—'}
                             </td>
                             <td className="py-3.5 px-4 font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
                               {item.fullName || (item.operator && item.operator.name) || 'Unknown Operator'}
                             </td>
-                            <td className="py-3.5 px-4 font-mono font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                            <td className="py-3.5 px-4 font-mono tabular-nums font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
                               {item.plateNo || '—'}
                             </td>
                             <td className="py-3.5 px-4 text-xs text-[#6B6761] dark:text-[#A8A29E]">
                               {item.todaName || 'NON-TODA'} {item.zone ? `• ${formatZoneLabel(item.zone)}` : ''}
                             </td>
-                            <td className="py-3.5 px-4 font-mono font-bold text-emerald-700 dark:text-emerald-400">
+                            <td className="py-3.5 px-4 font-mono tabular-nums font-bold text-emerald-700 dark:text-emerald-400">
                               ₱{parseFloat(item.amountPaid || standardFranchiseFee).toFixed(2)}
                             </td>
-                            <td className="py-3.5 px-4 text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                            <td className="py-3.5 px-4 text-xs text-[#6B6761] dark:text-[#A8A29E] tabular-nums">
                               <div>{dateStr}</div>
                               <div className="text-[10px]">{timeStr}</div>
                             </td>
@@ -819,8 +829,8 @@ const CashierSettings = () => {
 
       {/* Official Receipt Print Modal */}
       {isReceiptOpen && receiptData && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-          <div className="relative w-full max-w-md bg-white dark:bg-[#1C1917] rounded-lg shadow-2xl border border-[#E4E1DC] dark:border-[#2E2A27] p-6 text-[#1F1D1B] dark:text-[#F6F5F3] animate-in zoom-in-95 duration-150">
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+          <div className="relative w-full max-w-md bg-white dark:bg-[#1C1917] rounded-xl shadow-2xl border border-[#E4E1DC] dark:border-[#2E2A27] p-6 text-[#1F1D1B] dark:text-[#F6F5F3] animate-in zoom-in-95 duration-150">
             {/* Header controls (hidden on print) */}
             <div className="flex items-center justify-between pb-3 mb-4 border-b border-[#E4E1DC] dark:border-[#2E2A27] print:hidden">
               <span className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] uppercase tracking-wider flex items-center gap-1.5">
@@ -831,6 +841,7 @@ const CashierSettings = () => {
                 type="button"
                 onClick={() => setIsReceiptOpen(false)}
                 className="w-7 h-7 rounded-md hover:bg-[#F6F5F3] dark:hover:bg-[#252220] text-[#6B6761] dark:text-[#A8A29E] flex items-center justify-center cursor-pointer"
+                aria-label="Close receipt preview"
               >
                 <X size={16} />
               </button>
@@ -855,12 +866,12 @@ const CashierSettings = () => {
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <div>
                   <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] uppercase font-bold block">OR Number</span>
-                  <span className="font-mono font-bold text-sm text-[#9E2A2B] dark:text-[#D4AF37]">{receiptData.officialReceiptNo}</span>
+                  <span className="font-mono tabular-nums font-bold text-sm text-[#9E2A2B] dark:text-[#D4AF37]">{receiptData.officialReceiptNo}</span>
                 </div>
                 <div className="text-right">
                   <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] uppercase font-bold block">Date &amp; Time</span>
-                  <span className="font-semibold text-xs">{receiptData.dateFormatted}</span>
-                  <span className="block text-[10px] text-[#6B6761] dark:text-[#A8A29E]">{receiptData.timeFormatted}</span>
+                  <span className="font-semibold text-xs tabular-nums">{receiptData.dateFormatted}</span>
+                  <span className="block text-[10px] text-[#6B6761] dark:text-[#A8A29E] tabular-nums">{receiptData.timeFormatted}</span>
                 </div>
               </div>
 
@@ -872,7 +883,7 @@ const CashierSettings = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-[#6B6761] dark:text-[#A8A29E]">Tricycle Plate:</span>
-                  <span className="font-mono font-bold">{receiptData.franchise?.plateNo || '—'}</span>
+                  <span className="font-mono tabular-nums font-bold">{receiptData.franchise?.plateNo || '—'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-[#6B6761] dark:text-[#A8A29E]">TODA / Route:</span>
@@ -888,14 +899,14 @@ const CashierSettings = () => {
               <div className="border-t border-b border-[#E4E1DC] dark:border-[#2E2A27] py-2.5 text-xs space-y-1">
                 <div className="flex justify-between font-bold">
                   <span>MTOP Franchise Regulatory Fee</span>
-                  <span className="font-mono">₱{parseFloat(receiptData.amountPaid || standardFranchiseFee || 500).toFixed(2)}</span>
+                  <span className="font-mono tabular-nums">₱{parseFloat(receiptData.amountPaid || standardFranchiseFee || 500).toFixed(2)}</span>
                 </div>
                 <p className="text-[10px] text-[#6B6761] dark:text-[#A8A29E]">Annual motor tricycle regulatory &amp; inspection fee</p>
               </div>
 
               <div className="flex justify-between items-center text-sm font-bold pt-1">
                 <span>TOTAL AMOUNT PAID:</span>
-                <span className="text-base font-mono text-[#9E2A2B] dark:text-[#D4AF37]">
+                <span className="text-base font-mono tabular-nums text-[#9E2A2B] dark:text-[#D4AF37]">
                   ₱{parseFloat(receiptData.amountPaid || standardFranchiseFee || 500).toFixed(2)}
                 </span>
               </div>

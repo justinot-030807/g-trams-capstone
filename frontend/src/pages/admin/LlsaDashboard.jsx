@@ -264,7 +264,7 @@ const LlsaDashboard = () => {
         key: 'unit',
         header: t('admin.colUnit', 'Unit'),
         render: (log) => (
-          <span className="font-mono text-xs text-[#6B6761] dark:text-[#A8A29E]">
+          <span className="font-mono tabular-nums text-xs text-[#6B6761] dark:text-[#A8A29E]">
             {cleanText(log.mtopNo || log.mtopNumber || log.plateNo || log.motorNo || log.motorNumber, '—')}
           </span>
         ),
@@ -362,7 +362,7 @@ const LlsaDashboard = () => {
       {isLoading ? (
         <DashboardHealthSkeleton />
       ) : (
-        <div className="bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] p-4 sm:p-5 mb-6">
+        <div className="bg-white dark:bg-[#1C1917] rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] p-4 sm:p-5 mb-6">
           <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27] mb-3">
             <div className="flex items-center gap-2">
               <Layers size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
@@ -370,7 +370,7 @@ const LlsaDashboard = () => {
                 {t('admin.pipelineTitle', 'Active Municipal Franchise Pipeline')}
               </h2>
             </div>
-            <span className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-mono">
+            <span className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-mono tabular-nums">
               {stats.total} {t('admin.registeredUnits', 'total recorded units')}
             </span>
           </div>
@@ -382,7 +382,7 @@ const LlsaDashboard = () => {
                 <span className="text-[#1F1D1B] dark:text-[#F6F5F3] font-medium">
                   {t('admin.compliantUnits', 'Compliant Units')}
                 </span>
-                <span className="font-mono font-semibold text-[#15803D] dark:text-[#4ADE80]">
+                <span className="font-mono tabular-nums font-semibold text-[#15803D] dark:text-[#4ADE80]">
                   {getPercentage(stats.active)}%
                 </span>
               </div>
@@ -392,7 +392,7 @@ const LlsaDashboard = () => {
                   style={{ width: `${getPercentage(stats.active)}%` }}
                 />
               </div>
-              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1">
+              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1 tabular-nums">
                 {stats.active} {t('common.of', 'of')} {stats.total}{' '}
                 {t('admin.activeAndCompliant', 'active and compliant')}
               </p>
@@ -479,7 +479,7 @@ const LlsaDashboard = () => {
                 {t('admin.pendingApprovalsQueue', 'Pending Approvals Queue')}
               </h2>
               {stats.pending > 0 && (
-                <span className="bg-[#9E2A2B] text-white text-xs font-mono font-medium px-2 py-0.5 rounded">
+                <span className="bg-[#9E2A2B] text-white text-xs font-mono tabular-nums font-medium px-2 py-0.5 rounded">
                   {stats.pending}
                 </span>
               )}

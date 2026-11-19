@@ -261,22 +261,22 @@ const AuthNavbar = () => {
                     to="/register"
                     onClick={handleCloseMenu}
                     aria-current={currentPath === '/register' ? 'page' : undefined}
-                    className="w-full flex items-center justify-between p-3 rounded-2xl bg-[#D4AF37] hover:bg-[#E5C158] text-[#1A0B0E] font-black transition-all cursor-pointer shadow-md"
+                    className="w-full flex items-center justify-between p-3 rounded-lg bg-[#D4AF37] hover:bg-[#E5C158] text-[#14110F] font-extrabold transition-all cursor-pointer shadow-sm min-h-[44px]"
                   >
                     <div className="flex items-center gap-2.5">
-                      <UserPlus size={16} className="text-[#1A0B0E]" />
-                      <span className="text-sm font-black">Register</span>
+                      <UserPlus size={16} className="text-[#14110F]" />
+                      <span className="text-sm font-extrabold">Register</span>
                     </div>
-                    <ChevronRight size={14} className="text-[#1A0B0E]/60" />
+                    <ChevronRight size={14} className="text-[#14110F]/60" />
                   </Link>
 
-                  <p className="text-xs font-bold text-amber-200/90 uppercase tracking-widest px-1 pt-3">Official Links</p>
+                  <p className="text-xs font-bold text-[#F5E6B3] uppercase tracking-wider px-1 pt-3">Official Links</p>
 
                   <a
                     href={MUNICIPAL_WEBSITE}
                     target="_blank"
                     rel="noreferrer"
-                    className="w-full flex items-center justify-between p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] text-left text-xs font-semibold text-white/90 hover:text-white transition-all cursor-pointer"
+                    className="w-full flex items-center justify-between p-3 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-left text-xs font-semibold text-white/90 hover:text-white transition-all cursor-pointer min-h-[44px]"
                   >
                     <div className="flex items-center gap-2.5">
                       <Globe size={15} className="text-[#D4AF37]" />
@@ -289,7 +289,7 @@ const AuthNavbar = () => {
                     href={FB_PAGE_URL}
                     target="_blank"
                     rel="noreferrer"
-                    className="w-full flex items-center justify-between p-3 rounded-2xl bg-white/[0.04] hover:bg-white/[0.08] text-left text-xs font-semibold text-white/90 hover:text-white transition-all cursor-pointer"
+                    className="w-full flex items-center justify-between p-3 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-left text-xs font-semibold text-white/90 hover:text-white transition-all cursor-pointer min-h-[44px]"
                   >
                     <div className="flex items-center gap-2.5">
                       <FacebookIcon size={15} className="text-[#1877F2]" />
@@ -300,7 +300,7 @@ const AuthNavbar = () => {
                 </div>
 
                 {/* Municipal Support Information (R35, R36 Config Integration) */}
-                <div className="mt-5 p-4 rounded-3xl bg-white/[0.04] text-xs text-white/80 space-y-2">
+                <div className="mt-5 p-4 rounded-xl bg-white/[0.04] border border-[#2E2A27] text-xs text-white/80 space-y-2">
                   <div className="flex items-center gap-2 text-[#D4AF37] font-bold">
                     <Building2 size={16} />
                     <span>Municipal Helpdesk &amp; Support</span>

@@ -118,7 +118,7 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
             <button
               type="button"
               onClick={onClose}
-              className="p-1.5 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white transition-colors cursor-pointer"
+              className="p-1.5 rounded-lg hover:bg-white/10 text-[#A8A29E] hover:text-white transition-colors cursor-pointer"
             >
               <X size={18} />
             </button>
@@ -129,8 +129,8 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
         <div 
           ref={dossierRef}
           id="printable-dossier-content"
-          className="w-full bg-[#FFFDF9] text-slate-900 border border-[#E4E1DC] rounded-lg p-6 sm:p-10 shadow-sm print:border-none print:shadow-none print:p-6 print:m-0 print:w-full print:rounded-none relative overflow-hidden"
-          style={{ fontFamily: "'Inter', system-ui, -apple-system, sans-serif" }}
+          className="w-full bg-[#FFFDF9] text-[#1F1D1B] border border-[#E4E1DC] rounded-lg p-6 sm:p-10 shadow-sm print:border-none print:shadow-none print:p-6 print:m-0 print:w-full print:rounded-none relative overflow-hidden"
+          style={{ fontFamily: "'Manrope', system-ui, -apple-system, sans-serif" }}
         >
           {/* Print Styles */}
           <style>{`
@@ -202,39 +202,39 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
                 onError={(e) => { e.target.style.display = 'none'; }}
               />
               <div>
-                <p className="text-[11px] uppercase tracking-widest font-semibold text-slate-500">
+                <p className="text-[11px] uppercase tracking-widest font-semibold text-[#6B6761]">
                   Republic of the Philippines &bull; Province of Marinduque
                 </p>
-                <h1 className="text-base sm:text-lg font-black text-[#7A1B22] tracking-tight leading-tight">
+                <h1 className="text-base sm:text-lg font-extrabold text-[#7A1B22] tracking-tight leading-tight">
                   MUNICIPALITY OF GASAN
                 </h1>
-                <p className="text-xs font-bold text-slate-700">
+                <p className="text-xs font-bold text-[#1F1D1B]">
                   OFFICE OF THE SANGGUNIANG BAYAN / VICE MAYOR EXTENSION
                 </p>
-                <p className="text-[10px] text-slate-500 font-medium">
+                <p className="text-[10px] text-[#6B6761] font-medium">
                   Motorized Tricycle Regulatory Board (MTRB)
                 </p>
               </div>
             </div>
 
             <div className="text-right">
-              <span className="inline-block px-3 py-1 bg-[#7A1B22]/10 border border-[#7A1B22]/30 text-[#7A1B22] font-black text-xs uppercase tracking-wider rounded-lg mb-1">
+              <span className="inline-block px-3 py-1 bg-[#7A1B22]/10 border border-[#7A1B22]/30 text-[#7A1B22] font-extrabold text-xs uppercase tracking-wider rounded-lg mb-1">
                 Evaluation Dossier
               </span>
-              <p className="text-[10px] font-mono text-slate-500">
+              <p className="text-[10px] font-mono text-[#6B6761]">
                 APP ID: {String(franchise._id).slice(-8).toUpperCase()}
               </p>
-              <p className="text-[10px] text-slate-600 font-semibold">
+              <p className="text-[10px] text-[#6B6761] font-semibold">
                 Date: {formatDate(franchise.dateApplied || franchise.createdAt)}
               </p>
             </div>
           </div>
 
           <div className="text-center mb-6">
-            <h2 className="text-sm sm:text-base font-black uppercase tracking-wide text-slate-900 border-b border-slate-200 pb-1 inline-block">
+            <h2 className="text-sm sm:text-base font-extrabold uppercase tracking-wide text-[#1F1D1B] border-b border-[#E4E1DC] pb-1 inline-block">
               MTOP APPLICATION DOSSIER &amp; DOCUMENT VERACITY REPORT
             </h2>
-            <p className="text-xs text-slate-600 font-medium mt-1">
+            <p className="text-xs text-[#6B6761] font-medium mt-1">
               Official evaluation of applicant credentials, designated driver status, and vehicle registration veracity.
             </p>
           </div>
@@ -260,23 +260,23 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
                 <div className="space-y-1.5">
                   {(franchise.aiDiscrepancies || []).map((d, i) => (
                     <div key={i} className="bg-white dark:bg-[#1C1917] p-2.5 rounded-lg border border-amber-200 dark:border-amber-900/50 space-y-1 text-xs">
-                      <div className="font-bold text-slate-900 dark:text-slate-100 text-[11px]">{d.label || d.field}</div>
+                      <div className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] text-[11px]">{d.label || d.field}</div>
                       <div className="grid grid-cols-2 gap-2 text-[11px]">
                         <div className="p-1.5 rounded bg-red-50 dark:bg-red-950/30 border border-red-200/80 dark:border-red-900/40">
-                          <span className="text-[9px] text-red-600 dark:text-red-400 font-bold block uppercase">Detected from Image</span>
+                          <span className="text-[10px] text-red-600 dark:text-red-400 font-bold block uppercase">Detected from Image</span>
                           <span className="font-mono font-bold text-red-700 dark:text-red-300 truncate block">
                             {d.scannedValue || '—'} {d.severity === 'critical' ? '(Expired)' : ''}
                           </span>
                         </div>
-                        <div className="p-1.5 rounded bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800">
-                          <span className="text-[9px] text-slate-500 dark:text-slate-400 font-bold block uppercase">Entered by Applicant</span>
-                          <span className="font-mono font-bold text-slate-900 dark:text-slate-100 truncate block">
+                        <div className="p-1.5 rounded bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                          <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-bold block uppercase">Entered by Applicant</span>
+                          <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">
                             {d.enteredValue || '—'}
                           </span>
                         </div>
                       </div>
                       {d.reason && (
-                        <p className="text-[10px] text-slate-600 dark:text-slate-400 leading-snug pt-0.5">
+                        <p className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] leading-snug pt-0.5">
                           {d.reason}
                         </p>
                       )}
@@ -287,47 +287,47 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
             )}
 
             {/* SECTION 1: APPLICANT OPERATOR PROFILE */}
-            <div className="border border-slate-200 rounded-xl overflow-hidden">
+            <div className="border border-[#E4E1DC] rounded-xl overflow-hidden">
               <div className="bg-[#7A1B22] text-white px-3.5 py-1.5 flex items-center justify-between font-bold text-xs uppercase tracking-wider">
                 <span className="flex items-center gap-1.5">
                   <User size={14} className="text-[#D4AF37]" />
                   Section 1: Franchise Operator Profile
                 </span>
-                <span className="text-[10px] font-normal text-amber-200">Owner &bull; Registered Grantee</span>
+                <span className="text-[10px] font-normal text-[#F5E6B3]">Owner &bull; Registered Grantee</span>
               </div>
               <div className="p-3.5 grid grid-cols-1 sm:grid-cols-3 gap-3 bg-white">
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Full Name of Operator</span>
-                  <span className="text-xs font-bold text-slate-900">{franchise.fullName || '—'}</span>
+                  <span className="text-[10px] font-bold text-[#6B6761] uppercase tracking-wider block">Full Name of Operator</span>
+                  <span className="text-xs font-bold text-[#1F1D1B]">{franchise.fullName || '—'}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Barangay Address</span>
-                  <span className="text-xs font-semibold text-slate-800">{franchise.address || '—'}, Gasan, Marinduque</span>
+                  <span className="text-[10px] font-bold text-[#6B6761] uppercase tracking-wider block">Barangay Address</span>
+                  <span className="text-xs font-semibold text-[#1F1D1B]">{franchise.address || '—'}, Gasan, Marinduque</span>
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Contact Mobile No.</span>
-                  <span className="text-xs font-semibold text-slate-800">{franchise.contact || franchise.operator?.contact || '—'}</span>
+                  <span className="text-[10px] font-bold text-[#6B6761] uppercase tracking-wider block">Contact Mobile No.</span>
+                  <span className="text-xs font-semibold text-[#1F1D1B]">{franchise.contact || franchise.operator?.contact || '—'}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Assigned Route &amp; Zone</span>
+                  <span className="text-[10px] font-bold text-[#6B6761] uppercase tracking-wider block">Assigned Route &amp; Zone</span>
                   <span className="text-xs font-bold text-[#7A1B22]">
                     {formatZoneLabel(franchise.zone)}
                   </span>
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">TODA Association</span>
-                  <span className="text-xs font-bold text-slate-900">{franchise.todaName || 'Non-TODA'}</span>
+                  <span className="text-[10px] font-bold text-[#6B6761] uppercase tracking-wider block">TODA Association</span>
+                  <span className="text-xs font-bold text-[#1F1D1B]">{franchise.todaName || 'Non-TODA'}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Application Type</span>
-                  <span className="text-xs font-bold text-slate-900">{franchise.applicationType || 'New'}</span>
+                  <span className="text-[10px] font-bold text-[#6B6761] uppercase tracking-wider block">Application Type</span>
+                  <span className="text-xs font-bold text-[#1F1D1B]">{franchise.applicationType || 'New'}</span>
                 </div>
               </div>
             </div>
 
             {/* SECTION 2: AUTHORIZED DRIVER (OPERATOR VS DESIGNATED DRIVER) */}
-            <div className="border border-slate-200 rounded-xl overflow-hidden">
-              <div className="bg-slate-800 text-white px-3.5 py-1.5 flex items-center justify-between font-bold text-xs uppercase tracking-wider">
+            <div className="border border-[#E4E1DC] rounded-xl overflow-hidden">
+              <div className="bg-[#1F1D1B] text-white px-3.5 py-1.5 flex items-center justify-between font-bold text-xs uppercase tracking-wider">
                 <span className="flex items-center gap-1.5">
                   <User size={14} className="text-[#D4AF37]" />
                   Section 2: Authorized Driver Designation
@@ -340,31 +340,31 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
               </div>
               <div className="p-3.5 grid grid-cols-1 sm:grid-cols-3 gap-3 bg-white">
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Driver Status</span>
-                  <span className="text-xs font-bold text-slate-900">
+                  <span className="text-[10px] font-bold text-[#6B6761] uppercase tracking-wider block">Driver Status</span>
+                  <span className="text-xs font-bold text-[#1F1D1B]">
                     {isOperatorDriver ? 'Applicant / Operator (Self)' : 'Designated Hired Driver'}
                   </span>
                 </div>
                 {!isOperatorDriver && (
                   <>
                     <div>
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Designated Driver Name</span>
-                      <span className="text-xs font-bold text-slate-900">{franchise.driverName || '—'}</span>
+                      <span className="text-[10px] font-bold text-[#6B6761] uppercase tracking-wider block">Designated Driver Name</span>
+                      <span className="text-xs font-bold text-[#1F1D1B]">{franchise.driverName || '—'}</span>
                     </div>
                     <div>
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Driver Contact Number</span>
-                      <span className="text-xs font-semibold text-slate-800">{franchise.driverContact || '—'}</span>
+                      <span className="text-[10px] font-bold text-[#6B6761] uppercase tracking-wider block">Driver Contact Number</span>
+                      <span className="text-xs font-semibold text-[#1F1D1B]">{franchise.driverContact || '—'}</span>
                     </div>
                   </>
                 )}
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Driver's License No.</span>
-                  <span className="text-xs font-mono font-bold text-slate-900">{franchise.driverLicenseNo || '—'}</span>
+                  <span className="text-[10px] font-bold text-[#6B6761] uppercase tracking-wider block">Driver's License No.</span>
+                  <span className="text-xs font-mono font-bold text-[#1F1D1B]">{franchise.driverLicenseNo || '—'}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">License Validity / Expiry</span>
+                  <span className="text-[10px] font-bold text-[#6B6761] uppercase tracking-wider block">License Validity / Expiry</span>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="text-xs font-semibold text-slate-800">{formatDate(franchise.driverLicenseExpiryDate)}</span>
+                    <span className="text-xs font-semibold text-[#1F1D1B]">{formatDate(franchise.driverLicenseExpiryDate)}</span>
                     {franchise.driverLicenseExpiryDate && (
                       isDateExpired(franchise.driverLicenseExpiryDate) ? (
                         <span className="text-[10px] font-bold text-red-600 bg-red-100 border border-red-300 px-1.5 py-0.5 rounded">
@@ -379,7 +379,7 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
                   </div>
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">License Document Scan</span>
+                  <span className="text-[10px] font-bold text-[#6B6761] uppercase tracking-wider block">License Document Scan</span>
                   {franchise.licenseUrl ? (
                     <a 
                       href={franchise.licenseUrl} 
@@ -398,43 +398,43 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
             </div>
 
             {/* SECTION 3: TRICYCLE UNIT & OR/CR SPECIFICATIONS */}
-            <div className="border border-slate-200 rounded-xl overflow-hidden">
-              <div className="bg-slate-800 text-white px-3.5 py-1.5 flex items-center justify-between font-bold text-xs uppercase tracking-wider">
+            <div className="border border-[#E4E1DC] rounded-xl overflow-hidden">
+              <div className="bg-[#1F1D1B] text-white px-3.5 py-1.5 flex items-center justify-between font-bold text-xs uppercase tracking-wider">
                 <span className="flex items-center gap-1.5">
                   <TricycleIcon size={14} className="text-[#D4AF37]" />
                   Section 3: Tricycle Unit &amp; LTO OR/CR Specifications
                 </span>
-                <span className="text-[10px] font-normal text-slate-300">Mechanical Verification</span>
+                <span className="text-[10px] font-normal text-[#A8A29E]">Mechanical Verification</span>
               </div>
               <div className="p-3.5 grid grid-cols-2 sm:grid-cols-4 gap-3 bg-white">
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Make / Brand</span>
-                  <span className="text-xs font-bold text-slate-900">{formatVehicleMake(franchise, '—')}</span>
+                  <span className="text-[10px] font-bold text-[#6B6761] uppercase tracking-wider block">Make / Brand</span>
+                  <span className="text-xs font-bold text-[#1F1D1B]">{formatVehicleMake(franchise, '—')}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Model Year</span>
-                  <span className="text-xs font-bold text-slate-900">{formatVehicleModelYear(franchise, '—')}</span>
+                  <span className="text-[10px] font-bold text-[#6B6761] uppercase tracking-wider block">Model Year</span>
+                  <span className="text-xs font-bold text-[#1F1D1B]">{formatVehicleModelYear(franchise, '—')}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Plate Number</span>
-                  <span className="text-xs font-mono font-bold text-slate-900">{cleanText(franchise.plateNo, '—')}</span>
+                  <span className="text-[10px] font-bold text-[#6B6761] uppercase tracking-wider block">Plate Number</span>
+                  <span className="text-xs font-mono font-bold text-[#1F1D1B]">{cleanText(franchise.plateNo, '—')}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Engine / Motor No.</span>
-                  <span className="text-xs font-mono font-bold text-slate-900 truncate block">{cleanText(franchise.motorNo, '—')}</span>
+                  <span className="text-[10px] font-bold text-[#6B6761] uppercase tracking-wider block">Engine / Motor No.</span>
+                  <span className="text-xs font-mono font-bold text-[#1F1D1B] truncate block">{cleanText(franchise.motorNo, '—')}</span>
                 </div>
                 <div className="sm:col-span-2">
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Chassis Frame Serial No.</span>
+                  <span className="text-[10px] font-bold text-[#6B6761] uppercase tracking-wider block">Chassis Frame Serial No.</span>
                   <span className="text-xs font-mono font-bold text-[#7A1B22] truncate block">{franchise.chassisNo || '—'}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">LTO OR/CR No.</span>
-                  <span className="text-xs font-mono font-bold text-slate-900">{franchise.orCrNo || '—'}</span>
+                  <span className="text-[10px] font-bold text-[#6B6761] uppercase tracking-wider block">LTO OR/CR No.</span>
+                  <span className="text-xs font-mono font-bold text-[#1F1D1B]">{franchise.orCrNo || '—'}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">LTO Registration Validity</span>
+                  <span className="text-[10px] font-bold text-[#6B6761] uppercase tracking-wider block">LTO Registration Validity</span>
                   <div className="flex items-center gap-1.5 mt-0.5">
-                    <span className="text-xs font-semibold text-slate-800">{formatDate(franchise.orCrExpiryDate)}</span>
+                    <span className="text-xs font-semibold text-[#1F1D1B]">{formatDate(franchise.orCrExpiryDate)}</span>
                     {franchise.orCrExpiryDate && (
                       isDateExpired(franchise.orCrExpiryDate) ? (
                         <span className="text-[10px] font-bold text-red-600 bg-red-100 border border-red-300 px-1.5 py-0.5 rounded">
@@ -452,28 +452,28 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
             </div>
 
             {/* SECTION 4: CLEARANCES & STATUTORY REQUIREMENTS */}
-            <div className="border border-slate-200 rounded-xl overflow-hidden">
-              <div className="bg-slate-800 text-white px-3.5 py-1.5 flex items-center justify-between font-bold text-xs uppercase tracking-wider">
+            <div className="border border-[#E4E1DC] rounded-xl overflow-hidden">
+              <div className="bg-[#1F1D1B] text-white px-3.5 py-1.5 flex items-center justify-between font-bold text-xs uppercase tracking-wider">
                 <span className="flex items-center gap-1.5">
                   <ShieldCheck size={14} className="text-[#D4AF37]" />
                   Section 4: Clearances, TODA &amp; Cedula Statutory Details
                 </span>
-                <span className="text-[10px] font-normal text-slate-300">Municipal Verification</span>
+                <span className="text-[10px] font-normal text-[#A8A29E]">Municipal Verification</span>
               </div>
               <div className="p-3.5 grid grid-cols-1 sm:grid-cols-3 gap-3 bg-white">
                 {/* Cedula */}
-                <div className="p-2.5 rounded-lg border border-slate-200 bg-slate-50/50">
-                  <span className="text-[10px] font-black uppercase text-[#7A1B22] block mb-1">
+                <div className="p-2.5 rounded-lg border border-[#E4E1DC] bg-[#FAF9F7]">
+                  <span className="text-[10px] font-extrabold uppercase text-[#7A1B22] block mb-1">
                     1. CTC / Cedula
                   </span>
-                  <p className="text-[11px] text-slate-600">
-                    <strong className="text-slate-800">Serial No:</strong> {franchise.cedulaSerialNo || '—'}
+                  <p className="text-[11px] text-[#6B6761]">
+                    <strong className="text-[#1F1D1B]">Serial No:</strong> {franchise.cedulaSerialNo || '—'}
                   </p>
-                  <p className="text-[11px] text-slate-600">
-                    <strong className="text-slate-800">Date Issued:</strong> {formatDate(franchise.cedulaDate)}
+                  <p className="text-[11px] text-[#6B6761]">
+                    <strong className="text-[#1F1D1B]">Date Issued:</strong> {formatDate(franchise.cedulaDate)}
                   </p>
-                  <p className="text-[11px] text-slate-600 truncate">
-                    <strong className="text-slate-800">Place:</strong> {franchise.cedulaAddress || 'Gasan, Marinduque'}
+                  <p className="text-[11px] text-[#6B6761] truncate">
+                    <strong className="text-[#1F1D1B]">Place:</strong> {franchise.cedulaAddress || 'Gasan, Marinduque'}
                   </p>
                   {franchise.cedulaUrl && (
                     <a href={franchise.cedulaUrl} target="_blank" rel="noopener noreferrer" className="text-[10.5px] font-bold text-[#7A1B22] underline mt-1 inline-block">
@@ -483,18 +483,18 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
                 </div>
 
                 {/* TODA Certificate */}
-                <div className="p-2.5 rounded-lg border border-slate-200 bg-slate-50/50">
-                  <span className="text-[10px] font-black uppercase text-[#7A1B22] block mb-1">
+                <div className="p-2.5 rounded-lg border border-[#E4E1DC] bg-[#FAF9F7]">
+                  <span className="text-[10px] font-extrabold uppercase text-[#7A1B22] block mb-1">
                     2. TODA Endorsement
                   </span>
-                  <p className="text-[11px] text-slate-600">
-                    <strong className="text-slate-800">Certificate No:</strong> {franchise.todaCertNo || '—'}
+                  <p className="text-[11px] text-[#6B6761]">
+                    <strong className="text-[#1F1D1B]">Certificate No:</strong> {franchise.todaCertNo || '—'}
                   </p>
-                  <p className="text-[11px] text-slate-600">
-                    <strong className="text-slate-800">Date Issued:</strong> {formatDate(franchise.todaCertDate)}
+                  <p className="text-[11px] text-[#6B6761]">
+                    <strong className="text-[#1F1D1B]">Date Issued:</strong> {formatDate(franchise.todaCertDate)}
                   </p>
-                  <p className="text-[11px] text-slate-600 truncate">
-                    <strong className="text-slate-800">Signatory:</strong> {franchise.todaSignatory || 'TODA President'}
+                  <p className="text-[11px] text-[#6B6761] truncate">
+                    <strong className="text-[#1F1D1B]">Signatory:</strong> {franchise.todaSignatory || 'TODA President'}
                   </p>
                   {franchise.todaEndorsementUrl && (
                     <a href={franchise.todaEndorsementUrl} target="_blank" rel="noopener noreferrer" className="text-[10.5px] font-bold text-[#7A1B22] underline mt-1 inline-block">
@@ -504,18 +504,18 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
                 </div>
 
                 {/* Barangay Clearance */}
-                <div className="p-2.5 rounded-lg border border-slate-200 bg-slate-50/50">
-                  <span className="text-[10px] font-black uppercase text-[#7A1B22] block mb-1">
+                <div className="p-2.5 rounded-lg border border-[#E4E1DC] bg-[#FAF9F7]">
+                  <span className="text-[10px] font-extrabold uppercase text-[#7A1B22] block mb-1">
                     3. Barangay Clearance
                   </span>
-                  <p className="text-[11px] text-slate-600">
-                    <strong className="text-slate-800">Clearance No:</strong> {franchise.brgyClearanceNo || '—'}
+                  <p className="text-[11px] text-[#6B6761]">
+                    <strong className="text-[#1F1D1B]">Clearance No:</strong> {franchise.brgyClearanceNo || '—'}
                   </p>
-                  <p className="text-[11px] text-slate-600">
-                    <strong className="text-slate-800">Date Issued:</strong> {formatDate(franchise.brgyClearanceDate)}
+                  <p className="text-[11px] text-[#6B6761]">
+                    <strong className="text-[#1F1D1B]">Date Issued:</strong> {formatDate(franchise.brgyClearanceDate)}
                   </p>
-                  <p className="text-[11px] text-slate-600 truncate">
-                    <strong className="text-slate-800">Issuer:</strong> {franchise.brgyIssuer || 'Punong Barangay'}
+                  <p className="text-[11px] text-[#6B6761] truncate">
+                    <strong className="text-[#1F1D1B]">Issuer:</strong> {franchise.brgyIssuer || 'Punong Barangay'}
                   </p>
                   {franchise.brgyClearanceUrl && (
                     <a href={franchise.brgyClearanceUrl} target="_blank" rel="noopener noreferrer" className="text-[10.5px] font-bold text-[#7A1B22] underline mt-1 inline-block">
@@ -527,8 +527,8 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
             </div>
 
             {/* SECTION 5: MUNICIPAL TREASURY & PAYMENT ASSESSMENT */}
-            <div className="border border-slate-200 rounded-xl overflow-hidden">
-              <div className="bg-slate-800 text-white px-3.5 py-1.5 flex items-center justify-between font-bold text-xs uppercase tracking-wider">
+            <div className="border border-[#E4E1DC] rounded-xl overflow-hidden">
+              <div className="bg-[#1F1D1B] text-white px-3.5 py-1.5 flex items-center justify-between font-bold text-xs uppercase tracking-wider">
                 <span className="flex items-center gap-1.5">
                   <FileText size={14} className="text-[#D4AF37]" />
                   Section 5: Municipal Treasury &amp; Cashier Payment Status
@@ -541,49 +541,49 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
               </div>
               <div className="p-3.5 grid grid-cols-2 sm:grid-cols-4 gap-3 bg-white">
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Official Receipt (O.R.) No.</span>
-                  <span className="text-xs font-mono font-bold text-slate-900">{franchise.officialReceiptNo || 'Awaiting Payment'}</span>
+                  <span className="text-[10px] font-bold text-[#6B6761] uppercase tracking-wider block">Official Receipt (O.R.) No.</span>
+                  <span className="text-xs font-mono font-bold text-[#1F1D1B]">{franchise.officialReceiptNo || 'Awaiting Payment'}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Amount Assessed / Paid</span>
-                  <span className="text-xs font-bold text-slate-900">₱{franchise?.amountPaid != null ? Number(franchise.amountPaid).toLocaleString() : '500'}.00</span>
+                  <span className="text-[10px] font-bold text-[#6B6761] uppercase tracking-wider block">Amount Assessed / Paid</span>
+                  <span className="text-xs font-mono tabular-nums font-bold text-[#1F1D1B]">₱{franchise?.amountPaid != null ? Number(franchise.amountPaid).toLocaleString() : '500'}.00</span>
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Cashier In-Charge</span>
-                  <span className="text-xs font-semibold text-slate-800">{franchise?.cashierName || 'Treasury Staff'}</span>
+                  <span className="text-[10px] font-bold text-[#6B6761] uppercase tracking-wider block">Cashier In-Charge</span>
+                  <span className="text-xs font-semibold text-[#1F1D1B]">{franchise?.cashierName || 'Treasury Staff'}</span>
                 </div>
                 <div>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Payment Date</span>
-                  <span className="text-xs font-semibold text-slate-800">{formatDate(franchise?.paymentDate)}</span>
+                  <span className="text-[10px] font-bold text-[#6B6761] uppercase tracking-wider block">Payment Date</span>
+                  <span className="text-xs font-semibold text-[#1F1D1B]">{formatDate(franchise?.paymentDate)}</span>
                 </div>
               </div>
             </div>
 
             {/* SIGNATURE BLOCK */}
-            <div className="pt-6 mt-4 border-t border-slate-300 grid grid-cols-2 sm:grid-cols-3 gap-6 text-center">
+            <div className="pt-6 mt-4 border-t border-[#E4E1DC] grid grid-cols-2 sm:grid-cols-3 gap-6 text-center">
               <div>
-                <p className="text-[10px] font-bold uppercase text-slate-400 mb-8">Evaluated &amp; Verified By:</p>
-                <div className="border-t border-slate-800 pt-1">
-                  <p className="text-xs font-bold text-slate-900 uppercase">MTRB Evaluation Staff</p>
-                  <p className="text-[10px] text-slate-500">Office of the Vice Mayor Extension</p>
+                <p className="text-[10px] font-bold uppercase text-[#6B6761] mb-8">Evaluated &amp; Verified By:</p>
+                <div className="border-t border-[#1F1D1B] pt-1">
+                  <p className="text-xs font-bold text-[#1F1D1B] uppercase">MTRB Evaluation Staff</p>
+                  <p className="text-[10px] text-[#6B6761]">Office of the Vice Mayor Extension</p>
                 </div>
               </div>
 
               <div>
-                <p className="text-[10px] font-bold uppercase text-slate-400 mb-8">Noted &amp; Reviewed By:</p>
-                <div className="border-t border-slate-800 pt-1">
-                  <p className="text-xs font-bold text-slate-900 uppercase">FRANCHISE ADMINISTRATOR</p>
-                  <p className="text-[10px] text-slate-500">Municipality of Gasan</p>
+                <p className="text-[10px] font-bold uppercase text-[#6B6761] mb-8">Noted &amp; Reviewed By:</p>
+                <div className="border-t border-[#1F1D1B] pt-1">
+                  <p className="text-xs font-bold text-[#1F1D1B] uppercase">FRANCHISE ADMINISTRATOR</p>
+                  <p className="text-[10px] text-[#6B6761]">Municipality of Gasan</p>
                 </div>
               </div>
 
               <div className="col-span-2 sm:col-span-1">
-                <p className="text-[10px] font-bold uppercase text-slate-400 mb-8">Official Recommendation:</p>
-                <div className="border-t border-slate-800 pt-1 flex flex-col items-center">
-                  <span className="text-xs font-black uppercase text-[#7A1B22]">
+                <p className="text-[10px] font-bold uppercase text-[#6B6761] mb-8">Official Recommendation:</p>
+                <div className="border-t border-[#1F1D1B] pt-1 flex flex-col items-center">
+                  <span className="text-xs font-extrabold uppercase text-[#7A1B22]">
                     {franchise?.status === 'Pending' ? 'RECOMMENDED FOR APPROVAL' : (franchise?.status || '').toUpperCase()}
                   </span>
-                  <p className="text-[10px] text-slate-500">Subject to Final Executive Signing</p>
+                  <p className="text-[10px] text-[#6B6761]">Subject to Final Executive Signing</p>
                 </div>
               </div>
             </div>

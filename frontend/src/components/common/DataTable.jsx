@@ -30,17 +30,17 @@ const DataTable = ({
   };
 
   return (
-    <div className={`w-full overflow-hidden rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] ${className}`}>
+    <div className={`w-full overflow-hidden rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] shadow-sm ${className}`}>
       <div className="w-full overflow-x-auto">
         <table className="w-full text-left border-collapse text-xs">
           <thead>
-            <tr className="border-b border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3]/70 dark:bg-[#14110F]/70 text-[#6B6761] dark:text-[#A8A29E]">
+            <tr className="border-b border-[#E4E1DC] dark:border-[#2E2A27] bg-[#FAF9F7] dark:bg-[#14110F]/80 text-[#6B6761] dark:text-[#A8A29E]">
               {columns.map((col, idx) => (
                 <th
                   key={col.key || idx}
                   scope="col"
                   style={col.width ? { width: col.width } : undefined}
-                  className={`py-2.5 px-3 font-semibold uppercase tracking-wider text-xs select-none ${
+                  className={`py-3 px-3.5 font-mono font-semibold uppercase tracking-[0.06em] text-[11px] select-none ${
                     col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'
                   } ${col.headerClassName || ''}`}
                 >
@@ -56,7 +56,7 @@ const DataTable = ({
               Array.from({ length: 4 }).map((_, rIdx) => (
                 <tr key={`skeleton-${rIdx}`} className="animate-pulse">
                   {columns.map((col, cIdx) => (
-                    <td key={`skel-cell-${cIdx}`} className="py-3 px-3">
+                    <td key={`skel-cell-${cIdx}`} className="py-3.5 px-3.5">
                       <div className="h-3.5 bg-[#E4E1DC]/60 dark:bg-[#2E2A27]/60 rounded-sm w-3/4" />
                     </td>
                   ))}
@@ -73,14 +73,14 @@ const DataTable = ({
                     onClick={isClickable ? () => onRowClick(row) : undefined}
                     className={`transition-colors ${
                       isClickable
-                        ? 'hover:bg-[#F6F5F3]/70 dark:hover:bg-[#2E2A27]/40 cursor-pointer'
-                        : 'hover:bg-[#F6F5F3]/40 dark:hover:bg-[#2E2A27]/20'
+                        ? 'hover:bg-[#FAF9F7] dark:hover:bg-[#25211E]/70 cursor-pointer'
+                        : 'hover:bg-[#FAF9F7]/70 dark:hover:bg-[#25211E]/40'
                     }`}
                   >
                     {columns.map((col, cIdx) => (
                       <td
                         key={col.key || cIdx}
-                        className={`py-2.5 px-3 align-middle text-xs ${
+                        className={`py-3 px-3.5 align-middle text-[13px] ${
                           col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : 'text-left'
                         } ${col.className || ''}`}
                       >
@@ -92,17 +92,17 @@ const DataTable = ({
               })
             ) : (
               <tr>
-                <td colSpan={columns.length} className="py-10 px-4 text-center">
+                <td colSpan={columns.length} className="py-12 px-4 text-center">
                   <div className="flex flex-col items-center justify-center text-[#6B6761] dark:text-[#A8A29E]">
                     {emptyIcon ? (
                       <div className="mb-2.5 flex items-center justify-center">
                         {emptyIcon}
                       </div>
                     ) : (
-                      <Inbox size={26} className="mb-2 stroke-1 opacity-70" aria-hidden="true" />
+                      <Inbox size={28} className="mb-2.5 stroke-[1.5] opacity-70" aria-hidden="true" />
                     )}
-                    <p className="text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{emptyTitle}</p>
-                    <p className="text-xs mt-0.5 max-w-sm">{emptySubtitle}</p>
+                    <p className="text-sm font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{emptyTitle}</p>
+                    <p className="text-xs mt-1 max-w-sm leading-relaxed">{emptySubtitle}</p>
                   </div>
                 </td>
               </tr>

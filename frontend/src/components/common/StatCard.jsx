@@ -39,15 +39,15 @@ const StatCard = ({
             }
           : undefined
       }
-      className={`bg-white dark:bg-[#1C1917] p-4 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm flex flex-col justify-between transition-colors ${
+      className={`bg-white dark:bg-[#1C1917] p-4 sm:p-5 rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm flex flex-col justify-between transition-colors ${
         isClickable
-          ? 'hover:border-[#9E2A2B]/50 dark:hover:border-[#D4AF37]/50 cursor-pointer active:scale-[0.99] focus-visible:outline-2 focus-visible:outline-[#9E2A2B]'
+          ? 'hover:border-[#9E2A2B]/50 dark:hover:border-[#D4AF37]/50 hover:bg-[#FAF9F7] dark:hover:bg-[#25211E]/70 cursor-pointer active:scale-[0.99] focus-visible:outline-2 focus-visible:outline-[#9E2A2B] dark:focus-visible:outline-[#D4AF37]'
           : ''
       } ${className}`}
     >
       <div>
         <div className="flex items-center justify-between gap-2">
-          <p className="text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider truncate">
+          <p className="font-mono text-[11px] font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-[0.06em] truncate">
             {label}
           </p>
           {actionLabel && onAction && (
@@ -57,18 +57,18 @@ const StatCard = ({
                 e.stopPropagation();
                 onAction();
               }}
-              className="text-xs font-medium text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer shrink-0"
+              className="text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer shrink-0"
             >
               {actionLabel}
             </button>
           )}
         </div>
-        <div className="mt-1.5 flex items-baseline justify-between gap-2 flex-wrap">
-          <p className="text-2xl font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] tabular-nums font-mono">
+        <div className="mt-2 flex items-baseline justify-between gap-2 flex-wrap">
+          <p className="text-2xl sm:text-[26px] font-bold text-[#1F1D1B] dark:text-[#F6F5F3] tabular-nums font-mono tracking-[-0.02em]">
             {typeof resolvedCount === 'number' ? resolvedCount.toLocaleString() : resolvedCount}
           </p>
           {delta?.text && (
-            <span className="text-[11px] font-semibold font-mono text-[#6B6761] dark:text-[#A8A29E]">
+            <span className="text-[11px] font-semibold font-mono tabular-nums text-[#6B6761] dark:text-[#A8A29E]">
               {delta.text}
             </span>
           )}
@@ -76,7 +76,7 @@ const StatCard = ({
       </div>
 
       {subtext && (
-        <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1.5 line-clamp-2 leading-snug">
+        <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-2 line-clamp-2 leading-relaxed">
           {subtext}
         </p>
       )}

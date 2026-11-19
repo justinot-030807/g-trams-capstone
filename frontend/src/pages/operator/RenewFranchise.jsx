@@ -799,7 +799,7 @@ const RenewFranchise = () => {
                 <button
                   type="button"
                   onClick={() => setIsOfficialFormOpen(true)}
-                  className="w-full sm:w-auto px-3.5 py-2 bg-[#9E2A2B] hover:bg-[#851e20] text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+                  className="w-full sm:w-auto px-3.5 py-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white rounded-lg text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
                 >
                   <Printer size={14} />
                   <span>Preview / Print Form</span>
@@ -811,7 +811,7 @@ const RenewFranchise = () => {
                 <button 
                   type="button" 
                   onClick={handleBack} 
-                  className="w-full sm:w-auto px-6 py-2.5 rounded-lg font-bold text-sm sm:text-base text-[#1F1D1B] dark:text-[#EAE7E1] bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#F6F5F3] dark:hover:bg-[#252220] transition-all cursor-pointer min-h-[44px] flex items-center justify-center active:scale-95 shadow-sm"
+                  className="w-full sm:w-auto px-6 py-2.5 rounded-lg font-bold text-sm sm:text-base text-[#1F1D1B] dark:text-[#EAE7E1] bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] transition-all cursor-pointer min-h-[44px] flex items-center justify-center active:scale-95 shadow-sm"
                 >
                   <span>Back</span>
                 </button>
@@ -820,7 +820,7 @@ const RenewFranchise = () => {
                   type="submit" 
                   disabled={isSubmitting}
                   className={`w-full sm:w-auto flex items-center justify-center gap-2 px-7 py-2.5 rounded-lg font-bold text-sm sm:text-base text-white transition-all shadow-sm active:scale-95 cursor-pointer min-h-[44px] ${
-                    isSubmitting ? 'bg-[#6B7280] cursor-not-allowed' : 'bg-[#9E2A2B] hover:bg-[#7A1B22]'
+                    isSubmitting ? 'bg-[#6B6761] cursor-not-allowed' : 'bg-[#9E2A2B] hover:bg-[#7A1B22]'
                   }`}
                 >
                   {isSubmitting ? (

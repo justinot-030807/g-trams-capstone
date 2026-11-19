@@ -4220,7 +4220,7 @@ const ApplyFranchise = () => {
                   <button
                     type="button"
                     onClick={() => setIsOfficialFormOpen(true)}
-                    className="w-full sm:w-auto px-4 py-2.5 bg-[#9E2A2B] hover:bg-[#851e20] text-white rounded-xl text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer shrink-0 active:scale-95"
+                    className="w-full sm:w-auto px-4 py-2.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white rounded-lg text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer shrink-0 active:scale-95"
                   >
                     <Printer size={15} />
                     <span>Tingnan / I-print ang Form (PDF)</span>
@@ -4510,7 +4510,7 @@ const ApplyFranchise = () => {
                       disabled={isSubmitting || !isAgreedToTerms}
                       className={`w-full sm:w-auto inline-flex items-center justify-center gap-2 px-7 py-2.5 rounded-lg font-bold text-sm sm:text-base text-white transition-all shadow-sm active:scale-95 min-h-[44px] ${
                         isSubmitting || !isAgreedToTerms
-                          ? 'bg-[#6B7280] opacity-60 cursor-not-allowed' 
+                          ? 'bg-[#6B6761] opacity-60 cursor-not-allowed' 
                           : 'bg-[#9E2A2B] hover:bg-[#7A1B22] cursor-pointer'
                       }`}
                     >
@@ -4703,9 +4703,9 @@ const ApplyFranchise = () => {
                         {disc.scannedValue || 'None'} (Expired)
                       </span>
                     </div>
-                    <div className="bg-white dark:bg-[#1C1917] p-2 rounded border border-slate-200 dark:border-slate-800">
-                      <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold block">Entered in Application:</span>
-                      <span className="font-mono font-bold text-slate-900 dark:text-slate-100">
+                    <div className="bg-white dark:bg-[#1C1917] p-2 rounded border border-[#E4E1DC] dark:border-[#2E2A27]">
+                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block">Entered in Application:</span>
+                      <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
                         {disc.enteredValue || 'None'}
                       </span>
                     </div>

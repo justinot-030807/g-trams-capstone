@@ -1180,7 +1180,7 @@ const FranchiseReviewPage = () => {
                   </span>
                   <button 
                     onClick={() => setIsRejecting(false)} 
-                    className="text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-white text-xs underline cursor-pointer"
+                    className="text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3] text-xs underline cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -2306,7 +2306,7 @@ const FranchiseReviewPage = () => {
                 >
                   <RotateCw size={13} className={licenseSide === 'back' ? 'text-amber-300' : 'text-amber-600 dark:text-amber-400'} />
                   <span>{licenseSide === 'back' ? 'Card: Back View' : 'Card: Front View'}</span>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-black/10 dark:bg-white/10 uppercase font-black">
+                  <span className="text-[10px] px-1.5 py-0.5 rounded bg-black/10 dark:bg-white/10 uppercase font-extrabold">
                     {licenseSide === 'back' ? 'Flip to Front' : 'Flip to Back'}
                   </span>
                 </button>
@@ -2316,13 +2316,14 @@ const FranchiseReviewPage = () => {
                 onClick={() => setZoomScale(prev => Math.max(0.5, Number((prev - 0.25).toFixed(2))))}
                 className="p-1.5 hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] rounded-lg transition-colors cursor-pointer"
                 title="Zoom Out"
+                aria-label="Zoom Out"
               >
                 <ZoomOut size={15} />
               </button>
 
               <button
                 onClick={resetCanvasView}
-                className="text-xs font-bold px-1.5 py-0.5 rounded hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] text-[#9E2A2B] dark:text-[#D4AF37] min-w-[42px] text-center cursor-pointer"
+                className="text-xs font-bold font-mono tabular-nums px-1.5 py-0.5 rounded hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] text-[#9E2A2B] dark:text-[#D4AF37] min-w-[42px] text-center cursor-pointer"
                 title="Reset to 100%"
               >
                 {Math.round(zoomScale * 100)}%
@@ -2332,6 +2333,7 @@ const FranchiseReviewPage = () => {
                 onClick={() => setZoomScale(prev => Math.min(4.0, Number((prev + 0.25).toFixed(2))))}
                 className="p-1.5 hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] rounded-lg transition-colors cursor-pointer"
                 title="Zoom In"
+                aria-label="Zoom In"
               >
                 <ZoomIn size={15} />
               </button>

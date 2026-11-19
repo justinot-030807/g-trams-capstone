@@ -55,7 +55,7 @@ const BatchMtopModal = ({ isOpen, onClose, units = [] }) => {
                 <Layers size={18} />
               </div>
               <div>
-                <h3 className="font-black text-xs sm:text-sm tracking-wide flex items-center gap-2">
+                <h3 className="font-extrabold text-xs sm:text-sm tracking-wide flex items-center gap-2">
                   Batch MTOP Certificate Print Job (1:1 LGU Template)
                   <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
                     {units.length} Certificates
@@ -68,7 +68,7 @@ const BatchMtopModal = ({ isOpen, onClose, units = [] }) => {
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setShowQrStamp(prev => !prev)}
-                className={`flex items-center gap-1.5 px-2.5 py-2 rounded-xl text-xs font-bold border transition-all cursor-pointer shrink-0 ${
+                className={`flex items-center gap-1.5 px-2.5 py-2 rounded-lg text-xs font-bold border transition-all cursor-pointer shrink-0 ${
                   showQrStamp
                     ? 'bg-white/10 text-white border-white/25'
                     : 'bg-transparent text-white/50 border-white/10 hover:text-white'
@@ -80,7 +80,7 @@ const BatchMtopModal = ({ isOpen, onClose, units = [] }) => {
 
               <button
                 onClick={handlePrint}
-                className="flex items-center gap-1.5 bg-[#9E2A2B] hover:bg-[#922029] active:scale-95 text-white px-3 sm:px-4 py-2 rounded-xl text-xs font-bold transition-all shadow-md cursor-pointer shrink-0"
+                className="flex items-center gap-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] active:scale-95 text-white px-3 sm:px-4 py-2 rounded-lg text-xs font-bold transition-all shadow-md cursor-pointer shrink-0"
                 title="Print All Certificates"
               >
                 <Printer size={14} />
@@ -89,7 +89,7 @@ const BatchMtopModal = ({ isOpen, onClose, units = [] }) => {
 
               <button
                 onClick={onClose}
-                className="text-white/60 hover:text-white p-1.5 rounded-xl hover:bg-white/10 transition-colors cursor-pointer shrink-0"
+                className="text-white/60 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer shrink-0"
                 title="Close Batch Preview"
               >
                 <X size={18} />
@@ -362,13 +362,13 @@ const BatchMtopModal = ({ isOpen, onClose, units = [] }) => {
                           </div>
 
                           {showQrStamp && (
-                            <div className="absolute bottom-0 left-0 flex items-center gap-2 bg-white/90 border border-slate-300 rounded p-1.5">
+                            <div className="absolute bottom-0 left-0 flex items-center gap-2 bg-white/90 border border-[#E4E1DC] rounded p-1.5">
                               <QRCodeSVG
                                 value={`${window.location.origin}/verify/${unit._id || ''}`}
                                 size={48}
                                 level="M"
                               />
-                              <div className="text-left text-[7.5pt] leading-tight text-slate-700 font-sans">
+                              <div className="text-left text-[7.5pt] leading-tight text-[#1F1D1B] font-sans">
                                 <div className="font-bold text-black">G-TRAMS VERIFIED</div>
                                 <div>MTOP No: {mtopYearPrefix}{mtopSeqNo}</div>
                                 <div>Plate: {plateVal}</div>

@@ -31,21 +31,21 @@ const PageHeader = ({
 
   return (
     <div
-      className={`bg-white dark:bg-[#1C1917] p-5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 ${className}`}
+      className={`bg-white dark:bg-[#1C1917] p-5 rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-colors ${className}`}
     >
       {/* Title & Subtitle */}
       <div className="py-0.5 min-w-0">
         <div className="flex items-center gap-3 flex-wrap">
-          <h1 className="text-xl font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] tracking-normal">
+          <h1 className="text-xl sm:text-[22px] font-bold text-[#1F1D1B] dark:text-[#F6F5F3] tracking-[-0.02em] leading-snug">
             {title}
           </h1>
-          <span className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-normal border-l border-[#E4E1DC] dark:border-[#2E2A27] pl-3 hidden sm:inline">
+          <span className="text-xs font-mono tabular-nums text-[#6B6761] dark:text-[#A8A29E] font-medium border-l border-[#E4E1DC] dark:border-[#2E2A27] pl-3 hidden sm:inline">
             {formattedDate}
           </span>
         </div>
 
         {subtitle && (
-          <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1 leading-normal">
+          <p className="text-xs sm:text-[13px] text-[#6B6761] dark:text-[#A8A29E] mt-1 leading-relaxed">
             {subtitle}
           </p>
         )}
@@ -60,15 +60,15 @@ const PageHeader = ({
                 key={idx}
                 type="button"
                 onClick={item.onClick}
-                className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium border transition-colors cursor-pointer active:scale-[0.98] ${
+                className={`inline-flex items-center gap-1.5 px-3 py-1.5 min-h-[36px] rounded-lg text-xs font-semibold border transition-colors cursor-pointer active:scale-[0.98] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#9E2A2B] dark:focus-visible:ring-[#D4AF37] ${
                   item.active
                     ? 'bg-[#FDF2F4] text-[#9E2A2B] border-[#9E2A2B]/40 dark:bg-[#9E2A2B]/20 dark:text-[#D4AF37] dark:border-[#D4AF37]/40'
-                    : 'bg-transparent text-[#1F1D1B] dark:text-[#F6F5F3] border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27]'
+                    : 'bg-[#FAF9F7] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27]'
                 }`}
                 title={item.title || item.label}
               >
                 <span>{item.label}:</span>
-                <span className="font-mono tabular-nums font-semibold text-[#9E2A2B] dark:text-[#D4AF37]">
+                <span className="font-mono tabular-nums font-bold text-[#9E2A2B] dark:text-[#D4AF37]">
                   {item.count}
                 </span>
               </button>

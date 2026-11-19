@@ -37,27 +37,27 @@ const FeedbackModal = ({
     switch (type) {
       case 'error':
         return (
-          <div className="w-14 h-14 rounded-2xl bg-red-100 dark:bg-red-950/60 text-red-600 dark:text-red-400 flex items-center justify-center mx-auto mb-4 border border-red-200 dark:border-red-900/60 shadow-inner">
-            <AlertCircle size={30} className="stroke-[2.5]" />
+          <div className="w-14 h-14 rounded-xl bg-red-50 dark:bg-red-950/60 text-[#B91C1C] dark:text-red-400 flex items-center justify-center mx-auto mb-4 border border-red-200 dark:border-red-900/60">
+            <AlertCircle size={28} className="stroke-[2.2]" />
           </div>
         );
       case 'warning':
         return (
-          <div className="w-14 h-14 rounded-2xl bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center mx-auto mb-4 border border-amber-200 dark:border-amber-900/60 shadow-inner">
-            <AlertTriangle size={30} className="stroke-[2.5]" />
+          <div className="w-14 h-14 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-[#B45309] dark:text-amber-400 flex items-center justify-center mx-auto mb-4 border border-amber-200 dark:border-amber-900/60">
+            <AlertTriangle size={28} className="stroke-[2.2]" />
           </div>
         );
       case 'info':
         return (
-          <div className="w-14 h-14 rounded-2xl bg-blue-100 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center mx-auto mb-4 border border-blue-200 dark:border-blue-900/60 shadow-inner">
-            <Info size={30} className="stroke-[2.5]" />
+          <div className="w-14 h-14 rounded-xl bg-[#FDF2F4] dark:bg-[#9E2A2B]/25 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center mx-auto mb-4 border border-[#F8C5CA] dark:border-[#9E2A2B]/40">
+            <Info size={28} className="stroke-[2.2]" />
           </div>
         );
       case 'success':
       default:
         return (
-          <div className="w-14 h-14 rounded-2xl bg-emerald-100 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center mx-auto mb-4 border border-emerald-200 dark:border-emerald-900/60 shadow-inner">
-            <CheckCircle2 size={30} className="stroke-[2.5]" />
+          <div className="w-14 h-14 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-[#15803D] dark:text-emerald-400 flex items-center justify-center mx-auto mb-4 border border-emerald-200 dark:border-emerald-900/60">
+            <CheckCircle2 size={28} className="stroke-[2.2]" />
           </div>
         );
     }
@@ -65,18 +65,20 @@ const FeedbackModal = ({
 
   return (
     <div 
-      className="fixed inset-0 z-[9999] bg-slate-950/65 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+      className="fixed inset-0 z-[9999] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
       onClick={onClose || handleConfirm}
+      role="dialog"
+      aria-modal="true"
     >
       <div 
-        className="bg-white dark:bg-slate-900 border border-slate-200/90 dark:border-slate-800 rounded-3xl p-6 sm:p-7 shadow-2xl max-w-sm w-full text-center relative overflow-hidden animate-in zoom-in-95 duration-200"
+        className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-xl p-6 sm:p-7 shadow-xl max-w-sm w-full text-center relative overflow-hidden animate-in zoom-in-95 duration-200"
         onClick={(e) => e.stopPropagation()}
       >
         {onClose && (
           <button
             type="button"
             onClick={onClose}
-            className="absolute top-4 right-4 text-slate-600 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1.5 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            className="absolute top-3.5 right-3.5 text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3] p-1.5 rounded-lg hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] transition-colors cursor-pointer min-w-[36px] min-h-[36px] flex items-center justify-center"
             aria-label="Close"
           >
             <X size={18} />
@@ -85,12 +87,12 @@ const FeedbackModal = ({
 
         {getIcon()}
 
-        <h3 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight mb-2">
+        <h3 className="text-base sm:text-lg font-bold text-[#1F1D1B] dark:text-[#F6F5F3] tracking-[-0.015em] mb-2">
           {title}
         </h3>
 
         {message && (
-          <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed mb-6 font-medium">
+          <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] leading-relaxed mb-6 font-medium">
             {message}
           </p>
         )}
@@ -100,7 +102,7 @@ const FeedbackModal = ({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2.5 rounded-xl font-bold text-xs sm:text-sm text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all cursor-pointer min-h-[42px] active:scale-95"
+              className="flex-1 px-4 py-2.5 rounded-lg font-bold text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3] bg-[#F6F5F3] dark:bg-[#2E2A27] hover:bg-[#E4E1DC] dark:hover:bg-[#3D3834] border border-[#E4E1DC] dark:border-[#2E2A27] transition-all cursor-pointer min-h-[44px] active:scale-[0.98]"
             >
               {cancelText}
             </button>
@@ -110,7 +112,7 @@ const FeedbackModal = ({
             type="button"
             onClick={handleConfirm}
             disabled={isLoading}
-            className={`w-full ${cancelText ? 'flex-1' : ''} bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-slate-950 font-bold text-xs sm:text-sm py-2.5 px-6 rounded-xl shadow-sm transition-all active:scale-95 cursor-pointer min-h-[42px] flex items-center justify-center`}
+            className={`w-full ${cancelText ? 'flex-1' : ''} bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-[#14110F] font-bold text-xs sm:text-sm py-2.5 px-6 rounded-lg shadow-sm transition-all active:scale-[0.98] cursor-pointer min-h-[44px] flex items-center justify-center`}
           >
             {confirmText}
           </button>

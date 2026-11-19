@@ -64,18 +64,18 @@ const MaintenanceMode = () => {
       </header>
 
       {/* Main Card */}
-      <main className="w-full max-w-lg my-auto bg-[#1C1917] text-white rounded-lg shadow-xl border border-[#2E2A27] p-6 sm:p-8 text-center animate-in zoom-in-95 duration-200">
+      <main className="w-full max-w-lg my-auto bg-[#1C1917] text-white rounded-xl shadow-xl border border-[#2E2A27] p-6 sm:p-8 text-center animate-in zoom-in-95 duration-200">
         
         {/* Icon */}
-        <div className="w-16 h-16 bg-amber-500/10 text-amber-400 rounded-lg flex items-center justify-center mx-auto mb-4 border border-amber-500/20">
+        <div className="w-16 h-16 bg-amber-500/10 text-amber-400 rounded-xl flex items-center justify-center mx-auto mb-4 border border-amber-500/20">
           <Wrench size={32} />
         </div>
 
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-md bg-amber-500/10 text-amber-300 text-xs font-bold uppercase tracking-wider border border-amber-500/20 mb-3 shadow-sm">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/10 text-amber-300 text-xs font-bold uppercase tracking-wider border border-amber-500/20 mb-3">
           <ShieldAlert size={13} /> Naka-iskedyul na Maintenance
         </span>
 
-        <h2 className="text-xl sm:text-2xl font-bold text-white tracking-tight">
+        <h2 className="text-xl sm:text-2xl font-extrabold text-white tracking-[-0.02em]">
           Pansamantalang Naka-offline ang System
         </h2>
 

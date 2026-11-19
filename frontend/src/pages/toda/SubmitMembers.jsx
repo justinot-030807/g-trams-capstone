@@ -559,7 +559,7 @@ const SubmitMembers = () => {
                 {todaData.todaName || 'TODA Association'}
               </span>
             </div>
-            <h1 className="text-lg sm:text-xl font-bold text-[#1F1D1B] dark:text-[#EAE7E1] tracking-tight">
+            <h1 className="text-lg sm:text-xl font-bold text-[#1F1D1B] dark:text-[#EAE7E1] tracking-[-0.02em]">
               TODA Association &amp; Member Roster
             </h1>
             <p className="print:hidden text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] mt-0.5 font-medium">
@@ -601,7 +601,7 @@ const SubmitMembers = () => {
           >
             <Users size={16} className="shrink-0" />
             <span>Member Roster</span>
-            <span className={`px-2 py-0.5 rounded-md text-xs font-bold shrink-0 ${
+            <span className={`px-2 py-0.5 rounded-md text-xs font-mono tabular-nums font-bold shrink-0 ${
               activeTab === 'roster'
                 ? 'bg-white/20 text-white'
                 : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1]'
@@ -621,7 +621,7 @@ const SubmitMembers = () => {
           >
             <UploadCloud size={16} className="shrink-0" />
             <span>Upload Masterlist</span>
-            <span className={`px-2 py-0.5 rounded-md text-xs font-bold shrink-0 ${
+            <span className={`px-2 py-0.5 rounded-md text-xs font-mono tabular-nums font-bold shrink-0 ${
               activeTab === 'upload'
                 ? 'bg-white/20 text-white'
                 : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1]'
@@ -642,11 +642,11 @@ const SubmitMembers = () => {
             <UserMinus size={16} className="shrink-0" />
             <span>Disaffiliation Requests</span>
             {pendingRemovalCount > 0 ? (
-              <span className="px-2 py-0.5 rounded-md text-xs font-bold bg-amber-500 text-white">
+              <span className="px-2 py-0.5 rounded-md text-xs font-mono tabular-nums font-bold bg-amber-500 text-white">
                 {pendingRemovalCount} Pending
               </span>
             ) : (
-              <span className={`px-2 py-0.5 rounded-md text-xs font-bold ${
+              <span className={`px-2 py-0.5 rounded-md text-xs font-mono tabular-nums font-bold ${
                 activeTab === 'removals'
                   ? 'bg-white/20 text-white'
                   : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1]'
@@ -1318,7 +1318,7 @@ const SubmitMembers = () => {
                     disabled={!file || isUploading || isScanning}
                     className={`w-full mt-4 py-2.5 rounded-lg font-bold text-xs sm:text-sm text-white transition-all shadow-sm flex items-center justify-center gap-1.5 min-h-[44px] active:scale-95 ${
                       !file || isUploading || isScanning
-                      ? 'bg-[#6B7280] cursor-not-allowed' 
+                      ? 'bg-[#6B6761] cursor-not-allowed' 
                       : 'bg-[#9E2A2B] hover:bg-[#7A1B22] cursor-pointer'
                     }`}
                   >
@@ -1494,7 +1494,7 @@ const SubmitMembers = () => {
 
       {/* REPORT / KICK MEMBER MODAL */}
       {kickModal.isOpen && kickModal.member && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
           <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xl rounded-xl max-w-md w-full p-5 space-y-4">
             <div className="flex items-center justify-between pb-2 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
               <div className="flex items-center gap-2 text-red-600 dark:text-red-400 font-bold text-sm sm:text-base">
@@ -1504,7 +1504,8 @@ const SubmitMembers = () => {
               <button
                 type="button"
                 onClick={() => setKickModal(prev => ({ ...prev, isOpen: false }))}
-                className="text-[#6B6761] hover:text-[#1F1D1B] dark:text-[#A8A29E] dark:hover:text-white p-1 rounded cursor-pointer"
+                className="text-[#6B6761] hover:text-[#1F1D1B] dark:text-[#A8A29E] dark:hover:text-[#F6F5F3] p-1 rounded cursor-pointer"
+                aria-label="Close modal"
               >
                 <X size={16} />
               </button>
@@ -1586,7 +1587,7 @@ const SubmitMembers = () => {
       {/* DIGITIZED MEMBERS HISTORY VIEWER MODAL */}
       {selectedHistoryOCR && (
         <div role="dialog" aria-modal="true" className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-[#1A1816] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-2xl rounded-2xl max-w-xl w-full p-4 sm:p-5 space-y-4 overflow-hidden">
+          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-2xl rounded-xl max-w-xl w-full p-4 sm:p-5 space-y-4 overflow-hidden">
             <div className="flex items-center justify-between pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
               <div className="flex items-center gap-2.5">
                 <div className="w-8 h-8 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 text-[#9E2A2B] dark:text-[#E07A5F] flex items-center justify-center border border-[#9E2A2B]/20">
@@ -1604,7 +1605,7 @@ const SubmitMembers = () => {
               <button
                 type="button"
                 onClick={() => setSelectedHistoryOCR(null)}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-[#6B6761] hover:text-[#1F1D1B] dark:text-[#A8A29E] dark:hover:text-white hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] transition-colors cursor-pointer"
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-[#6B6761] hover:text-[#1F1D1B] dark:text-[#A8A29E] dark:hover:text-[#F6F5F3] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] transition-colors cursor-pointer"
                 title="Close modal"
                 aria-label="Close modal"
               >
@@ -1612,14 +1613,14 @@ const SubmitMembers = () => {
               </button>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs bg-gradient-to-br from-[#F6F5F3] via-white to-[#F6F5F3] dark:from-[#14110F] dark:via-[#1A1816] dark:to-[#14110F] p-3 sm:p-3.5 rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] gap-2">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between text-xs bg-[#F6F5F3] dark:bg-[#14110F] p-3 sm:p-3.5 rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] gap-2">
               <div>
                 <p className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{selectedHistoryOCR.fileName}</p>
-                <p className="text-[#6B6761] dark:text-[#A8A29E] mt-0.5">
+                <p className="text-[#6B6761] dark:text-[#A8A29E] mt-0.5 tabular-nums">
                   Submitted on {new Date(selectedHistoryOCR.createdAt).toLocaleDateString()}
                 </p>
               </div>
-              <span className="font-bold px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-[11px]">
+              <span className="font-bold tabular-nums px-2.5 py-1 rounded-full bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 text-[11px]">
                 {selectedHistoryOCR.extractedCount || selectedHistoryOCR.extractedMembers?.length || 0} Certified Members
               </span>
             </div>
@@ -1646,8 +1647,8 @@ const SubmitMembers = () => {
                       .toUpperCase();
 
                     return (
-                      <tr key={idx} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50 transition-colors">
-                        <td className="p-2.5 pl-3 font-mono text-[#6B6761] dark:text-[#A8A29E]">{idx + 1}</td>
+                      <tr key={idx} className="hover:bg-[#FAF9F7] dark:hover:bg-[#14110F]/50 transition-colors">
+                        <td className="p-2.5 pl-3 font-mono tabular-nums text-[#6B6761] dark:text-[#A8A29E]">{idx + 1}</td>
                         <td className="p-2.5 font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
                           <div className="flex items-center gap-2">
                             <span className="w-6 h-6 rounded-full bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/25 text-[#9E2A2B] dark:text-[#E07A5F] flex items-center justify-center text-[10px] font-bold shrink-0">
@@ -1656,7 +1657,7 @@ const SubmitMembers = () => {
                             <span>{displayName}</span>
                           </div>
                         </td>
-                        <td className="p-2.5 font-mono font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                        <td className="p-2.5 font-mono tabular-nums font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
                           {displayBodyNo ? (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-[#F6F5F3] dark:bg-[#14110F] text-xs text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27]">
                               <Hash size={11} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
@@ -1701,7 +1702,7 @@ const SubmitMembers = () => {
       {/* ADD INDIVIDUAL MEMBER MODAL */}
       {individualModal.isOpen && (
         <div role="dialog" aria-modal="true" className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white dark:bg-[#1A1816] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-2xl rounded-2xl max-w-lg w-full p-5 sm:p-6 space-y-4 overflow-hidden">
+          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-2xl rounded-xl max-w-lg w-full p-5 sm:p-6 space-y-4 overflow-hidden">
             <div className="flex items-center justify-between pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 text-[#9E2A2B] dark:text-[#E07A5F] flex items-center justify-center border border-[#9E2A2B]/20">
@@ -1719,7 +1720,7 @@ const SubmitMembers = () => {
               <button
                 type="button"
                 onClick={() => setIndividualModal(prev => ({ ...prev, isOpen: false }))}
-                className="w-8 h-8 rounded-lg flex items-center justify-center text-[#6B6761] hover:text-[#1F1D1B] dark:text-[#A8A29E] dark:hover:text-white hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] transition-colors cursor-pointer"
+                className="w-8 h-8 rounded-lg flex items-center justify-center text-[#6B6761] hover:text-[#1F1D1B] dark:text-[#A8A29E] dark:hover:text-[#F6F5F3] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] transition-colors cursor-pointer"
                 title="Close modal"
                 aria-label="Close modal"
               >
@@ -1749,7 +1750,7 @@ const SubmitMembers = () => {
                     value={individualModal.operatorName}
                     onChange={(e) => setIndividualModal(prev => ({ ...prev, operatorName: e.target.value, error: '' }))}
                     placeholder="e.g. Juan M. Dela Cruz"
-                    className="w-full pl-9 pr-3 py-2.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs sm:text-sm font-medium text-[#1F1D1B] dark:text-[#EAE7E1] focus:outline-none focus:border-[#9E2A2B] focus:ring-1 focus:ring-[#9E2A2B] min-h-[44px]"
+                    className="w-full pl-9 pr-3 py-2.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs sm:text-sm font-medium text-[#1F1D1B] dark:text-[#EAE7E1] focus:outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] min-h-[44px]"
                   />
                 </div>
               </div>
@@ -1788,14 +1789,14 @@ const SubmitMembers = () => {
                       value={individualModal.bodyNumber}
                       onChange={(e) => setIndividualModal(prev => ({ ...prev, bodyNumber: e.target.value.toUpperCase(), error: '' }))}
                       placeholder="e.g. 01, 042, GAS-001"
-                      className="w-full pl-9 pr-3 py-2.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] font-mono text-sm font-black text-[#1F1D1B] dark:text-[#EAE7E1] focus:outline-none focus:border-[#9E2A2B] focus:ring-1 focus:ring-[#9E2A2B] min-h-[44px] tracking-wider uppercase"
+                      className="w-full pl-9 pr-3 py-2.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] font-mono tabular-nums text-sm font-extrabold text-[#1F1D1B] dark:text-[#EAE7E1] focus:outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] min-h-[44px] tracking-wider uppercase"
                     />
                   </div>
                   <button
                     type="button"
                     onClick={handleRefreshNextBodyNumber}
                     disabled={individualModal.isLoadingNumber}
-                    className="h-[44px] px-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] hover:bg-[#E4E1DC] flex items-center gap-1.5 text-xs font-bold transition-colors cursor-pointer shrink-0 disabled:opacity-50"
+                    className="h-[44px] px-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] hover:bg-[#E4E1DC] dark:hover:bg-[#2E2A27] flex items-center gap-1.5 text-xs font-bold transition-colors cursor-pointer shrink-0 disabled:opacity-50"
                     title="Generate next Body Number"
                   >
                     <RefreshCw size={14} className={individualModal.isLoadingNumber ? 'animate-spin' : ''} />
@@ -1818,7 +1819,7 @@ const SubmitMembers = () => {
                     value={individualModal.plateNo}
                     onChange={(e) => setIndividualModal(prev => ({ ...prev, plateNo: e.target.value.toUpperCase() }))}
                     placeholder="e.g. 1234-TC"
-                    className="w-full px-3 py-2 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] font-mono text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] focus:outline-none focus:border-[#9E2A2B] min-h-[40px] uppercase"
+                    className="w-full px-3 py-2 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] font-mono tabular-nums text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] focus:outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] min-h-[40px] uppercase"
                   />
                 </div>
                 <div>

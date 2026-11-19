@@ -1532,7 +1532,7 @@ const AdminSettings = () => {
                                 {vt.isGrave ? 'Yes (Direct Revocation)' : 'No (3-Tier)'}
                               </button>
                             </td>
-                            <td className="p-3 text-right font-mono font-medium text-[#1F1D1B] dark:text-[#F6F5F3]">
+                            <td className="p-3 text-right font-mono tabular-nums font-medium text-[#1F1D1B] dark:text-[#F6F5F3]">
                               ₱{vt.defaultFine?.toLocaleString() || 0}
                             </td>
                             <td className="p-3 text-center text-[#6B6761] dark:text-[#A8A29E]">
@@ -1856,7 +1856,7 @@ const AdminSettings = () => {
                   </div>
                   <div className="min-w-0">
                     <p className="text-[11px] font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">Total Archives</p>
-                    <p className="text-lg font-black text-[#1F1D1B] dark:text-[#F6F5F3] mt-0.5">{backupStats.totalBackups} Snapshots</p>
+                    <p className="text-lg font-extrabold font-mono tabular-nums text-[#1F1D1B] dark:text-[#F6F5F3] mt-0.5">{backupStats.totalBackups} Snapshots</p>
                   </div>
                 </div>
 
@@ -2004,8 +2004,8 @@ const AdminSettings = () => {
                             </span>
                           </div>
                           <div className="flex items-center justify-between text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
-                            <span>{new Date(b.createdAt).toLocaleString('en-PH')}</span>
-                            <span className="font-mono font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{b.sizeFormatted}</span>
+                            <span className="tabular-nums">{new Date(b.createdAt).toLocaleString('en-PH')}</span>
+                            <span className="font-mono tabular-nums font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{b.sizeFormatted}</span>
                           </div>
                           <div className="flex items-center justify-end gap-1.5 pt-1">
                             <button
@@ -2063,10 +2063,10 @@ const AdminSettings = () => {
                                   {b.type}
                                 </span>
                               </td>
-                              <td className="p-3 text-[#6B6761] dark:text-[#A8A29E]">
+                              <td className="p-3 text-[#6B6761] dark:text-[#A8A29E] tabular-nums">
                                 {new Date(b.createdAt).toLocaleString('en-PH')}
                               </td>
-                              <td className="p-3 font-mono font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
+                              <td className="p-3 font-mono tabular-nums font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
                                 {b.sizeFormatted}
                               </td>
                               <td className="p-3 pr-4 text-right">

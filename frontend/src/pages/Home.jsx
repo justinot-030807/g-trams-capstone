@@ -123,7 +123,7 @@ const Home = () => {
             className="flex flex-col items-center w-full"
           >
             {/* Primary Headline */}
-            <motion.h1 variants={springFade} className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tight text-white leading-tight max-w-5xl px-1 sm:px-0 drop-shadow-md">
+            <motion.h1 variants={springFade} className="text-2xl xs:text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-[-0.03em] text-white leading-[1.12] max-w-5xl px-1 sm:px-0 drop-shadow-md">
               <span className="block sm:inline">Gasan Tricycle Records &amp; </span>
               <span className="inline sm:inline-block sm:whitespace-nowrap text-white">
                 Application Management System
@@ -141,7 +141,7 @@ const Home = () => {
               {/* Log In Button */}
               <Link
                 to="/login"
-                className="relative overflow-hidden group w-full sm:w-1/2 flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-lg bg-white hover:bg-[#F6F5F3] text-[#9E2A2B] font-bold text-sm uppercase tracking-wider shadow-sm hover:shadow transition-colors cursor-pointer whitespace-nowrap min-h-[48px]"
+                className="relative overflow-hidden group w-full sm:w-1/2 flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-lg bg-white hover:bg-[#F6F5F3] text-[#9E2A2B] font-bold text-sm tracking-wide shadow-sm hover:shadow transition-colors cursor-pointer whitespace-nowrap min-h-[48px]"
               >
                 <div className="w-6 h-6 rounded-lg bg-[#9E2A2B]/10 flex items-center justify-center">
                   <LogIn size={15} className="text-[#9E2A2B]" />
@@ -152,7 +152,7 @@ const Home = () => {
               {/* Register Button */}
               <Link
                 to="/register"
-                className="relative overflow-hidden group w-full sm:w-1/2 flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-lg bg-[#D4AF37] hover:bg-[#C29D2D] text-[#1C1917] font-bold text-sm uppercase tracking-wider shadow-sm hover:shadow transition-colors cursor-pointer whitespace-nowrap min-h-[48px]"
+                className="relative overflow-hidden group w-full sm:w-1/2 flex items-center justify-center gap-2.5 py-3.5 px-6 rounded-lg bg-[#D4AF37] hover:bg-[#C29D2D] text-[#1C1917] font-bold text-sm tracking-wide shadow-sm hover:shadow transition-colors cursor-pointer whitespace-nowrap min-h-[48px]"
               >
                 <div className="w-6 h-6 rounded-lg bg-black/10 flex items-center justify-center">
                   <UserPlus size={15} className="text-[#1C1917]" />
@@ -168,7 +168,7 @@ const Home = () => {
             >
               {/* Stat 1: Registered Operators */}
               <div className="flex flex-col items-center">
-                <span className="font-mono text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight tabular-nums drop-shadow-md">
+                <span className="font-mono text-3xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight tabular-nums drop-shadow-md">
                   {isLoadingStats ? '—' : Number(stats?.operators ?? 0).toLocaleString()}
                 </span>
                 <span className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-white/85 mt-1.5 drop-shadow-sm">
@@ -178,7 +178,7 @@ const Home = () => {
 
               {/* Stat 2: Accredited TODAs */}
               <div className="flex flex-col items-center">
-                <span className="font-mono text-3xl sm:text-4xl md:text-5xl font-black text-[#D4AF37] tracking-tight tabular-nums drop-shadow-md">
+                <span className="font-mono text-3xl sm:text-4xl md:text-5xl font-extrabold text-[#D4AF37] tracking-tight tabular-nums drop-shadow-md">
                   {isLoadingStats ? '—' : Number(stats?.todas ?? 0).toLocaleString()}
                 </span>
                 <span className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-white/85 mt-1.5 drop-shadow-sm">
@@ -188,7 +188,7 @@ const Home = () => {
 
               {/* Stat 3: Active Franchises */}
               <div className="flex flex-col items-center">
-                <span className="font-mono text-3xl sm:text-4xl md:text-5xl font-black text-white tracking-tight tabular-nums drop-shadow-md">
+                <span className="font-mono text-3xl sm:text-4xl md:text-5xl font-extrabold text-white tracking-tight tabular-nums drop-shadow-md">
                   {isLoadingStats ? '—' : Number(stats?.franchises ?? 0).toLocaleString()}
                 </span>
                 <span className="text-xs sm:text-sm font-semibold uppercase tracking-wider text-white/85 mt-1.5 drop-shadow-sm">

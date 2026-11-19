@@ -47,7 +47,7 @@ const AuthFooter = () => {
                 <img src="/gtrams-logo.png" alt="G-TRAMS Logo" className="w-full h-full object-cover scale-[1.04]" />
               </div>
               <div className="flex flex-col">
-                <span className="font-black text-lg text-white leading-tight">G-TRAMS</span>
+                <span className="font-extrabold text-lg text-white leading-tight tracking-[-0.02em]">G-TRAMS</span>
                 <span className="text-xs text-[#D4AF37] font-bold uppercase tracking-widest">Gasan Municipality</span>
               </div>
             </div>

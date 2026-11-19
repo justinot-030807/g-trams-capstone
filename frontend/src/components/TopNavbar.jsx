@@ -426,9 +426,10 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
           </div>
           
           {isMaintenanceActive && (
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950/60 text-[#B45309] dark:text-[#FBBF24] text-[9px] sm:text-xs font-semibold uppercase tracking-wider border border-amber-200 dark:border-amber-800/80 animate-pulse ml-2">
-              <span className="inline sm:hidden">🛠️ Maint</span>
-              <span className="hidden sm:inline">🛠️ Maintenance Active</span>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-[#B45309] dark:text-[#FBBF24] text-[10px] sm:text-xs font-semibold uppercase tracking-wider border border-amber-200 dark:border-amber-800/80 ml-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#B45309] dark:bg-[#FBBF24] animate-pulse shrink-0" />
+              <span className="inline sm:hidden">Maint</span>
+              <span className="hidden sm:inline">Maintenance Active</span>
             </span>
           )}
         </div>

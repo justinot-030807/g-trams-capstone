@@ -254,7 +254,7 @@ export const TODA_DIRECTORY = [
     id: 'NBI TODA',
     name: 'NBI TODA (North Bay Interstate)',
     zone: 'South',
-    color: 'bg-purple-500',
+    color: 'bg-[#D4AF37]',
     terminal: 'Bognuyan Port Terminal',
     barangays: ['Bognuyan', 'Cabugao', 'Dawis', 'Mangiliol'],
     description: 'Port and coastal connectivity covering fishing and agricultural communities.'

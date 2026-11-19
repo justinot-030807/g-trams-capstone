@@ -166,7 +166,7 @@ const LguAdvisoryModal = ({ isOpen, onClose, advisory, message, applicantData })
           </div>
 
           {/* Actionable Next Steps */}
-          <div className="bg-slate-50 dark:bg-slate-900/40 rounded-xl border border-slate-200 dark:border-slate-800 p-3.5 space-y-2">
+          <div className="bg-[#F6F5F3] dark:bg-[#14110F] rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] p-3.5 space-y-2">
             <h4 className="text-xs font-bold text-[#1F1D1B] dark:text-[#F6F5F3] flex items-center gap-1.5">
               <PhoneCall size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
               <span>{isTagalog ? 'Mga Hakbang Upang Maaprubahan:' : 'Next Steps to Complete Accreditation:'}</span>

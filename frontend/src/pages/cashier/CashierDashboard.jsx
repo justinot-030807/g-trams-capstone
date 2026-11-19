@@ -327,14 +327,14 @@ const CashierDashboard = () => {
         )}
 
         {/* Municipal Cashier Header Ribbon */}
-        <div className="bg-[#9E2A2B] border-b border-[#7A1B22] text-white rounded-lg p-5 sm:p-6 shadow-sm relative overflow-hidden">
+        <div className="bg-[#9E2A2B] border-b border-[#7A1B22] text-white rounded-xl p-5 sm:p-6 shadow-sm relative overflow-hidden">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
             <div className="space-y-1.5">
               <div className="inline-flex items-center gap-2 px-2.5 py-0.5 rounded-md bg-black/25 border border-white/20 text-xs font-semibold uppercase tracking-wider text-[#F5E6B3]">
                 <Receipt size={14} />
                 <span>Municipal Treasury &bull; Cashier Collection Terminal</span>
               </div>
-              <h1 className="text-xl sm:text-2xl font-bold tracking-tight">
+              <h1 className="text-xl sm:text-2xl font-bold tracking-[-0.02em]">
                 Cashier &amp; Payment Terminal
               </h1>
               <p className="text-xs sm:text-sm text-white/80 max-w-2xl leading-relaxed">
@@ -372,20 +372,20 @@ const CashierDashboard = () => {
           <StatsCardsSkeleton count={3} gridClassName="grid grid-cols-1 sm:grid-cols-3 gap-4" baseDelay={30} stepDelay={40} />
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4 sm:p-5 shadow-sm">
+            <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-xl p-4 sm:p-5 shadow-sm">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">Awaiting Collection</span>
                 <div className="w-8 h-8 rounded-md bg-amber-500/10 text-amber-700 dark:text-amber-400 flex items-center justify-center">
                   <Clock size={16} />
                 </div>
               </div>
-              <p className="text-2xl sm:text-3xl font-bold text-[#1F1D1B] dark:text-white mt-2">
+              <p className="text-2xl sm:text-3xl font-bold font-mono tabular-nums text-[#1F1D1B] dark:text-[#F6F5F3] mt-2">
                 {queue.length}
               </p>
               <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1">Applications queued for fee settlement</p>
             </div>
 
-            <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4 sm:p-5 shadow-sm">
+            <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-xl p-4 sm:p-5 shadow-sm">
               <div className="flex items-center justify-between gap-2">
                 <span className="text-xs font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">Today's Collections</span>
                 <div className="flex items-center gap-2 shrink-0">
@@ -415,14 +415,14 @@ const CashierDashboard = () => {
               <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1">Official Municipal Treasury receipts</p>
             </div>
 
-            <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4 sm:p-5 shadow-sm">
+            <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-xl p-4 sm:p-5 shadow-sm">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">Total Processed</span>
                 <div className="w-8 h-8 rounded-md bg-[#9E2A2B]/10 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center">
                   <ShieldCheck size={16} />
                 </div>
               </div>
-              <p className="text-2xl sm:text-3xl font-bold text-[#1F1D1B] dark:text-white mt-2">
+              <p className="text-2xl sm:text-3xl font-bold font-mono tabular-nums text-[#1F1D1B] dark:text-[#F6F5F3] mt-2">
                 {paidList.length}
               </p>
               <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1">Permits officially released to date</p>
@@ -431,7 +431,7 @@ const CashierDashboard = () => {
         )}
 
         {/* Search Bar & Tabs */}
-        <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-4 sm:p-5 shadow-sm space-y-4">
+        <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-xl p-4 sm:p-5 shadow-sm space-y-4">
           <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
             {/* Tab Switcher */}
             <div className="flex items-center bg-[#F6F5F3] dark:bg-[#14110F] p-1 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shrink-0">
@@ -441,11 +441,11 @@ const CashierDashboard = () => {
                 className={`px-3.5 py-2 rounded-md text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 min-h-[44px] ${
                   activeTab === 'pending'
                     ? 'bg-white dark:bg-[#1C1917] text-[#9E2A2B] dark:text-[#D4AF37] shadow-sm'
-                    : 'text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-white'
+                    : 'text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3]'
                 }`}
               >
                 <Clock size={15} />
-                <span>Payment Queue ({queue.length})</span>
+                <span className="tabular-nums">Payment Queue ({queue.length})</span>
               </button>
               <button
                 type="button"
@@ -453,11 +453,11 @@ const CashierDashboard = () => {
                 className={`px-3.5 py-2 rounded-md text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 min-h-[44px] ${
                   activeTab === 'completed'
                     ? 'bg-white dark:bg-[#1C1917] text-[#9E2A2B] dark:text-[#D4AF37] shadow-sm'
-                    : 'text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-white'
+                    : 'text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3]'
                 }`}
               >
                 <Receipt size={15} />
-                <span>Payment History ({paidList.length})</span>
+                <span className="tabular-nums">Payment History ({paidList.length})</span>
               </button>
             </div>
 
@@ -469,7 +469,7 @@ const CashierDashboard = () => {
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search Plate No., Operator, OR No., MTOP..."
-                className="w-full pl-10 pr-4 py-2.5 bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg text-xs sm:text-sm text-[#1F1D1B] dark:text-white placeholder-[#6B6761] dark:placeholder-[#A8A29E] outline-none focus:border-[#9E2A2B] focus:ring-1 focus:ring-[#9E2A2B] transition-all font-medium min-h-[44px]"
+                className="w-full pl-10 pr-4 py-2.5 bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3] placeholder-[#6B6761] dark:placeholder-[#A8A29E] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] transition-all font-medium min-h-[44px]"
               />
               {searchQuery && (
                 <button
@@ -541,14 +541,14 @@ const CashierDashboard = () => {
                         <div key={item._id} className="p-4 space-y-3 bg-white dark:bg-[#1C1917]">
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
-                              <span className="font-mono font-bold text-xs px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-900 dark:text-amber-200 border border-amber-600/30 inline-block">
+                              <span className="font-mono tabular-nums font-bold text-xs px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-900 dark:text-amber-200 border border-amber-600/30 inline-block">
                                 {item.plateNo || 'PENDING'}
                               </span>
-                              <p className="font-bold text-sm text-[#1F1D1B] dark:text-white mt-1.5 truncate">
+                              <p className="font-bold text-sm text-[#1F1D1B] dark:text-[#F6F5F3] mt-1.5 truncate">
                                 {item.fullName || item.operator?.name}
                               </p>
                               <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
-                                MTOP: <strong className="font-mono">{item.mtopNo || 'Pending'}</strong> &bull; {item.todaName || 'Non-TODA'}
+                                MTOP: <strong className="font-mono tabular-nums">{item.mtopNo || 'Pending'}</strong> &bull; {item.todaName || 'Non-TODA'}
                               </p>
                             </div>
                             <div className="text-right shrink-0">
@@ -573,21 +573,21 @@ const CashierDashboard = () => {
                       <div key={item._id} className="p-4 space-y-2.5 bg-white dark:bg-[#1C1917]">
                         <div className="flex items-start justify-between gap-2">
                           <div className="min-w-0">
-                            <span className="font-mono font-bold text-xs px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 border border-emerald-600/30 inline-block">
+                            <span className="font-mono tabular-nums font-bold text-xs px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 border border-emerald-600/30 inline-block">
                               {item.officialReceiptNo || 'OR-PAID'}
                             </span>
-                            <p className="font-bold text-sm text-[#1F1D1B] dark:text-white mt-1.5 truncate">
+                            <p className="font-bold text-sm text-[#1F1D1B] dark:text-[#F6F5F3] mt-1.5 truncate">
                               {item.fullName || item.operator?.name}
                             </p>
-                            <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-mono">
+                            <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-mono tabular-nums">
                               {item.plateNo || 'PENDING'} &bull; {item.todaName || 'Non-TODA'}
                             </p>
                           </div>
                           <div className="text-right shrink-0">
-                            <span className="font-bold text-sm font-mono tabular-nums text-[#1F1D1B] dark:text-white">
+                            <span className="font-bold text-sm font-mono tabular-nums text-[#1F1D1B] dark:text-[#F6F5F3]">
                               {formatAmountDisplay(item.amountPaid)}
                             </span>
-                            <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">{dt.dateFormatted}</p>
+                            <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] tabular-nums">{dt.dateFormatted}</p>
                           </div>
                         </div>
                         <button
@@ -635,28 +635,28 @@ const CashierDashboard = () => {
                       {filteredQueue.map((item) => {
                         if (activeTab === 'pending') {
                           return (
-                            <tr key={item._id} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50 transition-colors">
+                            <tr key={item._id} className="hover:bg-[#FAF9F7] dark:hover:bg-[#14110F]/50 transition-colors">
                               <td className="py-3.5 px-4">
                                 <div className="space-y-0.5">
-                                  <span className="font-mono font-bold text-sm px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-900 dark:text-amber-200 border border-amber-600/30 inline-block">
+                                  <span className="font-mono tabular-nums font-bold text-sm px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-900 dark:text-amber-200 border border-amber-600/30 inline-block">
                                     {item.plateNo || 'PENDING'}
                                   </span>
-                                  <div className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] font-mono mt-0.5">
-                                    MTOP: <strong className="text-[#1F1D1B] dark:text-white">{item.mtopNo || 'Pending'}</strong>
+                                  <div className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] font-mono tabular-nums mt-0.5">
+                                    MTOP: <strong className="text-[#1F1D1B] dark:text-[#F6F5F3]">{item.mtopNo || 'Pending'}</strong>
                                   </div>
                                 </div>
                               </td>
 
                               <td className="py-3.5 px-4">
                                 <div>
-                                  <p className="font-bold text-[#1F1D1B] dark:text-white">{item.fullName || item.operator?.name}</p>
+                                  <p className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{item.fullName || item.operator?.name}</p>
                                   <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">{item.contact || item.operator?.contact || item.address || 'Gasan, Marinduque'}</p>
                                 </div>
                               </td>
 
                               <td className="py-3.5 px-4">
                                 <div>
-                                  <p className="font-semibold text-[#1F1D1B] dark:text-white">{item.todaName || 'Non-TODA'}</p>
+                                  <p className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{item.todaName || 'Non-TODA'}</p>
                                   <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] font-medium">{item.zone ? formatZoneLabel(item.zone) : 'N/A'}</p>
                                 </div>
                               </td>
@@ -686,10 +686,10 @@ const CashierDashboard = () => {
                         // Completed Tab: Payment History with EXACT Date and EXACT Time
                         const dt = formatExactDateTime(item.paymentDate);
                         return (
-                          <tr key={item._id} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50 transition-colors">
+                          <tr key={item._id} className="hover:bg-[#FAF9F7] dark:hover:bg-[#14110F]/50 transition-colors">
                             <td className="py-3.5 px-4">
                               <div className="space-y-0.5">
-                                <span className="font-mono font-bold text-xs px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 border border-emerald-600/30 inline-block">
+                                <span className="font-mono tabular-nums font-bold text-xs px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 border border-emerald-600/30 inline-block">
                                   {item.officialReceiptNo || 'OR-PAID'}
                                 </span>
                                 <div className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] uppercase font-semibold">
@@ -700,8 +700,8 @@ const CashierDashboard = () => {
 
                             <td className="py-3.5 px-4">
                               <div>
-                                <p className="font-bold text-[#1F1D1B] dark:text-white">{item.fullName || item.operator?.name}</p>
-                                <p className="font-mono text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E]">
+                                <p className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{item.fullName || item.operator?.name}</p>
+                                <p className="font-mono tabular-nums text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E]">
                                   Plate: <span className="font-bold text-amber-700 dark:text-amber-400">{item.plateNo || 'PENDING'}</span>
                                 </p>
                               </div>
@@ -709,14 +709,14 @@ const CashierDashboard = () => {
 
                             <td className="py-3.5 px-4">
                               <div>
-                                <p className="font-semibold text-[#1F1D1B] dark:text-white">{item.todaName || 'Non-TODA'}</p>
+                                <p className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{item.todaName || 'Non-TODA'}</p>
                                 <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] font-medium">{item.zone ? formatZoneLabel(item.zone) : 'N/A'}</p>
                               </div>
                             </td>
 
                             <td className="py-3.5 px-4">
                               <div>
-                                <span className="font-bold text-[#1F1D1B] dark:text-white text-sm font-mono tabular-nums">
+                                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] text-sm font-mono tabular-nums">
                                   {formatAmountDisplay(item.amountPaid)}
                                 </span>
                                 <span className="block text-[10px] text-emerald-700 dark:text-emerald-400 font-bold uppercase tracking-tight">
@@ -727,11 +727,11 @@ const CashierDashboard = () => {
 
                             <td className="py-3.5 px-4 whitespace-nowrap">
                               <div className="space-y-0.5">
-                                <div className="flex items-center gap-1.5 font-bold text-[#1F1D1B] dark:text-white text-xs">
+                                <div className="flex items-center gap-1.5 font-bold text-[#1F1D1B] dark:text-[#F6F5F3] text-xs tabular-nums">
                                   <Calendar size={13} className="text-[#6B6761] dark:text-[#A8A29E] shrink-0" />
                                   <span>{dt.dateFormatted}</span>
                                 </div>
-                                <div className="flex items-center gap-1.5 font-mono text-[11px] text-emerald-700 dark:text-emerald-400 font-bold">
+                                <div className="flex items-center gap-1.5 font-mono tabular-nums text-[11px] text-emerald-700 dark:text-emerald-400 font-bold">
                                   <Clock size={12} className="shrink-0" />
                                   <span>{dt.timeFormatted}</span>
                                 </div>
@@ -769,8 +769,8 @@ const CashierDashboard = () => {
       {/* MODAL 1: PROCESS PAYMENT & ENCODE OFFICIAL RECEIPT                         */}
       {/* ========================================================================= */}
       {isPayModalOpen && selectedFranchise && (
-        <div className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/60 animate-in fade-in duration-150">
-          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-5 sm:p-6 max-w-lg w-full shadow-xl space-y-4 animate-in zoom-in-95 duration-150">
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-[250] flex items-center justify-center p-4 bg-black/60 animate-in fade-in duration-150">
+          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-xl p-5 sm:p-6 max-w-lg w-full shadow-xl space-y-4 animate-in zoom-in-95 duration-150">
             
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
@@ -779,14 +779,15 @@ const CashierDashboard = () => {
                   <Receipt size={22} />
                 </div>
                 <div>
-                  <h3 className="text-base font-bold text-[#1F1D1B] dark:text-white">Process Official Payment</h3>
+                  <h3 className="text-base font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">Process Official Payment</h3>
                   <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">Issue Municipal Official Receipt (OR)</p>
                 </div>
               </div>
               <button
                 onClick={() => setIsPayModalOpen(false)}
                 disabled={isProcessing}
-                className="text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] p-1.5 cursor-pointer rounded-lg hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] min-h-[44px] min-w-[44px] flex items-center justify-center"
+                className="text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3] p-1.5 cursor-pointer rounded-lg hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] min-h-[44px] min-w-[44px] flex items-center justify-center"
+                aria-label="Close payment modal"
               >
                 <X size={18} />
               </button>
@@ -796,13 +797,13 @@ const CashierDashboard = () => {
             <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-3.5 sm:p-4 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-2 text-xs">
               <div className="flex justify-between items-center">
                 <span className="text-[#6B6761] dark:text-[#A8A29E] font-medium">Tricycle Plate:</span>
-                <span className="font-mono font-bold text-amber-700 dark:text-amber-400 text-sm">
+                <span className="font-mono tabular-nums font-bold text-amber-700 dark:text-amber-400 text-sm">
                   {selectedFranchise.plateNo}
                 </span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-[#6B6761] dark:text-[#A8A29E] font-medium">Operator Name:</span>
-                <span className="font-bold text-[#1F1D1B] dark:text-white">{selectedFranchise.fullName}</span>
+                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{selectedFranchise.fullName}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-[#6B6761] dark:text-[#A8A29E] font-medium">MTOP / TODA:</span>
@@ -812,7 +813,7 @@ const CashierDashboard = () => {
               </div>
               <div className="flex justify-between items-center pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
                 <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">Total Amount Payable:</span>
-                <span className="font-bold text-sm text-emerald-700 dark:text-emerald-400 font-mono">
+                <span className="font-bold text-sm text-emerald-700 dark:text-emerald-400 font-mono tabular-nums">
                   ₱{Number(standardFranchiseFee || 500).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               </div>
@@ -831,7 +832,7 @@ const CashierDashboard = () => {
                     value={payFormData.officialReceiptNo}
                     onChange={(e) => setPayFormData(prev => ({ ...prev, officialReceiptNo: e.target.value.toUpperCase() }))}
                     placeholder="Enter Official O.R. Number"
-                    className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3.5 py-2.5 text-sm font-mono font-bold text-[#1F1D1B] dark:text-white outline-none focus:border-[#9E2A2B] focus:ring-1 focus:ring-[#9E2A2B] transition-all uppercase min-h-[44px]"
+                    className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3.5 py-2.5 text-sm font-mono tabular-nums font-bold text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] transition-all uppercase min-h-[44px]"
                   />
                   <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1">Serial number from physical government receipt stub.</p>
                 </div>
@@ -846,7 +847,7 @@ const CashierDashboard = () => {
                     value={payFormData.payerName}
                     onChange={(e) => setPayFormData(prev => ({ ...prev, payerName: e.target.value }))}
                     placeholder="Operator or Representative Name"
-                    className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3.5 py-2.5 text-sm font-bold text-[#1F1D1B] dark:text-white outline-none focus:border-[#9E2A2B] focus:ring-1 focus:ring-[#9E2A2B] transition-all min-h-[44px]"
+                    className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3.5 py-2.5 text-sm font-bold text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] transition-all min-h-[44px]"
                   />
                   <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1">Name of the person who presented payment at the counter.</p>
                 </div>
@@ -857,7 +858,7 @@ const CashierDashboard = () => {
                   <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider mb-1.5">
                     Payment Method
                   </label>
-                  <div className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3 py-2 text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-white min-h-[44px] flex items-center justify-between gap-2">
+                  <div className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3 py-2 text-xs sm:text-sm font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] min-h-[44px] flex items-center justify-between gap-2">
                     <span>Cash (Over-the-Counter)</span>
                     <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-400">
                       OTC Only
@@ -875,7 +876,7 @@ const CashierDashboard = () => {
                     required
                     value={payFormData.amountPaid}
                     onChange={(e) => setPayFormData(prev => ({ ...prev, amountPaid: e.target.value }))}
-                    className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3 py-2 text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-white outline-none focus:border-[#9E2A2B] min-h-[44px] font-mono"
+                    className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3 py-2 text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] min-h-[44px] font-mono tabular-nums"
                   />
                 </div>
               </div>
@@ -889,7 +890,7 @@ const CashierDashboard = () => {
                   value={payFormData.remarks}
                   onChange={(e) => setPayFormData(prev => ({ ...prev, remarks: e.target.value }))}
                   placeholder="Treasury window remarks..."
-                  className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3.5 py-2 text-xs text-[#1F1D1B] dark:text-white outline-none focus:border-[#9E2A2B] min-h-[44px]"
+                  className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3.5 py-2 text-xs text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] min-h-[44px]"
                 />
               </div>
 
@@ -921,7 +922,7 @@ const CashierDashboard = () => {
       {/* MODAL 2: PRINTABLE OFFICIAL ELECTRONIC MUNICIPAL RECEIPT (E-RESIBO)       */}
       {/* ========================================================================= */}
       {isReceiptOpen && receiptData && (
-        <div className="fixed inset-0 z-[260] flex items-center justify-center p-4 bg-black/60 animate-in fade-in duration-150">
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-[260] flex items-center justify-center p-4 bg-black/60 animate-in fade-in duration-150">
           <style>{`
             @media print {
               body * { visibility: hidden !important; }
@@ -942,7 +943,7 @@ const CashierDashboard = () => {
               .no-print { display: none !important; }
             }
           `}</style>
-          <div id="official-receipt-print-area" className="bg-white text-[#1F1D1B] rounded-lg p-6 sm:p-8 max-w-lg w-full shadow-xl space-y-6 relative max-h-[90vh] overflow-y-auto border border-[#E4E1DC]">
+          <div id="official-receipt-print-area" className="bg-white text-[#1F1D1B] rounded-xl p-6 sm:p-8 max-w-lg w-full shadow-xl space-y-6 relative max-h-[90vh] overflow-y-auto border border-[#E4E1DC]">
             
             {/* Header / Seal */}
             <div className="text-center space-y-1 border-b-2 border-[#1F1D1B] pb-4">
@@ -960,13 +961,13 @@ const CashierDashboard = () => {
             <div className="grid grid-cols-2 gap-3 text-xs">
               <div>
                 <p className="text-[#6B6761] font-semibold uppercase text-[10px]">Official Receipt No.</p>
-                <p className="font-mono font-bold text-sm text-[#9E2A2B]">
+                <p className="font-mono tabular-nums font-bold text-sm text-[#9E2A2B]">
                   {receiptData.officialReceiptNo || 'OR-PENDING'}
                 </p>
               </div>
               <div className="text-right">
                 <p className="text-[#6B6761] font-semibold uppercase text-[10px]">Date &amp; Exact Time Paid</p>
-                <p className="font-bold text-xs font-mono">
+                <p className="font-bold text-xs font-mono tabular-nums">
                   {formatExactDateTime(receiptData.paymentDate || Date.now()).full}
                 </p>
               </div>
@@ -984,7 +985,7 @@ const CashierDashboard = () => {
               </div>
               <div className="flex justify-between">
                 <span className="text-[#6B6761]">Tricycle Plate &amp; MTOP:</span>
-                <span className="font-mono font-bold text-[#1F1D1B]">{receiptData.plateNo} &bull; {receiptData.mtopNo || 'N/A'}</span>
+                <span className="font-mono tabular-nums font-bold text-[#1F1D1B]">{receiptData.plateNo} &bull; {receiptData.mtopNo || 'N/A'}</span>
               </div>
             </div>
 
@@ -1007,15 +1008,15 @@ const CashierDashboard = () => {
                       <>
                         <tr>
                           <td className="py-2 px-3">Franchise Filing &amp; Inspection Fee</td>
-                          <td className="py-2 px-3 text-right font-mono">{filingFee !== null ? `₱${filingFee.toFixed(2)}` : 'N/A'}</td>
+                          <td className="py-2 px-3 text-right font-mono tabular-nums">{filingFee !== null ? `₱${filingFee.toFixed(2)}` : 'N/A'}</td>
                         </tr>
                         <tr>
                           <td className="py-2 px-3">Mayor's Permit &amp; Supervision Fee</td>
-                          <td className="py-2 px-3 text-right font-mono">{permitFee !== null ? `₱${permitFee.toFixed(2)}` : 'N/A'}</td>
+                          <td className="py-2 px-3 text-right font-mono tabular-nums">{permitFee !== null ? `₱${permitFee.toFixed(2)}` : 'N/A'}</td>
                         </tr>
                         <tr>
                           <td className="py-2 px-3">Official Regulatory Sticker &amp; Seal</td>
-                          <td className="py-2 px-3 text-right font-mono">{stickerFee !== null ? `₱${stickerFee.toFixed(2)}` : 'N/A'}</td>
+                          <td className="py-2 px-3 text-right font-mono tabular-nums">{stickerFee !== null ? `₱${stickerFee.toFixed(2)}` : 'N/A'}</td>
                         </tr>
                       </>
                     );
@@ -1024,7 +1025,7 @@ const CashierDashboard = () => {
                 <tfoot className="bg-[#F6F5F3] border-t-2 border-[#1F1D1B] font-bold">
                   <tr>
                     <td className="py-2.5 px-3 uppercase text-[#1F1D1B]">Total Amount Paid:</td>
-                    <td className="py-2.5 px-3 text-right text-sm text-[#9E2A2B] font-mono">
+                    <td className="py-2.5 px-3 text-right text-sm text-[#9E2A2B] font-mono tabular-nums">
                       {formatAmountDisplay(receiptData.amountPaid)}
                     </td>
                   </tr>
@@ -1076,8 +1077,8 @@ const CashierDashboard = () => {
 
       {/* TREASURY DAILY REMITTANCE REPORT MODAL */}
       {isRemittanceModalOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-black/60 print:bg-white print:p-0 print:static">
-          <div className="bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-5 sm:p-6 print:border-none print:shadow-none print:max-h-none print:p-0">
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4 bg-black/60 print:bg-white print:p-0 print:static">
+          <div className="bg-white dark:bg-[#1C1917] rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xl w-full max-w-2xl max-h-[90vh] overflow-y-auto p-5 sm:p-6 print:border-none print:shadow-none print:max-h-none print:p-0">
             {/* Header */}
             <div className="flex items-start justify-between border-b border-[#E4E1DC] dark:border-[#2E2A27] pb-4 mb-4">
               <div className="flex items-center gap-3">
@@ -1100,6 +1101,7 @@ const CashierDashboard = () => {
                 type="button"
                 onClick={() => setIsRemittanceModalOpen(false)}
                 className="p-1 rounded-lg text-[#6B6761] hover:text-[#1F1D1B] dark:text-[#A8A29E] dark:hover:text-[#F6F5F3] print:hidden cursor-pointer"
+                aria-label="Close remittance sheet"
               >
                 <X size={18} />
               </button>
@@ -1109,13 +1111,13 @@ const CashierDashboard = () => {
             <div className="grid grid-cols-2 gap-3 mb-4">
               <div className="p-3 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27]">
                 <p className="text-[10px] font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">Total Collection Remitted</p>
-                <p className="text-lg font-mono font-bold text-emerald-700 dark:text-emerald-400 mt-0.5">
+                <p className="text-lg font-mono tabular-nums font-bold text-emerald-700 dark:text-emerald-400 mt-0.5">
                   ₱{todayPaidRecords.reduce((sum, r) => sum + (hasValidAmount(r.amountPaid) ? Number(r.amountPaid) : 0), 0).toLocaleString('en-PH', { minimumFractionDigits: 2 })}
                 </p>
               </div>
               <div className="p-3 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27]">
                 <p className="text-[10px] font-bold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">Total Official Receipts Issued</p>
-                <p className="text-lg font-bold text-[#1F1D1B] dark:text-[#F6F5F3] mt-0.5">
+                <p className="text-lg font-mono tabular-nums font-bold text-[#1F1D1B] dark:text-[#F6F5F3] mt-0.5">
                   {todayPaidRecords.length} Transactions
                 </p>
               </div>
@@ -1135,14 +1137,14 @@ const CashierDashboard = () => {
                 </thead>
                 <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
                   {todayPaidRecords.map((item, idx) => (
-                    <tr key={idx} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50">
-                      <td className="p-2.5 pl-3 font-mono font-bold text-[#9E2A2B] dark:text-[#D4AF37]">{item.officialReceiptNo || 'N/A'}</td>
+                    <tr key={idx} className="hover:bg-[#FAF9F7] dark:hover:bg-[#14110F]/50">
+                      <td className="p-2.5 pl-3 font-mono tabular-nums font-bold text-[#9E2A2B] dark:text-[#D4AF37]">{item.officialReceiptNo || 'N/A'}</td>
                       <td className="p-2.5 font-medium text-[#1F1D1B] dark:text-[#F6F5F3]">{item.payerName || item.fullName || 'Operator'}</td>
-                      <td className="p-2.5 font-mono text-[#6B6761] dark:text-[#A8A29E]">{item.plateNo || '—'}</td>
-                      <td className="p-2.5 text-[#6B6761] dark:text-[#A8A29E]">
+                      <td className="p-2.5 font-mono tabular-nums text-[#6B6761] dark:text-[#A8A29E]">{item.plateNo || '—'}</td>
+                      <td className="p-2.5 text-[#6B6761] dark:text-[#A8A29E] tabular-nums">
                         {item.paymentDate ? new Date(item.paymentDate).toLocaleTimeString('en-PH', { hour: '2-digit', minute: '2-digit' }) : '—'}
                       </td>
-                      <td className="p-2.5 pr-3 text-right font-mono font-bold text-emerald-700 dark:text-emerald-400">
+                      <td className="p-2.5 pr-3 text-right font-mono tabular-nums font-bold text-emerald-700 dark:text-emerald-400">
                         {formatAmountDisplay(item.amountPaid)}
                       </td>
                     </tr>

@@ -38,11 +38,11 @@ const BarList = ({
   const hasMore = sortedData.length > initialLimit;
 
   return (
-    <div className={`bg-white dark:bg-[#1C1917] p-5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm ${className}`}>
+    <div className={`bg-white dark:bg-[#1C1917] p-5 rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm ${className}`}>
       {/* Header */}
-      <div className="flex items-center justify-between mb-4 pb-2 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+      <div className="flex items-center justify-between mb-4 pb-2.5 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
         <div>
-          <h2 className="text-sm font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
+          <h2 className="text-sm font-bold text-[#1F1D1B] dark:text-[#F6F5F3] tracking-[-0.015em]">
             {title}
           </h2>
           {subtitle && (
@@ -70,10 +70,10 @@ const BarList = ({
             const pct = item.percentage !== undefined ? item.percentage : Math.round((val / maxValue) * 100);
             const widthPct = Math.max(4, Math.round((val / maxValue) * 100));
 
-            // Single brand maroon color for active TODAs, neutral gray for Non-TODA
+            // Single brand maroon color for active TODAs (gold in dark mode), warm neutral for Non-TODA
             const barBgColor = isNonToda
-              ? 'bg-[#9CA3AF] dark:bg-[#6B7280]'
-              : 'bg-[#9E2A2B] dark:bg-[#9E2A2B]';
+              ? 'bg-[#A8A29E] dark:bg-[#6B6761]'
+              : 'bg-[#9E2A2B] dark:bg-[#D4AF37]';
 
             return (
               <div key={idx} className="group" role="listitem">
@@ -92,9 +92,9 @@ const BarList = ({
                 </div>
 
                 {/* Single-color minimal bar */}
-                <div className="w-full bg-[#E4E1DC]/60 dark:bg-[#2E2A27] rounded-sm h-2 overflow-hidden">
+                <div className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC]/70 dark:border-[#2E2A27] rounded-full h-2 overflow-hidden">
                   <div
-                    className={`h-full rounded-sm transition-all duration-300 ease-out ${barBgColor}`}
+                    className={`h-full rounded-full transition-all duration-300 ease-out ${barBgColor}`}
                     style={{ width: `${widthPct}%` }}
                     aria-valuenow={val}
                     aria-valuemin={0}

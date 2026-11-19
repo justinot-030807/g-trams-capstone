@@ -145,7 +145,7 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
           <div className="w-full overflow-x-auto pb-4 custom-scrollbar flex justify-start sm:justify-center">
             <div 
               id="printable-transmittal-document"
-              className="relative bg-white text-slate-900 w-[780px] sm:w-full max-w-[820px] shrink-0 rounded-lg shadow-sm p-6 sm:p-8 border border-[#E4E1DC] print:border-none print:shadow-none print:m-0 print:max-w-full"
+              className="relative bg-white text-[#1F1D1B] w-[780px] sm:w-full max-w-[820px] shrink-0 rounded-lg shadow-sm p-6 sm:p-8 border border-[#E4E1DC] print:border-none print:shadow-none print:m-0 print:max-w-full"
               style={{ fontFamily: "'Georgia', 'Times New Roman', serif" }}
             >
               {/* Print Styles */}
@@ -226,10 +226,10 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
                     <img src="/gasan-logo.png" alt="Gasan Seal" className="w-full h-full object-cover" />
                   </div>
                   <div className="text-center">
-                    <p className="text-[9.5px] uppercase tracking-widest text-slate-600 font-sans font-semibold">Republic of the Philippines</p>
-                    <p className="text-[9.5px] uppercase tracking-widest text-slate-600 font-sans font-semibold">Province of Marinduque</p>
-                    <h2 className="text-base font-black text-[#9E2A2B] tracking-wider uppercase font-serif">MUNICIPALITY OF GASAN</h2>
-                    <p className="text-[9px] uppercase tracking-widest text-slate-700 font-sans font-bold">Office of the Sangguniang Bayan / Office of the Vice Mayor Extension Franchising Unit</p>
+                    <p className="text-[9.5px] uppercase tracking-widest text-[#6B6761] font-sans font-semibold">Republic of the Philippines</p>
+                    <p className="text-[9.5px] uppercase tracking-widest text-[#6B6761] font-sans font-semibold">Province of Marinduque</p>
+                    <h2 className="text-base font-extrabold text-[#9E2A2B] tracking-wider uppercase font-serif">MUNICIPALITY OF GASAN</h2>
+                    <p className="text-[9px] uppercase tracking-widest text-[#1F1D1B] font-sans font-bold">Office of the Sangguniang Bayan / Office of the Vice Mayor Extension Franchising Unit</p>
                   </div>
                   <div className="w-13 h-13 rounded-full overflow-hidden shrink-0 border border-[#D4AF37]">
                     <img src="/gasan-logo.png" alt="Gasan Seal Right" className="w-full h-full object-cover" />
@@ -237,7 +237,7 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
                 </div>
 
                 <div className="mt-2">
-                  <h1 className="text-sm sm:text-base font-black text-slate-900 tracking-wide uppercase font-serif">
+                  <h1 className="text-sm sm:text-base font-extrabold text-[#1F1D1B] tracking-wide uppercase font-serif">
                     BATCH FRANCHISE TRANSMITTAL &amp; ENDORSEMENT SUMMARY
                   </h1>
                   <p className="text-[9.5px] font-bold tracking-widest text-[#9E2A2B] uppercase font-sans mt-0.5">
@@ -247,50 +247,50 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
               </div>
 
               {/* Transmittal Metadata Strip */}
-              <div className="bg-slate-50 border border-slate-200 rounded-lg p-2.5 mb-3 text-xs flex items-center justify-between font-sans">
+              <div className="bg-[#F6F5F3] border border-[#E4E1DC] rounded-lg p-2.5 mb-3 text-xs flex items-center justify-between font-sans">
                 <div>
-                  <span className="text-[9px] font-bold text-slate-600 dark:text-slate-400 uppercase block">Transmittal Ref:</span>
+                  <span className="text-[9px] font-bold text-[#6B6761] uppercase block">Transmittal Ref:</span>
                   <span className="font-mono font-bold text-[#9E2A2B] text-xs">{batchRef}</span>
                 </div>
                 <div>
-                  <span className="text-[9px] font-bold text-slate-600 dark:text-slate-400 uppercase block">Date Processed:</span>
-                  <span className="font-bold text-slate-800 text-xs">{formattedDate}</span>
+                  <span className="text-[9px] font-bold text-[#6B6761] uppercase block">Date Processed:</span>
+                  <span className="font-bold text-[#1F1D1B] text-xs">{formattedDate}</span>
                 </div>
                 <div>
-                  <span className="text-[9px] font-bold text-slate-600 dark:text-slate-400 uppercase block">Total Units:</span>
-                  <span className="font-bold text-slate-900 text-xs">{units.length} Unit(s)</span>
+                  <span className="text-[9px] font-bold text-[#6B6761] uppercase block">Total Units:</span>
+                  <span className="font-bold text-[#1F1D1B] text-xs font-mono tabular-nums">{units.length} Unit(s)</span>
                 </div>
                 <div>
-                  <span className="text-[9px] font-bold text-slate-600 dark:text-slate-400 uppercase block">Action Type:</span>
-                  <span className="font-bold text-emerald-700 text-xs">Ready for Pickup / Release</span>
+                  <span className="text-[9px] font-bold text-[#6B6761] uppercase block">Action Type:</span>
+                  <span className="font-bold text-[#15803D] text-xs">Ready for Pickup / Release</span>
                 </div>
               </div>
 
               {/* Units Table */}
               <div className="mb-4">
-                <table className="w-full border-collapse border border-slate-300 text-xs text-left font-sans">
+                <table className="w-full border-collapse border border-[#E4E1DC] print:border-[#1F1D1B]/40 text-xs text-left font-sans">
                   <thead>
-                    <tr className="bg-slate-100 text-[9px] uppercase font-bold text-slate-700">
-                      <th className="border border-slate-300 py-1.5 px-2 text-center w-8">#</th>
-                      <th className="border border-slate-300 py-1.5 px-2">Operator Name</th>
-                      <th className="border border-slate-300 py-1.5 px-2 text-center">TODA / Route</th>
-                      <th className="border border-slate-300 py-1.5 px-2 text-center">Plate No.</th>
-                      <th className="border border-slate-300 py-1.5 px-2 text-center">Make / Year</th>
-                      <th className="border border-slate-300 py-1.5 px-2 text-center">Motor No.</th>
-                      <th className="border border-slate-300 py-1.5 px-2 text-center">Type</th>
+                    <tr className="bg-[#F6F5F3] text-[9px] uppercase font-bold text-[#1F1D1B]">
+                      <th className="border border-[#E4E1DC] print:border-[#1F1D1B]/40 py-1.5 px-2 text-center w-8">#</th>
+                      <th className="border border-[#E4E1DC] print:border-[#1F1D1B]/40 py-1.5 px-2">Operator Name</th>
+                      <th className="border border-[#E4E1DC] print:border-[#1F1D1B]/40 py-1.5 px-2 text-center">TODA / Route</th>
+                      <th className="border border-[#E4E1DC] print:border-[#1F1D1B]/40 py-1.5 px-2 text-center">Plate No.</th>
+                      <th className="border border-[#E4E1DC] print:border-[#1F1D1B]/40 py-1.5 px-2 text-center">Make / Year</th>
+                      <th className="border border-[#E4E1DC] print:border-[#1F1D1B]/40 py-1.5 px-2 text-center">Motor No.</th>
+                      <th className="border border-[#E4E1DC] print:border-[#1F1D1B]/40 py-1.5 px-2 text-center">Type</th>
                     </tr>
                   </thead>
                   <tbody>
                     {units.map((unit, i) => (
-                      <tr key={unit._id || i} className="text-xs text-slate-800 hover:bg-slate-50">
-                        <td className="border border-slate-300 py-1 px-2 text-center font-bold">{i + 1}</td>
-                        <td className="border border-slate-300 py-1 px-2 font-bold uppercase">{unit.fullName}</td>
-                        <td className="border border-slate-300 py-1 px-2 text-center font-semibold">{unit.todaName || 'NON-TODA'} (Z{unit.zone || 1})</td>
-                        <td className="border border-slate-300 py-1 px-2 text-center font-mono font-black text-[#9E2A2B]">{unit.plateNo || 'PENDING'}</td>
-                        <td className="border border-slate-300 py-1 px-2 text-center">{unit.make} {unit.made ? `(${unit.made})` : ''}</td>
-                        <td className="border border-slate-300 py-1 px-2 text-center font-mono">{unit.motorNo}</td>
-                        <td className="border border-slate-300 py-1 px-2 text-center">
-                          <span className={`px-1.5 py-0.5 rounded text-[8.5px] font-bold ${unit.applicationType === 'Renewal' ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'}`}>
+                      <tr key={unit._id || i} className="text-xs text-[#1F1D1B] hover:bg-[#FAF9F7]">
+                        <td className="border border-[#E4E1DC] print:border-[#1F1D1B]/40 py-1 px-2 text-center font-bold font-mono tabular-nums">{i + 1}</td>
+                        <td className="border border-[#E4E1DC] print:border-[#1F1D1B]/40 py-1 px-2 font-bold uppercase">{unit.fullName}</td>
+                        <td className="border border-[#E4E1DC] print:border-[#1F1D1B]/40 py-1 px-2 text-center font-semibold">{unit.todaName || 'NON-TODA'} (Z{unit.zone || 1})</td>
+                        <td className="border border-[#E4E1DC] print:border-[#1F1D1B]/40 py-1 px-2 text-center font-mono font-extrabold text-[#9E2A2B]">{unit.plateNo || 'PENDING'}</td>
+                        <td className="border border-[#E4E1DC] print:border-[#1F1D1B]/40 py-1 px-2 text-center">{unit.make} {unit.made ? `(${unit.made})` : ''}</td>
+                        <td className="border border-[#E4E1DC] print:border-[#1F1D1B]/40 py-1 px-2 text-center font-mono">{unit.motorNo}</td>
+                        <td className="border border-[#E4E1DC] print:border-[#1F1D1B]/40 py-1 px-2 text-center">
+                          <span className={`px-1.5 py-0.5 rounded text-[8.5px] font-bold ${unit.applicationType === 'Renewal' ? 'bg-amber-100 text-[#B45309]' : 'bg-[#9E2A2B]/10 text-[#9E2A2B]'}`}>
                             {unit.applicationType || 'New'}
                           </span>
                         </td>
@@ -301,7 +301,7 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
               </div>
 
               {/* Endorsement Statement */}
-              <div className="text-[10.5px] leading-snug text-slate-700 mb-6 text-justify">
+              <div className="text-[10.5px] leading-snug text-[#1F1D1B] mb-6 text-justify">
                 <p>
                   I hereby certify that the above-listed motorized tricycle franchise applications have undergone thorough administrative inspection, 
                   verification of required statutory clearances (OR/CR, LTO Driver's License, TODA Endorsement, Barangay Clearance), and compliance 
@@ -313,28 +313,28 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
               {/* Signatures */}
               <div className="pt-2 grid grid-cols-2 gap-8 font-sans">
                 <div className="text-center">
-                  <p className="text-[9px] uppercase font-bold text-slate-500 mb-8">
+                  <p className="text-[9px] uppercase font-bold text-[#6B6761] mb-8">
                     Prepared &amp; Inspected by:
                   </p>
-                  <div className="border-t border-slate-800 pt-1 inline-block min-w-[200px]">
-                    <p className="font-bold text-xs text-slate-900 uppercase">
+                  <div className="border-t border-[#1F1D1B] pt-1 inline-block min-w-[200px]">
+                    <p className="font-bold text-xs text-[#1F1D1B] uppercase">
                       Office of the Vice Mayor Extension FRANCHISING IN-CHARGE
                     </p>
-                    <p className="text-[8.5px] text-slate-500">
+                    <p className="text-[8.5px] text-[#6B6761]">
                       Business Permits &amp; Licensing Office
                     </p>
                   </div>
                 </div>
 
                 <div className="text-center">
-                  <p className="text-[9px] uppercase font-bold text-slate-500 mb-8">
+                  <p className="text-[9px] uppercase font-bold text-[#6B6761] mb-8">
                     Approved &amp; Endorsed by:
                   </p>
-                  <div className="border-t border-slate-800 pt-1 inline-block min-w-[200px]">
-                    <p className="font-black text-xs text-slate-900 uppercase font-serif">
+                  <div className="border-t border-[#1F1D1B] pt-1 inline-block min-w-[200px]">
+                    <p className="font-extrabold text-xs text-[#1F1D1B] uppercase font-serif">
                       {MUNICIPAL_SIGNATORY}
                     </p>
-                    <p className="text-[8.5px] uppercase font-bold text-slate-600">
+                    <p className="text-[8.5px] uppercase font-bold text-[#6B6761]">
                       Municipal Vice Mayor &amp; Presiding Officer
                     </p>
                   </div>

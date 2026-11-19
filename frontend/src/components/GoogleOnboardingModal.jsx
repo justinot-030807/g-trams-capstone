@@ -217,9 +217,9 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
       aria-labelledby="google-onboarding-title"
     >
       {/* Centered Modal Card */}
-      <div className="relative w-full max-w-[440px] max-h-[92vh] overflow-y-auto bg-white dark:bg-[#1C1917] rounded-lg shadow-xl border border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col animate-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-[440px] max-h-[92vh] overflow-y-auto bg-white dark:bg-[#1C1917] rounded-xl shadow-xl border border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col animate-in zoom-in-95 duration-200">
         
-        {/* Top Gold & Maroon Decorative Ribbon */}
+        {/* Top Maroon Accent Ribbon */}
         <div className="h-1 w-full bg-[#9E2A2B]" />
 
         {/* Modal Header */}
@@ -233,18 +233,13 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
             <X size={18} />
           </button>
 
-          <div className="flex items-center gap-2.5 mb-2">
+          <div className="flex items-center gap-2.5 mb-2 pr-8">
             <div className="w-8 h-8 rounded-lg bg-[#9E2A2B]/10 border border-[#9E2A2B]/20 flex items-center justify-center p-1 shrink-0">
               <img src="/gasan-logo.png" alt="Gasan Official Seal" className="w-full h-full object-contain" />
             </div>
-            <div>
-              <span className="text-[10px] font-bold tracking-wider text-[#9E2A2B] uppercase block">
-                Municipality of Gasan
-              </span>
-              <h2 id="google-onboarding-title" className="text-base sm:text-lg font-bold text-[#1F1D1B] dark:text-[#F6F5F3] leading-tight">
-                Complete Registration
-              </h2>
-            </div>
+            <h2 id="google-onboarding-title" className="text-base sm:text-lg font-extrabold text-[#1F1D1B] dark:text-[#F6F5F3] leading-tight tracking-[-0.02em]">
+              Complete Registration
+            </h2>
           </div>
 
           {/* Step Indicator & Intro */}
@@ -270,8 +265,8 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
           
           {/* Editable Full Name */}
           <div>
-            <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider mb-1">
-              Full Name <span className="text-red-500">*</span>
+            <label className="block text-[13px] font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] mb-1.5">
+              Full name <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B6761] dark:text-[#A8A29E]">
@@ -295,11 +290,11 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
 
           {/* Read-Only Google Email */}
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider">
-                Google Account Email
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-[13px] font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
+                Google account email
               </label>
-              <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600">
+              <span className="flex items-center gap-1 text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">
                 <ShieldCheck size={13} /> Verified
               </span>
             </div>
@@ -319,9 +314,9 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
 
           {/* Mobile Phone Number - Optional */}
           <div>
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider">
-                Phone Number (Mobile)
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-[13px] font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
+                Phone number (mobile)
               </label>
               <span className="text-[11px] font-semibold text-[#6B6761] dark:text-[#A8A29E] bg-[#F6F5F3] dark:bg-[#14110F] px-2 py-0.5 rounded border border-[#E4E1DC] dark:border-[#2E2A27]">
                 Optional
@@ -352,7 +347,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
 
           {/* Barangay Dropdown */}
           <div>
-            <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider mb-1">
+            <label className="block text-[13px] font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] mb-1.5">
               Barangay <span className="text-red-500">*</span>
             </label>
             <div className="relative">
@@ -390,8 +385,8 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
 
           {/* TODA Dropdown */}
           <div>
-            <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider mb-1">
-              TODA <span className="text-red-500">*</span>
+            <label className="block text-[13px] font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] mb-1.5">
+              TODA association <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B6761] dark:text-[#A8A29E] z-10">
@@ -426,8 +421,8 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
 
           {/* Assigned Body Number */}
           <div>
-            <label className="block text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider mb-1">
-              Assigned Body Number <span className="text-red-500">*</span>
+            <label className="block text-[13px] font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] mb-1.5">
+              Assigned body number <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B6761] dark:text-[#A8A29E]">
@@ -443,7 +438,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
                 }}
                 required
                 maxLength={20}
-                className={inputClasses}
+                className={`${inputClasses} font-mono font-semibold tracking-wide uppercase placeholder:font-sans placeholder:normal-case placeholder:tracking-normal`}
                 placeholder="hal. GAS-001 o 042"
               />
             </div>
@@ -456,7 +451,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
           {selectedToda && selectedToda !== 'NON-TODA' && (
             <div className="text-xs rounded-lg transition-all animate-fadeIn">
               {isCheckingToda ? (
-                <div className="flex items-center gap-2 text-slate-500 dark:text-slate-400 p-2.5 bg-slate-50 dark:bg-slate-900/40 rounded-lg border border-slate-200 dark:border-slate-800">
+                <div className="flex items-center gap-2 text-[#6B6761] dark:text-[#A8A29E] p-2.5 bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
                   <Loader2 size={13} className="animate-spin shrink-0 text-[#9E2A2B] dark:text-[#D4AF37]" />
                   <span>Kinukumpirma ang kombinasyon sa opisyal na masterlist ng {selectedToda}...</span>
                 </div>
@@ -468,7 +463,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
                       <div>
                         <span className="font-bold">Verified TODA Member: </span>
                         <span>
-                          Pangalan <strong>"{todaCheckResult.matchedMember || editableName}"</strong> ay opisyal na nakatala sa <strong>{selectedToda}</strong> (Body No. <strong>{todaCheckResult.matchedBodyNumber || bodyNumber}</strong>).
+                          Pangalan <strong>"{todaCheckResult.matchedMember || editableName}"</strong> ay opisyal na nakatala sa <strong>{selectedToda}</strong> (Body No. <strong className="font-mono">{todaCheckResult.matchedBodyNumber || bodyNumber}</strong>).
                         </span>
                       </div>
                     </div>
@@ -524,9 +519,9 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
                       </button>
                     </div>
                   ) : todaCheckResult.status === 'no_roster_on_file' ? (
-                    <div className="flex items-start justify-between gap-2 text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/40 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800">
+                    <div className="flex items-start justify-between gap-2 text-[#1F1D1B] dark:text-[#F6F5F3] bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
                       <div className="flex items-start gap-2">
-                        <Info size={16} className="shrink-0 mt-0.5 text-slate-500" />
+                        <Info size={16} className="shrink-0 mt-0.5 text-[#6B6761] dark:text-[#A8A29E]" />
                         <div>
                           <span className="font-bold">Pending Roster: </span>
                           <span>{todaCheckResult.message}</span>
@@ -541,8 +536,8 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
                       </button>
                     </div>
                   ) : (
-                    <div className="flex items-start gap-2 text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/40 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800">
-                      <Info size={16} className="shrink-0 mt-0.5 text-slate-500" />
+                    <div className="flex items-start gap-2 text-[#6B6761] dark:text-[#A8A29E] bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
+                      <Info size={16} className="shrink-0 mt-0.5 text-[#6B6761] dark:text-[#A8A29E]" />
                       <div>
                         <span>{todaCheckResult.message || `Pakilagay ang inyong legal name at assigned body number para sa ${selectedToda}.`}</span>
                       </div>
