@@ -216,25 +216,25 @@ const Login = () => {
           {/* RIGHT COLUMN: CLEAN FORM PANEL */}
           <div className="md:col-span-7 lg:col-span-7 flex flex-col items-center justify-start px-4 sm:px-8 md:px-14 lg:px-20 pt-5 sm:pt-8 md:pt-12 pb-6 sm:pb-10 bg-white dark:bg-[#1C1917] min-h-full">
             <div className="w-full max-w-md">
-              <div className="mb-5 sm:mb-6">
-                <h1 className="text-2xl sm:text-3xl font-black text-[#9E2A2B] dark:text-[#F6F5F3] tracking-tight leading-tight">
+              <div className="mb-6">
+                <h1 className="text-2xl sm:text-[1.875rem] font-extrabold text-[#9E2A2B] dark:text-[#F6F5F3] tracking-[-0.025em] leading-tight">
                   Welcome back
                 </h1>
-                <div className="w-10 h-1 bg-[#D4AF37] rounded-full mt-2" />
-                <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] font-medium mt-2 leading-relaxed">
+                <div className="w-10 h-1 bg-[#D4AF37] rounded-full mt-2.5" />
+                <p className="text-sm text-[#6B6761] dark:text-[#A8A29E] font-normal mt-2.5 leading-relaxed">
                   Log in to access your account and track your application.
                 </p>
               </div>
 
               {error && (
-                <div className={`mb-4 text-xs font-bold rounded-lg p-3 text-center shadow-sm animate-shake tracking-wide ${
+                <div className={`mb-4 text-xs font-semibold rounded-lg p-3.5 text-center shadow-sm ${
                   error.toLowerCase().includes('google')
                     ? 'bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800/60 text-amber-900 dark:text-amber-300 leading-relaxed'
-                    : 'bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 text-red-600 dark:text-red-400'
+                    : 'bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 text-red-700 dark:text-red-400'
                 }`}>
                   <p>{error}</p>
                   {error.toLowerCase().includes('maintenance') && (
-                    <Link to="/maintenance" className="inline-block mt-1 font-bold text-[#9E2A2B] dark:text-[#D4AF37] underline tracking-wider">
+                    <Link to="/maintenance" className="inline-block mt-1 font-semibold text-[#9E2A2B] dark:text-[#D4AF37] underline underline-offset-2">
                       View System Status Page →
                     </Link>
                   )}
@@ -243,8 +243,8 @@ const Login = () => {
 
               <form onSubmit={handleLogin} className="space-y-4">
                 <div>
-                  <label className="block text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider mb-1.5">
-                    Email or Phone Number
+                  <label className="block text-[13px] font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
+                    Email or phone number
                   </label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B6761] dark:text-[#A8A29E]">
@@ -269,7 +269,7 @@ const Login = () => {
 
                 <div>
                   <div className="flex justify-between items-center mb-1.5">
-                    <label className="block text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider">
+                    <label className="block text-[13px] font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
                       Password
                     </label>
                   </div>

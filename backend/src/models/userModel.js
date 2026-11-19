@@ -10,6 +10,7 @@ const userSchema = new mongoose.Schema({
     email: { type: String, default: '' },
     recoveryEmail: { type: String, default: '', trim: true, lowercase: true },
     recoveryPhone: { type: String, default: '', trim: true },
+    emergencyContact: { type: String, default: '', trim: true },
     googleId: { type: String, default: '' },
     authProvider: { type: String, enum: ['local', 'google'], default: 'local' },
     password: { type: String, required: true },

@@ -23,29 +23,29 @@ colors:
   neutral-zinc: "#4B5563"
 typography:
   display:
-    fontFamily: "\"IBM Plex Sans\", system-ui, -apple-system, sans-serif"
+    fontFamily: "\"Manrope\", system-ui, -apple-system, sans-serif"
     fontSize: "2.25rem"
-    fontWeight: 600
-    lineHeight: 1.2
-    letterSpacing: "-0.02em"
+    fontWeight: 700
+    lineHeight: 1.18
+    letterSpacing: "-0.025em"
   headline:
-    fontFamily: "\"IBM Plex Sans\", system-ui, -apple-system, sans-serif"
+    fontFamily: "\"Manrope\", system-ui, -apple-system, sans-serif"
     fontSize: "1.5rem"
-    fontWeight: 600
-    lineHeight: 1.25
-    letterSpacing: "-0.015em"
+    fontWeight: 700
+    lineHeight: 1.24
+    letterSpacing: "-0.02em"
   title:
-    fontFamily: "\"IBM Plex Sans\", system-ui, -apple-system, sans-serif"
+    fontFamily: "\"Manrope\", system-ui, -apple-system, sans-serif"
     fontSize: "1.125rem"
     fontWeight: 600
     lineHeight: 1.35
   body:
-    fontFamily: "\"IBM Plex Sans\", system-ui, -apple-system, sans-serif"
+    fontFamily: "\"Manrope\", system-ui, -apple-system, sans-serif"
     fontSize: "0.875rem"
     fontWeight: 400
-    lineHeight: 1.5
+    lineHeight: 1.55
   label:
-    fontFamily: "\"IBM Plex Mono\", ui-monospace, monospace"
+    fontFamily: "\"JetBrains Mono\", ui-monospace, monospace"
     fontSize: "0.6875rem"
     fontWeight: 600
     lineHeight: 1.4
@@ -119,9 +119,9 @@ The palette avoids cold gray or neon SaaS gradients in favor of warm paper surfa
 
 ## Typography
 
-**Display Font:** `"IBM Plex Sans", system-ui, -apple-system, sans-serif`
-**Body Font:** `"IBM Plex Sans", system-ui, -apple-system, sans-serif`
-**Label/Mono Font:** `"IBM Plex Mono", ui-monospace, monospace`
+**Display Font:** `"Manrope", system-ui, -apple-system, sans-serif`
+**Body Font:** `"Manrope", system-ui, -apple-system, sans-serif`
+**Label/Mono Font:** `"JetBrains Mono", ui-monospace, monospace`
 
 **Character:** Civic sans-serif clarity paired with tabular monospace discipline so plate codes, OR numbers, and audit timestamps align vertically down tables.
 

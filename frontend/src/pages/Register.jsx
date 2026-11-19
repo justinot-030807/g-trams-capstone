@@ -20,8 +20,7 @@ import {
   AlertTriangle,
   Info,
   Hash,
-  ShieldAlert,
-  Phone
+  ShieldAlert
 } from 'lucide-react';
 import GoogleAuthButton from '../components/GoogleAuthButton';
 import GoogleOnboardingModal from '../components/GoogleOnboardingModal';
@@ -45,9 +44,6 @@ const Register = () => {
     name: incomingGoogle?.name || '', 
     address: '', 
     contact: incomingGoogle?.email || '',
-    backupContact: '',
-    recoveryEmail: '',
-    recoveryPhone: '',
     password: '', 
     confirmPassword: '', 
     todaAssociation: '',
@@ -55,7 +51,6 @@ const Register = () => {
     role: 'operator'
   });
   const [otpCode, setOtpCode] = useState('');
-  const [otpChannel, setOtpChannel] = useState('primary'); // 'primary' | 'backup'
 
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -216,34 +211,6 @@ const Register = () => {
       return setError('PLEASE ENTER A VALID EMAIL OR PHONE NUMBER.');
     }
 
-    if (formData.backupContact && formData.backupContact.trim()) {
-      if (!isValidContact(formData.backupContact)) {
-        return setError('PLEASE ENTER A VALID BACKUP EMAIL OR PHILIPPINE MOBILE NUMBER (09XXXXXXXXX).');
-      }
-      if (formData.backupContact.trim().toLowerCase() === formData.contact.trim().toLowerCase()) {
-        return setError('BACKUP CONTACT MUST BE DIFFERENT FROM YOUR PRIMARY CONTACT.');
-      }
-    }
-    if (formData.recoveryEmail && formData.recoveryEmail.trim()) {
-      const rec = formData.recoveryEmail.trim().toLowerCase();
-      if (!rec.includes('@') || !rec.includes('.')) {
-        return setError('MANGYARING MAGLAGAY NG WASTONG RECOVERY EMAIL FORMAT.');
-      }
-      if (rec === formData.contact.trim().toLowerCase()) {
-        return setError('ANG RECOVERY EMAIL AY DAPAT IBA SA INYONG PRIMARY CONTACT EMAIL.');
-      }
-    }
-    if (formData.recoveryPhone && formData.recoveryPhone.trim()) {
-      const recP = formData.recoveryPhone.trim().replace(/[\s\-()]/g, '');
-      const rawC = formData.contact.trim().replace(/[\s\-()]/g, '');
-      if (!/^(09|\+639)\d{9}$/.test(recP)) {
-        return setError('MANGYARING MAGLAGAY NG WASTONG RECOVERY PHONE (09XXXXXXXXX).');
-      }
-      if (recP === rawC) {
-        return setError('ANG RECOVERY PHONE AY DAPAT IBA SA INYONG PRIMARY PHONE NUMBER.');
-      }
-    }
-
     if (!formData.password || formData.password.length < 8) {
       return setError('PASSWORD MUST BE AT LEAST 8 CHARACTERS LONG.');
     }
@@ -265,17 +232,12 @@ const Register = () => {
 
     const rawContact = (formData.contact || '').trim();
     const cleanContact = rawContact.includes('@') ? rawContact.toLowerCase() : rawContact.replace(/[\s\-()]/g, '');
-    const rawBackup = (formData.backupContact || '').trim();
-    const cleanBackup = rawBackup.includes('@') ? rawBackup.toLowerCase() : rawBackup.replace(/[\s\-()]/g, '');
 
     const payload = {
       name: (formData.name || '').trim(),
       fullName: (formData.name || '').trim(),
       address: (formData.address || '').trim(),
       contact: cleanContact,
-      backupContact: cleanBackup || formData.recoveryPhone || formData.recoveryEmail || '',
-      recoveryEmail: formData.recoveryEmail?.trim()?.toLowerCase() || '',
-      recoveryPhone: formData.recoveryPhone?.trim() || '',
       password: formData.password,
       confirmPassword: formData.confirmPassword,
       todaAssociation: formData.todaAssociation || 'NON-TODA',
@@ -292,7 +254,6 @@ const Register = () => {
       clearTimeout(slowTimer);
       const data = await response.json();
       if (response.ok) { 
-        setOtpChannel('primary');
         setSuccess('OTP CODE SENT SUCCESSFULLY!'); 
         setResendCooldown(60);
         setStep(2); 
@@ -319,31 +280,24 @@ const Register = () => {
     }
   };
 
-  const handleResendOTP = async (targetChannel = otpChannel) => {
-    if (isLoading) return;
-    if (targetChannel === otpChannel && resendCooldown > 0) return;
+  const handleResendOTP = async () => {
+    if (isLoading || resendCooldown > 0) return;
     setError(''); setSuccess('');
     setIsLoading(true);
 
     const rawContact = (formData.contact || '').trim();
     const cleanContact = rawContact.includes('@') ? rawContact.toLowerCase() : rawContact.replace(/[\s\-()]/g, '');
-    const rawBackup = (formData.backupContact || '').trim();
-    const cleanBackup = rawBackup.includes('@') ? rawBackup.toLowerCase() : rawBackup.replace(/[\s\-()]/g, '');
 
     const payload = {
       name: (formData.name || '').trim(),
       fullName: (formData.name || '').trim(),
       address: (formData.address || '').trim(),
       contact: cleanContact,
-      backupContact: cleanBackup || formData.recoveryPhone || formData.recoveryEmail || '',
-      recoveryEmail: formData.recoveryEmail?.trim()?.toLowerCase() || '',
-      recoveryPhone: formData.recoveryPhone?.trim() || '',
       password: formData.password,
       confirmPassword: formData.confirmPassword,
       todaAssociation: formData.todaAssociation || 'NON-TODA',
       bodyNumber: (formData.bodyNumber || '').trim().toUpperCase(),
-      role: 'operator',
-      useBackupContact: targetChannel === 'backup'
+      role: 'operator'
     };
 
     try {
@@ -354,12 +308,7 @@ const Register = () => {
       });
       const data = await response.json();
       if (response.ok) {
-        setOtpChannel(targetChannel);
-        setSuccess(
-          targetChannel === 'backup'
-            ? 'OTP CODE SENT TO YOUR BACKUP CONTACT!'
-            : 'NEW OTP CODE SENT SUCCESSFULLY!'
-        );
+        setSuccess('NEW OTP CODE SENT SUCCESSFULLY!');
         setResendCooldown(60);
       } else {
         const errorMsg = data.message || data.error || 'FAILED TO RESEND OTP.';
@@ -490,15 +439,15 @@ const Register = () => {
           {/* RIGHT COLUMN: CLEAN FORM PANEL (No card) */}
           <div className="md:col-span-7 lg:col-span-7 flex flex-col items-center justify-start px-4 sm:px-8 md:px-14 lg:px-20 pt-3 sm:pt-6 md:pt-10 pb-4 sm:pb-8 bg-white dark:bg-[#1C1917] min-h-full">
             <div className="w-full max-w-xl">
-              <div className="mb-4 sm:mb-5">
-                <h1 className="text-2xl sm:text-3xl font-black text-[#9E2A2B] dark:text-[#F6F5F3] tracking-tight leading-tight">
-                  {step === 1 ? 'Register' : 'Verify contact'}
+              <div className="mb-5">
+                <h1 className="text-2xl sm:text-[1.875rem] font-extrabold text-[#9E2A2B] dark:text-[#F6F5F3] tracking-[-0.025em] leading-tight">
+                  {step === 1 ? 'Create operator account' : 'Verify your contact'}
                 </h1>
-                <div className="w-10 h-1 bg-[#D4AF37] rounded-full mt-2" />
-                <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] font-medium mt-2 leading-relaxed">
+                <div className="w-10 h-1 bg-[#D4AF37] rounded-full mt-2.5" />
+                <p className="text-sm text-[#6B6761] dark:text-[#A8A29E] font-normal mt-2.5 leading-relaxed">
                   {step === 1
-                    ? 'Create your operator account to apply online.'
-                    : `Enter the 6-digit OTP sent to ${otpChannel === 'backup' ? (formData.backupContact || formData.recoveryPhone || formData.recoveryEmail || formData.contact) : formData.contact}`}
+                    ? 'Register with your official TODA record to file and manage franchise applications.'
+                    : `Enter the 6-digit verification code sent to ${formData.contact}.`}
                 </p>
               </div>
 
@@ -544,10 +493,10 @@ const Register = () => {
                     </div>
                   </div>
 
-                  <form onSubmit={handleSubmitRegisterForm} className="space-y-2.5 sm:space-y-3">
+                  <form onSubmit={handleSubmitRegisterForm} className="space-y-3.5">
                     {/* Full Name */}
                     <div>
-                      <label className="block text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider mb-1">Full Name</label>
+                      <label className="block text-[13px] font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">Full name</label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B6761] dark:text-[#A8A29E]">
                           <User size={18} />
@@ -569,7 +518,7 @@ const Register = () => {
                     {/* Barangay & TODA */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider mb-1">Barangay</label>
+                        <label className="block text-[13px] font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">Barangay</label>
                         <div className="relative">
                           <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B6761] dark:text-[#A8A29E] z-10">
                             <MapPin size={18} />
@@ -596,7 +545,7 @@ const Register = () => {
                         </div>
                       </div>
                       <div>
-                        <label className="block text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider mb-1">TODA Association</label>
+                        <label className="block text-[13px] font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">TODA association</label>
                         <div className="relative">
                           <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B6761] dark:text-[#A8A29E] z-10">
                             <Building2 size={18} />
@@ -629,12 +578,12 @@ const Register = () => {
 
                     {/* Assigned Body Number (Required for Operator Registration) */}
                     <div>
-                      <div className="flex items-center justify-between mb-1">
-                        <label className="block text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#EAE7E1] uppercase tracking-wider">
-                          Assigned Body Number
+                      <div className="flex items-center justify-between mb-1.5">
+                        <label className="block text-[13px] font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                          Assigned body number
                         </label>
-                        <span className="text-[11px] font-bold text-[#9E2A2B] dark:text-[#D4AF37]">
-                          * Required (TODA Roster)
+                        <span className="text-[11px] font-semibold text-[#9E2A2B] dark:text-[#D4AF37]">
+                          Required · TODA Masterlist
                         </span>
                       </div>
                       <div className="relative">
@@ -652,11 +601,11 @@ const Register = () => {
                             if (error) setError('');
                           }} 
                           required 
-                          className={`${inputClasses} font-mono font-bold tracking-wider uppercase`} 
-                          placeholder="hal. GAS-001 o 042" 
+                          className={`${inputClasses} font-mono font-semibold tracking-wide uppercase placeholder:font-sans placeholder:normal-case placeholder:tracking-normal`} 
+                          placeholder="e.g. GAS-001 or 042" 
                         />
                       </div>
-                      <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1 font-medium">
+                      <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1">
                         Ipasok ang opisyal na Body Number na nakatalaga sa inyong unit ayon sa TODA Masterlist.
                       </p>
                     </div>
@@ -677,7 +626,7 @@ const Register = () => {
                                 <div>
                                   <span className="font-bold">Verified TODA Member: </span>
                                   <span>
-                                    Pangalan <strong>"{todaCheckResult.matchedMember || formData.name}"</strong> ay opisyal na nakatala sa <strong>{formData.todaAssociation}</strong> (Body No. <strong>{todaCheckResult.matchedBodyNumber || formData.bodyNumber}</strong>).
+                                    Pangalan <strong>"{todaCheckResult.matchedMember || formData.name}"</strong> ay opisyal na nakatala sa <strong>{formData.todaAssociation}</strong> (Body No. <strong className="font-mono">{todaCheckResult.matchedBodyNumber || formData.bodyNumber}</strong>).
                                   </span>
                                 </div>
                               </div>
@@ -733,9 +682,9 @@ const Register = () => {
                                 </button>
                               </div>
                             ) : todaCheckResult.status === 'no_roster_on_file' ? (
-                              <div className="flex items-start justify-between gap-2 text-slate-700 dark:text-slate-300 bg-slate-50 dark:bg-slate-900/40 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800">
+                              <div className="flex items-start justify-between gap-2 text-[#1F1D1B] dark:text-[#EAE7E1] bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
                                 <div className="flex items-start gap-2">
-                                  <Info size={16} className="shrink-0 mt-0.5 text-slate-500" />
+                                  <Info size={16} className="shrink-0 mt-0.5 text-[#6B6761] dark:text-[#A8A29E]" />
                                   <div>
                                     <span className="font-bold">Pending Roster: </span>
                                     <span>{todaCheckResult.message}</span>
@@ -750,8 +699,8 @@ const Register = () => {
                                 </button>
                               </div>
                             ) : (
-                              <div className="flex items-start gap-2 text-slate-600 dark:text-slate-400 bg-slate-50 dark:bg-slate-900/40 p-2.5 rounded-lg border border-slate-200 dark:border-slate-800">
-                                <Info size={16} className="shrink-0 mt-0.5 text-slate-500" />
+                              <div className="flex items-start gap-2 text-[#6B6761] dark:text-[#A8A29E] bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
+                                <Info size={16} className="shrink-0 mt-0.5 text-[#6B6761] dark:text-[#A8A29E]" />
                                 <div>
                                   <span>{todaCheckResult.message || `Pakilagay ang inyong legal name at assigned body number para sa ${formData.todaAssociation}.`}</span>
                                 </div>
@@ -764,7 +713,7 @@ const Register = () => {
 
                     {/* Email or Phone Number */}
                     <div>
-                      <label className="block text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] normal-case mb-2">Email or phone number</label>
+                      <label className="block text-[13px] font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">Email or phone number</label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B6761] dark:text-[#A8A29E]">
                           <Mail size={18} />
@@ -785,52 +734,15 @@ const Register = () => {
                           placeholder="juan@gmail.com or 09123456789" 
                         />
                       </div>
-                    </div>
-
-                    {/* Backup Contact / Account Recovery Options */}
-                    <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <label className="block text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] normal-case">
-                          Backup Contact / Recovery Phone or Email <span className="text-[#9E2A2B] dark:text-red-400 font-bold">*</span>
-                        </label>
-                        <span className="text-xs text-[#9E2A2B] dark:text-red-400 font-medium">Required</span>
-                      </div>
-                      <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B6761] dark:text-[#A8A29E]">
-                          <Phone size={18} />
-                        </div>
-                        <input 
-                          type="text" 
-                          name="backupContact" 
-                          maxLength="50" 
-                          value={formData.backupContact || formData.recoveryPhone || formData.recoveryEmail || ''} 
-                          onChange={(e) => {
-                            handleChange(e);
-                            if (e.target.value.includes('@')) {
-                              setFormData(prev => ({ ...prev, recoveryEmail: e.target.value, recoveryPhone: '', backupContact: e.target.value }));
-                            } else {
-                              setFormData(prev => ({ ...prev, recoveryPhone: e.target.value, recoveryEmail: '', backupContact: e.target.value }));
-                            }
-                          }}
-                          autoComplete="tel"
-                          inputMode="text"
-                          autoCapitalize="none"
-                          autoCorrect="off"
-                          spellCheck="false"
-                          required 
-                          className={inputClasses} 
-                          placeholder="Secondary mobile (09XXXXXXXXX) or recovery email" 
-                        />
-                      </div>
                       <p className="mt-1 text-xs text-[#6B6761] dark:text-[#A8A29E]">
-                        Pang-recover kung sakaling mawala ang inyong primary email o SIM card.
+                        Puwedeng magdagdag ng backup recovery contact mamaya sa Profile Settings.
                       </p>
                     </div>
 
                     {/* Password & Confirm Password */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
-                        <label className="block text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] normal-case mb-2">Password</label>
+                        <label className="block text-[13px] font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">Password</label>
                         <div className="relative">
                           <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B6761] dark:text-[#A8A29E]">
                             <Lock size={18} />
@@ -901,7 +813,7 @@ const Register = () => {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] normal-case mb-2">Confirm password</label>
+                        <label className="block text-[13px] font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">Confirm password</label>
                         <div className="relative">
                           <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-[#6B6761] dark:text-[#A8A29E]">
                             <Lock size={18} />
@@ -1069,7 +981,7 @@ const Register = () => {
                   <div className="flex items-center justify-between pt-2">
                     <button 
                       type="button" 
-                      onClick={() => handleResendOTP(otpChannel)} 
+                      onClick={() => handleResendOTP()} 
                       disabled={resendCooldown > 0 || isLoading}
                       className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline disabled:opacity-50 disabled:no-underline cursor-pointer"
                     >
@@ -1085,13 +997,11 @@ const Register = () => {
                   </div>
 
                   {/* Primary Contact Ownership Notice */}
-                  {Boolean(formData.backupContact || formData.recoveryPhone || formData.recoveryEmail) && (
-                    <div className="mt-3 p-3.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3]/80 dark:bg-[#14110F]/80">
-                      <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-medium leading-relaxed">
-                        Ang verification code ay ipinadala sa inyong Primary Contact (<strong className="text-[#1F1D1B] dark:text-[#F6F5F3]">{formData.contact}</strong>) upang kumpirmahin ang pagmamay-ari nito. Ang inyong Backup Contact (<strong className="text-[#1F1D1B] dark:text-[#F6F5F3]">{formData.backupContact || formData.recoveryPhone || formData.recoveryEmail}</strong>) ay naka-save para sa Account Recovery (Forgot Password).
-                      </p>
-                    </div>
-                  )}
+                  <div className="mt-3 p-3.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3]/80 dark:bg-[#14110F]/80">
+                    <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-medium leading-relaxed">
+                      Ang verification code ay ipinadala sa inyong Primary Contact (<strong className="text-[#1F1D1B] dark:text-[#F6F5F3]">{formData.contact}</strong>). Pagkatapos mag-verify, puwede kayong magdagdag ng recovery phone o email sa Profile Settings.
+                    </p>
+                  </div>
                 </form>
               )}
 

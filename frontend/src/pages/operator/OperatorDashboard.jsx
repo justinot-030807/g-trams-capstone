@@ -22,6 +22,7 @@ import LanguagePreferenceModal from '../../components/operator/LanguagePreferenc
 import FeedbackModal from '../../components/common/FeedbackModal';
 import ApplicationSummaryModal from '../../components/operator/ApplicationSummaryModal';
 import RequestCancellationModal from '../../components/operator/RequestCancellationModal';
+import ProfileSetupCard from '../../components/operator/ProfileSetupCard';
 import { useNotifications } from '../../context/NotificationContext';
 import { 
   getNotificationVisuals, 
@@ -167,6 +168,14 @@ const OperatorDashboard = () => {
     return saved ? parseInt(saved, 10) || 2 : 2;
   });
 
+  const [currentUserProfile, setCurrentUserProfile] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('user') || '{}');
+    } catch {
+      return {};
+    }
+  });
+
   const [profilePic, setProfilePic] = useState(() => {
     try {
       const user = JSON.parse(localStorage.getItem('user') || '{}');
@@ -175,6 +184,31 @@ const OperatorDashboard = () => {
       return null;
     }
   });
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    let active = true;
+    const controller = new AbortController();
+    fetch(`${import.meta.env.VITE_API_URL || ''}/api/v1/auth/profile`, {
+      headers: { Authorization: `Bearer ${token}` },
+      signal: controller.signal
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((dbUser) => {
+        if (!active || !dbUser || localStorage.getItem('token') !== token) return;
+        setCurrentUserProfile(dbUser);
+        if (dbUser.profilePic) setProfilePic(dbUser.profilePic);
+        try {
+          localStorage.setItem('user', JSON.stringify(dbUser));
+        } catch {}
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, []);
 
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const { notifications, unreadCount: unreadNotifCount, markAllRead, markAsRead } = useNotifications();
@@ -975,6 +1009,19 @@ const OperatorDashboard = () => {
           )}
         </div>
       </div>
+
+      {/* SETUP YOUR PROFILE PROGRESSIVE CHECKLIST (Only renders while incomplete) */}
+      {!isLoading && (
+        <div className="mb-6">
+          <ProfileSetupCard
+            variant="dashboard"
+            user={currentUserProfile}
+            profilePicUrl={profilePic}
+            dismissible
+            onAction={(stepId) => navigate(`/operator-settings?setup=${stepId}`)}
+          />
+        </div>
+      )}
 
       {/* TODA PRESIDENT SUMMARY SECTION */}
       {isTodaPresident && !isLoading && (

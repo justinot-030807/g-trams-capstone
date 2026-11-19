@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import MainLayout from '../../components/MainLayout';
+import ProfileSetupCard from '../../components/operator/ProfileSetupCard';
 import { 
   User, Lock, Camera, Save, Loader2, Phone, Mail,
   CheckCircle2, AlertCircle, Moon, Sun, Globe, 
@@ -27,6 +28,7 @@ import {
 
 const OperatorSettings = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { language, setLanguage, t } = useLanguage();
   const { theme, setTheme, isDark } = useTheme();
 
@@ -35,6 +37,7 @@ const OperatorSettings = () => {
 
   // Modal Visibility States
   const [isEditProfileModalOpen, setIsEditProfileModalOpen] = useState(false);
+  const [isRecoveryModalOpen, setIsRecoveryModalOpen] = useState(false);
   const [isIdCardModalOpen, setIsIdCardModalOpen] = useState(false);
   const [isVaultModalOpen, setIsVaultModalOpen] = useState(false);
   const [isNotificationModalOpen, setIsNotificationModalOpen] = useState(false);
@@ -45,6 +48,11 @@ const OperatorSettings = () => {
   const [isClearCacheModalOpen, setIsClearCacheModalOpen] = useState(false);
   const [isTermsModalOpen, setIsTermsModalOpen] = useState(false);
   const [isLogoutConfirmOpen, setIsLogoutConfirmOpen] = useState(false);
+
+  // Password confirmation state when updating primary/recovery contact details
+  const [profileConfirmPassword, setProfileConfirmPassword] = useState('');
+  const [showProfileConfirmPass, setShowProfileConfirmPass] = useState(false);
+  const avatarHeaderInputRef = useRef(null);
 
   // Current logged in user object (reactive)
   const [currentUser, setCurrentUser] = useState(() => {
@@ -249,6 +257,25 @@ const OperatorSettings = () => {
     fetchOperatorProfile();
   }, []);
 
+  // Deep-link support from Dashboard "Setup your profile" card (?setup=recovery|emergency|photo|profile)
+  useEffect(() => {
+    if (isLoading) return;
+    const setupParam = searchParams.get('setup');
+    if (!setupParam) return;
+    if (setupParam === 'recovery') {
+      setProfileConfirmPassword('');
+      setShowProfileConfirmPass(false);
+      setIsRecoveryModalOpen(true);
+    } else if (setupParam === 'photo' || setupParam === 'emergency' || setupParam === 'profile') {
+      setProfileConfirmPassword('');
+      setShowProfileConfirmPass(false);
+      setIsEditProfileModalOpen(true);
+    }
+    const nextParams = new URLSearchParams(searchParams);
+    nextParams.delete('setup');
+    setSearchParams(nextParams, { replace: true });
+  }, [isLoading, searchParams, setSearchParams]);
+
   // Fetch Vault Documents
   const fetchVaultDocs = async () => {
     setIsVaultLoading(true);
@@ -422,6 +449,23 @@ const OperatorSettings = () => {
       }
     }
 
+    const normStr = (v) => String(v || '').trim();
+    const isContactModified = normStr(profileData.contact).toLowerCase() !== normStr(currentUser?.contact).toLowerCase();
+    const isRecEmailModified = normStr(profileData.recoveryEmail).toLowerCase() !== normStr(currentUser?.recoveryEmail).toLowerCase();
+    const isRecPhoneModified = normStr(profileData.recoveryPhone).replace(/[\s\-()]/g, '') !== normStr(currentUser?.recoveryPhone).replace(/[\s\-()]/g, '');
+    const isGoogleOnlyInitialRecovery =
+      currentUser?.authProvider === 'google' &&
+      !isContactModified &&
+      !normStr(currentUser?.recoveryEmail) &&
+      !normStr(currentUser?.recoveryPhone) &&
+      !normStr(currentUser?.backupContact);
+    const requiresPasswordConfirm = (isContactModified || isRecEmailModified || isRecPhoneModified) && !isGoogleOnlyInitialRecovery;
+
+    if (requiresPasswordConfirm && !profileConfirmPassword.trim()) {
+      showToast('Please enter your current password to confirm contact or recovery changes.', 'error');
+      return;
+    }
+
     setIsProcessing(true);
     try {
       const formData = new FormData();
@@ -429,11 +473,14 @@ const OperatorSettings = () => {
       formData.append('contact', profileData.contact);
       formData.append('recoveryEmail', profileData.recoveryEmail || '');
       formData.append('recoveryPhone', profileData.recoveryPhone || '');
-      formData.append('emergencyContact', profileData.emergencyContact);
+      formData.append('emergencyContact', profileData.emergencyContact || '');
       formData.append('address', profileData.address);
       formData.append('todaAssociation', profileData.todaAssociation);
       formData.append('language', preferences.language);
       formData.append('theme', preferences.theme);
+      if (requiresPasswordConfirm && profileConfirmPassword.trim()) {
+        formData.append('currentPassword', profileConfirmPassword.trim());
+      }
 
       if (profilePicFile) formData.append('profilePic', profilePicFile);
 
@@ -462,12 +509,18 @@ const OperatorSettings = () => {
           setProfilePicPreview(updated.profilePic);
         }
         setProfilePicFile(null);
+        setProfileConfirmPassword('');
+        setShowProfileConfirmPass(false);
+        const wasRecoveryModal = isRecoveryModalOpen;
         setIsEditProfileModalOpen(false);
+        setIsRecoveryModalOpen(false);
         setFeedbackModal({
           isOpen: true,
           type: 'success',
-          title: 'Profile Updated',
-          message: 'Your profile details and contact information have been saved successfully.'
+          title: wasRecoveryModal ? 'Account Recovery Saved' : 'Profile Updated',
+          message: wasRecoveryModal
+            ? 'Your recovery contact details are now active for Forgot Password account protection.'
+            : 'Your profile details and contact information have been saved successfully.'
         });
       } else {
         const errData = await res.json().catch(() => ({}));
@@ -726,6 +779,28 @@ const OperatorSettings = () => {
     ? (isEmailContact ? 'Email Address' : 'Phone Number')
     : 'Email / Phone Number';
 
+  const normField = (v) => String(v || '').trim();
+  const hasRecoveryConfigured = Boolean(
+    normField(profileData.recoveryEmail) ||
+    normField(profileData.recoveryPhone) ||
+    normField(currentUser?.backupContact)
+  );
+  const isContactModified =
+    normField(profileData.contact).toLowerCase() !== normField(currentUser?.contact).toLowerCase();
+  const isRecEmailModified =
+    normField(profileData.recoveryEmail).toLowerCase() !== normField(currentUser?.recoveryEmail).toLowerCase();
+  const isRecPhoneModified =
+    normField(profileData.recoveryPhone).replace(/[\s\-()]/g, '') !==
+    normField(currentUser?.recoveryPhone).replace(/[\s\-()]/g, '');
+  const isGoogleOnlyInitialRecovery =
+    currentUser?.authProvider === 'google' &&
+    !isContactModified &&
+    !normField(currentUser?.recoveryEmail) &&
+    !normField(currentUser?.recoveryPhone) &&
+    !normField(currentUser?.backupContact);
+  const requiresSensitivePasswordConfirm =
+    (isContactModified || isRecEmailModified || isRecPhoneModified) && !isGoogleOnlyInitialRecovery;
+
   return (
     <MainLayout>
       {/* Minimalist Floating Toast Notification */}
@@ -777,6 +852,7 @@ const OperatorSettings = () => {
                   >
                     <Camera size={15} />
                     <input
+                      ref={avatarHeaderInputRef}
                       id="avatar-upload-header"
                       type="file"
                       accept="image/*,.webp,image/webp"
@@ -805,7 +881,10 @@ const OperatorSettings = () => {
                   <div className="mt-2.5">
                     <button
                       type="button"
-                      onClick={() => setIsEditProfileModalOpen(true)}
+                      onClick={() => {
+                        setProfileConfirmPassword('');
+                        setIsEditProfileModalOpen(true);
+                      }}
                       className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-bold bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] text-white dark:text-[#14110F] transition-colors active:scale-95 shadow-sm cursor-pointer min-h-[44px]"
                     >
                       <Edit3 size={13} />
@@ -815,6 +894,29 @@ const OperatorSettings = () => {
                 </div>
               </div>
             </div>
+
+            {/* SETUP YOUR PROFILE CHECKLIST / READINESS */}
+            <ProfileSetupCard
+              variant="settings"
+              user={{ ...currentUser, ...profileData }}
+              profilePicUrl={profilePicPreview}
+              onAction={(stepId) => {
+                if (stepId === 'recovery') {
+                  setProfileConfirmPassword('');
+                  setIsRecoveryModalOpen(true);
+                } else if (stepId === 'photo') {
+                  if (avatarHeaderInputRef.current) {
+                    avatarHeaderInputRef.current.click();
+                  } else {
+                    setProfileConfirmPassword('');
+                    setIsEditProfileModalOpen(true);
+                  }
+                } else {
+                  setProfileConfirmPassword('');
+                  setIsEditProfileModalOpen(true);
+                }
+              }}
+            />
 
             {/* GROUP 1: OPERATOR CREDENTIALS */}
             <div>
@@ -961,6 +1063,47 @@ const OperatorSettings = () => {
                 {t('settings.accountGroup', 'Account')}
               </h3>
               <div className="bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm overflow-hidden divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
+                {/* Account Recovery Row */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProfileConfirmPassword('');
+                    setShowProfileConfirmPass(false);
+                    setIsRecoveryModalOpen(true);
+                  }}
+                  className="w-full flex items-center justify-between gap-3 p-4 hover:bg-[#F6F5F3] dark:hover:bg-[#25211E] transition-colors text-left group cursor-pointer min-h-[48px]"
+                >
+                  <div className="flex items-center gap-3.5 min-w-0">
+                    <div className="w-10 h-10 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+                      <ShieldCheck size={20} />
+                    </div>
+                    <div className="min-w-0">
+                      <span className="block text-sm font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
+                        {t('settings.accountRecovery', 'Account Recovery')}
+                      </span>
+                      <span className="block text-xs text-[#6B6761] dark:text-[#A8A29E] truncate mt-0.5">
+                        {hasRecoveryConfigured
+                          ? (profileData.recoveryPhone || profileData.recoveryEmail || currentUser?.backupContact)
+                          : t('settings.accountRecoveryHint', 'Add a backup phone or email for password recovery')}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {hasRecoveryConfigured ? (
+                      <span className="text-[11px] font-bold text-[#15803D] dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/60 inline-flex items-center gap-1">
+                        <CheckCircle2 size={11} />
+                        <span>Protected</span>
+                      </span>
+                    ) : (
+                      <span className="text-[11px] font-bold text-[#B45309] dark:text-amber-300 bg-amber-50 dark:bg-amber-950/50 px-2.5 py-0.5 rounded-full border border-amber-200 dark:border-amber-800/60 inline-flex items-center gap-1">
+                        <AlertCircle size={11} />
+                        <span>Setup needed</span>
+                      </span>
+                    )}
+                    <ChevronRight size={18} className="text-[#6B6761] dark:text-[#A8A29E] group-hover:translate-x-0.5 transition-transform" />
+                  </div>
+                </button>
+
                 {/* Password Row */}
                 <button
                   type="button"
@@ -1192,6 +1335,45 @@ const OperatorSettings = () => {
                     className={inputClasses}
                   />
                 </div>
+
+                {requiresSensitivePasswordConfirm && (
+                  <div className="p-3.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#D4AF37]/50 dark:border-[#D4AF37]/40 space-y-2">
+                    <div className="flex items-start gap-2">
+                      <Lock size={14} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0 mt-0.5" />
+                      <div>
+                        <label
+                          htmlFor="edit-profile-confirm-password"
+                          className="block text-xs font-bold text-[#1F1D1B] dark:text-[#F6F5F3]"
+                        >
+                          Confirm current password
+                        </label>
+                        <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-0.5 leading-snug">
+                          Required to verify changes to your primary or recovery contact details.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="relative">
+                      <input
+                        id="edit-profile-confirm-password"
+                        type={showProfileConfirmPass ? 'text' : 'password'}
+                        value={profileConfirmPassword}
+                        onChange={(e) => setProfileConfirmPassword(e.target.value)}
+                        placeholder="Enter your current password"
+                        required
+                        autoComplete="current-password"
+                        className={`${inputClasses} pr-10`}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowProfileConfirmPass(prev => !prev)}
+                        aria-label={showProfileConfirmPass ? 'Hide current password' : 'Show current password'}
+                        className="absolute inset-y-0 right-0 px-3 flex items-center text-[#6B6761] hover:text-[#9E2A2B] dark:text-[#A8A29E] dark:hover:text-[#D4AF37] cursor-pointer"
+                      >
+                        {showProfileConfirmPass ? <EyeOff size={15} /> : <Eye size={15} />}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -1232,7 +1414,11 @@ const OperatorSettings = () => {
               <div className="pt-4 border-t border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-end gap-2.5">
                 <button
                   type="button"
-                  onClick={() => setIsEditProfileModalOpen(false)}
+                  onClick={() => {
+                    setProfileConfirmPassword('');
+                    setShowProfileConfirmPass(false);
+                    setIsEditProfileModalOpen(false);
+                  }}
                   disabled={isProcessing}
                   className="px-4 py-2.5 rounded-lg font-bold text-[#1F1D1B] dark:text-[#F6F5F3] bg-[#F6F5F3] dark:bg-[#2E2A27] hover:bg-[#E4E1DC] dark:hover:bg-[#3D3834] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs transition-colors cursor-pointer min-h-[44px]"
                 >
@@ -1252,6 +1438,203 @@ const OperatorSettings = () => {
                     <>
                       <Save size={14} />
                       <span>Save Changes</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 1B. ACCOUNT RECOVERY MODAL */}
+      {isRecoveryModalOpen && (
+        <div
+          className="fixed inset-0 z-[9999] flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="account-recovery-modal-title"
+        >
+          <div
+            className="fixed inset-0 bg-black/60 animate-in fade-in duration-200 cursor-pointer"
+            onClick={() => {
+              if (isProcessing) return;
+              setProfileData(prev => ({
+                ...prev,
+                recoveryEmail: currentUser?.recoveryEmail || '',
+                recoveryPhone: currentUser?.recoveryPhone || ''
+              }));
+              setProfileConfirmPassword('');
+              setShowProfileConfirmPass(false);
+              setIsRecoveryModalOpen(false);
+            }}
+          />
+          <div className="relative z-10 w-full max-w-md bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg shadow-xl overflow-hidden flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-150">
+            {/* Header */}
+            <div className="p-4 sm:p-5 border-b border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5 min-w-0">
+                <div className="w-9 h-9 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#9E2A2B]/20 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+                  <ShieldCheck size={18} />
+                </div>
+                <div className="min-w-0">
+                  <h3
+                    id="account-recovery-modal-title"
+                    className="text-base font-bold text-[#1F1D1B] dark:text-[#F6F5F3]"
+                  >
+                    Account Recovery
+                  </h3>
+                  <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] truncate">
+                    Backup email or phone for Forgot Password OTP
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                aria-label="Close Account Recovery modal"
+                onClick={() => {
+                  if (isProcessing) return;
+                  setProfileData(prev => ({
+                    ...prev,
+                    recoveryEmail: currentUser?.recoveryEmail || '',
+                    recoveryPhone: currentUser?.recoveryPhone || ''
+                  }));
+                  setProfileConfirmPassword('');
+                  setShowProfileConfirmPass(false);
+                  setIsRecoveryModalOpen(false);
+                }}
+                disabled={isProcessing}
+                className="w-8 h-8 rounded-lg bg-[#F6F5F3] dark:bg-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] flex items-center justify-center hover:bg-[#E4E1DC] dark:hover:bg-[#3D3834] transition-colors cursor-pointer shrink-0"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleSaveProfile} className="flex-1 overflow-y-auto p-5 sm:p-6 space-y-4">
+              <div className="p-3.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs text-[#6B6761] dark:text-[#A8A29E] leading-relaxed">
+                Add at least one secondary phone number or email address different from your primary login ({profileData.contact || 'your primary contact'}). If you lose your SIM card or email access, G-TRAMS can send your password reset OTP here.
+              </div>
+
+              <div>
+                <label
+                  htmlFor="recovery-modal-phone"
+                  className="block text-[13px] font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] mb-1.5"
+                >
+                  Recovery phone number
+                </label>
+                <div className="relative">
+                  <Phone
+                    size={15}
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6B6761] dark:text-[#A8A29E] pointer-events-none"
+                  />
+                  <input
+                    id="recovery-modal-phone"
+                    type="tel"
+                    maxLength="20"
+                    value={profileData.recoveryPhone}
+                    onChange={(e) => setProfileData(prev => ({ ...prev, recoveryPhone: e.target.value }))}
+                    placeholder="e.g. 09187654321"
+                    className={`${inputClasses} pl-10 min-h-[44px]`}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label
+                  htmlFor="recovery-modal-email"
+                  className="block text-[13px] font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] mb-1.5"
+                >
+                  Recovery email address
+                </label>
+                <div className="relative">
+                  <Mail
+                    size={15}
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6B6761] dark:text-[#A8A29E] pointer-events-none"
+                  />
+                  <input
+                    id="recovery-modal-email"
+                    type="email"
+                    maxLength="80"
+                    value={profileData.recoveryEmail}
+                    onChange={(e) => setProfileData(prev => ({ ...prev, recoveryEmail: e.target.value }))}
+                    placeholder="e.g. backup.email@gmail.com"
+                    className={`${inputClasses} pl-10 min-h-[44px]`}
+                  />
+                </div>
+              </div>
+
+              {requiresSensitivePasswordConfirm && (
+                <div className="p-3.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#D4AF37]/50 dark:border-[#D4AF37]/40 space-y-2">
+                  <div className="flex items-start gap-2">
+                    <Lock size={14} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0 mt-0.5" />
+                    <div>
+                      <label
+                        htmlFor="recovery-modal-confirm-password"
+                        className="block text-xs font-bold text-[#1F1D1B] dark:text-[#F6F5F3]"
+                      >
+                        Confirm current password
+                      </label>
+                      <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-0.5 leading-snug">
+                        Enter your account password to save recovery contact changes.
+                      </p>
+                    </div>
+                  </div>
+                  <div className="relative">
+                    <input
+                      id="recovery-modal-confirm-password"
+                      type={showProfileConfirmPass ? 'text' : 'password'}
+                      value={profileConfirmPassword}
+                      onChange={(e) => setProfileConfirmPassword(e.target.value)}
+                      placeholder="Enter your current password"
+                      required
+                      autoComplete="current-password"
+                      className={`${inputClasses} pr-10 min-h-[44px]`}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowProfileConfirmPass(prev => !prev)}
+                      aria-label={showProfileConfirmPass ? 'Hide current password' : 'Show current password'}
+                      className="absolute inset-y-0 right-0 px-3 flex items-center text-[#6B6761] hover:text-[#9E2A2B] dark:text-[#A8A29E] dark:hover:text-[#D4AF37] cursor-pointer"
+                    >
+                      {showProfileConfirmPass ? <EyeOff size={15} /> : <Eye size={15} />}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="pt-4 border-t border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-end gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setProfileData(prev => ({
+                      ...prev,
+                      recoveryEmail: currentUser?.recoveryEmail || '',
+                      recoveryPhone: currentUser?.recoveryPhone || ''
+                    }));
+                    setProfileConfirmPassword('');
+                    setShowProfileConfirmPass(false);
+                    setIsRecoveryModalOpen(false);
+                  }}
+                  disabled={isProcessing}
+                  className="px-4 py-2.5 rounded-lg font-bold text-[#1F1D1B] dark:text-[#F6F5F3] bg-[#F6F5F3] dark:bg-[#2E2A27] hover:bg-[#E4E1DC] dark:hover:bg-[#3D3834] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs transition-colors cursor-pointer min-h-[44px]"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isProcessing || (!isRecEmailModified && !isRecPhoneModified)}
+                  className="px-5 py-2.5 rounded-lg font-bold text-white bg-[#9E2A2B] hover:bg-[#7A1B22] dark:bg-[#D4AF37] dark:hover:bg-[#c29e2f] dark:text-[#14110F] text-xs shadow-sm flex items-center gap-2 cursor-pointer active:scale-95 transition-all disabled:opacity-50 disabled:cursor-not-allowed min-h-[44px]"
+                >
+                  {isProcessing ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save size={14} />
+                      <span>Save Recovery Details</span>
                     </>
                   )}
                 </button>

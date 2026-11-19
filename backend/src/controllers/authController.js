@@ -197,10 +197,6 @@ exports.register = async (req, res) => {
             return res.status(400).json({ message: 'Contact email or phone number is required.' });
         }
 
-        if (!normalizedBackupContact && process.env.NODE_ENV !== 'test') {
-            return res.status(400).json({ message: 'Backup contact (email or phone number) is required.' });
-        }
-
         if (normalizedBackupContact && normalizedBackupContact.toLowerCase() === normalizedContact.toLowerCase()) {
             return res.status(400).json({ message: 'Backup contact must be different from primary contact.' });
         }
@@ -1201,10 +1197,17 @@ exports.updateProfile = async (req, res) => {
         const isContactChanging = contact !== undefined && normalizeContact(contact) !== normalizeContact(currentUser.contact);
         const isRecEmailChanging = req.body.recoveryEmail !== undefined && String(req.body.recoveryEmail || '').trim().toLowerCase() !== String(currentUser.recoveryEmail || '').trim().toLowerCase();
         const isRecPhoneChanging = req.body.recoveryPhone !== undefined && normalizeContact(req.body.recoveryPhone) !== normalizeContact(currentUser.recoveryPhone);
+        const isGoogleLinked = currentUser.authProvider === 'google' || Boolean(currentUser.googleId);
+        const isInitialGoogleRecoverySetup =
+            isGoogleLinked &&
+            currentUser.authProvider === 'google' &&
+            !isContactChanging &&
+            !currentUser.recoveryEmail &&
+            !currentUser.recoveryPhone &&
+            !currentUser.backupContact;
 
-        if ((isContactChanging || isRecEmailChanging || isRecPhoneChanging) && process.env.NODE_ENV !== 'test') {
+        if ((isContactChanging || isRecEmailChanging || isRecPhoneChanging) && !isInitialGoogleRecoverySetup && process.env.NODE_ENV !== 'test') {
             const suppliedPassword = String(req.body.currentPassword || req.body.password || '').trim();
-            const isGoogleLinked = currentUser.authProvider === 'google' || Boolean(currentUser.googleId);
             if (!suppliedPassword || !(await currentUser.matchPassword(suppliedPassword))) {
                 return res.status(401).json({
                     message: isGoogleLinked
@@ -1250,6 +1253,12 @@ exports.updateProfile = async (req, res) => {
         if (contact !== undefined) updateData.contact = normalizeContact(contact);
         if (req.body.recoveryEmail !== undefined) updateData.recoveryEmail = String(req.body.recoveryEmail || '').trim().toLowerCase();
         if (req.body.recoveryPhone !== undefined) updateData.recoveryPhone = String(req.body.recoveryPhone || '').trim();
+        if (req.body.recoveryEmail !== undefined || req.body.recoveryPhone !== undefined) {
+            const nextRecPhone = req.body.recoveryPhone !== undefined ? String(req.body.recoveryPhone || '').trim() : String(currentUser.recoveryPhone || '').trim();
+            const nextRecEmail = req.body.recoveryEmail !== undefined ? String(req.body.recoveryEmail || '').trim().toLowerCase() : String(currentUser.recoveryEmail || '').trim().toLowerCase();
+            updateData.backupContact = nextRecPhone || nextRecEmail || '';
+        }
+        if (req.body.emergencyContact !== undefined) updateData.emergencyContact = String(req.body.emergencyContact || '').trim();
         if (todaAssociation !== undefined && currentUserRole !== 'toda_president') updateData.todaAssociation = todaAssociation;
         if (language !== undefined) updateData.language = language;
         if (theme !== undefined) updateData.theme = theme;
