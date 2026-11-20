@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  X, FileText, User, Receipt, ShieldCheck, FileCheck, 
-  CheckCircle2, XCircle, ExternalLink, Loader2, AlertTriangle, Check,
-  ChevronLeft, ChevronRight, ChevronDown, ChevronUp, Eye, Printer
+import {
+  X, FileText, CheckCircle2, XCircle, ExternalLink, Loader2,
+  AlertTriangle, ChevronLeft, ChevronRight, ChevronDown, ChevronUp,
+  Printer, FileSpreadsheet, Receipt
 } from 'lucide-react';
-import { evaluateDocumentValidity } from '../../utils/dateValidity';
-import { formatZoneLabel } from '../../utils/constants';
-import TricycleIcon from '../common/TricycleIcon';
-import OfficialApplicationFormModal from '../common/OfficialApplicationFormModal';
+import { toast } from 'sonner';
+import OfficialApplicationForm from '../common/OfficialApplicationForm';
+import { downloadOriginalLguTemplate } from '../../utils/downloadOriginalLguTemplate';
 import { cleanText, formatVehicleMake, formatVehicleModelYear } from '../../utils/vehicleFormatters';
 
 const AdminApplicationSummaryModal = ({
@@ -24,10 +23,13 @@ const AdminApplicationSummaryModal = ({
   franchiseFee: franchiseFeeProp,
   isProcessing = false
 }) => {
-  const [previewDoc, setPreviewDoc] = useState(null); // { label, url }
   const [isAiNoticeOpen, setIsAiNoticeOpen] = useState(false);
-  const [showOfficialForm, setShowOfficialForm] = useState(false);
+  const [isDownloadingExcel, setIsDownloadingExcel] = useState(false);
   const [fetchedFee, setFetchedFee] = useState(500);
+
+  useEffect(() => {
+    setIsAiNoticeOpen(false);
+  }, [franchise?._id]);
 
   useEffect(() => {
     if (!isOpen || franchiseFeeProp != null) return;
@@ -37,9 +39,10 @@ const AdminApplicationSummaryModal = ({
       headers: token ? { Authorization: `Bearer ${token}` } : {}
     })
       .then((res) => (res.ok ? res.json() : null))
-      .then((data) => {
-        if (active && data?.franchiseFee != null && !Number.isNaN(Number(data.franchiseFee))) {
-          setFetchedFee(Number(data.franchiseFee));
+      .then((json) => {
+        const feeVal = json?.data?.franchiseFee ?? json?.franchiseFee;
+        if (active && feeVal != null && !Number.isNaN(Number(feeVal))) {
+          setFetchedFee(Number(feeVal));
         }
       })
       .catch(() => {});
@@ -59,139 +62,275 @@ const AdminApplicationSummaryModal = ({
 
   if (!isOpen || !franchise) return null;
 
-  const formatDate = (dateStr) => {
-    if (!dateStr) return '—';
-    const date = new Date(dateStr);
-    if (isNaN(date.getTime())) return dateStr;
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'short',
-      day: 'numeric'
-    });
-  };
-
   const isPending = franchise.status === 'Pending' || franchise.status === 'Pending for Approval';
-  const orCrValidity = evaluateDocumentValidity(franchise.orCrExpiryDate);
-  const licenseValidity = evaluateDocumentValidity(franchise.driverLicenseExpiryDate);
+  const isPaid = franchise.paymentStatus === 'Paid' || franchise.isPaid;
+  const canReject =
+    !isPaid &&
+    !['Ready for Pickup', 'Active', 'For Signing', 'Released', 'Cancelled'].includes(franchise.status) &&
+    Boolean(onReject);
+  const canApprove = isPending && Boolean(onApprove);
+  const discrepancies = Array.isArray(franchise.aiDiscrepancies) ? franchise.aiDiscrepancies : [];
 
   const getStatusDisplay = (status) => {
     if (status === 'Pending' || status === 'Pending for Approval') return 'Pending for Approval';
     return status;
   };
 
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleDownloadExcel = async () => {
+    if (isDownloadingExcel) return;
+    setIsDownloadingExcel(true);
+    try {
+      const op = franchise.operator || franchise.operatorId || {};
+      const fullName = String(
+        franchise.fullName ||
+        franchise.ownerName ||
+        franchise.operatorName ||
+        op.name ||
+        ''
+      ).trim();
+
+      await downloadOriginalLguTemplate({
+        franchise: {
+          ...franchise,
+          _id: franchise._id || franchise.id,
+          ownerName: fullName,
+          firstName: franchise.firstName || op.firstName,
+          middleName: franchise.middleName || op.middleName,
+          lastName: franchise.lastName || op.lastName,
+          applicationType: franchise.applicationType === 'Renewal' ? 'Renewal' : 'New',
+          zone: franchise.zone || franchise.todaZone,
+          barangay: franchise.barangay || op.barangay || franchise.address || op.address,
+          occupation: franchise.occupation || op.occupation || 'TRICYCLE OPERATOR',
+          make: formatVehicleMake(franchise, ''),
+          yearModel: formatVehicleModelYear(franchise, ''),
+          motorNumber: cleanText(franchise.motorNo || franchise.motorNumber || franchise.engineNumber, ''),
+          chassisNumber: cleanText(franchise.chassisNo || franchise.chassisNumber, ''),
+          plateNumber: cleanText(franchise.plateNo || franchise.plateNumber, ''),
+          sidecarNumber: cleanText(franchise.scNo || franchise.sidecarNumber || franchise.bodyNumber, ''),
+          ctcNumber: cleanText(franchise.cedulaSerialNo || franchise.ctcNumber || franchise.cedulaNo, ''),
+          ctcDateIssued: franchise.cedulaDate || franchise.ctcDateIssued || franchise.dateApplied || franchise.createdAt,
+          createdAt: franchise.dateApplied || franchise.createdAt
+        },
+        type: 'application'
+      });
+    } catch (err) {
+      console.error('Error downloading original Application Form Excel:', err);
+      toast.error('Could not download Excel file. Please try again.');
+    } finally {
+      setIsDownloadingExcel(false);
+    }
+  };
+
   return (
-    <div 
+    <div
+      id="admin-summary-modal-root"
       role="dialog"
       aria-modal="true"
       aria-labelledby="admin-summary-modal-title"
-      className="fixed inset-0 z-[9999] bg-black/60 flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200"
+      className="fixed inset-0 z-[9999] bg-black/75 overflow-y-auto overscroll-contain flex flex-col items-center justify-start p-2 sm:p-6 pb-20 pt-3 animate-in fade-in duration-150 print:static print:inset-auto print:bg-white print:p-0 print:block print:overflow-visible"
       onClick={onClose}
     >
-      <div 
-        className="relative max-w-2xl w-full bg-white dark:bg-[#1C1917] rounded-xl overflow-hidden shadow-lg border border-[#E4E1DC] dark:border-[#2E2A27] p-5 sm:p-6 max-h-[90vh] flex flex-col"
+      <div
+        className="w-full max-w-[820px] flex flex-col items-center gap-3 shrink-0 print:max-w-full print:m-0 print:block"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Modal Header */}
-        <div className="flex items-center justify-between pb-3.5 border-b border-[#E4E1DC] dark:border-[#2E2A27] gap-3">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-8 h-8 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
-              <FileText size={18} />
-            </div>
-            <div className="min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
-                <h3 id="admin-summary-modal-title" className="font-semibold text-base text-[#1F1D1B] dark:text-[#F6F5F3] truncate">
-                  Application Summary
-                </h3>
-                <span className={`text-xs font-bold px-2.5 py-0.5 rounded-full border shrink-0 ${
-                  isPending 
-                    ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-700 dark:text-amber-300 border-amber-300 dark:border-amber-700'
-                    : franchise.status === 'Active'
-                    ? 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border-emerald-300 dark:border-emerald-700'
-                    : franchise.status === 'Cancelled'
-                    ? 'bg-red-50 dark:bg-red-950/50 text-red-700 dark:text-red-300 border-red-300 dark:border-red-700'
-                    : 'bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#F5E6B3] border-[#9E2A2B]/25 dark:border-[#D4AF37]/35'
-                }`}>
-                  {getStatusDisplay(franchise.status)}
-                </span>
-                {franchise.isResubmitted && (
-                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 border border-blue-200 dark:border-blue-800">
-                    Corrected &amp; Re-submitted
+        {/* Top Sticky Control & Action Bar (Hidden when printing) */}
+        <div className="sticky top-2 z-20 w-full bg-[#1C1917] text-[#F6F5F3] border border-[#2E2A27] rounded-xl p-3 sm:px-4 shadow-xl flex flex-col gap-2.5 print:hidden">
+          <div className="flex flex-wrap items-center justify-between gap-2.5">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-9 h-9 rounded-lg bg-[#9E2A2B] text-white flex items-center justify-center shrink-0">
+                <FileText size={17} />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h3 id="admin-summary-modal-title" className="text-sm font-bold text-[#F6F5F3] truncate">
+                    Application Summary (Printable Form)
+                  </h3>
+                  <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border shrink-0 ${
+                    isPending
+                      ? 'bg-amber-950/60 text-amber-300 border-amber-700/70'
+                      : franchise.status === 'Active'
+                      ? 'bg-emerald-950/60 text-emerald-300 border-emerald-700/70'
+                      : franchise.status === 'Cancelled'
+                      ? 'bg-red-950/60 text-red-300 border-red-700/70'
+                      : 'bg-[#9E2A2B]/25 text-[#F5E6B3] border-[#D4AF37]/40'
+                  }`}>
+                    {getStatusDisplay(franchise.status)}
                   </span>
-                )}
+                  {franchise.isResubmitted && (
+                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-blue-950/60 text-blue-300 border border-blue-700/70">
+                      Corrected &amp; Re-submitted
+                    </span>
+                  )}
+                </div>
+                <p className="text-[11px] text-[#A8A29E] truncate mt-0.5">
+                  Plate <span className="font-mono tabular-nums text-[#F5E6B3]">{cleanText(franchise.plateNo || franchise.plateNumber, 'PENDING')}</span>
+                  {' • '}TODA <span className="font-semibold text-[#F6F5F3]">{franchise.todaName || 'NON-TODA'}</span>
+                  {' • '}Fee <span className="font-mono tabular-nums text-[#F6F5F3]">₱{effectiveFee.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                </p>
               </div>
-              <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] truncate mt-0.5">
-                Review complete details before final decision
-              </p>
             </div>
-          </div>
-          
-          <div className="flex items-center gap-2 shrink-0">
-            {totalCount > 1 && (
-              <div className="flex items-center gap-1 bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg p-1 border border-[#E4E1DC] dark:border-[#2E2A27]">
-                <button
-                  type="button"
-                  onClick={onPrev}
-                  disabled={!onPrev}
-                  className="p-1 rounded-lg hover:bg-white dark:hover:bg-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] disabled:opacity-30 disabled:hover:bg-transparent transition-colors cursor-pointer"
-                  title="Previous application"
-                >
-                  <ChevronLeft size={16} />
-                </button>
-                <span className="text-xs font-bold px-1.5 text-[#1F1D1B] dark:text-[#EAE7E1] min-w-[42px] text-center">
-                  {(currentIndex ?? 0) + 1} / {totalCount}
-                </span>
-                <button
-                  type="button"
-                  onClick={onNext}
-                  disabled={!onNext}
-                  className="p-1 rounded-lg hover:bg-white dark:hover:bg-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] disabled:opacity-30 disabled:hover:bg-transparent transition-colors cursor-pointer"
-                  title="Next application"
-                >
-                  <ChevronRight size={16} />
-                </button>
-              </div>
-            )}
-            <button 
-              type="button"
-              onClick={onClose}
-              className="p-2 rounded-full text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] transition-colors cursor-pointer"
-            >
-              <X size={18} />
-            </button>
-          </div>
-        </div>
 
-        {/* Modal Scrollable Body */}
-        <div className="overflow-y-auto py-4 space-y-4 flex-1 pr-1">
-          {/* AI Discrepancy Banner Accordion */}
-          {franchise.aiDiscrepancies && franchise.aiDiscrepancies.length > 0 && (
-            <div className="bg-amber-50/90 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 rounded-lg text-xs text-amber-900 dark:text-amber-200 overflow-hidden shadow-sm">
+            <div className="flex items-center gap-1.5 shrink-0 flex-wrap justify-end">
+              {totalCount > 1 && (
+                <div className="flex items-center gap-0.5 bg-[#14110F] rounded-lg p-1 border border-[#2E2A27]">
+                  <button
+                    type="button"
+                    onClick={onPrev}
+                    disabled={!onPrev}
+                    className="p-1.5 rounded-md hover:bg-[#2E2A27] text-[#A8A29E] hover:text-[#F6F5F3] disabled:opacity-30 disabled:hover:bg-transparent transition-colors cursor-pointer"
+                    title="Previous application"
+                    aria-label="Previous application"
+                  >
+                    <ChevronLeft size={15} />
+                  </button>
+                  <span className="font-mono tabular-nums text-[11px] font-bold px-1.5 text-[#F6F5F3] min-w-[44px] text-center">
+                    {(currentIndex ?? 0) + 1} / {totalCount}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={onNext}
+                    disabled={!onNext}
+                    className="p-1.5 rounded-md hover:bg-[#2E2A27] text-[#A8A29E] hover:text-[#F6F5F3] disabled:opacity-30 disabled:hover:bg-transparent transition-colors cursor-pointer"
+                    title="Next application"
+                    aria-label="Next application"
+                  >
+                    <ChevronRight size={15} />
+                  </button>
+                </div>
+              )}
+
               <button
                 type="button"
-                onClick={() => setIsAiNoticeOpen(prev => !prev)}
-                className="w-full p-2.5 flex items-center justify-between gap-2 hover:bg-amber-100/70 dark:hover:bg-amber-900/40 transition-colors text-left cursor-pointer select-none"
+                onClick={handleDownloadExcel}
+                disabled={isDownloadingExcel}
+                className="min-h-[38px] flex items-center gap-1.5 bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-all disabled:opacity-50 cursor-pointer"
+                title="Download populated original Gasan LGU Application Form (.xlsx)"
               >
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <AlertTriangle size={14} className="shrink-0 text-amber-600 dark:text-amber-400" />
-                  <span className="font-bold text-amber-800 dark:text-amber-300 truncate">
-                    AI Discrepancy Flagged ({(franchise?.aiDiscrepancies || []).length})
-                  </span>
-                </div>
-                <div className="flex items-center gap-1 text-[11px] font-semibold text-amber-800 dark:text-amber-300 shrink-0">
-                  <span>{isAiNoticeOpen ? 'Hide' : 'Show'}</span>
-                  {isAiNoticeOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                </div>
+                {isDownloadingExcel ? <Loader2 size={14} className="animate-spin" /> : <FileSpreadsheet size={14} />}
+                <span className="hidden sm:inline">Original Excel</span>
+                <span className="sm:hidden">.XLSX</span>
               </button>
 
+              <button
+                type="button"
+                onClick={handlePrint}
+                className="min-h-[38px] flex items-center gap-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] active:scale-95 text-white px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                title="Print or Save Official Application Form as PDF"
+              >
+                <Printer size={14} />
+                <span>Print / PDF</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={onClose}
+                className="min-h-[38px] min-w-[38px] flex items-center justify-center rounded-lg text-[#A8A29E] hover:text-[#F6F5F3] hover:bg-[#2E2A27] transition-colors cursor-pointer"
+                title="Close (Esc)"
+                aria-label="Close application summary"
+              >
+                <X size={18} />
+              </button>
+            </div>
+          </div>
+
+          {/* Quick Shortcuts Row: Review Photos, Approve & Reject + Treasury Indicator */}
+          <div className="pt-2 border-t border-[#2E2A27] flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className={`inline-flex items-center gap-1.5 text-[11px] font-semibold px-2.5 py-1 rounded-md border ${
+                isPaid
+                  ? 'bg-emerald-950/50 text-emerald-300 border-emerald-700/60'
+                  : 'bg-[#14110F] text-[#A8A29E] border-[#2E2A27]'
+              }`}>
+                <Receipt size={12} />
+                {isPaid
+                  ? `Paid • OR# ${franchise.officialReceiptNo || franchise.orNo || 'Recorded'}`
+                  : 'Awaiting Cashier Payment'}
+              </span>
+
+              {onReview && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onReview(franchise);
+                  }}
+                  className="min-h-[36px] px-3 py-1 rounded-lg bg-[#2E2A27] hover:bg-[#3A3532] text-[#F6F5F3] text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+                  title="Open full image inspection workbench"
+                >
+                  <ExternalLink size={13} />
+                  <span>Review Photos</span>
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-2 flex-wrap justify-end">
+              {canReject && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onReject(franchise);
+                  }}
+                  disabled={isProcessing}
+                  className="min-h-[38px] px-3.5 py-1.5 rounded-lg bg-red-700 hover:bg-red-800 active:scale-95 text-white font-semibold text-xs inline-flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                  title="Reject application and return to operator"
+                >
+                  <XCircle size={14} />
+                  <span>Reject</span>
+                </button>
+              )}
+
+              {canApprove && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    onClose();
+                    onApprove(franchise);
+                  }}
+                  disabled={isProcessing}
+                  className="min-h-[38px] px-4 py-1.5 rounded-lg bg-emerald-700 hover:bg-emerald-800 active:scale-95 text-white font-semibold text-xs inline-flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                  title="Approve requirements and send to Municipal Cashier for payment"
+                >
+                  {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
+                  <span>Approve (Send to Cashier)</span>
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Optional AI Document Discrepancy Notice */}
+          {discrepancies.length > 0 && (
+            <div className="bg-amber-950/50 border border-amber-700/70 rounded-lg text-xs text-amber-200 overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setIsAiNoticeOpen((prev) => !prev)}
+                className="w-full px-3 py-2 flex items-center justify-between gap-2 hover:bg-amber-900/30 transition-colors text-left cursor-pointer"
+              >
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <AlertTriangle size={14} className="shrink-0 text-amber-400" />
+                  <span className="font-bold text-amber-200 truncate">
+                    AI Discrepancy Flagged ({discrepancies.length}) — Verify via Review Photos before approving
+                  </span>
+                </div>
+                <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-300 shrink-0">
+                  <span>{isAiNoticeOpen ? 'Hide' : 'Show'}</span>
+                  {isAiNoticeOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                </span>
+              </button>
               {isAiNoticeOpen && (
-                <div className="p-3 pt-0 border-t border-amber-200 dark:border-amber-900/40 space-y-1 mt-1">
-                  {(franchise?.aiDiscrepancies || []).map((d, i) => (
-                    <div key={i} className="text-[11px] flex items-center justify-between gap-2 border-b border-amber-200/60 dark:border-amber-900/40 pb-1 last:border-0 last:pb-0">
-                      <span className="font-medium text-[#1F1D1B] dark:text-[#EAE7E1]">{d.label || d.field}:</span>
-                      <span className="text-right">
-                        <span className="text-red-600 dark:text-red-400 font-mono font-bold mr-1">Image: {d.scannedValue || '—'} {d.severity === 'critical' ? '(Expired)' : ''}</span>
-                        <span className="text-[#6B6761] dark:text-[#A8A29E]">|</span>
-                        <span className="text-[#1F1D1B] dark:text-[#F6F5F3] font-mono font-bold ml-1">Entered: {d.enteredValue || '—'}</span>
+                <div className="px-3 pb-2.5 pt-1 border-t border-amber-800/60 space-y-1">
+                  {discrepancies.map((d, idx) => (
+                    <div key={idx} className="text-[11px] flex items-center justify-between gap-2 border-b border-amber-900/40 pb-1 last:border-0 last:pb-0">
+                      <span className="font-medium text-amber-100">{d.label || d.field}:</span>
+                      <span className="text-right font-mono tabular-nums">
+                        <span className="text-red-300 font-bold mr-1">Image: {d.scannedValue || '—'} {d.severity === 'critical' ? '(Expired)' : ''}</span>
+                        <span className="text-amber-500">|</span>
+                        <span className="text-[#F6F5F3] font-bold ml-1">Entered: {d.enteredValue || '—'}</span>
                       </span>
                     </div>
                   ))}
@@ -199,425 +338,16 @@ const AdminApplicationSummaryModal = ({
               )}
             </div>
           )}
-
-          {/* 1. Operator Information */}
-          <div>
-            <h4 className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] uppercase tracking-wider mb-2 flex items-center gap-1.5">
-              <User size={13} /> 1. Operator Information
-            </h4>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
-                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Full Name</span>
-                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{franchise.fullName || '—'}</span>
-              </div>
-              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
-                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Barangay Address</span>
-                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{franchise.address || '—'}</span>
-              </div>
-              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
-                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Route Zone</span>
-                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{franchise.zone ? formatZoneLabel(franchise.zone) : '—'}</span>
-              </div>
-              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
-                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">TODA Association</span>
-                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{franchise.todaName || '—'}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* 2. Tricycle Details */}
-          <div>
-            <h4 className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] uppercase tracking-wider mb-2 flex items-center gap-1.5">
-              <TricycleIcon size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" /> 2. Tricycle Details
-            </h4>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
-              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
-                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Make &amp; Model</span>
-                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{formatVehicleMake(franchise, '—')}</span>
-              </div>
-              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
-                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Model Year</span>
-                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{formatVehicleModelYear(franchise, '—')}</span>
-              </div>
-              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
-                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Plate Number</span>
-                <span className="font-mono font-bold text-amber-600 dark:text-amber-400">{cleanText(franchise.plateNo, '—')}</span>
-              </div>
-              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
-                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Motor Number</span>
-                <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">{cleanText(franchise.motorNo, '—')}</span>
-              </div>
-              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] sm:col-span-2">
-                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Chassis Number</span>
-                <span className="font-mono font-bold text-[#9E2A2B] dark:text-[#D4AF37] truncate block">{franchise.chassisNo || '—'}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* 3. CTC / Cedula Details */}
-          <div>
-            <h4 className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] uppercase tracking-wider mb-2 flex items-center gap-1.5">
-              <Receipt size={13} /> 3. CTC / Cedula Details
-            </h4>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
-              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
-                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Cedula Serial No.</span>
-                <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{franchise.cedulaSerialNo || '—'}</span>
-              </div>
-              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
-                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Tax Year</span>
-                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{franchise.cedulaYear || (franchise.cedulaDate ? new Date(franchise.cedulaDate).getFullYear() : '—')}</span>
-              </div>
-              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
-                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Date Issued</span>
-                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{formatDate(franchise.cedulaDate)}</span>
-              </div>
-              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
-                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Place Issued</span>
-                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">{franchise.cedulaPlaceIssued || franchise.cedulaAddress || '—'}</span>
-              </div>
-              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
-                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Cedula Taxpayer</span>
-                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">{franchise.cedulaFullName || franchise.fullName || '—'}</span>
-              </div>
-              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
-                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Civil Status / Citizenship</span>
-                <span className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{[franchise.cedulaCivilStatus, franchise.cedulaCitizenship || 'Filipino'].filter(Boolean).join(' • ')}</span>
-              </div>
-              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
-                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Amount Paid</span>
-                <span className="font-mono font-bold text-emerald-600 dark:text-emerald-400">{franchise.cedulaAmount ? `₱${Number(franchise.cedulaAmount).toFixed(2)}` : '₱55.00'}</span>
-              </div>
-              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
-                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-bold">Date Applied</span>
-                <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{formatDate(franchise.dateApplied || franchise.createdAt)}</span>
-              </div>
-            </div>
-          </div>
-
-          {/* 4. Document Metadata & Validity */}
-          <div>
-            <h4 className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] uppercase tracking-wider mb-2 flex items-center gap-1.5">
-              <FileCheck size={13} /> 4. Document Metadata &amp; Validity
-            </h4>
-            
-            <div className="space-y-2 text-xs">
-              {/* LTO OR/CR */}
-              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-bold uppercase tracking-wider text-[#9E2A2B] dark:text-[#D4AF37]">
-                    LTO OR / CR
-                  </span>
-                  {franchise.orCrExpiryDate && (
-                    <span className={`text-xs font-bold px-2 py-0.5 rounded-md border ${orCrValidity.badgeColor}`}>
-                      {orCrValidity.label}
-                    </span>
-                  )}
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <span className="text-[#6B6761] dark:text-[#A8A29E] block text-xs uppercase font-bold">OR / CR No.</span>
-                    <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{franchise.orCrNo || franchise.crNo || '—'}</span>
-                  </div>
-                  <div>
-                    <span className="text-[#6B6761] dark:text-[#A8A29E] block text-xs uppercase font-bold">Registration Expiry</span>
-                    <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{formatDate(franchise.orCrExpiryDate)}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Driver & License */}
-              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-bold uppercase tracking-wider text-[#9E2A2B] dark:text-[#D4AF37]">
-                    Driver &amp; License
-                  </span>
-                  {franchise.driverLicenseExpiryDate && (
-                    <span className={`text-xs font-bold px-2 py-0.5 rounded-md border ${licenseValidity.badgeColor}`}>
-                      {licenseValidity.label}
-                    </span>
-                  )}
-                </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  <div>
-                    <span className="text-[#6B6761] dark:text-[#A8A29E] block text-xs uppercase font-bold">Designation</span>
-                    <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">
-                      {franchise.isOperatorDriver ? 'Operator (Self)' : 'Designated Driver'}
-                    </span>
-                  </div>
-                  <div>
-                    <span className="text-[#6B6761] dark:text-[#A8A29E] block text-xs uppercase font-bold">License No.</span>
-                    <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">{franchise.driverLicenseNo || '—'}</span>
-                  </div>
-                  <div>
-                    <span className="text-[#6B6761] dark:text-[#A8A29E] block text-xs uppercase font-bold">Card Serial No. (Back)</span>
-                    <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">{franchise.driverLicenseSerialNo || '—'}</span>
-                  </div>
-                  <div>
-                    <span className="text-[#6B6761] dark:text-[#A8A29E] block text-xs uppercase font-bold">License Expiry</span>
-                    <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">{formatDate(franchise.driverLicenseExpiryDate)}</span>
-                  </div>
-                  {!franchise.isOperatorDriver && franchise.driverName && (
-                    <div className="col-span-2 sm:col-span-4">
-                      <span className="text-[#6B6761] dark:text-[#A8A29E] block text-xs uppercase font-bold">Driver Name &amp; Contact</span>
-                      <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
-                        {franchise.driverName} {franchise.driverContact ? `(${franchise.driverContact})` : ''}
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Barangay Clearance Issuance */}
-              <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-bold uppercase tracking-wider text-[#9E2A2B] dark:text-[#D4AF37]">
-                    Barangay Clearance
-                  </span>
-                  {franchise.brgyClearanceUrl && (
-                    <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                      Attached
-                    </span>
-                  )}
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <span className="text-[#6B6761] dark:text-[#A8A29E] block text-xs uppercase font-bold">Date Issued</span>
-                    <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{formatDate(franchise.brgyClearanceDate)}</span>
-                  </div>
-                  <div>
-                    <span className="text-[#6B6761] dark:text-[#A8A29E] block text-xs uppercase font-bold">Issuing Official / Punong Barangay</span>
-                    <span className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">{franchise.brgyIssuer || '—'}</span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* 5. Attached Document Links */}
-          <div>
-            <h4 className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] uppercase tracking-wider mb-2 flex items-center gap-1.5">
-              <ShieldCheck size={13} /> 5. Attached Documents
-            </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-              {[
-                { label: 'LTO CR Document', url: franchise.crUrl || franchise.orCrUrl },
-                { label: 'LTO OR Document', url: franchise.orUrl || franchise.orCrUrl },
-                { label: "Driver's License (Front)", url: franchise.licenseUrl },
-                { label: "Driver's License (Back)", url: franchise.licenseBackUrl },
-                { label: 'Barangay Clearance', url: franchise.brgyClearanceUrl },
-                { label: 'Cedula (CTC)', url: franchise.cedulaUrl }
-              ].map((doc, idx) => (
-                <div key={idx} className="p-2.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs flex items-center justify-between">
-                  <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] truncate">{doc.label}</span>
-                  {doc.url ? (
-                    <div className="flex items-center gap-1.5 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => setPreviewDoc(doc)}
-                        className="text-[#9E2A2B] dark:text-[#D4AF37] hover:bg-[#E4E1DC] dark:hover:bg-[#2E2A27] px-2 py-1 rounded-md flex items-center gap-1 text-[11px] font-bold transition-colors cursor-pointer"
-                        title={`Preview ${doc.label}`}
-                      >
-                        <Eye size={12} />
-                        <span>Preview</span>
-                      </button>
-                      <a
-                        href={doc.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3] p-1 rounded-md hover:bg-[#E4E1DC] dark:hover:bg-[#2E2A27] transition-colors"
-                        title="Open in new tab"
-                      >
-                        <ExternalLink size={12} />
-                      </a>
-                    </div>
-                  ) : (
-                    <span className="text-[#6B6761] dark:text-[#A8A29E] text-[10px]">None</span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* 6. Treasury / Cashier Payment */}
-          <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
-            <div className="flex items-center justify-between mb-2">
-              <h4 className="text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37] uppercase tracking-wider flex items-center gap-1.5">
-                <Receipt size={13} /> 6. Treasury / Cashier Payment
-              </h4>
-              {franchise.paymentStatus === 'Paid' || franchise.isPaid ? (
-                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-300 border border-emerald-300 dark:border-emerald-700 flex items-center gap-1">
-                  <Check size={12} /> Paid • OR# {franchise.officialReceiptNo || franchise.orNo || 'Recorded'}
-                </span>
-              ) : (
-                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 border border-amber-300 dark:border-amber-700">
-                  Awaiting Cashier Payment (₱{effectiveFee.toLocaleString()})
-                </span>
-              )}
-            </div>
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
-              <div>
-                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-semibold">Amount Payable</span>
-                <span className="font-mono font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">₱{effectiveFee.toFixed(2)}</span>
-              </div>
-              <div>
-                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-semibold">Official Receipt (OR)</span>
-                <span className="font-mono font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{franchise.officialReceiptNo || franchise.orNo || 'Pending Payment'}</span>
-              </div>
-              <div>
-                <span className="text-[#6B6761] dark:text-[#A8A29E] block text-[10px] uppercase font-semibold">Payment Date</span>
-                <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{franchise.paymentDate ? formatDate(franchise.paymentDate) : 'Not settled yet'}</span>
-              </div>
-            </div>
-          </div>
         </div>
 
-        {/* Modal Actions */}
-        <div className="pt-3.5 border-t border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col sm:flex-row items-center justify-between gap-2.5">
-          <div className="flex items-center gap-1.5 w-full sm:w-auto">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-3.5 py-2 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] font-semibold text-xs hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] transition-colors cursor-pointer whitespace-nowrap"
-            >
-              Close
-            </button>
-            {onReview && (
-              <button
-                type="button"
-                onClick={() => {
-                  onClose();
-                  onReview(franchise);
-                }}
-                className="px-3 py-2 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27] font-semibold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer whitespace-nowrap"
-                title="Open image inspection workbench"
-              >
-                <ExternalLink size={13} />
-                <span>Review Photos</span>
-              </button>
-            )}
-            {onNext && (
-              <button
-                type="button"
-                onClick={onNext}
-                className="px-3 py-2 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27] font-semibold text-xs flex items-center justify-center gap-1 transition-colors cursor-pointer whitespace-nowrap"
-                title="Go to next application"
-              >
-                <span>Next</span>
-                <ChevronRight size={13} />
-              </button>
-            )}
-          </div>
-
-          {/* Decision Buttons (Approve / Reject) & Official Form Print */}
-          <div className="flex items-center gap-1.5 w-full sm:w-auto justify-end">
-            <button
-              type="button"
-              onClick={() => setShowOfficialForm(true)}
-              className="px-3 py-2 rounded-lg bg-[#9E2A2B]/10 hover:bg-[#9E2A2B]/15 text-[#9E2A2B] dark:bg-[#D4AF37]/20 dark:hover:bg-[#D4AF37]/30 dark:text-[#F5E6B3] border border-[#9E2A2B]/25 dark:border-[#D4AF37]/40 font-bold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm cursor-pointer whitespace-nowrap"
-              title="Print official MTOP application form pursuant to Ord. 48 s. 1999"
-            >
-              <Printer size={13} className="shrink-0" />
-              <span>Official Form (PDF)</span>
-            </button>
-
-            {franchise.paymentStatus !== 'Paid' && !['Ready for Pickup', 'Active', 'For Signing', 'Released'].includes(franchise.status) && onReject && (
-              <button
-                type="button"
-                onClick={() => {
-                  onClose();
-                  onReject(franchise);
-                }}
-                disabled={isProcessing}
-                className="px-3.5 py-2 rounded-lg bg-red-700 hover:bg-red-800 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer disabled:opacity-50 whitespace-nowrap"
-              >
-                <XCircle size={13} />
-                <span>Reject</span>
-              </button>
-            )}
-
-            {isPending && (
-              <button
-                type="button"
-                onClick={() => {
-                  onClose();
-                  onApprove(franchise);
-                }}
-                disabled={isProcessing}
-                className="px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-semibold text-xs flex items-center justify-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer disabled:opacity-50 whitespace-nowrap"
-              >
-                {isProcessing ? <Loader2 size={13} className="animate-spin" /> : <CheckCircle2 size={13} />}
-                <span>Send to Cashier</span>
-              </button>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* In-Modal Document Lightbox Preview */}
-      {previewDoc && (
-        <div 
-          className="fixed inset-0 z-[10001] bg-black/80 flex flex-col items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200"
-          onClick={() => setPreviewDoc(null)}
-        >
-          <div 
-            className="relative max-w-4xl w-full max-h-[92vh] bg-[#1C1917] rounded-lg overflow-hidden flex flex-col shadow-sm border border-[#2E2A27]"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between px-5 py-3.5 bg-[#14110F] border-b border-[#2E2A27] text-white">
-              <div className="flex items-center gap-2.5">
-                <FileText size={18} className="text-[#D4AF37]" />
-                <span className="font-semibold text-sm">{previewDoc.label}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <a
-                  href={previewDoc.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-[#A8A29E] hover:text-white px-3 py-1.5 rounded-lg hover:bg-white/10 flex items-center gap-1.5 transition-colors"
-                >
-                  <span>Open in New Tab</span>
-                  <ExternalLink size={13} />
-                </a>
-                <button
-                  type="button"
-                  onClick={() => setPreviewDoc(null)}
-                  className="p-1.5 rounded-lg text-[#A8A29E] hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
-                >
-                  <X size={18} />
-                </button>
-              </div>
-            </div>
-            <div className="flex-1 overflow-auto p-4 flex items-center justify-center bg-[#14110F]/95 min-h-[300px]">
-              {(previewDoc.url?.toLowerCase().includes('.pdf') || previewDoc.url?.toLowerCase().includes('/raw/upload') || previewDoc.type === 'application/pdf') ? (
-                <iframe
-                  src={previewDoc.url}
-                  title={previewDoc.label}
-                  sandbox="allow-same-origin"
-                  referrerPolicy="no-referrer"
-                  className="w-full h-[70vh] rounded-lg border border-[#2E2A27] bg-white"
-                />
-              ) : (
-                <img
-                  src={previewDoc.url}
-                  alt={previewDoc.label}
-                  className="max-h-[75vh] max-w-full object-contain rounded-xl shadow-lg"
-                />
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Official MTOP Application Form Print Modal */}
-      {showOfficialForm && (
-        <OfficialApplicationFormModal
-          isOpen={showOfficialForm}
-          onClose={() => setShowOfficialForm(false)}
+        {/* Printable Official MTOP Application File (1:1 Original LGU Form pursuant to Ord. No. 48 s. 1999) */}
+        <OfficialApplicationForm
           formData={franchise}
           isRenewal={franchise.applicationType === 'Renewal'}
+          showActions={false}
+          className="print:w-full"
         />
-      )}
+      </div>
     </div>
   );
 };

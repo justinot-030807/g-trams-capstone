@@ -19,42 +19,72 @@ const OfficialApplicationForm = ({
   const formRef = useRef(null);
   const [isDownloadingExcel, setIsDownloadingExcel] = useState(false);
 
+  const op = formData.operator || formData.operatorId || {};
+
   // Parse applicant full name into Family Name, Given Name, Middle Name
-  const fullName = String(
+  const rawOperatorName = String(
     formData.fullName ||
     formData.ownerName ||
     formData.name ||
     formData.operatorName ||
-    (formData.firstName ? `${formData.firstName} ${formData.middleName || ''} ${formData.lastName || ''}` : '')
+    op.name ||
+    ((formData.firstName || op.firstName)
+      ? `${formData.firstName || op.firstName || ''} ${formData.middleName || op.middleName || ''} ${formData.lastName || op.lastName || ''}`
+      : '')
   ).replace(/\s+/g, ' ').trim();
 
-  let familyName = String(formData.lastName || formData.familyName || '').toUpperCase().trim();
-  let givenName = String(formData.firstName || formData.givenName || '').toUpperCase().trim();
-  let middleName = String(formData.middleName || '').toUpperCase().trim();
+  let familyName = String(formData.lastName || formData.familyName || op.lastName || '').toUpperCase().trim();
+  let givenName = String(formData.firstName || formData.givenName || op.firstName || '').toUpperCase().trim();
+  let middleName = String(formData.middleName || op.middleName || '').toUpperCase().trim();
 
-  if (!familyName && !givenName && fullName) {
-    const parts = fullName.toUpperCase().split(' ').filter(Boolean);
-    if (parts.length === 1) {
-      familyName = parts[0];
-    } else if (parts.length === 2) {
-      givenName = parts[0];
-      familyName = parts[1];
+  if (!familyName && !givenName && rawOperatorName) {
+    const upperName = rawOperatorName.toUpperCase();
+    if (upperName.includes(',')) {
+      const [commaLast, commaRest = ''] = upperName.split(',', 2);
+      familyName = commaLast.trim();
+      const restParts = commaRest.trim().split(/\s+/).filter(Boolean);
+      if (restParts.length === 1) {
+        givenName = restParts[0];
+      } else if (restParts.length > 1) {
+        const lastToken = restParts[restParts.length - 1];
+        const looksLikeMiddle = lastToken.endsWith('.') || restParts.length >= 2;
+        if (looksLikeMiddle) {
+          middleName = lastToken.replace(/\./g, '');
+          givenName = restParts.slice(0, -1).join(' ');
+        } else {
+          givenName = restParts.join(' ');
+        }
+      }
     } else {
-      const midCandidate = parts[parts.length - 2];
-      givenName = parts.slice(0, -2).join(' ');
-      middleName = midCandidate.replace(/\./g, '');
-      familyName = parts[parts.length - 1];
+      const parts = upperName.split(/\s+/).filter(Boolean);
+      if (parts.length === 1) {
+        familyName = parts[0];
+      } else if (parts.length === 2) {
+        givenName = parts[0];
+        familyName = parts[1];
+      } else {
+        const midCandidate = parts[parts.length - 2];
+        givenName = parts.slice(0, -2).join(' ');
+        middleName = midCandidate.replace(/\./g, '');
+        familyName = parts[parts.length - 1];
+      }
     }
   }
 
+  const fullName = (
+    givenName && familyName
+      ? `${givenName} ${middleName ? `${middleName.charAt(0)}. ` : ''}${familyName}`
+      : rawOperatorName
+  ).replace(/\s+/g, ' ').trim();
+
   const rawZone = String(formData.zone || formData.todaZone || '').toUpperCase().replace(/\s*ZONE.*$/i, '').trim();
-  const rawAddress = String(formData.barangay || formData.address || '')
+  const rawAddress = String(formData.barangay || op.barangay || formData.address || op.address || '')
     .toUpperCase()
     .replace(/^BRGY\.?\s*/i, 'BRGY. ')
     .replace(/,?\s*GASAN.*$/i, '')
     .trim();
 
-  const occupation = cleanText(formData.occupation || (fullName ? 'TRICYCLE OPERATOR' : ''), '').toUpperCase();
+  const occupation = cleanText(formData.occupation || op.occupation || (fullName ? 'TRICYCLE OPERATOR' : ''), '').toUpperCase();
   const make = formatVehicleMake(formData, '').toUpperCase();
   const model = formatVehicleModelYear(formData, '').toUpperCase();
   const motorNo = cleanText(formData.motorNo || formData.motorNumber || formData.engineNumber, '').toUpperCase();

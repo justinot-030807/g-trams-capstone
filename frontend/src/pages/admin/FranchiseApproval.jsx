@@ -13,7 +13,6 @@ import MtopCertificateModal from '../../components/admin/MtopCertificateModal';
 import BatchMtopModal from '../../components/admin/BatchMtopModal';
 import TransmittalSheetModal from '../../components/admin/TransmittalSheetModal';
 import AdminApplicationSummaryModal from '../../components/admin/AdminApplicationSummaryModal';
-import ApplicationDossierModal from '../../components/admin/ApplicationDossierModal';
 import StaffCancellationReviewModal from '../../components/admin/StaffCancellationReviewModal';
 import PageHeader from '../../components/common/PageHeader';
 import StatusBadge from '../../components/common/StatusBadge';
@@ -102,9 +101,8 @@ const FranchiseApproval = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeMenuId, setActiveMenuId] = useState(null);
   
-  // Application Summary & Printable Evaluation Dossier Modal state
+  // Application Summary (Printable Official Form) Modal state
   const [dossierTargetUnit, setDossierTargetUnit] = useState(null);
-  const [printableDossierTarget, setPrintableDossierTarget] = useState(null);
 
   // Module 8: Voluntary Cancellation Review Modal state
   const [cancellationReviewTarget, setCancellationReviewTarget] = useState(null);
@@ -911,25 +909,6 @@ const FranchiseApproval = () => {
         isProcessing={isProcessing} 
       />
 
-      {/* Official Printable Application Evaluation Dossier Modal */}
-      <ApplicationDossierModal
-        isOpen={Boolean(printableDossierTarget)}
-        onClose={() => setPrintableDossierTarget(null)}
-        franchise={printableDossierTarget}
-        franchiseFee={franchiseFee}
-        onApprove={() => {
-          const unit = printableDossierTarget;
-          setPrintableDossierTarget(null);
-          setQuickApproveTarget(unit);
-        }}
-        onReject={() => {
-          const unit = printableDossierTarget;
-          setPrintableDossierTarget(null);
-          setQuickRejectTarget(unit);
-        }}
-        isProcessing={isProcessing}
-      />
-
       {/* Module 8: BPLO Staff Voluntary Cancellation Review Modal */}
       {cancellationReviewTarget && (
         <StaffCancellationReviewModal
@@ -1628,27 +1607,17 @@ const FranchiseApproval = () => {
                     </div>
                   </div>
 
-                  {/* Actions: Dossier + View Summary + Primary Action + More Menu */}
+                  {/* Actions: View Summary (Printable Application Form) + Primary Action + More Menu */}
                   <div className="flex flex-wrap items-center gap-2 justify-end shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-[#E4E1DC] dark:border-[#2E2A27]">
-                    {/* Printable Evaluation Dossier button */}
-                    <button
-                      type="button"
-                      onClick={() => setPrintableDossierTarget(app)}
-                      className="px-2.5 py-1.5 bg-[#F6F5F3] hover:bg-[#E4E1DC] dark:bg-[#14110F] dark:hover:bg-[#2E2A27] text-[#9E2A2B] dark:text-[#D4AF37] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
-                      title="View Printable Application Dossier"
-                    >
-                      <FileText size={13} />
-                      <span>Dossier</span>
-                    </button>
-
-                    {/* View Summary text button */}
+                    {/* View Summary (Printable Official Application Form + Quick Actions) button */}
                     <button
                       type="button"
                       onClick={() => setDossierTargetUnit(app)}
-                      className="px-3 py-1.5 bg-[#F6F5F3] hover:bg-[#E4E1DC] dark:bg-[#14110F] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg font-medium text-xs transition-colors cursor-pointer"
-                      title="View Application Summary"
+                      className="px-3 py-1.5 bg-[#F6F5F3] hover:bg-[#E4E1DC] dark:bg-[#14110F] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg font-medium text-xs transition-colors inline-flex items-center gap-1.5 cursor-pointer"
+                      title="View Printable Application Form, Approve & Reject Shortcuts"
                     >
-                      View Summary
+                      <FileText size={13} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                      <span>View Summary</span>
                     </button>
 
                     {/* Primary Button depending on status */}
@@ -1720,22 +1689,11 @@ const FranchiseApproval = () => {
                           <button
                             onClick={() => {
                               setActiveMenuId(null);
-                              setPrintableDossierTarget(app);
-                            }}
-                            className="w-full text-left px-3.5 py-2 text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] flex items-center gap-2 cursor-pointer"
-                          >
-                            <FileText size={14} />
-                            <span>Printable Dossier</span>
-                          </button>
-
-                          <button
-                            onClick={() => {
-                              setActiveMenuId(null);
                               setDossierTargetUnit(app);
                             }}
                             className="w-full text-left px-3.5 py-2 text-xs font-medium text-[#1F1D1B] dark:text-[#F6F5F3] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] flex items-center gap-2 cursor-pointer"
                           >
-                            <FileText size={14} />
+                            <FileText size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                             <span>View Summary</span>
                           </button>
 

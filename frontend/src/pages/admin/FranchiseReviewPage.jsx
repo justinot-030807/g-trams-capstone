@@ -9,7 +9,6 @@ import {
 } from 'lucide-react';
 import MtopCertificateModal from '../../components/admin/MtopCertificateModal';
 import AdminApplicationSummaryModal from '../../components/admin/AdminApplicationSummaryModal';
-import ApplicationDossierModal from '../../components/admin/ApplicationDossierModal';
 import OfficialApplicationFormModal from '../../components/common/OfficialApplicationFormModal';
 import { useSocket } from '../../context/SocketContext';
 import { evaluateDocumentValidity } from '../../utils/dateValidity';
@@ -95,7 +94,6 @@ const FranchiseReviewPage = () => {
   const [isPrintOpen, setIsPrintOpen] = useState(false);
   const [isAppFormOpen, setIsAppFormOpen] = useState(false);
   const [isDossierOpen, setIsDossierOpen] = useState(false);
-  const [isPrintableDossierOpen, setIsPrintableDossierOpen] = useState(false);
   const [franchiseFee, setFranchiseFee] = useState(500);
   const [showViolationConfirmModal, setShowViolationConfirmModal] = useState(false);
 
@@ -842,21 +840,11 @@ const FranchiseReviewPage = () => {
             </button>
           )}
 
-          {/* Print Official Evaluation Dossier */}
-          <button
-            onClick={() => setIsPrintableDossierOpen(true)}
-            className="px-3 py-1.5 bg-white/10 hover:bg-white/15 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors border border-white/15 cursor-pointer"
-            title="Preview and Print Official Application Evaluation Dossier"
-          >
-            <Printer size={14} className="text-[#D4AF37]" />
-            <span className="hidden lg:inline">Print Dossier</span>
-          </button>
-
-          {/* View Summary text button */}
+          {/* View Summary (Printable Application Form + Quick Actions) button */}
           <button
             onClick={() => setIsDossierOpen(true)}
             className="px-3 py-1.5 bg-white/10 hover:bg-white/15 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors border border-white/15 cursor-pointer"
-            title="Open Application Summary"
+            title="View Printable Official Application Form & Quick Actions"
           >
             <FileText size={14} />
             <span className="hidden md:inline">View Summary</span>
@@ -2726,30 +2714,6 @@ const FranchiseReviewPage = () => {
           setIsRejecting(true); 
         }} 
         isProcessing={isProcessing} 
-      />
-
-      {/* Printable Official Application Evaluation Dossier Modal */}
-      <ApplicationDossierModal
-        isOpen={isPrintableDossierOpen}
-        onClose={() => setIsPrintableDossierOpen(false)}
-        franchise={currentApp}
-        franchiseFee={franchiseFee}
-        onApprove={() => {
-          setIsPrintableDossierOpen(false);
-          const verifiedViolationCount = recordCheck.data?.totalViolations ?? recordCheck.data?.violations?.length ?? 0;
-          const nameWarningCount = Array.isArray(recordCheck.data?.nameMatchWarnings) ? recordCheck.data.nameMatchWarnings.length : 0;
-          const isPendingApp = selectedApp?.status === 'Pending' || selectedApp?.status === 'Pending for Approval';
-          if (isPendingApp && (verifiedViolationCount > 0 || nameWarningCount > 0 || recordCheckError)) {
-            setShowViolationConfirmModal(true);
-            return;
-          }
-          handleUpdateStatus('For Payment', null, true);
-        }}
-        onReject={() => {
-          setIsPrintableDossierOpen(false);
-          setIsRejecting(true);
-        }}
-        isProcessing={isProcessing}
       />
 
       {showViolationConfirmModal && (() => {
