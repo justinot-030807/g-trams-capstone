@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/MainLayout';
 import { 
@@ -8,16 +8,52 @@ import {
 } from 'lucide-react';
 import { formatZoneLabel } from '../../utils/constants';
 import { StatsCardsSkeleton, TableRowsSkeleton } from '../../components/skeleton';
+import { useSocket } from '../../context/SocketContext';
+
+const isAutoPrintEnabled = () => localStorage.getItem('cashier_auto_print') !== 'false';
+
+const isQueueSoundEnabled = () => {
+  const pref = localStorage.getItem('cashier_sound_enabled') ?? localStorage.getItem('cashier_sound_alert');
+  return pref !== 'false';
+};
+
+const resolveCollectorName = (receipt) => {
+  if (!receipt) return 'Municipal Cashier';
+  const candidate =
+    receipt.processedByName ||
+    receipt.cashierName ||
+    (typeof receipt.paidByCashier === 'object' ? receipt.paidByCashier?.name : receipt.paidByCashier);
+  const clean = typeof candidate === 'string' ? candidate.trim() : '';
+  if (!clean || /^[a-f0-9]{24}$/i.test(clean)) {
+    return 'Municipal Cashier';
+  }
+  return clean;
+};
 
 const CashierDashboard = () => {
   const navigate = useNavigate();
+  const { socket } = useSocket() || {};
   const [queue, setQueue] = useState([]);
   const [paidList, setPaidList] = useState([]);
   const [allRecords, setAllRecords] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('pending'); // 'pending' | 'completed'
-  
+  const prevPendingIdsRef = useRef(null);
+
+  const [standardFranchiseFee, setStandardFranchiseFee] = useState(() => {
+    const val = Number(localStorage.getItem('franchise_fee'));
+    return Number.isFinite(val) && val > 0 ? val : 500;
+  });
+
+  const syncFranchiseFee = useCallback((rawFee) => {
+    const parsed = Number(rawFee);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      setStandardFranchiseFee(parsed);
+      localStorage.setItem('franchise_fee', String(parsed));
+    }
+  }, []);
+
   // Payment Modal State
   const [selectedFranchise, setSelectedFranchise] = useState(null);
   const [isPayModalOpen, setIsPayModalOpen] = useState(false);
@@ -30,9 +66,41 @@ const CashierDashboard = () => {
     remarks: ''
   });
 
-  const standardFranchiseFee = useMemo(() => {
-    const val = Number(localStorage.getItem('franchise_fee'));
-    return Number.isFinite(val) && val > 0 ? val : 500;
+  // Gentle, crisp 2-tone Web Audio API chime when a new unpaid item arrives
+  const playQueueArrivalChime = useCallback(() => {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const now = ctx.currentTime;
+
+      const scheduleTone = (freq, startOffset, duration) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, now + startOffset);
+        gain.gain.setValueAtTime(0.0001, now + startOffset);
+        gain.gain.exponentialRampToValueAtTime(0.14, now + startOffset + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + startOffset + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now + startOffset);
+        osc.stop(now + startOffset + duration + 0.02);
+      };
+
+      scheduleTone(1046.5, 0, 0.16);
+      scheduleTone(1318.5, 0.14, 0.24);
+
+      setTimeout(() => {
+        try {
+          ctx.close();
+        } catch {
+          // Ignore close errors
+        }
+      }, 600);
+    } catch {
+      // Browser autoplay restriction or unsupported AudioContext
+    }
   }, []);
 
   // Daily Treasury Remittance Modal State
@@ -40,7 +108,11 @@ const CashierDashboard = () => {
 
   const sanitizeCsvCell = (value) => {
     const str = String(value ?? '');
-    const trimmedLeading = str.replace(/^[\s\u0000-\u001F\u00A0]+/, '');
+    let start = 0;
+    while (start < str.length && (str.charCodeAt(start) <= 32 || str.charCodeAt(start) === 0x00A0)) {
+      start += 1;
+    }
+    const trimmedLeading = str.slice(start);
     const isFormula =
       /^[=+\-@\t\r\n\uFF1D\uFF0B\uFF0D\uFF20]/.test(str) ||
       /^[=+\-@\uFF1D\uFF0B\uFF0D\uFF20]/.test(trimmedLeading);
@@ -67,15 +139,18 @@ const CashierDashboard = () => {
     const seenIds = new Set();
     const seenOrs = new Set();
     const records = [];
-    const sourceList = allRecords.length > 0 ? allRecords : [...paidList, ...queue];
+    // Prefer durable PaymentLedger (paidList) so renewed/archived franchises never vanish from Daily Remittance
+    const sourceList = paidList.length > 0 ? paidList : (allRecords.length > 0 ? allRecords : queue);
 
     for (const item of sourceList) {
-      if (!item || (item._id && seenIds.has(String(item._id)))) continue;
-      if (item._id) seenIds.add(String(item._id));
+      if (!item) continue;
+      const orKey = (item.officialReceiptNo || '').trim().toUpperCase();
+      if (orKey && seenOrs.has(orKey)) continue;
+      if (!orKey && item._id && seenIds.has(String(item._id))) continue;
 
       if (item.paymentStatus === 'Paid' && toManilaDate(item.paymentDate) === today) {
-        const orKey = (item.officialReceiptNo || '').trim().toUpperCase();
         if (orKey) seenOrs.add(orKey);
+        if (item._id) seenIds.add(String(item._id));
         records.push(item);
       }
 
@@ -86,6 +161,7 @@ const CashierDashboard = () => {
           const histOr = (hist.officialReceiptNo || '').trim().toUpperCase();
           if (histOr && seenOrs.has(histOr)) continue;
           if (histOr) seenOrs.add(histOr);
+          const recordedCollector = resolveCollectorName(hist);
           records.push({
             ...item,
             _id: `${item._id || 'hist'}_term_${idx}_${histOr || hist.paymentDate}`,
@@ -94,7 +170,8 @@ const CashierDashboard = () => {
             amountPaid: hist.amountPaid,
             paymentMethod: hist.paymentMethod || item.paymentMethod || '',
             paymentDate: hist.paymentDate,
-            cashierName: hist.cashierName || '',
+            processedByName: hist.processedByName || recordedCollector,
+            cashierName: recordedCollector,
             paymentRemarks: hist.paymentRemarks || '',
             mtopNo: hist.mtopNo || item.mtopNo || '',
             isHistoricalTerm: true
@@ -115,13 +192,13 @@ const CashierDashboard = () => {
     const headers = ['Official Receipt No', 'Payer Full Name', 'Plate Number', 'TODA Association', 'Amount Paid (PHP)', 'Payment Method', 'Payment Timestamp', 'Collecting Cashier'];
     const rows = todayPaidRecords.map(item => [
       sanitizeCsvCell(item.officialReceiptNo || 'PENDING'),
-      sanitizeCsvCell(item.payerName || item.fullName || ''),
+      sanitizeCsvCell(item.payerName || item.fullName || item.applicantName || ''),
       sanitizeCsvCell(item.plateNo || 'PENDING'),
-      sanitizeCsvCell(item.todaName || 'NON-TODA'),
+      sanitizeCsvCell(item.todaName || item.todaAssociation || 'NON-TODA'),
       hasValidAmount(item.amountPaid) ? Number(item.amountPaid) : sanitizeCsvCell(''),
       sanitizeCsvCell(item.paymentMethod || 'N/A'),
       sanitizeCsvCell(item.paymentDate ? new Date(item.paymentDate).toLocaleString('en-PH', { timeZone: 'Asia/Manila' }) : 'N/A'),
-      sanitizeCsvCell(item.cashierName || 'N/A')
+      sanitizeCsvCell(resolveCollectorName(item))
     ]);
 
     const csvContent = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
@@ -151,8 +228,28 @@ const CashierDashboard = () => {
 
   const currentCashierName = localStorage.getItem('name') || 'Municipal Cashier';
 
-  const fetchQueue = useCallback(async () => {
-    setIsLoading(true);
+  const fetchLiveSettingsFee = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/settings`, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
+      if (res.ok) {
+        const json = await res.json().catch(() => null);
+        const liveFee = json?.data?.franchiseFee ?? json?.franchiseFee;
+        if (liveFee != null) {
+          syncFranchiseFee(liveFee);
+        }
+      }
+    } catch {
+      // Fallback to cashier-queue franchiseFee or cached fee
+    }
+  }, [syncFranchiseFee]);
+
+  const fetchQueue = useCallback(async ({ silent = false } = {}) => {
+    if (!silent) {
+      setIsLoading(true);
+    }
     try {
       const token = localStorage.getItem('token');
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/cashier-queue`, {
@@ -161,34 +258,85 @@ const CashierDashboard = () => {
       if (res.ok) {
         const data = await res.json();
         const isPayable = (f) => f && f.status === 'For Payment' && f.paymentStatus !== 'Paid' && !f.isArchived;
+        let payableItems = [];
+        let ledgerItems = [];
+
         if (Array.isArray(data)) {
+          payableItems = data.filter(isPayable);
+          ledgerItems = data.filter(f => f.paymentStatus === 'Paid');
           setAllRecords(data);
-          setQueue(data.filter(isPayable));
-          setPaidList(data.filter(f => f.paymentStatus === 'Paid'));
         } else {
-          const pendingSource = Array.isArray(data.pendingQueue) ? data.pendingQueue : (Array.isArray(data.all) ? data.all : []);
-          const recentlyPaidSource = Array.isArray(data.recentlyPaid) ? data.recentlyPaid : [];
-          setAllRecords(Array.isArray(data.all) ? data.all : [...pendingSource, ...recentlyPaidSource]);
-          setQueue(pendingSource.filter(isPayable));
-          setPaidList(recentlyPaidSource);
+          if (data?.franchiseFee != null) {
+            syncFranchiseFee(data.franchiseFee);
+          }
+          const pendingSource = Array.isArray(data.pendingQueue)
+            ? data.pendingQueue
+            : (Array.isArray(data.pendingPayment) ? data.pendingPayment : (Array.isArray(data.all) ? data.all : []));
+          ledgerItems = Array.isArray(data.paymentLedger)
+            ? data.paymentLedger
+            : (Array.isArray(data.recentlyPaid) ? data.recentlyPaid : []);
+          payableItems = pendingSource.filter(isPayable);
+          setAllRecords(Array.isArray(data.all) ? data.all : [...payableItems, ...ledgerItems]);
         }
-      } else {
+
+        // Play arrival chime only on subsequent polls/socket refreshes when a genuinely new unpaid item enters queue
+        const nextPendingIds = new Set(payableItems.map((item) => String(item._id)));
+        if (prevPendingIdsRef.current !== null) {
+          let hasNewPending = false;
+          for (const pendingId of nextPendingIds) {
+            if (!prevPendingIdsRef.current.has(pendingId)) {
+              hasNewPending = true;
+              break;
+            }
+          }
+          if (hasNewPending && isQueueSoundEnabled()) {
+            playQueueArrivalChime();
+          }
+        }
+        prevPendingIdsRef.current = nextPendingIds;
+
+        setQueue(payableItems);
+        setPaidList(ledgerItems);
+      } else if (!silent) {
         showToast('Failed to load cashier payment queue.', 'error');
       }
     } catch (err) {
       console.error('Error fetching cashier queue:', err);
-      showToast('Cannot connect to server.', 'error');
+      if (!silent) {
+        showToast('Cannot connect to server.', 'error');
+      }
     } finally {
-      setIsLoading(false);
+      if (!silent) {
+        setIsLoading(false);
+      }
     }
-  }, []);
+  }, [playQueueArrivalChime, syncFranchiseFee]);
 
   useEffect(() => {
     fetchQueue();
-    // Auto-refresh queue every 20 seconds
-    const interval = setInterval(fetchQueue, 20000);
-    return () => clearInterval(interval);
-  }, [fetchQueue]);
+    fetchLiveSettingsFee();
+    // Auto-refresh queue every 20 seconds without jarring skeleton flicker
+    const interval = setInterval(() => fetchQueue({ silent: true }), 20000);
+    window.addEventListener('gtrams_settings_updated', fetchLiveSettingsFee);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('gtrams_settings_updated', fetchLiveSettingsFee);
+    };
+  }, [fetchQueue, fetchLiveSettingsFee]);
+
+  // Real-time refresh when socket events arrive for the cashier terminal
+  useEffect(() => {
+    if (!socket) return;
+    const handleRealtimeRefresh = () => {
+      fetchQueue({ silent: true });
+    };
+    socket.on('notification', handleRealtimeRefresh);
+    socket.on('franchise:updated', handleRealtimeRefresh);
+    return () => {
+      socket.off('notification', handleRealtimeRefresh);
+      socket.off('franchise:updated', handleRealtimeRefresh);
+    };
+  }, [socket, fetchQueue]);
 
   // Format exact date and exact time (HH:MM:SS AM/PM)
   const formatExactDateTime = (dateStr) => {
@@ -217,7 +365,7 @@ const CashierDashboard = () => {
     setPayFormData({
       officialReceiptNo: '',
       payerName: franchise.fullName || '',
-      amountPaid: franchise.amountPaid || standardFranchiseFee,
+      amountPaid: standardFranchiseFee,
       paymentMethod: 'Cash',
       remarks: 'Payment settled over the counter at Municipal Treasury Window'
     });
@@ -256,22 +404,25 @@ const CashierDashboard = () => {
         showToast(`Official Receipt ${payFormData.officialReceiptNo} issued! Payment marked as Paid.`, 'success');
         setIsPayModalOpen(false);
         
-        // Open printable Official Receipt
+        // Open printable Official Receipt preserving the recorded collector from server
+        const recordedCollector = resolveCollectorName(data.ledgerEntry || data.franchise) || currentCashierName;
         setReceiptData({
           ...data.franchise,
-          officialReceiptNo: (payFormData.officialReceiptNo || '').trim().toUpperCase(),
-          payerName: (payFormData.payerName || '').trim() || selectedFranchise.fullName,
-          amountPaid: Number(payFormData.amountPaid) || standardFranchiseFee,
-          paymentMethod: 'Cash',
-          paymentDate: new Date(),
-          cashierName: currentCashierName
+          ...(data.ledgerEntry || {}),
+          officialReceiptNo: data.ledgerEntry?.officialReceiptNo || data.franchise?.officialReceiptNo || (payFormData.officialReceiptNo || '').trim().toUpperCase(),
+          payerName: data.ledgerEntry?.payerName || data.franchise?.payerName || (payFormData.payerName || '').trim() || selectedFranchise.fullName,
+          amountPaid: data.ledgerEntry?.amountPaid ?? data.franchise?.amountPaid ?? (Number(payFormData.amountPaid) || standardFranchiseFee),
+          paymentMethod: data.ledgerEntry?.paymentMethod || data.franchise?.paymentMethod || 'Cash',
+          paymentDate: data.ledgerEntry?.paymentDate || data.franchise?.paymentDate || new Date(),
+          processedByName: data.ledgerEntry?.processedByName || data.franchise?.cashierName || recordedCollector,
+          cashierName: recordedCollector
         });
         setIsReceiptOpen(true);
-        if (localStorage.getItem('cashier_auto_print') === 'true') {
+        if (isAutoPrintEnabled()) {
           setTimeout(() => window.print(), 300);
         }
 
-        fetchQueue();
+        fetchQueue({ silent: true });
       } else {
         showToast(data.message || 'Payment processing failed.', 'error');
       }
@@ -296,10 +447,11 @@ const CashierDashboard = () => {
       const ref = (item._id || '').slice(-6).toUpperCase();
       const mtop = (item.mtopNo || '').toLowerCase();
       const plate = (item.plateNo || '').toLowerCase();
-      const name = (item.fullName || item.operator?.name || '').toLowerCase();
+      const name = (item.fullName || item.applicantName || item.payerName || item.operator?.name || '').toLowerCase();
       const orNo = (item.officialReceiptNo || '').toLowerCase();
-      const toda = (item.todaName || '').toLowerCase();
-      return ref.includes(q) || mtop.includes(q) || plate.includes(q) || name.includes(q) || orNo.includes(q) || toda.includes(q);
+      const toda = (item.todaName || item.todaAssociation || '').toLowerCase();
+      const collector = resolveCollectorName(item).toLowerCase();
+      return ref.includes(q) || mtop.includes(q) || plate.includes(q) || name.includes(q) || orNo.includes(q) || toda.includes(q) || collector.includes(q);
     });
   }, [activeTab, queue, paidList, searchQuery]);
 
@@ -482,7 +634,7 @@ const CashierDashboard = () => {
             </div>
 
             <button
-              onClick={fetchQueue}
+              onClick={() => fetchQueue()}
               className="px-4 py-2.5 bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#E4E1DC] dark:hover:bg-[#2E2A27] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg text-xs font-bold text-[#1F1D1B] dark:text-[#EAE7E1] flex items-center justify-center gap-1.5 transition-colors cursor-pointer shrink-0 min-h-[44px]"
               title="Refresh queue"
             >
@@ -553,7 +705,7 @@ const CashierDashboard = () => {
                             </div>
                             <div className="text-right shrink-0">
                               <span className="font-bold text-emerald-700 dark:text-emerald-400 text-sm font-mono tabular-nums">
-                                ₱{(item.amountPaid || standardFranchiseFee).toFixed(2)}
+                                ₱{Number(standardFranchiseFee).toFixed(2)}
                               </span>
                               <span className="block text-[10px] text-[#6B6761] dark:text-[#A8A29E] uppercase font-bold">Cash OTC</span>
                             </div>
@@ -577,10 +729,13 @@ const CashierDashboard = () => {
                               {item.officialReceiptNo || 'OR-PAID'}
                             </span>
                             <p className="font-bold text-sm text-[#1F1D1B] dark:text-[#F6F5F3] mt-1.5 truncate">
-                              {item.fullName || item.operator?.name}
+                              {item.fullName || item.applicantName || item.operator?.name}
                             </p>
                             <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-mono tabular-nums">
-                              {item.plateNo || 'PENDING'} &bull; {item.todaName || 'Non-TODA'}
+                              {item.plateNo || 'PENDING'} &bull; {item.todaName || item.todaAssociation || 'Non-TODA'}
+                            </p>
+                            <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-0.5">
+                              Collector: <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{resolveCollectorName(item)}</span>
                             </p>
                           </div>
                           <div className="text-right shrink-0">
@@ -594,7 +749,7 @@ const CashierDashboard = () => {
                           onClick={() => {
                             setReceiptData(item);
                             setIsReceiptOpen(true);
-                            if (localStorage.getItem('cashier_auto_print') === 'true') {
+                            if (isAutoPrintEnabled()) {
                               setTimeout(() => window.print(), 300);
                             }
                           }}
@@ -664,7 +819,7 @@ const CashierDashboard = () => {
                               <td className="py-3.5 px-4">
                                 <div>
                                   <span className="font-bold text-emerald-700 dark:text-emerald-400 text-sm font-mono tabular-nums">
-                                    ₱{(item.amountPaid || standardFranchiseFee).toFixed(2)}
+                                    ₱{Number(standardFranchiseFee).toFixed(2)}
                                   </span>
                                   <span className="block text-[10px] text-[#6B6761] dark:text-[#A8A29E] uppercase font-bold tracking-tight">Standard LGU Fee</span>
                                 </div>
@@ -693,14 +848,14 @@ const CashierDashboard = () => {
                                   {item.officialReceiptNo || 'OR-PAID'}
                                 </span>
                                 <div className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] uppercase font-semibold">
-                                  Cashier: {item.cashierName || 'N/A'}
+                                  Cashier: {resolveCollectorName(item)}
                                 </div>
                               </div>
                             </td>
 
                             <td className="py-3.5 px-4">
                               <div>
-                                <p className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{item.fullName || item.operator?.name}</p>
+                                <p className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">{item.fullName || item.applicantName || item.operator?.name}</p>
                                 <p className="font-mono tabular-nums text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E]">
                                   Plate: <span className="font-bold text-amber-700 dark:text-amber-400">{item.plateNo || 'PENDING'}</span>
                                 </p>
@@ -709,7 +864,7 @@ const CashierDashboard = () => {
 
                             <td className="py-3.5 px-4">
                               <div>
-                                <p className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{item.todaName || 'Non-TODA'}</p>
+                                <p className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{item.todaName || item.todaAssociation || 'Non-TODA'}</p>
                                 <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] font-medium">{item.zone ? formatZoneLabel(item.zone) : 'N/A'}</p>
                               </div>
                             </td>
@@ -743,7 +898,7 @@ const CashierDashboard = () => {
                                 onClick={() => {
                                   setReceiptData(item);
                                   setIsReceiptOpen(true);
-                                  if (localStorage.getItem('cashier_auto_print') === 'true') {
+                                  if (isAutoPrintEnabled()) {
                                     setTimeout(() => window.print(), 300);
                                   }
                                 }}
@@ -977,11 +1132,11 @@ const CashierDashboard = () => {
             <div className="bg-[#F6F5F3] p-3.5 rounded-lg border border-[#E4E1DC] text-xs space-y-1.5">
               <div className="flex justify-between">
                 <span className="text-[#6B6761]">Received From (Payor):</span>
-                <span className="font-bold text-[#1F1D1B]">{receiptData.fullName || receiptData.operator?.name}</span>
+                <span className="font-bold text-[#1F1D1B]">{receiptData.payerName || receiptData.fullName || receiptData.applicantName || receiptData.operator?.name}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-[#6B6761]">TODA Association:</span>
-                <span className="font-semibold text-[#1F1D1B]">{receiptData.todaName || 'Non-TODA'}</span>
+                <span className="font-semibold text-[#1F1D1B]">{receiptData.todaName || receiptData.todaAssociation || 'Non-TODA'}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-[#6B6761]">Tricycle Plate &amp; MTOP:</span>
@@ -1046,7 +1201,7 @@ const CashierDashboard = () => {
               <div className="text-right">
                 <p className="text-[#6B6761] text-[10px] uppercase font-bold">Collecting Officer</p>
                 <p className="font-bold text-[#1F1D1B] border-b border-[#6B6761] pb-0.5">
-                  {receiptData.cashierName || 'N/A'}
+                  {resolveCollectorName(receiptData)}
                 </p>
                 <p className="text-[10px] text-[#6B6761]">Municipal Treasury Staff</p>
               </div>

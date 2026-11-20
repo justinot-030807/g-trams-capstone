@@ -133,6 +133,13 @@ const OperatorDashboard = () => {
     localStorage.removeItem('userId');
     localStorage.removeItem('name');
     localStorage.removeItem('reapply_target');
+    try {
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith('gtrams_reapply_target')) {
+          localStorage.removeItem(key);
+        }
+      });
+    } catch {}
     localStorage.removeItem('gtrams_all_notifs_read_at');
     localStorage.removeItem('gtrams_cached_notifications');
     window.dispatchEvent(new Event('gtrams-auth-changed'));
@@ -161,7 +168,13 @@ const OperatorDashboard = () => {
     onConfirm: null
   });
 
-  const systemFranchiseFee = localStorage.getItem('franchise_fee') || '500';
+  const [systemFranchiseFee, setSystemFranchiseFee] = useState(() => localStorage.getItem('franchise_fee') || '500');
+
+  const [renewalReminderDays, setRenewalReminderDays] = useState(() => {
+    const saved = localStorage.getItem('renewal_reminder_days');
+    const parsed = saved ? parseInt(saved, 10) : NaN;
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 60;
+  });
 
   const [maxUnits, setMaxUnits] = useState(() => {
     const saved = localStorage.getItem('max_units_per_operator');
@@ -256,7 +269,20 @@ const OperatorDashboard = () => {
         }
         const fee = json.data?.franchiseFee ?? json.franchiseFee;
         if (fee !== undefined && fee !== null) {
-          localStorage.setItem('franchise_fee', fee);
+          setSystemFranchiseFee(String(fee));
+          localStorage.setItem('franchise_fee', String(fee));
+        }
+        const reminderDays =
+          json.data?.renewalReminderDays ??
+          json.data?.expiryWarningDays ??
+          json.renewalReminderDays ??
+          json.expiryWarningDays;
+        if (reminderDays !== undefined && reminderDays !== null) {
+          const daysNum = Number(reminderDays);
+          if (Number.isFinite(daysNum) && daysNum > 0) {
+            setRenewalReminderDays(daysNum);
+            localStorage.setItem('renewal_reminder_days', String(daysNum));
+          }
         }
       }
     } catch (err) {
@@ -432,7 +458,31 @@ const OperatorDashboard = () => {
 
   const handleFixIssues = (targetUnit) => {
     if (!targetUnit) return;
-    localStorage.setItem('reapply_target', JSON.stringify(targetUnit));
+    const ownerUserId = (() => {
+      try {
+        const u = JSON.parse(localStorage.getItem('user') || '{}');
+        if (u._id) return String(u._id);
+        if (u.id) return String(u.id);
+      } catch {}
+      const storedId = localStorage.getItem('userId');
+      if (storedId) return String(storedId);
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const payload = JSON.parse(atob(token.split('.')[1]));
+          if (payload.id) return String(payload.id);
+        } catch {}
+      }
+      const fallback = getCurrentUserId();
+      return fallback && fallback !== 'default' ? String(fallback) : '';
+    })();
+    localStorage.removeItem('reapply_target');
+    if (ownerUserId) {
+      localStorage.setItem(
+        `gtrams_reapply_target_${ownerUserId}`,
+        JSON.stringify({ ...targetUnit, _ownerUserId: ownerUserId })
+      );
+    }
     
     // Determine target field from rejectedField or parse from cancelReason
     let targetField = targetUnit.rejectedField || '';
@@ -1245,9 +1295,9 @@ const OperatorDashboard = () => {
                 <div id={unitIndex === 0 ? "tour-tracker-section" : undefined}>
                   {renderApplicationTracker(unit?.status)}
 
-                  {unit?.status === 'Active' && (() => {
+                  {(unit?.status === 'Active' || unit?.status === 'Active - Under Warning') && (() => {
                     const daysRemaining = calculateDaysRemaining(unit);
-                    const isExpiringSoon = daysRemaining !== null && daysRemaining <= 60 && daysRemaining > 0;
+                    const isExpiringSoon = daysRemaining !== null && daysRemaining <= renewalReminderDays && daysRemaining > 0;
                     const isOverdue = daysRemaining !== null && daysRemaining <= 0;
 
                     return (
@@ -1299,7 +1349,7 @@ const OperatorDashboard = () => {
                             {isExpiringSoon && (
                               <div className="pt-1.5 flex items-center justify-between">
                                 <p className="text-xs text-[#92400E] dark:text-[#FDE68A] font-medium leading-tight">
-                                  Within 60-day renewal window. Renew early to avoid penalties.
+                                  Within {renewalReminderDays}-day renewal window. Renew early to avoid penalties.
                                 </p>
                                 <button
                                   onClick={() => navigate(`/renew-franchise/${unit._id}`)}
@@ -1383,7 +1433,7 @@ const OperatorDashboard = () => {
                               </span>
                             </div>
                             <p className="text-xs font-normal text-[#92400E]/90 dark:text-[#FDE68A]/90 leading-snug">
-                              Pay ₱500 at the Municipal Cashier window with Plate No. <b>{unit.plateNo}</b>. Your franchise will be activated once payment is confirmed.
+                              Pay ₱{parseFloat(systemFranchiseFee || 500).toFixed(2)} at the Municipal Cashier window with Plate No. <b>{unit.plateNo}</b>. Your franchise will be activated once payment is confirmed.
                             </p>
                           </div>
                         </div>

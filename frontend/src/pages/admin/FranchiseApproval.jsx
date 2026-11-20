@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import MainLayout from '../../components/MainLayout';
 import { 
@@ -13,12 +13,24 @@ import MtopCertificateModal from '../../components/admin/MtopCertificateModal';
 import BatchMtopModal from '../../components/admin/BatchMtopModal';
 import TransmittalSheetModal from '../../components/admin/TransmittalSheetModal';
 import AdminApplicationSummaryModal from '../../components/admin/AdminApplicationSummaryModal';
+import ApplicationDossierModal from '../../components/admin/ApplicationDossierModal';
 import StaffCancellationReviewModal from '../../components/admin/StaffCancellationReviewModal';
 import PageHeader from '../../components/common/PageHeader';
 import StatusBadge from '../../components/common/StatusBadge';
 import TricycleIcon from '../../components/common/TricycleIcon';
 import { triageApplication } from '../../utils/dateValidity';
-import { GASAN_BARANGAYS, formatZoneLabel } from '../../utils/constants';
+import { GASAN_BARANGAYS, TODA_LIST, formatZoneLabel } from '../../utils/constants';
+
+const TAB_STATUS_QUERY = {
+  pending: 'Pending',
+  payment: 'For Payment',
+  signing: 'For Signing',
+  ready: 'Ready for Pickup',
+  cancellations: 'Cancellation Requested',
+  all: 'Pending,Pending for Approval,For Payment,For Signing,Ready for Pickup,Cancellation Requested',
+  approved: 'Active',
+  rejected: 'Cancelled'
+};
 
 const REJECT_REASONS = [
   "Expired OR/CR Registration",
@@ -51,9 +63,29 @@ const FranchiseApproval = () => {
   const endDate = searchParams.get('endDate') || '';
 
   const [applications, setApplications] = useState([]);
-  const [historyApps, setHistoryApps] = useState([]); // Active (approved) + Cancelled (rejected)
+  const [serverPagination, setServerPagination] = useState({
+    totalRecords: 0,
+    totalPages: 1,
+    currentPage: 1,
+    limit: 25,
+    hasNextPage: false,
+    hasPrevPage: false
+  });
+  const [tabCounts, setTabCounts] = useState({
+    pending: 0,
+    payment: 0,
+    signing: 0,
+    ready: 0,
+    cancellations: 0,
+    all: 0,
+    approved: 0,
+    rejected: 0
+  });
   const [franchiseFee, setFranchiseFee] = useState(500);
   const [isLoading, setIsLoading] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
+  const [searchInput, setSearchInput] = useState(searchQuery);
+  const fetchAbortRef = useRef(null);
 
   // Batch selection state
   const [selectedIds, setSelectedIds] = useState([]);
@@ -70,8 +102,9 @@ const FranchiseApproval = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeMenuId, setActiveMenuId] = useState(null);
   
-  // Application Dossier Modal state
+  // Application Summary & Printable Evaluation Dossier Modal state
   const [dossierTargetUnit, setDossierTargetUnit] = useState(null);
+  const [printableDossierTarget, setPrintableDossierTarget] = useState(null);
 
   // Module 8: Voluntary Cancellation Review Modal state
   const [cancellationReviewTarget, setCancellationReviewTarget] = useState(null);
@@ -88,7 +121,7 @@ const FranchiseApproval = () => {
   const [isTransmittalOpen, setIsTransmittalOpen] = useState(false);
 
   // Helper to update URL params cleanly
-  const updateParams = (newParams) => {
+  const updateParams = useCallback((newParams) => {
     const next = new URLSearchParams(searchParams);
     Object.entries(newParams).forEach(([k, v]) => {
       if (k === 'tab') {
@@ -104,51 +137,182 @@ const FranchiseApproval = () => {
       }
     });
     setSearchParams(next, { replace: true });
-  };
+  }, [searchParams, setSearchParams]);
 
-  const fetchApplications = async () => {
-    setIsLoading(true);
+  // Keep search input synchronized with URL query param (e.g. Reset Filters)
+  useEffect(() => {
+    setSearchInput(searchQuery);
+  }, [searchQuery]);
+
+  // Debounce search query updates to avoid firing excessive server requests per keystroke
+  useEffect(() => {
+    if (searchInput === searchQuery) return;
+    const timer = setTimeout(() => {
+      updateParams({ q: searchInput, page: 1 });
+    }, 280);
+    return () => clearTimeout(timer);
+  }, [searchInput, searchQuery, updateParams]);
+
+  const fetchSettingsAndCounts = useCallback(async () => {
+    const headers = { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
+    const apiBase = import.meta.env.VITE_API_URL;
+    const countTargets = [
+      { key: 'pending', status: 'Pending' },
+      { key: 'payment', status: 'For Payment' },
+      { key: 'signing', status: 'For Signing' },
+      { key: 'ready', status: 'Ready for Pickup' },
+      { key: 'cancellations', status: 'Cancellation Requested' },
+      { key: 'approved', status: 'Active' },
+      { key: 'rejected', status: 'Cancelled' }
+    ];
+
     try {
-      const headers = { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
-      const [response, historyRes, settingsRes] = await Promise.all([
-        fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises?status=Pending,Pending%20for%20Approval,For%20Payment,For%20Signing,Ready%20for%20Pickup,Cancellation%20Requested&limit=2000&sort=oldest`, { headers }),
-        fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises?status=Active,Cancelled&limit=500`, { headers }),
-        fetch(`${import.meta.env.VITE_API_URL}/api/v1/settings`, { headers }).catch(() => null)
+      const [settingsRes, ...countResponses] = await Promise.all([
+        fetch(`${apiBase}/api/v1/settings`, { headers }).catch(() => null),
+        ...countTargets.map(({ status }) =>
+          fetch(`${apiBase}/api/v1/franchises?status=${encodeURIComponent(status)}&page=1&limit=1`, { headers }).catch(() => null)
+        )
       ]);
+
       if (settingsRes?.ok) {
-        const sData = await settingsRes.json().catch(() => null);
-        if (sData?.franchiseFee != null && !Number.isNaN(Number(sData.franchiseFee))) {
-          setFranchiseFee(Number(sData.franchiseFee));
+        const settingsJson = await settingsRes.json().catch(() => null);
+        const liveFee = settingsJson?.data?.franchiseFee ?? settingsJson?.franchiseFee;
+        if (liveFee != null && !Number.isNaN(Number(liveFee)) && Number(liveFee) > 0) {
+          setFranchiseFee(Number(liveFee));
         }
       }
-      if (response.ok) {
-        const data = await response.json();
-        // Server already sorted, ensure FIFO queue (oldest date applied first)
-        const queue = (Array.isArray(data) ? data : (data.data || []))
-          .sort((a, b) => new Date(a.dateApplied || a.createdAt || 0) - new Date(b.dateApplied || b.createdAt || 0));
-        
-        setApplications(queue);
+
+      const nextCounts = {};
+      let resolvedAnyCount = false;
+      for (let i = 0; i < countTargets.length; i++) {
+        const res = countResponses[i];
+        if (res?.ok) {
+          const json = await res.json().catch(() => null);
+          const total = json?.pagination?.totalRecords ?? json?.total ?? (Array.isArray(json?.data) ? json.data.length : 0);
+          nextCounts[countTargets[i].key] = Number(total) || 0;
+          resolvedAnyCount = true;
+        }
       }
-      if (historyRes.ok) {
-        const hData = await historyRes.json();
-        // History: most recently decided first
-        const list = (Array.isArray(hData) ? hData : (hData.data || []))
-          .sort((a, b) => new Date(b.updatedAt || b.approvalDate || 0) - new Date(a.updatedAt || a.approvalDate || 0));
-        setHistoryApps(list);
+
+      if (resolvedAnyCount) {
+        setTabCounts(prev => {
+          const merged = { ...prev, ...nextCounts };
+          merged.all =
+            (merged.pending || 0) +
+            (merged.payment || 0) +
+            (merged.signing || 0) +
+            (merged.ready || 0) +
+            (merged.cancellations || 0);
+          return merged;
+        });
       }
-    } catch (error) {
-      console.error('Error fetching applications:', error);
-    } finally {
-      setIsLoading(false);
+    } catch (err) {
+      console.error('Error fetching approval settings/counts:', err);
     }
-  };
+  }, []);
+
+  const fetchApplications = useCallback(async () => {
+    if (fetchAbortRef.current) {
+      fetchAbortRef.current.abort();
+    }
+    const controller = new AbortController();
+    fetchAbortRef.current = controller;
+
+    setIsLoading(true);
+    setFetchError(null);
+    try {
+      const headers = { 'Authorization': `Bearer ${localStorage.getItem('token')}` };
+      const params = new URLSearchParams();
+      params.set('status', TAB_STATUS_QUERY[activeTab] || 'Pending');
+      params.set('page', String(flaggedOnly ? 1 : Math.max(1, currentPage)));
+      params.set('limit', String(flaggedOnly ? 2000 : pageSize));
+      params.set('sort', isHistoryTab ? 'newest' : 'oldest');
+
+      if (selectedToda && selectedToda !== 'all') {
+        params.set('todaName', selectedToda);
+      }
+      if (selectedType && selectedType !== 'all') {
+        params.set('applicationType', selectedType);
+      }
+      if (selectedBarangay && selectedBarangay !== 'all') {
+        params.set('barangay', selectedBarangay);
+      }
+      if (startDate && endDate) {
+        params.set('startDate', startDate);
+        params.set('endDate', endDate);
+      }
+      if (searchQuery.trim() !== '') {
+        params.set('search', searchQuery.trim());
+      }
+
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises?${params.toString()}`, {
+        headers,
+        signal: controller.signal
+      });
+
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData?.message || errData?.error || `Failed to load applications (HTTP ${response.status}).`);
+      }
+
+      const data = await response.json();
+      const list = Array.isArray(data) ? data : (Array.isArray(data?.data) ? data.data : []);
+      const pg = data?.pagination || {};
+      const totalRecords = Number(pg.totalRecords ?? data?.total ?? list.length) || 0;
+      const resolvedLimit = Number(pg.limit ?? pageSize) || pageSize;
+      const totalPages = Math.max(1, Number(pg.totalPages ?? data?.totalPages ?? Math.ceil(totalRecords / resolvedLimit)) || 1);
+      const resolvedPage = Math.max(1, Number(pg.currentPage ?? data?.page ?? currentPage) || 1);
+
+      setApplications(list);
+      setServerPagination({
+        totalRecords,
+        totalPages,
+        currentPage: resolvedPage,
+        limit: resolvedLimit,
+        hasNextPage: Boolean(pg.hasNextPage ?? (resolvedPage < totalPages)),
+        hasPrevPage: Boolean(pg.hasPrevPage ?? (resolvedPage > 1))
+      });
+    } catch (error) {
+      if (error?.name === 'AbortError') return;
+      console.error('Error fetching applications:', error);
+      setApplications([]);
+      setServerPagination({
+        totalRecords: 0,
+        totalPages: 1,
+        currentPage: 1,
+        limit: pageSize,
+        hasNextPage: false,
+        hasPrevPage: false
+      });
+      setFetchError(error?.message || 'Unable to load franchise applications right now. Please check your connection and retry.');
+    } finally {
+      if (fetchAbortRef.current === controller) {
+        setIsLoading(false);
+      }
+    }
+  }, [activeTab, currentPage, pageSize, isHistoryTab, selectedToda, selectedType, selectedBarangay, startDate, endDate, flaggedOnly, searchQuery]);
+
+  const refreshAll = useCallback(() => {
+    fetchApplications();
+    fetchSettingsAndCounts();
+  }, [fetchApplications, fetchSettingsAndCounts]);
 
   useEffect(() => {
     setSelectedIds([]);
-  }, [activeTab, selectedToda, selectedType, selectedBarangay, flaggedOnly, searchQuery]);
+  }, [activeTab, currentPage, pageSize, selectedToda, selectedType, selectedBarangay, flaggedOnly, searchQuery]);
 
   useEffect(() => {
     fetchApplications();
+  }, [fetchApplications]);
+
+  useEffect(() => {
+    fetchSettingsAndCounts();
+  }, [fetchSettingsAndCounts]);
+
+  useEffect(() => {
+    return () => {
+      if (fetchAbortRef.current) fetchAbortRef.current.abort();
+    };
   }, []);
 
   // Cleanup undo countdown on unmount
@@ -231,7 +395,7 @@ const FranchiseApproval = () => {
       } else {
         showToast(`Action undone! Reverted ${succeeded.length} application(s).`, "success");
       }
-      fetchApplications();
+      refreshAll();
     } catch (err) {
       console.error('Undo error:', err);
       showToast("Failed to undo action.", "error");
@@ -272,7 +436,7 @@ const FranchiseApproval = () => {
         setQuickApproveTarget(null);
         setQuickRejectTarget(null);
         setActiveMenuId(null);
-        fetchApplications();
+        refreshAll();
 
         triggerUndoCountdown(
           [{ _id: targetApp._id, prevStatus, newStatus: status, updatedAt: updatedDoc?.updatedAt, name: targetApp.fullName }],
@@ -283,7 +447,7 @@ const FranchiseApproval = () => {
         setQuickApproveTarget(null);
         setQuickRejectTarget(null);
         setActiveMenuId(null);
-        fetchApplications();
+        refreshAll();
         showToast(errData.message || 'Application status was updated by another user. Refreshing queue...', 'warning');
       } else {
         const errData = await response.json().catch(() => ({}));
@@ -319,7 +483,7 @@ const FranchiseApproval = () => {
       }
 
       showToast(`Franchise for ${unit.plateNo} voluntarily cancelled.`, 'success');
-      fetchApplications();
+      refreshAll();
     } catch (err) {
       console.error('Finalize cancellation error:', err);
       showToast(err.message || 'Failed to finalize cancellation.', 'error');
@@ -353,7 +517,7 @@ const FranchiseApproval = () => {
       }
 
       showToast(`Cancellation request for ${unit.plateNo} rejected. Franchise restored to Active.`, 'info');
-      fetchApplications();
+      refreshAll();
     } catch (err) {
       console.error('Reject cancellation error:', err);
       showToast(err.message || 'Failed to reject cancellation request.', 'error');
@@ -406,7 +570,7 @@ const FranchiseApproval = () => {
 
       setSelectedIds(failedUnits.map(u => u._id));
       setBatchApproveModal(false);
-      fetchApplications();
+      refreshAll();
 
       if (succeededUnits.length === 0) {
         showToast(
@@ -480,7 +644,7 @@ const FranchiseApproval = () => {
 
       setSelectedIds(failedUnits.map(u => u._id));
       setBatchReleaseModal(false);
-      fetchApplications();
+      refreshAll();
 
       if (succeededUnits.length === 0) {
         showToast(
@@ -514,86 +678,63 @@ const FranchiseApproval = () => {
     }
   };
 
+  // Unified Status Counts (from real server totals)
+  const isPendingStatus = (s) => s === 'Pending' || s === 'Pending for Approval';
+
   // Navigate to dedicated full-screen review workstation (persists origin tab!)
   const handleOpenWorkstation = (app) => {
     navigate(`/franchise-approval/review/${app._id}?tab=${activeTab}`);
   };
 
-  // Unified Status Counts
-  const isPendingStatus = (s) => s === 'Pending' || s === 'Pending for Approval';
-  const pendingCount = applications.filter(a => isPendingStatus(a.status)).length;
-  const paymentCount = applications.filter(a => a.status === 'For Payment').length;
-  const signingCount = applications.filter(a => a.status === 'For Signing').length;
-  const readyCount = applications.filter(a => a.status === 'Ready for Pickup').length;
-  const cancellationCount = applications.filter(a => a.status === 'Cancellation Requested').length;
-  const allCount = applications.length;
-  const approvedCount = historyApps.filter(a => a.status === 'Active').length;
-  const rejectedCount = historyApps.filter(a => a.status === 'Cancelled').length;
+  const handleStartReviewQueue = async () => {
+    const localPending = applications.find(a => isPendingStatus(a.status));
+    if (localPending) {
+      navigate(`/franchise-approval/review/${localPending._id}?tab=pending`);
+      return;
+    }
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises?status=Pending&page=1&limit=1&sort=oldest`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        const first = Array.isArray(data) ? data[0] : data?.data?.[0];
+        if (first?._id) {
+          navigate(`/franchise-approval/review/${first._id}?tab=pending`);
+          return;
+        }
+      }
+      showToast('No pending applications available to review.', 'info');
+    } catch {
+      showToast('Unable to open review workstation right now.', 'error');
+    }
+  };
 
-  // Extract unique TODAs for filter dropdown
-  const uniqueTodas = Array.from(new Set([...applications, ...historyApps].map(a => a.todaName || 'NON-TODA').filter(Boolean))).sort();
+  const pendingCount = tabCounts.pending;
+  const paymentCount = tabCounts.payment;
+  const signingCount = tabCounts.signing;
+  const readyCount = tabCounts.ready;
+  const cancellationCount = tabCounts.cancellations;
+  const allCount = tabCounts.all;
+  const approvedCount = tabCounts.approved;
+  const rejectedCount = tabCounts.rejected;
 
-  // Multi-Stage Filter Pipeline
+  // Extract unique TODAs for filter dropdown (official Gasan TODA list + loaded records)
+  const uniqueTodas = useMemo(() => {
+    return Array.from(
+      new Set([
+        ...(Array.isArray(TODA_LIST) ? TODA_LIST : []),
+        'NON-TODA',
+        ...applications.map(a => a.todaName).filter(Boolean)
+      ])
+    ).sort();
+  }, [applications]);
+
+  // Flagged triage refinement (server handles status, TODA, type, barangay, date range, search & pagination)
   const filteredApps = useMemo(() => {
-    const source = isHistoryTab ? historyApps : applications;
-    return source.filter(app => {
-      // 1. Tab Filter
-      if (activeTab === 'pending' && !isPendingStatus(app.status)) return false;
-      if (activeTab === 'payment' && app.status !== 'For Payment') return false;
-      if (activeTab === 'signing' && app.status !== 'For Signing') return false;
-      if (activeTab === 'ready' && app.status !== 'Ready for Pickup') return false;
-      if (activeTab === 'cancellations' && app.status !== 'Cancellation Requested') return false;
-      if (activeTab === 'approved' && app.status !== 'Active') return false;
-      if (activeTab === 'rejected' && app.status !== 'Cancelled') return false;
-
-      // 2. TODA Filter
-      if (selectedToda !== 'all' && (app.todaName || 'NON-TODA').toLowerCase() !== selectedToda.toLowerCase()) {
-        return false;
-      }
-
-      // 3. Application Type Filter
-      if (selectedType !== 'all') {
-        const appType = app.applicationType || 'New';
-        if (appType.toLowerCase() !== selectedType.toLowerCase()) return false;
-      }
-
-      // 4. Barangay Filter
-      if (selectedBarangay !== 'all') {
-        const addr = (app.address || '').toLowerCase();
-        if (!addr.includes(selectedBarangay.toLowerCase())) return false;
-      }
-
-      // 5. Date Range Filter
-      if (startDate && endDate) {
-        const d = new Date(app.dateApplied || app.createdAt || 0);
-        const s = new Date(startDate);
-        const e = new Date(endDate);
-        e.setHours(23, 59, 59, 999);
-        if (d < s || d > e) return false;
-      }
-
-      // 6. Flagged Only Triage Filter
-      if (flaggedOnly) {
-        const triage = triageApplication(app);
-        if (triage.isClean) return false;
-      }
-
-      // 7. Search Filter
-      if (searchQuery.trim() !== '') {
-        const q = searchQuery.toLowerCase();
-        const matches = (
-          (app.fullName || '').toLowerCase().includes(q) ||
-          (app.plateNo || '').toLowerCase().includes(q) ||
-          (app.motorNo || '').toLowerCase().includes(q) ||
-          (app.chassisNo || '').toLowerCase().includes(q) ||
-          (app.todaName || '').toLowerCase().includes(q)
-        );
-        if (!matches) return false;
-      }
-
-      return true;
-    });
-  }, [applications, historyApps, isHistoryTab, activeTab, selectedToda, selectedType, selectedBarangay, startDate, endDate, flaggedOnly, searchQuery]);
+    if (!flaggedOnly) return applications;
+    return applications.filter(app => !triageApplication(app).isClean);
+  }, [applications, flaggedOnly]);
 
   // Active filter state check & reset helper
   const hasActiveFilters = Boolean(
@@ -607,6 +748,7 @@ const FranchiseApproval = () => {
   );
 
   const clearAllFilters = () => {
+    setSearchInput('');
     const next = new URLSearchParams();
     if (activeTab && activeTab !== 'pending') {
       next.set('tab', activeTab);
@@ -614,13 +756,17 @@ const FranchiseApproval = () => {
     setSearchParams(next, { replace: true });
   };
 
-  // Pagination calculation
-  const totalApps = filteredApps.length;
-  const totalPages = Math.max(1, Math.ceil(totalApps / pageSize));
-  const validCurrentPage = Math.min(currentPage, totalPages);
-  const startIndex = (validCurrentPage - 1) * pageSize;
-  const endIndex = Math.min(startIndex + pageSize, totalApps);
-  const paginatedApps = filteredApps.slice(startIndex, endIndex);
+  // Pagination calculation (true server-side pagination by default; sliced client-side only for flaggedOnly triage)
+  const totalApps = flaggedOnly ? filteredApps.length : serverPagination.totalRecords;
+  const totalPages = flaggedOnly
+    ? Math.max(1, Math.ceil(totalApps / pageSize))
+    : Math.max(1, serverPagination.totalPages);
+  const validCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
+  const startIndex = totalApps === 0 ? 0 : (validCurrentPage - 1) * pageSize;
+  const paginatedApps = flaggedOnly
+    ? filteredApps.slice(startIndex, startIndex + pageSize)
+    : applications;
+  const endIndex = Math.min(startIndex + paginatedApps.length, totalApps);
 
   // Dossier summary next / prev sequential traversal
   const currentDossierIndex = useMemo(() => {
@@ -743,7 +889,8 @@ const FranchiseApproval = () => {
       <AdminApplicationSummaryModal 
         isOpen={Boolean(dossierTargetUnit)} 
         onClose={() => setDossierTargetUnit(null)} 
-        franchise={dossierTargetUnit} 
+        franchise={dossierTargetUnit}
+        franchiseFee={franchiseFee}
         onApprove={() => { 
           const unit = dossierTargetUnit; 
           setDossierTargetUnit(null); 
@@ -762,6 +909,25 @@ const FranchiseApproval = () => {
         currentIndex={currentDossierIndex}
         totalCount={filteredApps.length}
         isProcessing={isProcessing} 
+      />
+
+      {/* Official Printable Application Evaluation Dossier Modal */}
+      <ApplicationDossierModal
+        isOpen={Boolean(printableDossierTarget)}
+        onClose={() => setPrintableDossierTarget(null)}
+        franchise={printableDossierTarget}
+        franchiseFee={franchiseFee}
+        onApprove={() => {
+          const unit = printableDossierTarget;
+          setPrintableDossierTarget(null);
+          setQuickApproveTarget(unit);
+        }}
+        onReject={() => {
+          const unit = printableDossierTarget;
+          setPrintableDossierTarget(null);
+          setQuickRejectTarget(unit);
+        }}
+        isProcessing={isProcessing}
       />
 
       {/* Module 8: BPLO Staff Voluntary Cancellation Review Modal */}
@@ -1051,10 +1217,7 @@ const FranchiseApproval = () => {
           <div className="flex items-center gap-2">
             {pendingCount > 0 && (
               <button
-                onClick={() => {
-                  const firstPending = applications.find(a => isPendingStatus(a.status)) || applications[0];
-                  if (firstPending) handleOpenWorkstation(firstPending);
-                }}
+                onClick={handleStartReviewQueue}
                 className="px-3.5 py-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-semibold text-xs rounded-lg flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer"
                 title="Open full-screen review workstation"
               >
@@ -1066,7 +1229,7 @@ const FranchiseApproval = () => {
             )}
 
             <button
-              onClick={fetchApplications}
+              onClick={refreshAll}
               disabled={isLoading}
               className="p-2 bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] rounded-lg transition-all cursor-pointer shadow-sm"
               title="Refresh queue"
@@ -1087,8 +1250,8 @@ const FranchiseApproval = () => {
             <input 
               type="text" 
               placeholder="Search Name, Plate, Motor, or Chassis..." 
-              value={searchQuery} 
-              onChange={(e) => updateParams({ q: e.target.value, page: 1 })} 
+              value={searchInput} 
+              onChange={(e) => setSearchInput(e.target.value)} 
               className="w-full bg-[#F6F5F3]/70 dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg pl-9 pr-3 py-1.5 text-xs text-[#1F1D1B] dark:text-[#F6F5F3] placeholder-[#6B6761] dark:placeholder-[#A8A29E] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37]"
             />
           </div>
@@ -1319,10 +1482,40 @@ const FranchiseApproval = () => {
         )}
       </div>
 
-      {/* 4. APPLICATIONS LIST */}
+      {/* 4. ERROR BANNER & APPLICATIONS LIST */}
+      {fetchError && (
+        <div
+          role="alert"
+          className="mb-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+        >
+          <div className="flex items-start gap-3 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-400 flex items-center justify-center shrink-0">
+              <AlertCircle size={18} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm font-bold text-red-900 dark:text-red-200">
+                Could Not Load Approval Queue
+              </p>
+              <p className="text-xs text-red-700 dark:text-red-300 mt-0.5 leading-relaxed">
+                {fetchError}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={refreshAll}
+            disabled={isLoading}
+            className="px-3.5 py-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-sm cursor-pointer shrink-0 disabled:opacity-50"
+          >
+            <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
+            <span>Retry</span>
+          </button>
+        </div>
+      )}
+
       {isLoading ? (
         <QueueListSkeleton count={4} baseDelay={50} stepDelay={70} />
-      ) : filteredApps.length === 0 ? (
+      ) : fetchError && paginatedApps.length === 0 ? null : paginatedApps.length === 0 ? (
         <div className="bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] p-12 text-center text-[#6B6761] dark:text-[#A8A29E] transition-colors">
           <div className="relative mb-3 flex justify-center">
             <div className="w-16 h-16 bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-center p-2.5 shadow-sm">
@@ -1435,10 +1628,22 @@ const FranchiseApproval = () => {
                     </div>
                   </div>
 
-                  {/* Actions: View Summary text button + Primary Action + More Menu */}
-                  <div className="flex items-center gap-2 justify-end shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-[#E4E1DC] dark:border-[#2E2A27]">
+                  {/* Actions: Dossier + View Summary + Primary Action + More Menu */}
+                  <div className="flex flex-wrap items-center gap-2 justify-end shrink-0 pt-2 md:pt-0 border-t md:border-t-0 border-[#E4E1DC] dark:border-[#2E2A27]">
+                    {/* Printable Evaluation Dossier button */}
+                    <button
+                      type="button"
+                      onClick={() => setPrintableDossierTarget(app)}
+                      className="px-2.5 py-1.5 bg-[#F6F5F3] hover:bg-[#E4E1DC] dark:bg-[#14110F] dark:hover:bg-[#2E2A27] text-[#9E2A2B] dark:text-[#D4AF37] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer"
+                      title="View Printable Application Dossier"
+                    >
+                      <FileText size={13} />
+                      <span>Dossier</span>
+                    </button>
+
                     {/* View Summary text button */}
                     <button
+                      type="button"
                       onClick={() => setDossierTargetUnit(app)}
                       className="px-3 py-1.5 bg-[#F6F5F3] hover:bg-[#E4E1DC] dark:bg-[#14110F] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg font-medium text-xs transition-colors cursor-pointer"
                       title="View Application Summary"
@@ -1512,6 +1717,17 @@ const FranchiseApproval = () => {
 
                       {isMenuOpen && (
                         <div className="absolute right-0 top-full mt-1 z-30 w-48 bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-lg rounded-lg py-1">
+                          <button
+                            onClick={() => {
+                              setActiveMenuId(null);
+                              setPrintableDossierTarget(app);
+                            }}
+                            className="w-full text-left px-3.5 py-2 text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] flex items-center gap-2 cursor-pointer"
+                          >
+                            <FileText size={14} />
+                            <span>Printable Dossier</span>
+                          </button>
+
                           <button
                             onClick={() => {
                               setActiveMenuId(null);

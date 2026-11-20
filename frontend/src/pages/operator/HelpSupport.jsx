@@ -10,20 +10,20 @@ import TermsPolicyModal from '../../components/common/TermsPolicyModal';
 import { HELP_DESK_EMAIL, HOTLINE_DISPLAY, HOTLINE_NUMBER, MUNICIPAL_OFFICE_NAME } from '../../utils/contactConfig';
 import { toast } from 'sonner';
 
-const FAQS_DATA = {
+const buildFaqsData = ({ maxUnitsPerOperator = 2, renewalReminderDays = 30, validityNew = 3, validityRenew = 1 } = {}) => ({
   en: [
     {
       id: 1,
       question: "What are the required documents for a New Franchise Application?",
-      answer: "You must submit clear scanned copies or photos of: 1. Motor OR / CR (Official Receipt and Certificate of Registration), 2. Valid Driver's License, 3. TODA Endorsement Certificate, and 4. Barangay Clearance.",
-      tags: ["requirements", "apply", "new", "documents", "or/cr", "license"],
+      answer: "You must submit clear scanned copies or photos of: 1. Motor OR / CR (Official Receipt and Certificate of Registration), 2. Valid Driver's License, 3. Community Tax Certificate (Cedula / CTC) for the current fiscal year, 4. Barangay Clearance, and 5. TODA Endorsement Certificate (when applicable).",
+      tags: ["requirements", "apply", "new", "documents", "or/cr", "license", "cedula", "ctc"],
       defaultViews: 24
     },
     {
       id: 2,
       question: "When is the regular schedule for Franchise Renewal?",
-      answer: "Regular annual franchise renewal is conducted every January. You may submit your online renewal application starting 30 days before your franchise permit expires.",
-      tags: ["renewal", "deadline", "expire", "schedule", "january"],
+      answer: `Regular franchise renewal is processed annually (renewals are valid for ${validityRenew} year${validityRenew === 1 ? '' : 's'}, while new franchises are valid for ${validityNew} year${validityNew === 1 ? '' : 's'}). You may submit your online renewal application starting ${renewalReminderDays} days before your franchise permit expires.`,
+      tags: ["renewal", "deadline", "expire", "schedule", "validity"],
       defaultViews: 19
     },
     {
@@ -43,24 +43,31 @@ const FAQS_DATA = {
     {
       id: 5,
       question: "How many tricycle units can an individual operator register?",
-      answer: "In accordance with the Municipal Ordinance of Gasan, each registered operator is allowed a maximum of 2 units (or as configured by Municipal Administration).",
+      answer: `In accordance with the Municipal Ordinance of Gasan, each registered operator is currently allowed a maximum of ${maxUnitsPerOperator} unit${maxUnitsPerOperator === 1 ? '' : 's'} (as configured by Municipal Administration).`,
       tags: ["capacity", "limit", "units", "ordinance", "max"],
       defaultViews: 8
+    },
+    {
+      id: 6,
+      question: "How do I set up Account Recovery (Backup Email or Phone)?",
+      answer: "Account signup only requires your primary email or mobile number. After logging in, open Profile Settings → Account Recovery to add a secondary backup email or mobile number. This ensures you can still receive Forgot Password OTP codes if you ever lose access to your primary contact.",
+      tags: ["recovery", "backup", "password", "otp", "settings", "account"],
+      defaultViews: 10
     }
   ],
   fil: [
     {
       id: 1,
       question: "Ano ang mga kailangang requirements para sa New Franchise Application?",
-      answer: "Kailangan ng malinaw na kopya o litrato ng: 1. OR/CR ng Motor (Official Receipt / Certificate of Registration), 2. Valid Driver's License, 3. TODA Endorsement Certificate, at 4. Barangay Clearance.",
-      tags: ["requirements", "apply", "bago", "dokumento", "or/cr", "lisensya"],
+      answer: "Kailangan ng malinaw na kopya o litrato ng: 1. OR/CR ng Motor (Official Receipt / Certificate of Registration), 2. Valid Driver's License, 3. Community Tax Certificate (Cedula / CTC) para sa kasalukuyang taon, 4. Barangay Clearance, at 5. TODA Endorsement Certificate (kung naaangkop).",
+      tags: ["requirements", "apply", "bago", "dokumento", "or/cr", "lisensya", "cedula", "ctc"],
       defaultViews: 24
     },
     {
       id: 2,
       question: "Kailan ang regular schedule ng Franchise Renewal?",
-      answer: "Taon-taon tuwing buwan ng Enero ginagawa ang regular renewal. Maaari kayong mag-apply online 30 days bago mag-expire ang inyong prangkisa.",
-      tags: ["renewal", "deadline", "expire", "petsa", "enero"],
+      answer: `Taon-taon ipinoproseso ang franchise renewal (may bisang ${validityRenew} taon ang renewal, habang ${validityNew} taon naman ang bagong prangkisa). Maaari kayong mag-apply online ${renewalReminderDays} araw bago mag-expire ang inyong prangkisa.`,
+      tags: ["renewal", "deadline", "expire", "petsa", "validity"],
       defaultViews: 19
     },
     {
@@ -80,23 +87,74 @@ const FAQS_DATA = {
     {
       id: 5,
       question: "Ilang tricycle unit ang pwedeng i-rehistro ng isang operator?",
-      answer: "Alinsunod sa Municipal Ordinance ng Gasan, hanggang 2 units lamang ang karaniwang limitasyon na maaaring hawakan ng bawat rehistradong operator.",
+      answer: `Alinsunod sa Municipal Ordinance ng Gasan, hanggang ${maxUnitsPerOperator} unit lamang ang kasalukuyang limitasyon na maaaring hawakan ng bawat rehistradong operator.`,
       tags: ["capacity", "limit", "units", "dami", "ordinansa"],
       defaultViews: 8
+    },
+    {
+      id: 6,
+      question: "Paano mag-set up ng Account Recovery (Backup Email o Phone)?",
+      answer: "Pangunahing email o numero lamang ang kailangan sa pagpaparehistro. Pagkatapos mag-log in, pumunta sa Profile Settings → Account Recovery upang magdagdag ng backup email o mobile number. Makatutulong ito upang makatanggap ka pa rin ng Forgot Password OTP kung mawala ang access sa iyong pangunahing contact.",
+      tags: ["recovery", "backup", "password", "otp", "settings", "account"],
+      defaultViews: 10
     }
   ]
-};
+});
 
 const HelpSupport = () => {
   const { language, t } = useLanguage();
   const currentLang = language === 'fil' || language === 'tl' || language === 'tagalog' ? 'fil' : 'en';
 
+  const [portalSettings, setPortalSettings] = useState(() => ({
+    franchiseFee: Number(localStorage.getItem('franchise_fee')) || 500,
+    penaltyRate: 50,
+    maxUnitsPerOperator: Number(localStorage.getItem('max_units_per_operator')) || 2,
+    renewalReminderDays: Number(localStorage.getItem('renewal_reminder_days')) || 30,
+    validityNew: 3,
+    validityRenew: 1,
+    violationPolicy: null
+  }));
+
+  useEffect(() => {
+    let active = true;
+    const controller = new AbortController();
+    fetch(`${import.meta.env.VITE_API_URL || ''}/api/v1/settings`, {
+      signal: controller.signal
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (!active || !json) return;
+        const d = json.data || json;
+        const nextFee = Number(d.franchiseFee);
+        const nextPenalty = Number(d.penaltyRate);
+        const nextMaxUnits = Number(d.maxUnitsPerOperator);
+        const nextReminder = Number(d.renewalReminderDays ?? d.expiryWarningDays);
+        const nextValidityNew = Number(d.validityNew);
+        const nextValidityRenew = Number(d.validityRenew);
+
+        setPortalSettings({
+          franchiseFee: Number.isFinite(nextFee) && nextFee >= 0 ? nextFee : 500,
+          penaltyRate: Number.isFinite(nextPenalty) && nextPenalty >= 0 ? nextPenalty : 50,
+          maxUnitsPerOperator: Number.isFinite(nextMaxUnits) && nextMaxUnits > 0 ? nextMaxUnits : 2,
+          renewalReminderDays: Number.isFinite(nextReminder) && nextReminder > 0 ? nextReminder : 30,
+          validityNew: Number.isFinite(nextValidityNew) && nextValidityNew > 0 ? nextValidityNew : 3,
+          validityRenew: Number.isFinite(nextValidityRenew) && nextValidityRenew > 0 ? nextValidityRenew : 1,
+          violationPolicy: d.violationPolicy || null
+        });
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, []);
+
   const [viewCounts, setViewCounts] = useState(() => {
     try {
       const saved = localStorage.getItem('gtrams_faqs_analytics');
-      return saved ? JSON.parse(saved) : { 1: 24, 2: 19, 3: 15, 4: 11, 5: 8 };
+      return saved ? JSON.parse(saved) : { 1: 24, 2: 19, 3: 15, 4: 11, 5: 8, 6: 10 };
     } catch {
-      return { 1: 24, 2: 19, 3: 15, 4: 11, 5: 8 };
+      return { 1: 24, 2: 19, 3: 15, 4: 11, 5: 8, 6: 10 };
     }
   });
 
@@ -155,10 +213,14 @@ const HelpSupport = () => {
     }
   };
 
-  const currentFaqList = (FAQS_DATA[currentLang] || FAQS_DATA.en).map(faq => ({
+  const dynamicFaqs = buildFaqsData(portalSettings);
+  const currentFaqList = (dynamicFaqs[currentLang] || dynamicFaqs.en).map(faq => ({
     ...faq,
     views: viewCounts[faq.id] ?? faq.defaultViews
   }));
+
+  const formatPhp = (amount) =>
+    `₱${Number(amount || 0).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
   // Relevance + Frequency Scoring Algorithm
   const filteredAndSortedFaqs = currentFaqList
@@ -327,20 +389,32 @@ const HelpSupport = () => {
             <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-4 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
               <h3 className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] mb-3 text-sm flex items-center gap-2">
                 <FileText size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                Standard Fees
+                Standard Fees &amp; Franchise Terms
               </h3>
               <ul className="space-y-2 text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3]">
                 <li className="flex justify-between border-b border-[#E4E1DC] dark:border-[#2E2A27] pb-2">
-                  <span className="font-semibold">Annual Franchise Fee</span>
-                  <span className="font-mono tabular-nums">₱500.00</span>
+                  <span className="font-semibold">Annual Franchise / Renewal Fee</span>
+                  <span className="font-mono tabular-nums">{formatPhp(portalSettings.franchiseFee)}</span>
                 </li>
                 <li className="flex justify-between border-b border-[#E4E1DC] dark:border-[#2E2A27] pb-2 pt-1">
                   <span className="font-semibold">New Application Fee</span>
-                  <span className="font-mono tabular-nums">₱500.00</span>
+                  <span className="font-mono tabular-nums">{formatPhp(portalSettings.franchiseFee)}</span>
+                </li>
+                <li className="flex justify-between border-b border-[#E4E1DC] dark:border-[#2E2A27] pb-2 pt-1">
+                  <span className="font-semibold">Late Penalty (per month)</span>
+                  <span className="text-[#B91C1C] dark:text-red-400 font-bold font-mono tabular-nums">{formatPhp(portalSettings.penaltyRate)}</span>
+                </li>
+                <li className="flex justify-between border-b border-[#E4E1DC] dark:border-[#2E2A27] pb-2 pt-1">
+                  <span className="font-semibold">Permit Validity (New / Renewal)</span>
+                  <span className="font-mono tabular-nums">
+                    {portalSettings.validityNew} yr{portalSettings.validityNew === 1 ? '' : 's'} / {portalSettings.validityRenew} yr{portalSettings.validityRenew === 1 ? '' : 's'}
+                  </span>
                 </li>
                 <li className="flex justify-between pt-1">
-                  <span className="font-semibold">Late Penalty (per month)</span>
-                  <span className="text-[#B91C1C] dark:text-red-400 font-bold font-mono tabular-nums">₱50.00</span>
+                  <span className="font-semibold">Max Units per Operator</span>
+                  <span className="font-mono tabular-nums">
+                    {portalSettings.maxUnitsPerOperator} unit{portalSettings.maxUnitsPerOperator === 1 ? '' : 's'}
+                  </span>
                 </li>
               </ul>
               <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-3 font-medium italic">

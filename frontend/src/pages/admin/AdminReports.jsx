@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { GASAN_BARANGAYS, TODA_LIST } from '../../utils/constants';
 import MainLayout from '../../components/MainLayout';
-import { Printer, Filter, Download, ChevronDown } from 'lucide-react';
+import { Printer, Filter, Download, ChevronDown, AlertCircle, RefreshCw } from 'lucide-react';
 import { StatsCardsSkeleton, TableRowsSkeleton } from '../../components/skeleton';
 import PageHeader from '../../components/common/PageHeader';
 import StatusBadge from '../../components/common/StatusBadge';
 
+const EMPTY_SUMMARY = { total: 0, active: 0, pending: 0, revoked: 0, cancelled: 0, expired: 0 };
+
 const AdminReports = () => {
   const [reports, setReports] = useState([]);
-  const [summary, setSummary] = useState({ total: 0, active: 0, pending: 0, revoked: 0, cancelled: 0, expired: 0 });
+  const [summary, setSummary] = useState(EMPTY_SUMMARY);
   const [isLoading, setIsLoading] = useState(false);
+  const [fetchError, setFetchError] = useState(null);
   
   const [filters, setFilters] = useState({
     startDate: '',
@@ -21,6 +24,7 @@ const AdminReports = () => {
 
   const fetchReports = async () => {
     setIsLoading(true);
+    setFetchError(null);
     try {
       const queryParams = new URLSearchParams();
       if (filters.startDate) queryParams.append('startDate', filters.startDate);
@@ -36,10 +40,18 @@ const AdminReports = () => {
       if (response.ok) {
         const data = await response.json();
         setReports(data.data || []);
-        setSummary(data.summary || { total: 0, active: 0, pending: 0, revoked: 0, cancelled: 0, expired: 0 });
+        setSummary(data.summary || EMPTY_SUMMARY);
+      } else {
+        const errData = await response.json().catch(() => ({}));
+        setReports([]);
+        setSummary(EMPTY_SUMMARY);
+        setFetchError(errData.message || errData.error || `Unable to load franchise reports (HTTP ${response.status}).`);
       }
     } catch (error) {
       console.error('Error fetching reports:', error);
+      setReports([]);
+      setSummary(EMPTY_SUMMARY);
+      setFetchError('Unable to reach the server to load system reports. Please check your connection and retry.');
     } finally {
       setIsLoading(false);
     }
@@ -71,7 +83,11 @@ const AdminReports = () => {
 
   const sanitizeCsvCell = (value) => {
     const str = String(value ?? '');
-    const trimmedLeading = str.replace(/^[\s\u0000-\u001F\u00A0]+/, '');
+    let start = 0;
+    while (start < str.length && (str.charCodeAt(start) <= 32 || str.charCodeAt(start) === 0x00A0)) {
+      start += 1;
+    }
+    const trimmedLeading = str.slice(start);
     const isFormula =
       /^[=+\-@\t\r\n\uFF1D\uFF0B\uFF0D\uFF20]/.test(str) ||
       /^[=+\-@\uFF1D\uFF0B\uFF0D\uFF20]/.test(trimmedLeading);
@@ -273,6 +289,37 @@ const AdminReports = () => {
         </div>
       </div>
 
+      {/* Visible Error State Banner */}
+      {fetchError && (
+        <div
+          role="alert"
+          className="mb-6 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 rounded-xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 print:hidden print-hide"
+        >
+          <div className="flex items-start gap-3 min-w-0">
+            <div className="w-8 h-8 rounded-lg bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-400 flex items-center justify-center shrink-0">
+              <AlertCircle size={18} />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs sm:text-sm font-bold text-red-900 dark:text-red-200">
+                Could Not Load System Reports
+              </p>
+              <p className="text-xs text-red-700 dark:text-red-300 mt-0.5 leading-relaxed">
+                {fetchError}
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={fetchReports}
+            disabled={isLoading}
+            className="px-3.5 py-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors shadow-sm cursor-pointer shrink-0 disabled:opacity-50"
+          >
+            <RefreshCw size={14} className={isLoading ? 'animate-spin' : ''} />
+            <span>Retry</span>
+          </button>
+        </div>
+      )}
+
       {/* ========================================================================= */}
       {/* 📄 PRINTABLE REPORT CONTAINER (Isolates and styles cleanly for printing) */}
       {/* ========================================================================= */}
@@ -369,7 +416,9 @@ const AdminReports = () => {
                 ) : reports.length === 0 ? (
                   <tr>
                     <td colSpan="7" className="p-8 text-center text-[#6B6761] dark:text-[#A8A29E] text-xs sm:text-sm print:p-4">
-                      No records found for the selected filters.
+                      {fetchError
+                        ? 'Report data is unavailable right now. Click Retry above to try again.'
+                        : 'No records found for the selected filters.'}
                     </td>
                   </tr>
                 ) : (

@@ -34,7 +34,11 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
 
   const sanitizeCsvCell = (value) => {
     const str = String(value ?? '');
-    const trimmedLeading = str.replace(/^[\s\u0000-\u001F\u00A0]+/, '');
+    let start = 0;
+    while (start < str.length && (str.charCodeAt(start) <= 32 || str.charCodeAt(start) === 0x00A0)) {
+      start += 1;
+    }
+    const trimmedLeading = str.slice(start);
     const isFormula =
       /^[=+\-@\t\r\n\uFF1D\uFF0B\uFF0D\uFF20]/.test(str) ||
       /^[=+\-@\uFF1D\uFF0B\uFF0D\uFF20]/.test(trimmedLeading);
@@ -42,12 +46,17 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
     return `"${neutralized.replace(/"/g, '""')}"`;
   };
 
+  const resolveCanonicalMtop = (u) => {
+    const canonical = String(u?.mtopNo || '').trim();
+    return canonical || 'PENDING MTOP';
+  };
+
   const handleExportCSV = () => {
     if (!units || units.length === 0) return;
 
     const headers = [
       'Seq No',
-      'Permit Reference',
+      'MTOP No',
       'Operator Full Name',
       'TODA Association',
       'Plate No',
@@ -59,8 +68,7 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
     ];
 
     const rows = units.map((u, i) => {
-      const cleanPlate = u.plateNo && u.plateNo.toUpperCase() !== 'PENDING' ? u.plateNo : null;
-      const permitNo = cleanPlate ? `MTOP-GASAN-${cleanPlate}` : `MTOP-GASAN-${String(u._id).slice(-6).toUpperCase()}`;
+      const permitNo = resolveCanonicalMtop(u);
       return [
         i + 1,
         sanitizeCsvCell(permitNo),
@@ -89,7 +97,10 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
 
   return (
     <div 
-      id="printable-transmittal-root" 
+      id="printable-transmittal-root"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Official Transmittal Summary Sheet"
       className="fixed inset-0 z-[220] bg-black/75 overflow-y-auto overscroll-contain print:p-0 print:bg-white print:static print:inset-auto print:overflow-visible"
     >
       <div className="min-h-full w-full flex flex-col items-center justify-start p-2 sm:p-6 pb-28 pt-2 print:p-0 print:m-0">
@@ -272,6 +283,7 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
                   <thead>
                     <tr className="bg-[#F6F5F3] text-[9px] uppercase font-bold text-[#1F1D1B]">
                       <th className="border border-[#E4E1DC] print:border-[#1F1D1B]/40 py-1.5 px-2 text-center w-8">#</th>
+                      <th className="border border-[#E4E1DC] print:border-[#1F1D1B]/40 py-1.5 px-2 text-center">MTOP No.</th>
                       <th className="border border-[#E4E1DC] print:border-[#1F1D1B]/40 py-1.5 px-2">Operator Name</th>
                       <th className="border border-[#E4E1DC] print:border-[#1F1D1B]/40 py-1.5 px-2 text-center">TODA / Route</th>
                       <th className="border border-[#E4E1DC] print:border-[#1F1D1B]/40 py-1.5 px-2 text-center">Plate No.</th>
@@ -284,9 +296,10 @@ const TransmittalSheetModal = ({ isOpen, onClose, units = [], batchDate = new Da
                     {units.map((unit, i) => (
                       <tr key={unit._id || i} className="text-xs text-[#1F1D1B] hover:bg-[#FAF9F7]">
                         <td className="border border-[#E4E1DC] print:border-[#1F1D1B]/40 py-1 px-2 text-center font-bold font-mono tabular-nums">{i + 1}</td>
+                        <td className="border border-[#E4E1DC] print:border-[#1F1D1B]/40 py-1 px-2 text-center font-mono tabular-nums font-bold text-[#9E2A2B] whitespace-nowrap">{resolveCanonicalMtop(unit)}</td>
                         <td className="border border-[#E4E1DC] print:border-[#1F1D1B]/40 py-1 px-2 font-bold uppercase">{unit.fullName}</td>
                         <td className="border border-[#E4E1DC] print:border-[#1F1D1B]/40 py-1 px-2 text-center font-semibold">{unit.todaName || 'NON-TODA'} (Z{unit.zone || 1})</td>
-                        <td className="border border-[#E4E1DC] print:border-[#1F1D1B]/40 py-1 px-2 text-center font-mono font-extrabold text-[#9E2A2B]">{unit.plateNo || 'PENDING'}</td>
+                        <td className="border border-[#E4E1DC] print:border-[#1F1D1B]/40 py-1 px-2 text-center font-mono font-extrabold text-[#1F1D1B]">{unit.plateNo || 'PENDING'}</td>
                         <td className="border border-[#E4E1DC] print:border-[#1F1D1B]/40 py-1 px-2 text-center">{unit.make} {unit.made ? `(${unit.made})` : ''}</td>
                         <td className="border border-[#E4E1DC] print:border-[#1F1D1B]/40 py-1 px-2 text-center font-mono">{unit.motorNo}</td>
                         <td className="border border-[#E4E1DC] print:border-[#1F1D1B]/40 py-1 px-2 text-center">

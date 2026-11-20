@@ -28,7 +28,29 @@ const RenewFranchise = () => {
     navigate('/operator-dashboard');
   };
 
-  const systemFranchiseFee = localStorage.getItem('franchise_fee') || '500';
+  const [systemFranchiseFee, setSystemFranchiseFee] = useState(() => localStorage.getItem('franchise_fee') || '500');
+
+  useEffect(() => {
+    let active = true;
+    const controller = new AbortController();
+    fetch(`${import.meta.env.VITE_API_URL || ''}/api/v1/settings`, {
+      signal: controller.signal
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        if (!active || !json) return;
+        const fee = json.data?.franchiseFee ?? json.franchiseFee;
+        if (fee !== undefined && fee !== null) {
+          setSystemFranchiseFee(String(fee));
+          localStorage.setItem('franchise_fee', String(fee));
+        }
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+      controller.abort();
+    };
+  }, []);
 
   const [franchise, setFranchise] = useState(null);
   const [loadingFranchise, setLoadingFranchise] = useState(true);
@@ -772,7 +794,7 @@ const RenewFranchise = () => {
                     Payment & Collection Notice
                   </h4>
                   <p className="text-xs sm:text-sm text-[#6B6761] dark:text-amber-300/90 mt-1 leading-relaxed font-medium">
-                    Submission is free. Once approved by the Franchising Office, pay the ₱500 fee at the Municipal Treasury window to claim your updated MTOP and sticker.
+                    Submission is free. Once approved by the Franchising Office, pay the ₱{Number(systemFranchiseFee || 500).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} fee at the Municipal Treasury window to claim your updated MTOP and sticker.
                   </p>
                 </div>
               </div>

@@ -44,7 +44,7 @@ const translations = {
     'dashboard.operator': 'Operator',
     'dashboard.validUntil': 'Valid Until',
     'dashboard.approvedPaymentTitle': 'Ready for Cashier Payment',
-    'dashboard.approvedPaymentDesc': 'Pay ₱500 at the Municipal Cashier window with your Plate Number to claim your permit.',
+    'dashboard.approvedPaymentDesc': 'Pay the assessed franchise fee at the Municipal Cashier window with your Plate Number to claim your permit.',
     'dashboard.signingTitle': 'Approved — In Routing for Official Signatures',
     'dashboard.signingDesc': 'Payment is completed. Documents are routing for executive signatures. We will notify you when ready for MTOP release / pickup.',
     'dashboard.appProgress': 'Application Progress',
@@ -280,7 +280,7 @@ const translations = {
     'dashboard.operator': 'Operator',
     'dashboard.validUntil': 'May Bisa Hanggang',
     'dashboard.approvedPaymentTitle': 'Handa Na sa Pagbabayad sa Cashier',
-    'dashboard.approvedPaymentDesc': 'Magbayad ng ₱500 sa Ingat-Yaman ng Munisipyo gamit ang Plate Number upang makuha ang permiso.',
+    'dashboard.approvedPaymentDesc': 'Bayaran ang nakatakdang franchise fee sa Municipal Cashier gamit ang Plate Number upang makuha ang permiso.',
     'dashboard.signingTitle': 'Aprubado — Kasalukuyang Pinapapirmahan',
     'dashboard.signingDesc': 'Nakumpleto na ang bayad sa Ingat-Yaman. Kasalukuyang pinapapirmahan ang mga opisyal na dokumento. Hintayin ang abiso para sa pagkuha (release) ng MTOP certificate at sticker.',
     'dashboard.appProgress': 'Progreso ng Aplikasyon',
@@ -504,7 +504,7 @@ export const LanguageProvider = ({ children }) => {
     const token = localStorage.getItem('token');
     if (token) {
       try {
-        await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/profile`, {
+        const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/v1/auth/profile`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -512,6 +512,13 @@ export const LanguageProvider = ({ children }) => {
           },
           body: JSON.stringify({ language: normalized })
         });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          console.warn(
+            `Failed to sync language preference with backend (HTTP ${res.status}):`,
+            errData.message || res.statusText
+          );
+        }
       } catch (err) {
         console.error('Failed to sync language preference with backend:', err);
       }

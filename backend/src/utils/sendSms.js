@@ -37,21 +37,40 @@ async function sendSms({ phone, number, message }) {
   const rawTarget = phone || number;
   const formattedPhone = formatPhoneE164(rawTarget);
   if (!formattedPhone || !message) {
-    return { success: false, reason: 'Invalid phone number or empty message' };
+    return {
+      success: false,
+      error: 'Invalid phone number or empty message',
+      reason: 'Invalid phone number or empty message'
+    };
   }
 
   if (process.env.NODE_ENV === 'test') {
     return { success: true, simulated: true, provider: 'test' };
   }
 
+  const maskedPhone = formattedPhone.length >= 7
+    ? `${formattedPhone.slice(0, 4)}****${formattedPhone.slice(-3)}`
+    : '****';
+
   const textbeeApiKey = (process.env.TEXTBEE_API_KEY || '').trim();
   const textbeeDeviceId = (process.env.TEXTBEE_DEVICE_ID || '').trim();
+  let lastError = null;
+  let lastDetails = null;
 
   // 1. Primary Gateway: TextBee (Android SMS Gateway)
   if (textbeeApiKey) {
     const headers = {
       'x-api-key': textbeeApiKey,
       'Content-Type': 'application/json'
+    };
+
+    const isTextBeePayloadSuccess = (res) => {
+      if (!res || res.status < 200 || res.status >= 300) return false;
+      if (res.data && typeof res.data === 'object') {
+        if (res.data.success === false || res.data.error) return false;
+        if (res.data.data && res.data.data.success === false) return false;
+      }
+      return true;
     };
 
     // If TEXTBEE_DEVICE_ID is provided, try device-specific endpoint first, then gateway fallback
@@ -66,7 +85,11 @@ async function sendSms({ phone, number, message }) {
           },
           { headers, timeout: 10000 }
         );
-        return { success: true, provider: 'textbee', data: res.data };
+        if (isTextBeePayloadSuccess(res)) {
+          return { success: true, provider: 'textbee', data: res.data };
+        }
+        lastError = res?.data?.message || res?.data?.error || 'TextBee device endpoint returned failure';
+        lastDetails = res?.data || null;
       } catch (deviceErr) {
         // Fallback to general gateway endpoint if device endpoint differs
         try {
@@ -80,46 +103,87 @@ async function sendSms({ phone, number, message }) {
             },
             { headers, timeout: 10000 }
           );
-          return { success: true, provider: 'textbee', data: res.data };
+          if (isTextBeePayloadSuccess(res)) {
+            return { success: true, provider: 'textbee', data: res.data };
+          }
+          lastError = res?.data?.message || res?.data?.error || 'TextBee gateway returned failure';
+          lastDetails = res?.data || null;
         } catch (fallbackErr) {
-          throw fallbackErr;
+          lastError = fallbackErr?.response?.data?.message || fallbackErr?.response?.data?.error || fallbackErr.message || 'TextBee SMS delivery failed';
+          lastDetails = fallbackErr?.response?.data || null;
         }
       }
     } else {
       // No deviceId specified — use default active device on TextBee account
-      const gatewayUrl = 'https://api.textbee.dev/api/v1/gateway/send-sms';
-      const res = await axios.post(
-        gatewayUrl,
-        {
-          recipients: [formattedPhone],
-          message: String(message)
-        },
-        { headers, timeout: 10000 }
-      );
-      return { success: true, provider: 'textbee', data: res.data };
+      try {
+        const gatewayUrl = 'https://api.textbee.dev/api/v1/gateway/send-sms';
+        const res = await axios.post(
+          gatewayUrl,
+          {
+            recipients: [formattedPhone],
+            message: String(message)
+          },
+          { headers, timeout: 10000 }
+        );
+        if (isTextBeePayloadSuccess(res)) {
+          return { success: true, provider: 'textbee', data: res.data };
+        }
+        lastError = res?.data?.message || res?.data?.error || 'TextBee gateway returned failure';
+        lastDetails = res?.data || null;
+      } catch (gatewayErr) {
+        lastError = gatewayErr?.response?.data?.message || gatewayErr?.response?.data?.error || gatewayErr.message || 'TextBee SMS delivery failed';
+        lastDetails = gatewayErr?.response?.data || null;
+      }
     }
   }
 
   // 2. Secondary Fallback: Semaphore SMS API
   const semaphoreApiKey = (process.env.SEMAPHORE_API_KEY || '').trim();
   if (semaphoreApiKey && semaphoreApiKey !== 'mock_key' && semaphoreApiKey !== 'test_key') {
-    const res = await axios.post(
-      'https://api.semaphore.co/api/v4/messages',
-      {
-        apikey: semaphoreApiKey,
-        number: formattedPhone,
-        message: String(message)
-      },
-      { timeout: 8000 }
-    );
-    return { success: true, provider: 'semaphore', data: res.data };
+    try {
+      const res = await axios.post(
+        'https://api.semaphore.co/api/v4/messages',
+        {
+          apikey: semaphoreApiKey,
+          number: formattedPhone,
+          message: String(message)
+        },
+        { timeout: 8000 }
+      );
+      const payload = res?.data;
+      const isSemaphoreError =
+        !res ||
+        res.status < 200 ||
+        res.status >= 300 ||
+        (payload && !Array.isArray(payload) && (payload.error || payload.status === 'error' || payload.success === false));
+      if (!isSemaphoreError) {
+        return { success: true, provider: 'semaphore', data: payload };
+      }
+      lastError = (typeof payload?.error === 'string' ? payload.error : JSON.stringify(payload?.error || payload)) || 'Semaphore SMS delivery failed';
+      lastDetails = payload || null;
+    } catch (semErr) {
+      lastError = semErr?.response?.data?.message || semErr?.response?.data?.error || semErr.message || 'Semaphore SMS delivery failed';
+      lastDetails = semErr?.response?.data || null;
+    }
   }
 
-  const maskedPhone = formattedPhone.length >= 7
-    ? `${formattedPhone.slice(0, 4)}****${formattedPhone.slice(-3)}`
-    : '****';
+  if (lastError) {
+    console.warn(`[SMS Gateway] Failed to deliver SMS to ${maskedPhone}: ${lastError}`);
+    return {
+      success: false,
+      error: String(lastError),
+      reason: String(lastError),
+      ...(lastDetails ? { details: lastDetails } : {})
+    };
+  }
+
   console.warn(`[SMS Gateway] Neither TEXTBEE_API_KEY nor SEMAPHORE_API_KEY is configured. SMS to ${maskedPhone} skipped.`);
-  return { success: false, simulated: true, reason: 'No SMS API key configured' };
+  return {
+    success: false,
+    simulated: true,
+    error: 'No SMS API key configured',
+    reason: 'No SMS API key configured'
+  };
 }
 
 sendSms.formatPhoneE164 = formatPhoneE164;

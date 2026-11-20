@@ -3,6 +3,7 @@ const mongoose = require('mongoose');
 const chatMessageSchema = new mongoose.Schema({
   thread: { type: mongoose.Schema.Types.ObjectId, ref: 'ChatThread', required: true, index: true },
   sender: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  senderRole: { type: String, default: '' },
   message: { type: String, required: true, maxlength: 5000 },
   targetToda: { type: String, default: 'ALL' },
   targetStatus: { type: String, default: 'ALL' },

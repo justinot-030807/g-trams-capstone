@@ -31,9 +31,9 @@ const About = () => {
           <div className="bg-[#9E2A2B] border-b border-[#7A1B22] text-white p-6 sm:p-8 text-center relative overflow-hidden">
             <GraduationCap size={100} className="absolute -right-4 -top-4 text-white/10 rotate-12 pointer-events-none" />
             <div className="relative z-10">
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-[-0.025em] mb-2">Tungkol sa GTRAMS</h1>
+              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-[-0.025em] mb-2">Tungkol sa G-TRAMS</h1>
               <p className="text-xs sm:text-sm text-white/85 max-w-2xl mx-auto leading-relaxed">
-                Gasan Tricycle Regulatory and Automated Management System
+                Gasan Tricycle Records &amp; Application Management System
               </p>
             </div>
           </div>

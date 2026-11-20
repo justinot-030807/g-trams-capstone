@@ -14,6 +14,7 @@ const {
     forgotPassword,
     resetPassword,
     changePassword,
+    requestRecoveryOtp,
     verifyAdminPassword,
     updateUser,          
     deleteUser,
@@ -59,10 +60,11 @@ router.post('/verify-otp', registerLimiter, validate(verifyOtpSchema), verifyOTP
 router.post('/login', loginLimiter, validate(loginSchema), login);
 router.get('/', protect, authorize('system_admin', 'admin', 'bplo_staff'), getUsers);
 
-// Password management routes
+// Password & recovery management routes
 router.post('/forgot-password', forgotLimiter, validate(forgotPasswordSchema), forgotPassword);
 router.post('/reset-password', resetLimiter, resetPassword);
 router.put('/change-password', resetLimiter, protect, changePassword);
+router.post('/request-recovery-otp', forgotLimiter, protect, requestRecoveryOtp);
 
 // System Admin IT routes
 router.post('/verify-password', loginLimiter, protect, authorize('system_admin', 'admin'), verifyAdminPassword);

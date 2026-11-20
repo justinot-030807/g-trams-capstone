@@ -76,6 +76,7 @@ const getSettings = async (req, res) => {
       requiredDocs: ['OR / CR ng Motor', "Driver's License", 'TODA Endorsement', 'Barangay Clearance'],
       maintenanceMode: false,
       maintenanceMessage: 'G-TRAMS portal is currently undergoing scheduled system maintenance. Please check back later.',
+      announcementsConfigured: false,
       announcements: DEFAULT_ANNOUNCEMENTS,
       violationPolicy: DEFAULT_VIOLATION_POLICY
     };
@@ -84,7 +85,10 @@ const getSettings = async (req, res) => {
       settings.maxUnitsPerOperator = 2;
     }
 
-    if (!settings.announcements || !Array.isArray(settings.announcements)) {
+    settings.announcementsConfigured = Boolean(settings.announcementsConfigured);
+    if (settings.announcementsConfigured) {
+      settings.announcements = Array.isArray(settings.announcements) ? settings.announcements : [];
+    } else if (!settings.announcements || !Array.isArray(settings.announcements)) {
       settings.announcements = DEFAULT_ANNOUNCEMENTS;
     }
 
@@ -141,7 +145,34 @@ const updateSettings = async (req, res) => {
       settings.violationPolicy = violationPolicy;
     }
     if (announcements !== undefined && Array.isArray(announcements)) {
-      settings.announcements = announcements;
+      const OBJECT_ID_HEX_RE = /^[a-f0-9]{24}$/i;
+      const sanitizedAnnouncements = announcements
+        .filter((item) => item && typeof item === 'object')
+        .map((item) => {
+          const clean = {
+            title: String(item.title || '').trim(),
+            desc: String(item.desc || '').trim(),
+            type: ['alert', 'info', 'event'].includes(item.type) ? item.type : 'info',
+            date: String(item.date || 'General Advisory').trim() || 'General Advisory',
+            isActive: item.isActive !== false
+          };
+          const rawId = item._id !== undefined && item._id !== null ? String(item._id).trim() : '';
+          if (OBJECT_ID_HEX_RE.test(rawId)) {
+            clean._id = rawId;
+          }
+          return clean;
+        });
+
+      const invalidIdx = sanitizedAnnouncements.findIndex((a) => !a.title || !a.desc);
+      if (invalidIdx !== -1) {
+        return res.status(400).json({
+          success: false,
+          message: `Announcement #${invalidIdx + 1} requires both a title and description.`
+        });
+      }
+
+      settings.announcements = sanitizedAnnouncements;
+      settings.announcementsConfigured = true;
     }
 
     await settings.save();

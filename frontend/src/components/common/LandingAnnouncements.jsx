@@ -52,14 +52,20 @@ const LandingAnnouncements = () => {
   useEffect(() => {
     const fetchAnnouncements = async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/settings`);
+        const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/v1/settings`);
         if (res.ok) {
           const json = await res.json();
-          if (json.data?.announcements && Array.isArray(json.data.announcements)) {
-            const active = json.data.announcements.filter(a => a.isActive !== false);
-            if (active.length > 0) {
+          const serverData = json?.data || json;
+          const isConfigured = serverData?.announcementsConfigured === true;
+          if (Array.isArray(serverData?.announcements)) {
+            const active = serverData.announcements.filter((a) => a && a.isActive !== false);
+            if (isConfigured) {
+              setAnnouncements(active);
+            } else if (active.length > 0) {
               setAnnouncements(active);
             }
+          } else if (isConfigured) {
+            setAnnouncements([]);
           }
         }
       } catch (err) {
@@ -69,6 +75,10 @@ const LandingAnnouncements = () => {
 
     fetchAnnouncements();
   }, []);
+
+  if (!announcements || announcements.length === 0) {
+    return null;
+  }
 
   const getIcon = (type) => {
     switch (type) {
@@ -131,7 +141,7 @@ const LandingAnnouncements = () => {
             </div>
 
             <div className="mt-4 pt-3 border-t border-[#E4E1DC]/60 dark:border-[#2E2A27]/60 flex items-center justify-between text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
-              <span>Office of the Municipal Mayor / BPLO</span>
+              <span>Office of the Vice Mayor / Sangguniang Bayan</span>
               <span className="text-[10px] font-mono text-emerald-600 dark:text-emerald-400 font-semibold uppercase">● Verified</span>
             </div>
           </motion.div>

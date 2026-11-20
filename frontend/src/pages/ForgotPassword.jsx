@@ -9,6 +9,7 @@ const ForgotPassword = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1); 
   const [error, setError] = useState('');
+  const [isDeliveryError, setIsDeliveryError] = useState(false);
   const [success, setSuccess] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isSendingBackup, setIsSendingBackup] = useState(false);
@@ -16,11 +17,17 @@ const ForgotPassword = () => {
   
   const [contact, setContact] = useState('');
   const [activeContactTarget, setActiveContactTarget] = useState('');
+  const [resetChallengeToken, setResetChallengeToken] = useState('');
   const [backupInfo, setBackupInfo] = useState({
     hasBackupContact: false,
+    hasRecoveryEmail: false,
+    hasRecoveryPhone: false,
+    maskedRecoveryEmail: '',
+    maskedRecoveryPhone: '',
     maskedBackupContact: '',
     maskedPrimaryContact: '',
-    activeChannel: 'primary'
+    activeChannel: 'primary',
+    manualTarget: ''
   });
   const [showManualRecoveryInput, setShowManualRecoveryInput] = useState(false);
   const [manualRecoveryContact, setManualRecoveryContact] = useState('');
@@ -77,10 +84,12 @@ const ForgotPassword = () => {
     e.preventDefault();
     if (isLoading) return;
     
-    setError(''); setSuccess('');
+    setError('');
+    setIsDeliveryError(false);
+    setSuccess('');
 
     if (!isValidContact(contact)) {
-      return setError('PLEASE ENTER A VALID EMAIL OR PHONE NUMBER.');
+      return setError('Please enter a valid email or phone number.');
     }
 
     setIsLoading(true);
@@ -95,45 +104,92 @@ const ForgotPassword = () => {
       const data = await response.json().catch(() => ({}));
 
       if (response.ok) {
-        setActiveContactTarget(data.destination || contact.trim());
+        const dest = data.destination || contact.trim();
+        const inferredChannel = data.recoveryUsed
+          ? (dest.includes('@') ? 'recovery_email' : 'recovery_phone')
+          : 'primary';
+        setResetChallengeToken(data.resetChallengeToken || '');
+        setActiveContactTarget(dest);
         setBackupInfo({
-          hasBackupContact: Boolean(data.hasBackupContact),
+          hasBackupContact: Boolean(data.hasBackupContact || data.hasRecoveryEmail || data.hasRecoveryPhone),
+          hasRecoveryEmail: Boolean(data.hasRecoveryEmail),
+          hasRecoveryPhone: Boolean(data.hasRecoveryPhone),
+          maskedRecoveryEmail: data.maskedRecoveryEmail || '',
+          maskedRecoveryPhone: data.maskedRecoveryPhone || '',
           maskedBackupContact: data.maskedBackupContact || '',
           maskedPrimaryContact: data.maskedPrimaryContact || contact.trim(),
-          activeChannel: data.recoveryUsed ? 'backup' : 'primary'
+          activeChannel: inferredChannel,
+          manualTarget: ''
         });
         setShowManualRecoveryInput(false);
         setResendCooldown(60);
-        setSuccess(data.message || 'OTP CODE SENT SUCCESSFULLY!');
+        setSuccess(data.message || 'Verification code sent successfully.');
         setStep(2); 
+      } else if (response.status === 503) {
+        setIsDeliveryError(true);
+        setError(data.message || 'Unable to deliver verification code right now. Please wait a moment and try again.');
       } else {
-        setError(data.message || 'ERROR FINDING ACCOUNT.');
+        setError(data.message || 'Error finding account.');
       }
     } catch {
-      setError('CANNOT CONNECT TO THE SERVER.');
+      setError('Cannot connect to the server. Please check your internet connection and try again.');
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleSendToBackupContact = async (customRecoveryValue) => {
+  const handleSendToBackupContact = async (options) => {
     if (isSendingBackup || isLoading) return;
-    setError(''); setSuccess('');
+    setError('');
+    setIsDeliveryError(false);
+    setSuccess('');
 
-    const targetRecovery = typeof customRecoveryValue === 'string' && customRecoveryValue.trim()
-      ? customRecoveryValue.trim()
+    const opts = typeof options === 'string'
+      ? { recoveryTarget: options }
+      : (options && typeof options === 'object' ? options : {});
+
+    const targetRecovery = typeof opts.recoveryTarget === 'string' && opts.recoveryTarget.trim()
+      ? opts.recoveryTarget.trim()
       : '';
+    const requestedChannel = opts.preferredChannel || '';
 
     if (targetRecovery && !isValidContact(targetRecovery)) {
-      return setError('PLEASE ENTER A VALID RECOVERY EMAIL OR PHONE NUMBER.');
+      return setError('Please enter a valid recovery email or phone number.');
     }
 
     setIsSendingBackup(true);
     try {
-      const wantBackup = targetRecovery ? true : (backupInfo.activeChannel !== 'backup');
-      const payload = targetRecovery
-        ? { contact: targetRecovery, useBackupContact: true }
-        : { contact: contact.trim(), useBackupContact: wantBackup };
+      let payload;
+      let nextChannel = 'primary';
+
+      if (targetRecovery) {
+        payload = {
+          contact: contact.trim(),
+          recoveryTarget: targetRecovery,
+          useBackupContact: true
+        };
+        nextChannel = 'manual';
+      } else if (requestedChannel === 'recovery_email' || requestedChannel === 'recovery_phone') {
+        payload = {
+          contact: contact.trim(),
+          preferredChannel: requestedChannel,
+          useBackupContact: true
+        };
+        nextChannel = requestedChannel;
+      } else if (requestedChannel === 'primary') {
+        payload = {
+          contact: contact.trim(),
+          useBackupContact: false
+        };
+        nextChannel = 'primary';
+      } else {
+        const wantBackup = backupInfo.activeChannel === 'primary';
+        payload = {
+          contact: contact.trim(),
+          useBackupContact: wantBackup
+        };
+        nextChannel = wantBackup ? 'backup' : 'primary';
+      }
 
       const response = await resilientApiFetch('/api/v1/auth/forgot-password', {
         method: 'POST',
@@ -144,39 +200,61 @@ const ForgotPassword = () => {
       const data = await response.json().catch(() => ({}));
 
       if (response.ok) {
+        setResetChallengeToken(data.resetChallengeToken || '');
+        setOtpCode('');
+
         if (targetRecovery) {
-          setActiveContactTarget(targetRecovery);
+          setActiveContactTarget(data.destination || targetRecovery);
           setBackupInfo(prev => ({
             ...prev,
-            activeChannel: 'backup',
-            maskedBackupContact: targetRecovery
+            hasBackupContact: Boolean(data.hasBackupContact ?? true),
+            hasRecoveryEmail: Boolean(data.hasRecoveryEmail ?? prev.hasRecoveryEmail),
+            hasRecoveryPhone: Boolean(data.hasRecoveryPhone ?? prev.hasRecoveryPhone),
+            maskedRecoveryEmail: data.maskedRecoveryEmail || prev.maskedRecoveryEmail,
+            maskedRecoveryPhone: data.maskedRecoveryPhone || prev.maskedRecoveryPhone,
+            maskedBackupContact: data.maskedBackupContact || targetRecovery,
+            activeChannel: 'manual',
+            manualTarget: targetRecovery
           }));
           setShowManualRecoveryInput(false);
         } else {
-          setActiveContactTarget(
-            wantBackup
-              ? (data.destination || backupInfo.maskedBackupContact || 'Backup Contact')
-              : contact.trim()
-          );
+          const isBackupDest = nextChannel !== 'primary';
+          const fallbackDest = nextChannel === 'recovery_email'
+            ? (backupInfo.maskedRecoveryEmail || backupInfo.maskedBackupContact)
+            : nextChannel === 'recovery_phone'
+            ? (backupInfo.maskedRecoveryPhone || backupInfo.maskedBackupContact)
+            : isBackupDest
+            ? (backupInfo.maskedBackupContact || 'Backup Contact')
+            : contact.trim();
+
+          setActiveContactTarget(data.destination || fallbackDest);
           setBackupInfo(prev => ({
             ...prev,
             hasBackupContact: Boolean(data.hasBackupContact ?? prev.hasBackupContact),
+            hasRecoveryEmail: Boolean(data.hasRecoveryEmail ?? prev.hasRecoveryEmail),
+            hasRecoveryPhone: Boolean(data.hasRecoveryPhone ?? prev.hasRecoveryPhone),
+            maskedRecoveryEmail: data.maskedRecoveryEmail || prev.maskedRecoveryEmail,
+            maskedRecoveryPhone: data.maskedRecoveryPhone || prev.maskedRecoveryPhone,
             maskedBackupContact: data.maskedBackupContact || prev.maskedBackupContact,
-            activeChannel: wantBackup ? 'backup' : 'primary'
+            activeChannel: nextChannel,
+            manualTarget: ''
           }));
         }
         setResendCooldown(60);
         setSuccess(
           data.message ||
-          (wantBackup
-            ? `OTP CODE SENT TO YOUR RECOVERY CONTACT (${targetRecovery || backupInfo.maskedBackupContact})!`
-            : `OTP CODE SENT TO YOUR PRIMARY CONTACT!`)
+          (nextChannel !== 'primary'
+            ? `Verification code sent to your recovery contact.`
+            : `Verification code sent to your primary contact.`)
         );
+      } else if (response.status === 503) {
+        setIsDeliveryError(true);
+        setError(data.message || 'Unable to deliver verification code right now. Please wait a moment and try again.');
       } else {
-        setError(data.message || 'COULD NOT SEND OTP TO RECOVERY CONTACT.');
+        setError(data.message || 'Could not send verification code to recovery contact.');
       }
     } catch {
-      setError('CANNOT CONNECT TO THE SERVER.');
+      setError('Cannot connect to the server. Please try again.');
     } finally {
       setIsSendingBackup(false);
     }
@@ -184,14 +262,31 @@ const ForgotPassword = () => {
 
   const handleResendCurrentOTP = async () => {
     if (resendCooldown > 0 || isLoading || isSendingBackup) return;
-    setError(''); setSuccess('');
+    setError('');
+    setIsDeliveryError(false);
+    setSuccess('');
     setIsSendingBackup(true);
 
     try {
-      const isUsingManual = activeContactTarget && activeContactTarget !== contact.trim() && ! activeContactTarget.includes('*');
-      const payload = isUsingManual
-        ? { contact: activeContactTarget }
-        : { contact: contact.trim(), useBackupContact: backupInfo.activeChannel === 'backup' };
+      let payload;
+      if (backupInfo.activeChannel === 'manual' && backupInfo.manualTarget) {
+        payload = {
+          contact: contact.trim(),
+          recoveryTarget: backupInfo.manualTarget,
+          useBackupContact: true
+        };
+      } else if (backupInfo.activeChannel === 'recovery_email' || backupInfo.activeChannel === 'recovery_phone') {
+        payload = {
+          contact: contact.trim(),
+          preferredChannel: backupInfo.activeChannel,
+          useBackupContact: true
+        };
+      } else {
+        payload = {
+          contact: contact.trim(),
+          useBackupContact: backupInfo.activeChannel !== 'primary'
+        };
+      }
 
       const response = await resilientApiFetch('/api/v1/auth/forgot-password', {
         method: 'POST',
@@ -201,13 +296,19 @@ const ForgotPassword = () => {
 
       const data = await response.json().catch(() => ({}));
       if (response.ok) {
+        if (data.resetChallengeToken) {
+          setResetChallengeToken(data.resetChallengeToken);
+        }
         setResendCooldown(60);
-        setSuccess('NEW OTP CODE SENT SUCCESSFULLY!');
+        setSuccess(data.message || 'New verification code sent successfully.');
+      } else if (response.status === 503) {
+        setIsDeliveryError(true);
+        setError(data.message || 'Unable to deliver verification code right now. Please try again shortly.');
       } else {
-        setError(data.message || 'FAILED TO RESEND OTP CODE.');
+        setError(data.message || 'Failed to resend verification code.');
       }
     } catch {
-      setError('CANNOT CONNECT TO THE SERVER.');
+      setError('Cannot connect to the server. Please try again.');
     } finally {
       setIsSendingBackup(false);
     }
@@ -218,20 +319,24 @@ const ForgotPassword = () => {
     if (isLoading) return;
 
     setIsLoading(true);
-    setError(''); setSuccess('');
+    setError('');
+    setIsDeliveryError(false);
+    setSuccess('');
 
     if (!newPassword || newPassword.length < 8 || !isPasswordQualified) {
       setIsLoading(false);
-      return setError('PASSWORD MUST MEET ALL SECURITY QUALIFICATIONS (MIN. 8 CHARS, UPPERCASE, LOWERCASE, NUMBER, AND SYMBOL)!');
+      return setError('Password must meet all security qualifications (min. 8 chars, uppercase, lowercase, number, and symbol).');
     }
 
     if (newPassword !== confirmPassword) {
       setIsLoading(false);
-      return setError('PASSWORDS DO NOT MATCH!');
+      return setError('Passwords do not match.');
     }
 
     try {
-      const lookupContact = (activeContactTarget && !activeContactTarget.includes('*'))
+      const lookupContact = (backupInfo.activeChannel === 'manual' && backupInfo.manualTarget)
+        ? backupInfo.manualTarget
+        : (activeContactTarget && !activeContactTarget.includes('*'))
         ? activeContactTarget
         : contact.trim();
 
@@ -240,23 +345,24 @@ const ForgotPassword = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           contact: lookupContact,
-          otp: otpCode,
-          newPassword: newPassword
+          otp: otpCode.trim(),
+          newPassword: newPassword,
+          ...(resetChallengeToken ? { resetChallengeToken } : {})
         }),
       });
 
       const data = await response.json().catch(() => ({}));
 
       if (response.ok) {
-        setSuccess('PASSWORD RESET SUCCESSFUL! REDIRECTING...');
+        setSuccess('Password reset successful! Redirecting to login...');
         setTimeout(() => {
           navigate('/login');
         }, 2000);
       } else {
-        setError(data.message || 'INVALID OR EXPIRED OTP.');
+        setError(data.message || 'Invalid or expired verification code.');
       }
     } catch {
-      setError('CANNOT CONNECT TO THE SERVER.');
+      setError('Cannot connect to the server.');
     } finally {
       setIsLoading(false);
     }
@@ -296,8 +402,20 @@ const ForgotPassword = () => {
             </div>
 
             {error && (
-              <div className="mb-4 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 text-[#B91C1C] dark:text-red-400 text-xs font-semibold rounded-lg p-3 text-center">
-                {error}
+              <div
+                role="alert"
+                className={`mb-4 border text-xs font-semibold rounded-lg p-3 text-center leading-relaxed ${
+                  isDeliveryError
+                    ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800/60 text-[#B45309] dark:text-amber-300'
+                    : 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800/60 text-[#B91C1C] dark:text-red-400'
+                }`}
+              >
+                <p>{error}</p>
+                {isDeliveryError && (
+                  <p className="mt-1 text-[11px] font-medium opacity-90">
+                    The delivery gateway is temporarily unavailable. Your info is preserved — please retry in a moment.
+                  </p>
+                )}
               </div>
             )}
             {success && (
@@ -374,25 +492,91 @@ const ForgotPassword = () => {
                   />
 
                   {/* OTP Recovery Contact Switcher (When primary contact is inaccessible/not working) */}
-                  <div className="mt-3 p-3 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs">
-                    {backupInfo.hasBackupContact ? (
+                  <div className="mt-3 p-3 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs space-y-2">
+                    {backupInfo.hasRecoveryEmail && backupInfo.hasRecoveryPhone ? (
+                      <div className="space-y-2">
+                        <p className="text-[#6B6761] dark:text-[#A8A29E] font-medium leading-snug">
+                          Choose where to receive your verification code:
+                        </p>
+                        <div className="grid grid-cols-1 gap-1.5">
+                          <button
+                            type="button"
+                            disabled={isSendingBackup}
+                            onClick={() => handleSendToBackupContact({ preferredChannel: 'recovery_email' })}
+                            className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg border text-left transition-colors cursor-pointer disabled:opacity-50 ${
+                              backupInfo.activeChannel === 'recovery_email'
+                                ? 'bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 border-[#9E2A2B] dark:border-[#D4AF37] text-[#9E2A2B] dark:text-[#D4AF37] font-bold'
+                                : 'bg-white dark:bg-[#1C1917] border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] hover:border-[#9E2A2B]/50 font-semibold'
+                            }`}
+                          >
+                            <span className="inline-flex items-center gap-1.5 min-w-0 truncate">
+                              <Mail size={13} className="shrink-0" />
+                              <span className="truncate">Recovery Email ({backupInfo.maskedRecoveryEmail})</span>
+                            </span>
+                            <span className="text-[11px] shrink-0">
+                              {backupInfo.activeChannel === 'recovery_email' ? 'Active' : 'Send'}
+                            </span>
+                          </button>
+
+                          <button
+                            type="button"
+                            disabled={isSendingBackup}
+                            onClick={() => handleSendToBackupContact({ preferredChannel: 'recovery_phone' })}
+                            className={`w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg border text-left transition-colors cursor-pointer disabled:opacity-50 ${
+                              backupInfo.activeChannel === 'recovery_phone'
+                                ? 'bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 border-[#9E2A2B] dark:border-[#D4AF37] text-[#9E2A2B] dark:text-[#D4AF37] font-bold'
+                                : 'bg-white dark:bg-[#1C1917] border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] hover:border-[#9E2A2B]/50 font-semibold'
+                            }`}
+                          >
+                            <span className="inline-flex items-center gap-1.5 min-w-0 truncate">
+                              <Phone size={13} className="shrink-0" />
+                              <span className="truncate">Recovery Phone ({backupInfo.maskedRecoveryPhone})</span>
+                            </span>
+                            <span className="text-[11px] shrink-0">
+                              {backupInfo.activeChannel === 'recovery_phone' ? 'Active' : 'Send'}
+                            </span>
+                          </button>
+
+                          {backupInfo.activeChannel !== 'primary' && (
+                            <button
+                              type="button"
+                              disabled={isSendingBackup}
+                              onClick={() => handleSendToBackupContact({ preferredChannel: 'primary' })}
+                              className="text-left font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline pt-0.5 cursor-pointer disabled:opacity-50"
+                            >
+                              {isSendingBackup ? 'Sending...' : `Send to Primary Contact (${backupInfo.maskedPrimaryContact}) instead`}
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    ) : backupInfo.hasBackupContact ? (
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
                         <span className="text-[#6B6761] dark:text-[#A8A29E] font-medium leading-snug">
-                          {backupInfo.activeChannel === 'backup'
-                            ? `Code sent to your Backup Contact (${backupInfo.maskedBackupContact}).`
+                          {backupInfo.activeChannel !== 'primary'
+                            ? `Code sent to your Backup Contact (${backupInfo.maskedRecoveryEmail || backupInfo.maskedRecoveryPhone || backupInfo.maskedBackupContact}).`
                             : 'Di na gumagana o walang natanggap sa primary contact?'}
                         </span>
                         <button
                           type="button"
                           disabled={isSendingBackup}
-                          onClick={() => handleSendToBackupContact()}
+                          onClick={() =>
+                            handleSendToBackupContact(
+                              backupInfo.activeChannel !== 'primary'
+                                ? { preferredChannel: 'primary' }
+                                : backupInfo.hasRecoveryEmail
+                                ? { preferredChannel: 'recovery_email' }
+                                : backupInfo.hasRecoveryPhone
+                                ? { preferredChannel: 'recovery_phone' }
+                                : undefined
+                            )
+                          }
                           className="font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline shrink-0 text-left sm:text-right cursor-pointer disabled:opacity-50"
                         >
                           {isSendingBackup
                             ? 'Sending...'
-                            : backupInfo.activeChannel === 'backup'
+                            : backupInfo.activeChannel !== 'primary'
                             ? 'Send to Primary Contact instead'
-                            : `Receive OTP via Backup (${backupInfo.maskedBackupContact})`}
+                            : `Receive OTP via Backup (${backupInfo.maskedRecoveryEmail || backupInfo.maskedRecoveryPhone || backupInfo.maskedBackupContact})`}
                         </button>
                       </div>
                     ) : (
@@ -421,7 +605,7 @@ const ForgotPassword = () => {
                             <button
                               type="button"
                               disabled={isSendingBackup || !manualRecoveryContact.trim()}
-                              onClick={() => handleSendToBackupContact(manualRecoveryContact)}
+                              onClick={() => handleSendToBackupContact({ recoveryTarget: manualRecoveryContact.trim() })}
                               className="px-3 py-2 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white text-xs font-bold shrink-0 cursor-pointer disabled:opacity-50"
                             >
                               {isSendingBackup ? 'Sending...' : 'Send OTP'}
@@ -545,7 +729,14 @@ const ForgotPassword = () => {
                     </button>
                     <button 
                       type="button" 
-                      onClick={() => setStep(1)} 
+                      onClick={() => {
+                        setStep(1);
+                        setResetChallengeToken('');
+                        setOtpCode('');
+                        setError('');
+                        setIsDeliveryError(false);
+                        setSuccess('');
+                      }} 
                       className="py-1.5 text-xs font-bold text-[#6B6761] dark:text-[#A8A29E] hover:text-[#9E2A2B] dark:hover:text-[#D4AF37] transition-colors cursor-pointer"
                     >
                       ← Change Contact Info

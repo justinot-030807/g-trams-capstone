@@ -13,6 +13,19 @@ import { useLanguage } from '../../context/LanguageContext';
 import { formatZoneLabel } from '../../utils/constants';
 import { TableRowsSkeleton } from '../../components/skeleton';
 
+const resolveCollectorName = (receipt) => {
+  if (!receipt) return 'Municipal Cashier';
+  const candidate =
+    receipt.processedByName ||
+    receipt.cashierName ||
+    (typeof receipt.paidByCashier === 'object' ? receipt.paidByCashier?.name : receipt.paidByCashier);
+  const clean = typeof candidate === 'string' ? candidate.trim() : '';
+  if (!clean || /^[a-f0-9]{24}$/i.test(clean)) {
+    return 'Municipal Cashier';
+  }
+  return clean;
+};
+
 const CashierSettings = () => {
   const navigate = useNavigate();
   const { theme, toggleTheme, isDark } = useTheme();
@@ -29,16 +42,25 @@ const CashierSettings = () => {
   });
   const [isSavingProfile, setIsSavingProfile] = useState(false);
 
-  // Preferences state
+  // Preferences state (aligned defaults: ON unless explicitly set to 'false')
   const [autoPrintReceipt, setAutoPrintReceipt] = useState(() => {
     return localStorage.getItem('cashier_auto_print') !== 'false';
   });
   const [soundAlert, setSoundAlert] = useState(() => {
-    return localStorage.getItem('cashier_sound_alert') !== 'false';
+    const stored = localStorage.getItem('cashier_sound_enabled') ?? localStorage.getItem('cashier_sound_alert');
+    return stored !== 'false';
   });
-  const standardFranchiseFee = useMemo(() => {
+  const [standardFranchiseFee, setStandardFranchiseFee] = useState(() => {
     const val = Number(localStorage.getItem('franchise_fee'));
     return Number.isFinite(val) && val > 0 ? val : 500;
+  });
+
+  const syncFranchiseFee = useCallback((rawFee) => {
+    const parsed = Number(rawFee);
+    if (Number.isFinite(parsed) && parsed > 0) {
+      setStandardFranchiseFee(parsed);
+      localStorage.setItem('franchise_fee', String(parsed));
+    }
   }, []);
 
   // Archive state
@@ -87,7 +109,26 @@ const CashierSettings = () => {
     fetchProfile();
   }, []);
 
-  // Fetch paid transactions for archive
+  // Fetch live municipal franchise fee from /api/v1/settings
+  const fetchLiveSettingsFee = useCallback(async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/settings`, {
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
+      if (res.ok) {
+        const json = await res.json().catch(() => null);
+        const liveFee = json?.data?.franchiseFee ?? json?.franchiseFee;
+        if (liveFee != null) {
+          syncFranchiseFee(liveFee);
+        }
+      }
+    } catch {
+      // Fallback to cashier-queue franchiseFee or cached fee
+    }
+  }, [syncFranchiseFee]);
+
+  // Fetch durable PaymentLedger transactions for archive
   const fetchArchive = useCallback(async () => {
     setIsLoadingArchive(true);
     try {
@@ -100,8 +141,15 @@ const CashierSettings = () => {
         let list = [];
         if (Array.isArray(data)) {
           list = data.filter(f => f.paymentStatus === 'Paid');
-        } else if (data.recentlyPaid) {
-          list = data.recentlyPaid;
+        } else {
+          if (data?.franchiseFee != null) {
+            syncFranchiseFee(data.franchiseFee);
+          }
+          if (Array.isArray(data.paymentLedger)) {
+            list = data.paymentLedger;
+          } else if (Array.isArray(data.recentlyPaid)) {
+            list = data.recentlyPaid;
+          }
         }
         setArchiveList(list);
       }
@@ -110,11 +158,16 @@ const CashierSettings = () => {
     } finally {
       setIsLoadingArchive(false);
     }
-  }, []);
+  }, [syncFranchiseFee]);
 
   useEffect(() => {
     fetchArchive();
-  }, [fetchArchive]);
+    fetchLiveSettingsFee();
+    window.addEventListener('gtrams_settings_updated', fetchLiveSettingsFee);
+    return () => {
+      window.removeEventListener('gtrams_settings_updated', fetchLiveSettingsFee);
+    };
+  }, [fetchArchive, fetchLiveSettingsFee]);
 
   // Handle Profile Update
   const handleSaveProfile = async (e) => {
@@ -167,6 +220,7 @@ const CashierSettings = () => {
   const handleToggleSound = () => {
     const next = !soundAlert;
     setSoundAlert(next);
+    localStorage.setItem('cashier_sound_enabled', String(next));
     localStorage.setItem('cashier_sound_alert', String(next));
     showToast(`Queue sound alert ${next ? 'enabled' : 'disabled'}.`, 'info');
   };
@@ -182,8 +236,12 @@ const CashierSettings = () => {
         (item.officialReceiptNo && item.officialReceiptNo.toLowerCase().includes(q)) ||
         (item.plateNo && item.plateNo.toLowerCase().includes(q)) ||
         (item.fullName && item.fullName.toLowerCase().includes(q)) ||
+        (item.applicantName && item.applicantName.toLowerCase().includes(q)) ||
+        (item.payerName && item.payerName.toLowerCase().includes(q)) ||
         (item.mtopNo && item.mtopNo.toLowerCase().includes(q)) ||
-        (item.todaName && item.todaName.toLowerCase().includes(q))
+        (item.todaName && item.todaName.toLowerCase().includes(q)) ||
+        (item.todaAssociation && item.todaAssociation.toLowerCase().includes(q)) ||
+        resolveCollectorName(item).toLowerCase().includes(q)
       );
     }
 
@@ -208,21 +266,28 @@ const CashierSettings = () => {
 
   // Total collected calculation
   const totalAmountCollected = useMemo(() => {
-    return filteredArchive.reduce((acc, curr) => acc + (parseFloat(curr.amountPaid) || 500), 0);
+    return filteredArchive.reduce((acc, curr) => {
+      const amt = Number(curr.amountPaid);
+      return acc + (Number.isFinite(amt) && amt > 0 ? amt : 0);
+    }, 0);
   }, [filteredArchive]);
 
-  // Open Receipt Modal for Reprinting
+  // Open Receipt Modal for Reprinting — strictly preserve recorded collector (never overwrite with logged-in user)
   const handleOpenReceipt = (item) => {
     const d = item.paymentDate ? new Date(item.paymentDate) : new Date(item.updatedAt || Date.now());
+    const recordedCollector = resolveCollectorName(item);
+    const parsedAmount = Number(item.amountPaid);
     setReceiptData({
       officialReceiptNo: item.officialReceiptNo || 'OR-PREVIEW',
-      amountPaid: item.amountPaid || 500,
+      amountPaid: Number.isFinite(parsedAmount) && parsedAmount > 0 ? parsedAmount : standardFranchiseFee,
       paymentMethod: item.paymentMethod || 'Cash',
       remarks: item.paymentRemarks || 'Settled at Municipal Treasury Window',
       dateFormatted: d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
       timeFormatted: d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
       franchise: item,
-      cashierName: profileData.name || 'Municipal Cashier'
+      processedByName: item.processedByName || '',
+      cashierName: recordedCollector,
+      paidByCashier: item.paidByCashier || ''
     });
     setIsReceiptOpen(true);
   };
@@ -740,10 +805,13 @@ const CashierSettings = () => {
                               OR #{item.officialReceiptNo || '—'}
                             </span>
                             <p className="font-bold text-sm text-[#1F1D1B] dark:text-[#F6F5F3] truncate">
-                              {item.fullName || (item.operator && item.operator.name) || 'Unknown Operator'}
+                              {item.fullName || item.applicantName || item.payerName || (item.operator && item.operator.name) || 'Unknown Operator'}
                             </p>
                             <p className="text-xs font-mono tabular-nums text-[#6B6761] dark:text-[#A8A29E]">
                               {item.plateNo || '—'} &bull; {dateStr}
+                            </p>
+                            <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-0.5">
+                              Collector: <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{resolveCollectorName(item)}</span>
                             </p>
                           </div>
                           <span className="font-mono tabular-nums font-bold text-sm text-emerald-700 dark:text-emerald-400 shrink-0">
@@ -786,16 +854,19 @@ const CashierSettings = () => {
                         return (
                           <tr key={item._id} className="hover:bg-[#FAF9F7] dark:hover:bg-[#14110F]/50 transition-colors">
                             <td className="py-3.5 px-4 font-mono tabular-nums font-bold text-[#9E2A2B] dark:text-[#D4AF37]">
-                              {item.officialReceiptNo || '—'}
+                              <div>{item.officialReceiptNo || '—'}</div>
+                              <div className="text-[10px] font-sans font-semibold text-[#6B6761] dark:text-[#A8A29E]">
+                                {resolveCollectorName(item)}
+                              </div>
                             </td>
                             <td className="py-3.5 px-4 font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
-                              {item.fullName || (item.operator && item.operator.name) || 'Unknown Operator'}
+                              {item.fullName || item.applicantName || item.payerName || (item.operator && item.operator.name) || 'Unknown Operator'}
                             </td>
                             <td className="py-3.5 px-4 font-mono tabular-nums font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
                               {item.plateNo || '—'}
                             </td>
                             <td className="py-3.5 px-4 text-xs text-[#6B6761] dark:text-[#A8A29E]">
-                              {item.todaName || 'NON-TODA'} {item.zone ? `• ${formatZoneLabel(item.zone)}` : ''}
+                              {item.todaName || item.todaAssociation || 'NON-TODA'} {item.zone ? `• ${formatZoneLabel(item.zone)}` : ''}
                             </td>
                             <td className="py-3.5 px-4 font-mono tabular-nums font-bold text-emerald-700 dark:text-emerald-400">
                               ₱{parseFloat(item.amountPaid || standardFranchiseFee).toFixed(2)}
@@ -829,7 +900,7 @@ const CashierSettings = () => {
 
       {/* Official Receipt Print Modal */}
       {isReceiptOpen && receiptData && (
-        <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
           <div className="relative w-full max-w-md bg-white dark:bg-[#1C1917] rounded-xl shadow-2xl border border-[#E4E1DC] dark:border-[#2E2A27] p-6 text-[#1F1D1B] dark:text-[#F6F5F3] animate-in zoom-in-95 duration-150">
             {/* Header controls (hidden on print) */}
             <div className="flex items-center justify-between pb-3 mb-4 border-b border-[#E4E1DC] dark:border-[#2E2A27] print:hidden">
@@ -879,7 +950,7 @@ const CashierSettings = () => {
               <div className="p-3 bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] space-y-2 text-xs">
                 <div className="flex justify-between">
                   <span className="text-[#6B6761] dark:text-[#A8A29E]">Payor / Operator:</span>
-                  <span className="font-bold">{receiptData.franchise?.fullName || '—'}</span>
+                  <span className="font-bold">{receiptData.franchise?.payerName || receiptData.franchise?.fullName || receiptData.franchise?.applicantName || '—'}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-[#6B6761] dark:text-[#A8A29E]">Tricycle Plate:</span>
@@ -887,7 +958,7 @@ const CashierSettings = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-[#6B6761] dark:text-[#A8A29E]">TODA / Route:</span>
-                  <span className="font-medium">{receiptData.franchise?.todaName || 'NON-TODA'}</span>
+                  <span className="font-medium">{receiptData.franchise?.todaName || receiptData.franchise?.todaAssociation || 'NON-TODA'}</span>
                 </div>
                 <div className="flex justify-between pt-1 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
                   <span className="text-[#6B6761] dark:text-[#A8A29E]">Payment Method:</span>
@@ -913,7 +984,7 @@ const CashierSettings = () => {
 
               {/* Cashier Signatory */}
               <div className="pt-4 text-center border-t border-dashed border-[#E4E1DC] dark:border-[#2E2A27]">
-                <p className="text-xs font-bold uppercase">{receiptData.cashierName}</p>
+                <p className="text-xs font-bold uppercase">{resolveCollectorName(receiptData)}</p>
                 <p className="text-[10px] text-[#6B6761] dark:text-[#A8A29E]">Municipal Cashier / Authorized Collector</p>
                 <p className="text-[9px] text-[#6B6761] dark:text-[#A8A29E] mt-1 font-mono">G-TRAMS Electronic Official Receipt</p>
               </div>

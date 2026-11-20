@@ -457,7 +457,9 @@ describe('Registration & Auth Verification Flow', () => {
 
         const updatedUser = await User.findById(createdUser._id);
         expect(updatedUser.googleId).toBe('google-maria-12345');
-        expect(updatedUser.authProvider).toBe('google');
+        // H2: Linking Google onto an existing local account preserves authProvider='local' & hasLocalPassword=true
+        expect(updatedUser.authProvider).toBe('local');
+        expect(updatedUser.hasLocalPassword).toBe(true);
     });
 
     it('18. should decode JWT idToken as fallback and authenticate without tokeninfo failure', async () => {
@@ -522,7 +524,9 @@ describe('Registration & Auth Verification Flow', () => {
 
         const dbUser = await User.findOne({ email: 'nested.profile@gmail.com' });
         expect(dbUser).toBeDefined();
-        expect(dbUser.contact).toBe('09777777777');
+        // M4: Google onboarding keeps verified Google email as primary contact; optional phone stored as emergencyContact
+        expect(dbUser.contact).toBe('nested.profile@gmail.com');
+        expect(dbUser.emergencyContact).toBe('09777777777');
     });
 
     it('21. should accept null or empty string fields in googleAuthSchema without validation error', async () => {

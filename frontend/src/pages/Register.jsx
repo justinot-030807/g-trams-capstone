@@ -38,6 +38,7 @@ const Register = () => {
 
   const [step, setStep] = useState(1); 
   const [error, setError] = useState('');
+  const [isDeliveryError, setIsDeliveryError] = useState(false);
   const [success, setSuccess] = useState('');
   
   const [formData, setFormData] = useState({
@@ -178,7 +179,9 @@ const Register = () => {
   const handleRequestOTP = async (e) => {
     e.preventDefault();
     setHasAttemptedSubmit(true);
-    setError(''); setSuccess('');
+    setError('');
+    setIsDeliveryError(false);
+    setSuccess('');
 
     if (!formData.name || formData.name.trim().length < 2) {
       return setError('PLEASE ENTER YOUR FULL LEGAL NAME (AT LEAST 2 CHARACTERS).');
@@ -252,11 +255,17 @@ const Register = () => {
         body: JSON.stringify(payload),
       });
       clearTimeout(slowTimer);
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
       if (response.ok) { 
         setSuccess('OTP CODE SENT SUCCESSFULLY!'); 
         setResendCooldown(60);
         setStep(2); 
+      } else if (response.status === 503) {
+        setIsDeliveryError(true);
+        setError(
+          data.message ||
+          'Unable to deliver your verification code right now. Please check your email or phone number and try again shortly.'
+        );
       } else { 
         if (response.status === 403 || data.advisory) {
           setLguAdvisoryModal({
@@ -282,7 +291,9 @@ const Register = () => {
 
   const handleResendOTP = async () => {
     if (isLoading || resendCooldown > 0) return;
-    setError(''); setSuccess('');
+    setError('');
+    setIsDeliveryError(false);
+    setSuccess('');
     setIsLoading(true);
 
     const rawContact = (formData.contact || '').trim();
@@ -306,10 +317,16 @@ const Register = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
       if (response.ok) {
         setSuccess('NEW OTP CODE SENT SUCCESSFULLY!');
         setResendCooldown(60);
+      } else if (response.status === 503) {
+        setIsDeliveryError(true);
+        setError(
+          data.message ||
+          'Unable to deliver your verification code right now. Please wait a moment and click Resend Code.'
+        );
       } else {
         const errorMsg = data.message || data.error || 'FAILED TO RESEND OTP.';
         setError(errorMsg.toUpperCase());
@@ -452,8 +469,20 @@ const Register = () => {
               </div>
 
               {error && (
-                <div className="mb-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/60 text-red-600 dark:text-red-400 text-xs font-bold rounded-lg p-3 text-center shadow-sm tracking-wide">
+                <div
+                  role="alert"
+                  className={`mb-3 border text-xs font-bold rounded-lg p-3 text-center shadow-sm ${
+                    isDeliveryError
+                      ? 'bg-amber-50 dark:bg-amber-950/40 border-amber-300 dark:border-amber-800/60 text-[#B45309] dark:text-amber-300 leading-relaxed'
+                      : 'bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800/60 text-red-600 dark:text-red-400 tracking-wide'
+                  }`}
+                >
                   <p>{error}</p>
+                  {isDeliveryError && (
+                    <p className="mt-1 text-[11px] font-medium opacity-90">
+                      Your form details are saved below — please retry once the delivery service responds.
+                    </p>
+                  )}
                   {error.includes('ALREADY EXISTS') && (
                     <Link to="/login" className="inline-block mt-1 font-bold text-[#9E2A2B] dark:text-[#D4AF37] underline tracking-wider">
                       Click here to log in →

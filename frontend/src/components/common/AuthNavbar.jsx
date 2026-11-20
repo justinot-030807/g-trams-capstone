@@ -324,7 +324,7 @@ const AuthNavbar = () => {
               {/* Drawer Footer */}
               <div className="pt-4 border-t border-white/5 flex items-center justify-between text-xs text-white/60 mt-4">
                 <span>G-TRAMS Portal</span>
-                <span className="font-mono text-white/80">v2.4.0</span>
+                <span className="font-mono text-white/80">v2.5.0</span>
               </div>
 
             </motion.div>

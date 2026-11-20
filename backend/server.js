@@ -9,6 +9,7 @@ const connectDB = require('./src/config/db');
 const mongoSanitize = require('./src/middleware/sanitize');
 const timeoutMiddleware = require('./src/middleware/timeoutMiddleware'); // ADDED TIMEOUT
 const { initSocket } = require('./src/config/socket');
+const { isRestoreInProgress } = require('./src/services/backupService');
 
 if (process.env.NODE_ENV !== 'test' && (!process.env.JWT_SECRET || !String(process.env.JWT_SECRET).trim())) {
     console.error('FATAL: JWT_SECRET environment variable is required.');
@@ -133,6 +134,20 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // NoSQL Injection sanitization
 app.use(mongoSanitize);
+
+// Guard mutating HTTP requests while a database restore is in progress (H1)
+app.use((req, res, next) => {
+    if (
+        isRestoreInProgress() &&
+        ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method) &&
+        !/\/backups\/restore-(file\/|upload)/i.test(req.path)
+    ) {
+        return res.status(503).json({
+            message: 'Database restore in progress. Please retry shortly.'
+        });
+    }
+    return next();
+});
 
 // Auth routes
 const authRoutes = require('./src/routes/authRoutes');

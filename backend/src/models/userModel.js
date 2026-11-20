@@ -13,6 +13,7 @@ const userSchema = new mongoose.Schema({
     emergencyContact: { type: String, default: '', trim: true },
     googleId: { type: String, default: '' },
     authProvider: { type: String, enum: ['local', 'google'], default: 'local' },
+    hasLocalPassword: { type: Boolean, default: true },
     password: { type: String, required: true },
     role: { 
         type: String, 
@@ -39,7 +40,7 @@ const userSchema = new mongoose.Schema({
     otp: { type: String },
     otpExpire: { type: Date },
     otpAttempts: { type: Number, default: 0 },
-    otpPurpose: { type: String, enum: ['register', 'reset', ''], default: '' },
+    otpPurpose: { type: String, enum: ['register', 'reset', 'recovery_bind', ''], default: '' },
     otpRecipient: { type: String, default: '' },
     tokenVersion: { type: Number, default: 0 },
     passwordChangedAt: { type: Date, default: null },

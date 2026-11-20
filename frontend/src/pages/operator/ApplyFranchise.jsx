@@ -1225,14 +1225,28 @@ const ApplyFranchise = () => {
     };
     fetchSettings();
 
-    const reapplyData = localStorage.getItem('reapply_target');
-    if (reapplyData) {
+    const currentUid = getStoredUserId();
+    const scopedReapplyKey = currentUid ? `gtrams_reapply_target_${currentUid}` : null;
+    const rawScopedReapply = scopedReapplyKey ? localStorage.getItem(scopedReapplyKey) : null;
+    const rawLegacyReapply = localStorage.getItem('reapply_target');
+    if (rawLegacyReapply) localStorage.removeItem('reapply_target');
+    if (scopedReapplyKey && rawScopedReapply) localStorage.removeItem(scopedReapplyKey);
+
+    const reapplyData = rawScopedReapply || rawLegacyReapply;
+    let loadedReapply = false;
+    if (reapplyData && currentUid) {
       try {
         const parsed = JSON.parse(reapplyData);
-        handleReapplyClick(parsed);
-        localStorage.removeItem('reapply_target');
+        const ownerId =
+          parsed?._ownerUserId ||
+          (parsed?.operator && typeof parsed.operator === 'object' ? parsed.operator._id : parsed?.operator);
+        if (ownerId && String(ownerId) === String(currentUid)) {
+          handleReapplyClick(parsed);
+          loadedReapply = true;
+        }
       } catch (e) { console.error(e); }
-    } else if (modeParam === 'new') {
+    }
+    if (!loadedReapply && modeParam === 'new') {
       handleStartNewApplication();
     }
     const handleSessionSwitch = () => {
@@ -1294,7 +1308,7 @@ const ApplyFranchise = () => {
     } else if (['contactNumber', 'driverContact'].includes(name)) {
       sanitized = value.replace(/\D/g, '').slice(0, 11);
     } else if (['fullName', 'driverName'].includes(name)) {
-      sanitized = value.replace(/[^a-zA-Z\s\-\.\Ã±\Ã‘]/g, '');
+      sanitized = value.replace(/[^a-zA-Z\s.\-\u00F1\u00D1]/g, '');
     } else if (['motorNo', 'chassisNo', 'plateNo', 'orCrNo', 'driverLicenseNo', 'todaCertNo', 'brgyClearanceNo', 'cedulaSerialNo', 'driverLicenseSerialNo'].includes(name)) {
       sanitized = value.replace(/[^a-zA-Z0-9-]/g, '').slice(0, 30).toUpperCase();
     }

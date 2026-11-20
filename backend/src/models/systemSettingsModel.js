@@ -16,6 +16,7 @@ const systemSettingsSchema = new mongoose.Schema({
   },
   maintenanceMode: { type: Boolean, default: false },
   maintenanceMessage: { type: String, default: 'G-TRAMS portal is currently undergoing scheduled system maintenance. Please check back later.' },
+  announcementsConfigured: { type: Boolean, default: false },
   announcements: {
     type: [{
       title: { type: String, required: true },

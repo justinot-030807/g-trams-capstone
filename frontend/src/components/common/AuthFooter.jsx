@@ -141,7 +141,7 @@ const AuthFooter = () => {
         <div className="pt-6 border-t border-[#2E2A27] flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-white/40 font-medium">
           <p>© 2026 Municipality of Gasan. All rights reserved.</p>
           <div className="flex items-center gap-4">
-            <span className="font-mono text-xs bg-white/5 px-2 py-1 rounded text-white/60">v2.4.0</span>
+            <span className="font-mono text-xs bg-white/5 px-2 py-1 rounded text-white/60">v2.5.0</span>
           </div>
         </div>
       </div>

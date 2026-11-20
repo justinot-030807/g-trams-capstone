@@ -8,7 +8,15 @@ const Notification = require('../models/notificationModel');
 const { ChatMessage, ChatThread } = require('../models/chatModel');
 
 const ENCRYPTED_MAGIC = Buffer.from('GTRAMS_ENC_V1\n', 'ascii');
+const RESTORE_LOCK_ID = 'db_restore_lock';
+const RESTORE_LOCK_TTL_MS = 10 * 60 * 1000; // 10 minutes TTL safety net
+
 let restoreLock = Promise.resolve();
+let activeRestoreCount = 0;
+
+function isRestoreInProgress() {
+    return activeRestoreCount > 0;
+}
 
 function withRestoreLock(fn) {
     const previous = restoreLock;
@@ -17,6 +25,53 @@ function withRestoreLock(fn) {
         release = resolve;
     });
     return previous.then(() => fn()).finally(() => release());
+}
+
+// MongoDB-backed distributed lock for coordinating restores across instances (H1)
+const systemLockSchema = new mongoose.Schema({
+    _id: { type: String, required: true },
+    ownerId: { type: String, required: true },
+    triggeredBy: { type: String, default: 'System' },
+    acquiredAt: { type: Date, default: Date.now },
+    expiresAt: { type: Date, required: true, index: { expires: 0 } }
+}, { versionKey: false });
+
+const SystemLock = mongoose.models.SystemLock || mongoose.model('SystemLock', systemLockSchema, 'system_locks');
+
+async function acquireDistributedRestoreLock(triggeredBy = 'System Admin') {
+    const ownerId = `${process.pid}-${Date.now()}-${crypto.randomBytes(6).toString('hex')}`;
+    if (mongoose.connection.readyState !== 1) {
+        return ownerId;
+    }
+
+    const now = new Date();
+    // Clear any expired lock document that TTL monitor hasn't reaped yet
+    await SystemLock.deleteOne({ _id: RESTORE_LOCK_ID, expiresAt: { $lte: now } }).catch(() => {});
+
+    try {
+        await SystemLock.create({
+            _id: RESTORE_LOCK_ID,
+            ownerId,
+            triggeredBy,
+            acquiredAt: now,
+            expiresAt: new Date(now.getTime() + RESTORE_LOCK_TTL_MS)
+        });
+        return ownerId;
+    } catch (err) {
+        if (err && err.code === 11000) {
+            const lockErr = new Error('Database restore is already in progress on another instance. Please retry shortly.');
+            lockErr.statusCode = 409;
+            throw lockErr;
+        }
+        throw err;
+    }
+}
+
+async function releaseDistributedRestoreLock(ownerId) {
+    if (!ownerId || mongoose.connection.readyState !== 1) return;
+    await SystemLock.deleteOne({ _id: RESTORE_LOCK_ID, ownerId }).catch((err) => {
+        console.warn('[BackupService] Failed releasing distributed restore lock:', err.message);
+    });
 }
 
 function getBackupEncryptionKey() {
@@ -85,7 +140,8 @@ const MODELS = {
     notifications: require('../models/notificationModel'),
     chat_threads: ChatThread,
     chat_messages: ChatMessage,
-    push_subscriptions: require('../models/pushSubscriptionModel')
+    push_subscriptions: require('../models/pushSubscriptionModel'),
+    payment_ledgers: require('../models/paymentLedgerModel')
 };
 
 const BACKUP_DIR = process.env.BACKUP_DIR
@@ -388,68 +444,121 @@ async function validateBackupPayload(backupPayload) {
 }
 
 /**
- * Restore collections from backup data with safety pre-snapshot
+ * Restore collections from backup data with coordinated locking, safety pre-snapshot,
+ * and full in-memory rollback if any collection mutation fails (H1).
  */
 async function restoreFromBackup(backupPayload, { triggeredBy = 'System Admin' } = {}) {
     return await withRestoreLock(async () => {
-        // Step 0: Validate archive integrity, collection keys, and every document shape BEFORE any deleteMany
+        // Step 0: Pre-validate ALL collections, checksums, and document shapes BEFORE acquiring lock or touching live data
         await validateBackupPayload(backupPayload);
 
-        const { collections } = backupPayload;
+        const lockOwnerId = await acquireDistributedRestoreLock(triggeredBy);
+        activeRestoreCount += 1;
 
-        // Step 1: Create a safety pre-restore backup first (must succeed and exist on disk before any deleteMany)
-        console.log('[BackupService] Creating pre-restore safety snapshot...');
-        const safetySnapshot = await createBackupFile({
-            isAutomated: false,
-            triggeredBy,
-            notes: 'Pre-Restore Emergency Safety Snapshot'
-        });
-        if (!safetySnapshot || !safetySnapshot.success || !safetySnapshot.filePath || !fs.existsSync(safetySnapshot.filePath)) {
-            throw new Error('Pre-restore safety snapshot failed to verify on disk. Aborting restore.');
-        }
+        try {
+            const { collections } = backupPayload;
 
-        const restoredCounts = {};
+            // Step 1: Create a safety pre-restore backup first (must succeed and exist on disk before any deleteMany)
+            console.log('[BackupService] Creating pre-restore safety snapshot...');
+            const safetySnapshot = await createBackupFile({
+                isAutomated: false,
+                triggeredBy,
+                notes: 'Pre-Restore Emergency Safety Snapshot'
+            });
+            if (!safetySnapshot || !safetySnapshot.success || !safetySnapshot.filePath || !fs.existsSync(safetySnapshot.filePath)) {
+                throw new Error('Pre-restore safety snapshot failed to verify on disk. Aborting restore.');
+            }
 
-        // Step 2: Clear and populate each collection with notification hooks suppressed ONLY for this async restore context
-        await Notification.runWithNotificationHooksSuppressed(async () => {
-            for (const [key, model] of Object.entries(MODELS)) {
-                const records = collections[key];
-                if (Array.isArray(records)) {
-                    await model.deleteMany({});
-
-                    if (records.length > 0) {
-                        const BATCH_SIZE = 500;
-                        for (let i = 0; i < records.length; i += BATCH_SIZE) {
-                            const batch = records.slice(i, i + BATCH_SIZE);
-                            await model.insertMany(batch, { ordered: false });
-                        }
-                    }
-                    restoredCounts[key] = records.length;
+            // Step 2: Capture full raw in-memory rollback copy of every target collection before any destructive mutation
+            const targetEntries = Object.entries(MODELS).filter(([key]) => Array.isArray(collections[key]));
+            const rollbackSnapshot = {};
+            for (const [key, model] of targetEntries) {
+                if (model.collection && typeof model.collection.find === 'function') {
+                    rollbackSnapshot[key] = await model.collection.find({}).toArray();
+                } else {
+                    rollbackSnapshot[key] = await model.find().lean();
                 }
             }
-        });
 
-        // Log the restoration event
-        await AuditLog.create({
-            action: 'DATABASE_RESTORE_COMPLETED',
-            targetType: 'General',
-            details: {
-                triggeredBy,
-                safetySnapshot: safetySnapshot.filename,
-                restoredCollections: Object.keys(restoredCounts).length,
-                restoredCounts,
-                backupManifest: backupPayload.manifest
+            const restoredCounts = {};
+            const mutatedEntries = [];
+
+            // Step 3: Clear and populate each collection with notification hooks suppressed ONLY for this async restore context
+            // If ANY collection delete/insert fails, automatically roll back all mutated collections to prior live state.
+            try {
+                await Notification.runWithNotificationHooksSuppressed(async () => {
+                    for (const [key, model] of targetEntries) {
+                        const records = collections[key];
+                        mutatedEntries.push([key, model]);
+                        await model.deleteMany({});
+
+                        if (records.length > 0) {
+                            const BATCH_SIZE = 500;
+                            for (let i = 0; i < records.length; i += BATCH_SIZE) {
+                                const batch = records.slice(i, i + BATCH_SIZE);
+                                await model.insertMany(batch, { ordered: true });
+                            }
+                        }
+                        restoredCounts[key] = records.length;
+                    }
+                });
+            } catch (cutoverErr) {
+                console.error('[BackupService] Restore cutover failed; rolling back mutated collections:', cutoverErr.message);
+                const rollbackErrors = [];
+                await Notification.runWithNotificationHooksSuppressed(async () => {
+                    for (const [key, model] of [...mutatedEntries].reverse()) {
+                        try {
+                            await model.deleteMany({});
+                            const priorDocs = rollbackSnapshot[key] || [];
+                            if (priorDocs.length > 0) {
+                                const BATCH_SIZE = 500;
+                                for (let i = 0; i < priorDocs.length; i += BATCH_SIZE) {
+                                    const batch = priorDocs.slice(i, i + BATCH_SIZE);
+                                    if (model.collection && typeof model.collection.insertMany === 'function') {
+                                        await model.collection.insertMany(batch, { ordered: true });
+                                    } else {
+                                        await model.insertMany(batch, { ordered: true });
+                                    }
+                                }
+                            }
+                        } catch (rbErr) {
+                            console.error(`[BackupService] CRITICAL: Rollback failed for collection "${key}":`, rbErr.message);
+                            rollbackErrors.push(`${key}: ${rbErr.message}`);
+                        }
+                    }
+                });
+
+                if (rollbackErrors.length > 0) {
+                    throw new Error(`Restore failed (${cutoverErr.message}) and rollback encountered errors (${rollbackErrors.join('; ')}). Safety snapshot: ${safetySnapshot.filename}`);
+                }
+                throw new Error(`Restore failed and live data was rolled back cleanly: ${cutoverErr.message}`);
             }
-        }).catch((err) => {
-            console.error('[BackupService] Failed to record restore audit log:', err.message);
-        });
 
-        return {
-            success: true,
-            message: 'Database successfully restored from archive.',
-            restoredCounts,
-            manifest: backupPayload.manifest
-        };
+            // Log the restoration event
+            await AuditLog.create({
+                action: 'DATABASE_RESTORE_COMPLETED',
+                targetType: 'General',
+                details: {
+                    triggeredBy,
+                    safetySnapshot: safetySnapshot.filename,
+                    restoredCollections: Object.keys(restoredCounts).length,
+                    restoredCounts,
+                    backupManifest: backupPayload.manifest
+                }
+            }).catch((err) => {
+                console.error('[BackupService] Failed to record restore audit log:', err.message);
+            });
+
+            return {
+                success: true,
+                message: 'Database successfully restored from archive.',
+                restoredCounts,
+                manifest: backupPayload.manifest
+            };
+        } finally {
+            activeRestoreCount = Math.max(0, activeRestoreCount - 1);
+            await releaseDistributedRestoreLock(lockOwnerId);
+        }
     });
 }
 
@@ -510,6 +619,9 @@ async function ensurePersistentBackups() {
 
 module.exports = {
     BACKUP_DIR,
+    RESTORE_LOCK_ID,
+    SystemLock,
+    isRestoreInProgress,
     assembleBackupPayload,
     encodeBackupPayload,
     validateBackupPayload,

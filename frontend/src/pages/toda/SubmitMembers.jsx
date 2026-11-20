@@ -288,7 +288,7 @@ const SubmitMembers = () => {
         body: formData
       });
 
-      const data = await response.json();
+      const data = await response.json().catch(() => ({}));
 
       if (response.ok) {
         setFile(null);
@@ -296,12 +296,26 @@ const SubmitMembers = () => {
         setDetectedToda('');
         setOcrNotes('');
         setScanWarning('');
+        setShowAddMemberRow(false);
         fetchMySubmissions();
         setFeedbackModal({
           isOpen: true,
           type: 'success',
           title: 'Official Masterlist Submitted',
           message: data.message || `Your official TODA masterlist has been successfully submitted to LGU Admin for review.`
+        });
+      } else if (response.status === 422 || data.ocrFailed || data.emptyExtraction) {
+        const warnMsg =
+          data.warning ||
+          data.message ||
+          'No valid member records could be extracted from this file. Please upload a clearer scan or add members manually below before submitting.';
+        setScanWarning(warnMsg);
+        setShowAddMemberRow(true);
+        setFeedbackModal({
+          isOpen: true,
+          type: 'warning',
+          title: data.ocrFailed ? 'AI OCR Extraction Failed' : 'No Members Detected in Document',
+          message: warnMsg
         });
       } else {
         setFeedbackModal({
@@ -343,6 +357,14 @@ const SubmitMembers = () => {
 
     setKickModal(prev => ({ ...prev, isSubmitting: true }));
     try {
+      const rawMemberId = String(kickModal.member._id || '').trim();
+      const resolvedTargetRosterId =
+        kickModal.member.targetRosterId ||
+        kickModal.member.rosterId ||
+        (rawMemberId.startsWith('roster-direct-')
+          ? rawMemberId.replace('roster-direct-', '')
+          : (/^[a-f0-9]{24}$/i.test(rawMemberId) ? rawMemberId : undefined));
+
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/toda/removal-requests`, {
         method: 'POST',
         headers: {
@@ -351,6 +373,9 @@ const SubmitMembers = () => {
         },
         body: JSON.stringify({
           memberId: kickModal.member._id,
+          memberName: kickModal.member.name || kickModal.member.operatorName || '',
+          todaName: todaData.todaName || undefined,
+          targetRosterId: resolvedTargetRosterId || undefined,
           reason: kickModal.reason,
           details: kickModal.details.trim()
         })
@@ -1176,12 +1201,56 @@ const SubmitMembers = () => {
 
                     {/* Scan Warning / Fallback Notice */}
                     {scanWarning && !isScanning && (
-                      <div className="mt-4 p-3 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-xs text-amber-800 dark:text-amber-200 flex items-start gap-2 text-left">
-                        <AlertTriangle size={15} className="shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
-                        <div>
-                          <p className="font-bold">AI Scan Note</p>
-                          <p className="mt-0.5 leading-snug">{scanWarning}</p>
+                      <div className="mt-4 p-3.5 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-xs text-amber-900 dark:text-amber-200 space-y-2.5 text-left">
+                        <div className="flex items-start gap-2">
+                          <AlertTriangle size={15} className="shrink-0 mt-0.5 text-amber-600 dark:text-amber-400" />
+                          <div>
+                            <p className="font-bold">AI Scan Warning — Manual Entry Available</p>
+                            <p className="mt-0.5 leading-snug">{scanWarning}</p>
+                          </div>
                         </div>
+                        {extractedRoster.length === 0 && (
+                          <div className="pt-2 border-t border-amber-200/80 dark:border-amber-800/60 space-y-2">
+                            <button
+                              type="button"
+                              onClick={() => setShowAddMemberRow((prev) => !prev)}
+                              className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer"
+                            >
+                              {showAddMemberRow ? '– Hide manual member entry' : '+ Add members manually to submit with this file'}
+                            </button>
+                            {showAddMemberRow && (
+                              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-white dark:bg-[#1C1917] p-2.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
+                                <input
+                                  type="text"
+                                  placeholder="Full Name (e.g. Dela Cruz, Juan A.)"
+                                  value={newMemberInput.name}
+                                  onChange={(e) => setNewMemberInput((prev) => ({ ...prev, name: e.target.value }))}
+                                  className="flex-1 px-3 py-1.5 text-xs rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37]"
+                                />
+                                <input
+                                  type="text"
+                                  placeholder="Body No. (e.g. GAS-001)"
+                                  value={newMemberInput.bodyNumber}
+                                  onChange={(e) => setNewMemberInput((prev) => ({ ...prev, bodyNumber: e.target.value.toUpperCase() }))}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') {
+                                      e.preventDefault();
+                                      handleAddExtractedMember();
+                                    }
+                                  }}
+                                  className="w-full sm:w-36 px-3 py-1.5 text-xs font-mono rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37]"
+                                />
+                                <button
+                                  type="button"
+                                  onClick={handleAddExtractedMember}
+                                  className="px-3.5 py-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white rounded-lg text-xs font-bold cursor-pointer transition-colors shadow-sm"
+                                >
+                                  Add to List
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     )}
 

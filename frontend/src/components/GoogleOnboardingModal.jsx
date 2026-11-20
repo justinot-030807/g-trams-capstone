@@ -162,9 +162,10 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
         todaAssociation: selectedToda.trim(),
         bodyNumber: bodyNumber.trim().toUpperCase(),
         email,
-      onboardingToken: googleProfile.onboardingToken || undefined,
+        onboardingToken: googleProfile.onboardingToken || undefined,
+        contact: email,
+        emergencyContact: formattedPhone || undefined,
         phone: formattedPhone || undefined,
-        contact: formattedPhone || email,
         role: 'operator'
       }
     };
@@ -312,11 +313,11 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
             </div>
           </div>
 
-          {/* Mobile Phone Number - Optional */}
+          {/* Optional Mobile / Emergency Contact */}
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <label className="block text-[13px] font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
-                Phone number (mobile)
+                Optional mobile / emergency contact
               </label>
               <span className="text-[11px] font-semibold text-[#6B6761] dark:text-[#A8A29E] bg-[#F6F5F3] dark:bg-[#14110F] px-2 py-0.5 rounded border border-[#E4E1DC] dark:border-[#2E2A27]">
                 Optional
@@ -341,7 +342,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
               />
             </div>
             <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1">
-              Used for official SMS franchise notifications. You can also add this later in settings.
+              Saved as your emergency contact for official notices. Your verified Google email remains your primary login.
             </p>
           </div>
 

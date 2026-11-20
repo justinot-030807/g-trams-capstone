@@ -1,13 +1,15 @@
+const mongoose = require('mongoose');
 const User = require('../models/userModel'); 
 const Franchise = require('../models/franchiseModel');
 const SystemSettings = require('../models/systemSettingsModel');
+const TodaRoster = require('../models/todaModel');
 const jwt = require('jsonwebtoken'); 
 const sendEmail = require('../utils/sendEmail'); 
 const sendSms = require('../utils/sendSms');
 const axios = require('axios');
 const crypto = require('crypto');
 const { logAudit } = require('../utils/auditLogger');
-const { validateOperatorAgainstRoster } = require('../utils/rosterValidator');
+const { validateOperatorAgainstRoster, normalizeBodyNumber, isBodyNumberMatch } = require('../utils/rosterValidator');
 const { verifyTodaRoster } = require('./todaController');
 const { disconnectUserSockets } = require('../config/socket');
 
@@ -133,7 +135,453 @@ const sanitizeUserObject = (userDocOrObj) => {
     delete obj.passwordResetToken;
     delete obj.failedLoginAttempts;
     delete obj.lockUntil;
+
+    // Expose whether user has a local password configured (defaults to true for legacy local users)
+    obj.hasLocalPassword = obj.hasLocalPassword !== false;
+
+    // Hydrate legacy backupContact into recoveryEmail / recoveryPhone when both typed fields are empty
+    const cleanRecEmail = String(obj.recoveryEmail || '').trim();
+    const cleanRecPhone = String(obj.recoveryPhone || '').trim();
+    const cleanBackup = String(obj.backupContact || '').trim();
+    if (!cleanRecEmail && !cleanRecPhone && cleanBackup) {
+        if (cleanBackup.includes('@')) {
+            obj.recoveryEmail = cleanBackup.toLowerCase();
+        } else {
+            obj.recoveryPhone = cleanBackup;
+        }
+    }
+
     return obj;
+};
+
+const isValidEmailFormat = (val) => {
+    const str = String(val || '').trim();
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(str);
+};
+
+const isValidPhMobileFormat = (val) => {
+    const clean = String(val || '').trim().replace(/[\s\-()]/g, '');
+    return /^(09\d{9}|\+639\d{9}|639\d{9})$/.test(clean);
+};
+
+// Unified OTP dispatcher with accurate delivery failure detection (M1)
+const dispatchOtpMessage = async ({ destination, subject, emailMessage, smsMessage }) => {
+    if (process.env.NODE_ENV === 'test') {
+        return { success: true, simulated: true };
+    }
+    const target = String(destination || '').trim();
+    if (!target) {
+        return { success: false, error: 'Missing OTP destination' };
+    }
+    if (target.includes('@')) {
+        const emailRes = await sendEmail({
+            email: target,
+            subject,
+            message: emailMessage
+        });
+        if (emailRes && emailRes.success === false) {
+            return { success: false, error: emailRes.error || emailRes.reason || 'Email delivery failed' };
+        }
+        return { success: true, data: emailRes };
+    }
+    const smsRes = await sendSms({
+        phone: target,
+        message: smsMessage
+    });
+    if (!smsRes || smsRes.success !== true) {
+        return {
+            success: false,
+            error: smsRes?.error || smsRes?.reason || 'SMS delivery failed',
+            details: smsRes?.details
+        };
+    }
+    return { success: true, data: smsRes };
+};
+
+// Helper: Check if a TODA Association + normalized Body Number is already claimed by another verified operator or TodaRoster row (H3)
+const findVerifiedRosterClaimConflict = async ({ todaAssociation, bodyNumber, excludeUserId = null }) => {
+    const cleanToda = String(todaAssociation || '').trim();
+    const cleanBody = String(bodyNumber || '').trim();
+    if (!cleanToda || cleanToda.toUpperCase() === 'NON-TODA' || !cleanBody || !normalizeBodyNumber(cleanBody)) {
+        return { conflict: false, matchingRosterDoc: null };
+    }
+
+    const escapedToda = cleanToda.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const todaRegex = new RegExp(`^${escapedToda}$`, 'i');
+
+    const userFilter = {
+        todaAssociation: todaRegex,
+        isVerified: true,
+        bodyNumber: { $exists: true, $ne: '' }
+    };
+    if (excludeUserId) {
+        userFilter._id = { $ne: excludeUserId };
+    }
+
+    const verifiedUsers = await User.find(userFilter).select('_id bodyNumber').lean();
+    for (const u of verifiedUsers) {
+        if (isBodyNumberMatch(cleanBody, u.bodyNumber)) {
+            return { conflict: true, reason: 'already_claimed_user', matchingRosterDoc: null };
+        }
+    }
+
+    const rosterDocs = await TodaRoster.find({ todaAssociation: todaRegex }).lean();
+    let matchingRosterDoc = null;
+    for (const r of rosterDocs) {
+        if (isBodyNumberMatch(cleanBody, r.bodyNumber)) {
+            matchingRosterDoc = r;
+            const existingClaimant = r.registeredUser || r.claimedBy || null;
+            if (existingClaimant && (!excludeUserId || String(existingClaimant) !== String(excludeUserId))) {
+                return { conflict: true, reason: 'already_claimed_roster', matchingRosterDoc: r };
+            }
+            break;
+        }
+    }
+
+    return { conflict: false, matchingRosterDoc };
+};
+
+// Atomically claim a TodaRoster entry for a user (syncs both claimedBy & registeredUser)
+const claimTodaRosterSlot = async ({ matchingRosterDoc, userId }) => {
+    if (!matchingRosterDoc || !matchingRosterDoc._id) {
+        return { claimed: true, rosterId: null };
+    }
+    const updated = await TodaRoster.findOneAndUpdate(
+        {
+            _id: matchingRosterDoc._id,
+            $and: [
+                {
+                    $or: [
+                        { registeredUser: null },
+                        { registeredUser: { $exists: false } },
+                        { registeredUser: userId }
+                    ]
+                },
+                {
+                    $or: [
+                        { claimedBy: null },
+                        { claimedBy: { $exists: false } },
+                        { claimedBy: userId }
+                    ]
+                }
+            ]
+        },
+        { $set: { registeredUser: userId, claimedBy: userId } },
+        { returnDocument: 'after' }
+    );
+    if (!updated) {
+        return { claimed: false, rosterId: null };
+    }
+    return { claimed: true, rosterId: updated._id };
+};
+
+const releaseTodaRosterSlot = async ({ rosterId, userId }) => {
+    if (!rosterId || !userId) return;
+    await TodaRoster.updateOne(
+        {
+            _id: rosterId,
+            $or: [{ registeredUser: userId }, { claimedBy: userId }]
+        },
+        { $set: { registeredUser: null, claimedBy: null } }
+    ).catch(() => {});
+};
+
+// Race-safe fallback guard when no TodaRoster row exists to anchor atomic locking
+const hasLostVerifiedUserSlotRace = async ({ todaAssociation, bodyNumber, userId }) => {
+    const cleanToda = String(todaAssociation || '').trim();
+    const cleanBody = String(bodyNumber || '').trim();
+    if (!cleanToda || cleanToda.toUpperCase() === 'NON-TODA' || !cleanBody || !normalizeBodyNumber(cleanBody)) {
+        return false;
+    }
+    const escapedToda = cleanToda.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const todaRegex = new RegExp(`^${escapedToda}$`, 'i');
+    const allVerified = await User.find({
+        todaAssociation: todaRegex,
+        isVerified: true,
+        bodyNumber: { $exists: true, $ne: '' }
+    })
+        .select('_id bodyNumber')
+        .sort({ _id: 1 })
+        .lean();
+
+    const matching = allVerified.filter((u) => isBodyNumberMatch(cleanBody, u.bodyNumber));
+    return matching.length > 1 && String(matching[0]._id) !== String(userId);
+};
+
+// Shared singleton institutional role uniqueness guard (M14)
+const checkSingletonRoleConflict = async ({ targetUserId, normalizedRole, todaAssociation }) => {
+    if (normalizedRole === 'bplo_staff') {
+        const existingLlsa = await User.findOne({
+            _id: { $ne: targetUserId },
+            role: { $in: ['bplo_staff', 'bplo staff'] },
+            isActive: { $ne: false }
+        });
+        if (existingLlsa) {
+            return {
+                conflict: true,
+                message: `May nakatalaga nang aktibong LLSA I Staff (${existingLlsa.name}). Tanging 1 aktibong LLSA I (Franchising Staff) account lamang ang pinapayagan.`
+            };
+        }
+    }
+
+    if (normalizedRole === 'cashier') {
+        const existingCashier = await User.findOne({
+            _id: { $ne: targetUserId },
+            role: 'cashier',
+            isActive: { $ne: false }
+        });
+        if (existingCashier) {
+            return {
+                conflict: true,
+                message: `May nakatalaga nang aktibong Municipal Cashier (${existingCashier.name}). Tanging 1 aktibong Municipal Cashier account lamang ang pinapayagan.`
+            };
+        }
+    }
+
+    if (normalizedRole === 'toda_president') {
+        const targetToda = String(todaAssociation || '').trim();
+        if (!targetToda || targetToda.toUpperCase() === 'NON-TODA') {
+            return {
+                conflict: true,
+                invalidToda: true,
+                message: 'A TODA President must be assigned to an active TODA Association (cannot be NON-TODA).'
+            };
+        }
+        const escaped = targetToda.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const existingPresident = await User.findOne({
+            _id: { $ne: targetUserId },
+            role: { $in: ['toda_president', 'toda president'] },
+            todaAssociation: { $regex: new RegExp(`^${escaped}$`, 'i') },
+            isActive: { $ne: false }
+        });
+        if (existingPresident) {
+            return {
+                conflict: true,
+                message: `May nakatalaga nang TODA President para sa ${targetToda} (${existingPresident.name}). Tanging 1 TODA President lamang ang pinapayagan bawat asosasyon.`
+            };
+        }
+    }
+
+    return { conflict: false };
+};
+
+// Reusable Google token verification helper for googleAuth, profile reauth (H2), and Google-only appeals (M4)
+const verifyGoogleTokens = async ({ idToken, accessToken, allowTestJwtFallback = true }) => {
+    let email = '';
+    let googleId = '';
+    let googleName = '';
+    let googlePicture = '';
+    let emailVerified = false;
+    let sawUnverifiedGoogleEmail = false;
+
+    const isTruthyEmailVerified = (val) => val === true || val === 'true';
+
+    const isValidIdTokenAudience = (tokenData) => {
+        if (!tokenData) return false;
+        if (process.env.NODE_ENV === 'test' && !process.env.GOOGLE_CLIENT_ID) {
+            return true;
+        }
+        const expectedClientId = (process.env.GOOGLE_CLIENT_ID || '').trim();
+        if (!expectedClientId) return false;
+        return tokenData.aud === expectedClientId;
+    };
+
+    const isValidAccessTokenAudience = (tokenData) => {
+        if (!tokenData) return false;
+        if (process.env.NODE_ENV === 'test' && !process.env.GOOGLE_CLIENT_ID) {
+            return true;
+        }
+        const expectedClientId = (process.env.GOOGLE_CLIENT_ID || '').trim();
+        if (!expectedClientId) return false;
+        if (tokenData.aud !== undefined && tokenData.aud !== null && String(tokenData.aud).trim() !== '') {
+            return tokenData.aud === expectedClientId;
+        }
+        return tokenData.azp === expectedClientId;
+    };
+
+    if (idToken) {
+        const isLikelyJwt = typeof idToken === 'string' && idToken.split('.').length === 3 && idToken.startsWith('eyJ');
+
+        if (isLikelyJwt) {
+            try {
+                const googleRes = await axios.get(`https://oauth2.googleapis.com/tokeninfo?id_token=${encodeURIComponent(idToken)}`, { timeout: 4000 });
+                if (googleRes.data && googleRes.data.email && isValidIdTokenAudience(googleRes.data)) {
+                    const verifiedFlag = isTruthyEmailVerified(googleRes.data.email_verified);
+                    if (process.env.NODE_ENV !== 'test' && !verifiedFlag) {
+                        sawUnverifiedGoogleEmail = true;
+                    } else if (googleRes.data.email_verified === false || googleRes.data.email_verified === 'false') {
+                        sawUnverifiedGoogleEmail = true;
+                    } else {
+                        email = String(googleRes.data.email).toLowerCase().trim();
+                        emailVerified = verifiedFlag;
+                        googleId = googleRes.data.sub || googleRes.data.user_id || '';
+                        googleName = googleRes.data.name || '';
+                        googlePicture = googleRes.data.picture || '';
+                    }
+                }
+            } catch (err) {
+                console.warn('Google tokeninfo id_token verification note:', err.message);
+            }
+
+            if (!email && !sawUnverifiedGoogleEmail && allowTestJwtFallback && process.env.NODE_ENV === 'test') {
+                try {
+                    const decoded = jwt.decode(idToken);
+                    const isAppInternalToken = Boolean(decoded && (decoded.tokenType || decoded.purpose));
+                    if (
+                        decoded &&
+                        !isAppInternalToken &&
+                        (decoded.email || decoded.sub || decoded.email_verified) &&
+                        (!process.env.GOOGLE_CLIENT_ID || decoded.aud === process.env.GOOGLE_CLIENT_ID)
+                    ) {
+                        if (decoded.email_verified === false || decoded.email_verified === 'false') {
+                            sawUnverifiedGoogleEmail = true;
+                        } else {
+                            if (decoded.email) email = String(decoded.email).toLowerCase().trim();
+                            emailVerified = decoded.email_verified === undefined ? true : isTruthyEmailVerified(decoded.email_verified);
+                            googleId = googleId || decoded.sub || decoded.user_id || decoded.id || '';
+                            googleName = googleName || decoded.name || `${decoded.given_name || ''} ${decoded.family_name || ''}`.trim() || '';
+                            googlePicture = googlePicture || decoded.picture || '';
+                        }
+                    }
+                } catch (jwtErr) {
+                    console.warn('Google JWT decode warning:', jwtErr.message);
+                }
+            }
+        } else {
+            try {
+                const googleRes = await axios.get(`https://oauth2.googleapis.com/tokeninfo?access_token=${encodeURIComponent(idToken)}`, { timeout: 4000 });
+                if (googleRes.data && googleRes.data.email && isValidAccessTokenAudience(googleRes.data)) {
+                    const verifiedFlag = isTruthyEmailVerified(googleRes.data.email_verified);
+                    if (process.env.NODE_ENV !== 'test' && !verifiedFlag) {
+                        sawUnverifiedGoogleEmail = true;
+                    } else {
+                        email = String(googleRes.data.email).toLowerCase().trim();
+                        emailVerified = verifiedFlag;
+                        googleId = googleId || googleRes.data.sub || googleRes.data.user_id || '';
+                    }
+                }
+            } catch (err) {
+                console.warn('Google tokeninfo access_token note:', err.message);
+            }
+        }
+    }
+
+    const rawAccessToken = accessToken || (!email && !sawUnverifiedGoogleEmail && idToken ? idToken : null);
+    if (!email && !sawUnverifiedGoogleEmail && rawAccessToken) {
+        let accessTokenAudienceVerified = false;
+        try {
+            const tokenInfoRes = await axios.get(`https://oauth2.googleapis.com/tokeninfo?access_token=${encodeURIComponent(rawAccessToken)}`, { timeout: 4000 });
+            if (tokenInfoRes.data && isValidAccessTokenAudience(tokenInfoRes.data)) {
+                accessTokenAudienceVerified = true;
+                if (tokenInfoRes.data.email) {
+                    const verifiedFlag = isTruthyEmailVerified(tokenInfoRes.data.email_verified);
+                    if (process.env.NODE_ENV !== 'test' && !verifiedFlag) {
+                        sawUnverifiedGoogleEmail = true;
+                    } else {
+                        email = String(tokenInfoRes.data.email).toLowerCase().trim();
+                        emailVerified = verifiedFlag;
+                    }
+                }
+                googleId = googleId || tokenInfoRes.data.sub || tokenInfoRes.data.user_id || '';
+            }
+        } catch {
+            // proceed to userinfo endpoints only if allowed
+        }
+
+        if (!email && !sawUnverifiedGoogleEmail && (accessTokenAudienceVerified || (process.env.NODE_ENV === 'test' && !process.env.GOOGLE_CLIENT_ID))) {
+            try {
+                const userinfoRes = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
+                    headers: { Authorization: `Bearer ${rawAccessToken}` },
+                    timeout: 4000
+                });
+                if (userinfoRes.data && userinfoRes.data.email) {
+                    const verifiedFlag = isTruthyEmailVerified(userinfoRes.data.email_verified);
+                    if (process.env.NODE_ENV !== 'test' && !verifiedFlag) {
+                        sawUnverifiedGoogleEmail = true;
+                    } else {
+                        email = String(userinfoRes.data.email).toLowerCase().trim();
+                        emailVerified = verifiedFlag;
+                        googleId = googleId || userinfoRes.data.sub || '';
+                        googleName = googleName || userinfoRes.data.name || '';
+                        googlePicture = googlePicture || userinfoRes.data.picture || '';
+                    }
+                }
+            } catch {
+                try {
+                    const oidcRes = await axios.get('https://openidconnect.googleapis.com/v1/userinfo', {
+                        headers: { Authorization: `Bearer ${rawAccessToken}` },
+                        timeout: 4000
+                    });
+                    if (oidcRes.data && oidcRes.data.email) {
+                        const verifiedFlag = isTruthyEmailVerified(oidcRes.data.email_verified);
+                        if (process.env.NODE_ENV !== 'test' && !verifiedFlag) {
+                            sawUnverifiedGoogleEmail = true;
+                        } else {
+                            email = String(oidcRes.data.email).toLowerCase().trim();
+                            emailVerified = verifiedFlag;
+                            googleId = googleId || oidcRes.data.sub || '';
+                            googleName = googleName || oidcRes.data.name || '';
+                            googlePicture = googlePicture || oidcRes.data.picture || '';
+                        }
+                    }
+                } catch {
+                    // proceed
+                }
+            }
+        }
+    }
+
+    return {
+        email,
+        googleId,
+        googleName,
+        googlePicture,
+        emailVerified,
+        sawUnverifiedGoogleEmail
+    };
+};
+
+// Verify that a fresh Google token belongs to a specific User account (for H2 profile reauth & M4 Google-only appeals)
+const verifyGoogleReauthForUser = async ({ idToken, accessToken, user }) => {
+    if (!idToken && !accessToken) {
+        return { valid: false, message: 'Fresh Google sign-in token is required.' };
+    }
+    const verified = await verifyGoogleTokens({ idToken, accessToken, allowTestJwtFallback: true });
+    if (verified.sawUnverifiedGoogleEmail || (process.env.NODE_ENV !== 'test' && !verified.emailVerified)) {
+        return { valid: false, message: 'Google account email must be verified.' };
+    }
+    if (!verified.email && !verified.googleId) {
+        return { valid: false, message: 'Invalid or expired Google reauthentication token.' };
+    }
+
+    const userGoogleId = String(user.googleId || '').trim();
+    const userEmail = String(user.email || '').trim().toLowerCase();
+    const userContactEmail = String(user.contact || '').includes('@') ? String(user.contact).trim().toLowerCase() : '';
+
+    if (userGoogleId) {
+        if (verified.googleId && verified.googleId !== userGoogleId) {
+            return { valid: false, message: 'Google account identity mismatch.' };
+        }
+        if (process.env.NODE_ENV !== 'test' && !verified.googleId) {
+            return { valid: false, message: 'Google account identity mismatch.' };
+        }
+    }
+
+    const googleIdMatched = Boolean(userGoogleId && verified.googleId && verified.googleId === userGoogleId);
+    const emailMatched = Boolean(
+        verified.email &&
+        ((userEmail && verified.email === userEmail) || (userContactEmail && verified.email === userContactEmail))
+    );
+
+    if (verified.email && (userEmail || userContactEmail) && !emailMatched) {
+        return { valid: false, message: 'Google account email does not match your account.' };
+    }
+
+    if (!googleIdMatched && !emailMatched) {
+        return { valid: false, message: 'Google account does not match your account.' };
+    }
+
+    return { valid: true, verified };
 };
 
 const signSessionToken = (user) => {
@@ -255,6 +703,19 @@ exports.register = async (req, res) => {
                     advisory: rosterReport.advisory
                 });
             }
+
+            // H3: Prevent a TODA association + normalized body number from being claimed by a second verified operator
+            const claimConflict = await findVerifiedRosterClaimConflict({
+                todaAssociation: normalizedToda,
+                bodyNumber: normalizedBodyNo
+            });
+            if (claimConflict.conflict) {
+                return res.status(409).json({
+                    success: false,
+                    status: 'already_claimed',
+                    message: 'Ang TODA association at Body Number na ito ay nakarehistro at na-claim na ng ibang verified operator account.'
+                });
+            }
         }
         
         // Validate recovery email/phone are not identical to primary contact
@@ -332,25 +793,31 @@ exports.register = async (req, res) => {
         const isOtpTargetEmail = otpTargetContact.includes('@');
 
         if (process.env.NODE_ENV !== 'test') {
+            let deliverySucceeded = false;
             try {
-                if (isOtpTargetEmail) {
-                    await sendEmail({ 
-                        email: otpTargetContact, 
-                        subject: 'G-TRAMS: Account Verification OTP', 
-                        message: `Your OTP for G-TRAMS registration is: ${otp}\n\nThis is valid for 10 minutes only.` 
-                    });
-                } else {
-                    await sendSms({
-                        phone: otpTargetContact,
-                        message: `G-TRAMS LGU Gasan: Ang inyong verification code ay ${otp}. Huwag itong ibahagi kahit kanino.`
-                    });
+                const sendResult = await dispatchOtpMessage({
+                    destination: otpTargetContact,
+                    subject: 'G-TRAMS: Account Verification OTP',
+                    emailMessage: `Your OTP for G-TRAMS registration is: ${otp}\n\nThis is valid for 10 minutes only.`,
+                    smsMessage: `G-TRAMS LGU Gasan: Ang inyong verification code ay ${otp}. Huwag itong ibahagi kahit kanino.`
+                });
+                deliverySucceeded = Boolean(sendResult && sendResult.success);
+                if (!deliverySucceeded) {
+                    console.error("OTP Delivery Error (email/SMS):", sendResult?.error || 'Unknown delivery failure');
                 }
             } catch (sendErr) {
-                console.error("OTP Delivery Warning (email/SMS):", sendErr.message);
+                console.error("OTP Delivery Error (email/SMS):", sendErr.message);
+                deliverySucceeded = false;
+            }
+
+            if (!deliverySucceeded) {
                 await User.findOneAndUpdate(
                     { _id: user._id, otp: user.otp, otpPurpose: user.otpPurpose },
-                    { $unset: { otp: 1, otpExpire: 1, otpAttempts: 1, otpPurpose: 1, otpRecipient: 1 } }
+                    { $unset: { otp: 1, otpExpire: 1 }, $set: { otpAttempts: 0, otpPurpose: '', otpRecipient: '' } }
                 ).catch(() => {});
+                return res.status(503).json({
+                    message: 'Unable to deliver verification code right now. Please try again.'
+                });
             }
         }
         if (process.env.NODE_ENV === 'test') {
@@ -438,6 +905,40 @@ exports.verifyOTP = async (req, res) => {
             setFields.email = rawContact.toLowerCase();
         }
 
+        // H3: Enforce single-use TODA roster claim atomically before finalizing verification
+        let claimedRosterId = null;
+        const hasClaimableSlot = Boolean(
+            user.todaAssociation &&
+            String(user.todaAssociation).trim().toUpperCase() !== 'NON-TODA' &&
+            user.bodyNumber &&
+            normalizeBodyNumber(user.bodyNumber)
+        );
+
+        if (hasClaimableSlot) {
+            const claimConflict = await findVerifiedRosterClaimConflict({
+                todaAssociation: user.todaAssociation,
+                bodyNumber: user.bodyNumber,
+                excludeUserId: user._id
+            });
+            if (claimConflict.conflict) {
+                return res.status(409).json({
+                    message: 'Ang TODA association at Body Number na ito ay na-claim na ng ibang verified operator account.'
+                });
+            }
+            if (claimConflict.matchingRosterDoc) {
+                const claimResult = await claimTodaRosterSlot({
+                    matchingRosterDoc: claimConflict.matchingRosterDoc,
+                    userId: user._id
+                });
+                if (!claimResult.claimed) {
+                    return res.status(409).json({
+                        message: 'Ang TODA association at Body Number na ito ay na-claim na ng ibang verified operator account.'
+                    });
+                }
+                claimedRosterId = claimResult.rosterId;
+            }
+        }
+
         const expectedPurposeQuery = isTestBlankPurpose ? { $in: ['register', '', null] } : 'register';
         const verifiedUser = await User.findOneAndUpdate(
             {
@@ -456,7 +957,25 @@ exports.verifyOTP = async (req, res) => {
         );
 
         if (!verifiedUser) {
+            if (claimedRosterId) {
+                await releaseTodaRosterSlot({ rosterId: claimedRosterId, userId: user._id });
+            }
             return res.status(400).json({ message: 'Invalid or expired OTP.' });
+        }
+
+        // Race-safe fallback guard if no TodaRoster document existed to lock
+        if (hasClaimableSlot && !claimedRosterId) {
+            const lostRace = await hasLostVerifiedUserSlotRace({
+                todaAssociation: verifiedUser.todaAssociation,
+                bodyNumber: verifiedUser.bodyNumber,
+                userId: verifiedUser._id
+            });
+            if (lostRace) {
+                await User.findByIdAndUpdate(verifiedUser._id, { $set: { isVerified: false } }).catch(() => {});
+                return res.status(409).json({
+                    message: 'Ang TODA association at Body Number na ito ay na-claim na ng ibang verified operator account.'
+                });
+            }
         }
 
         const token = signSessionToken(verifiedUser);
@@ -694,36 +1213,96 @@ exports.forgotPassword = async (req, res) => {
             });
         }
 
-        // Check if applicant used recovery contact or explicitly requested backup contact in Step 2
+        // Determine exact recovery/primary destination (M3)
         const isEmailInput = rawContact.includes('@');
-        const backupTargetRaw = String(user.backupContact || user.recoveryEmail || user.recoveryPhone || '').trim();
+        const cleanRecEmail = String(user.recoveryEmail || '').trim().toLowerCase();
+        const cleanRecPhone = normalizeContact(user.recoveryPhone || '');
+        const cleanLegacyBackup = String(user.backupContact || '').trim();
+        const cleanLegacyBackupNorm = cleanLegacyBackup ? normalizeContact(cleanLegacyBackup) : '';
+        const effectiveRecEmail = cleanRecEmail || (cleanLegacyBackup && cleanLegacyBackup.includes('@') ? cleanLegacyBackup.toLowerCase() : '');
+        const effectiveRecPhone = cleanRecPhone || (cleanLegacyBackup && !cleanLegacyBackup.includes('@') ? cleanLegacyBackupNorm : '');
+
+        const backupTargetRaw = String(effectiveRecEmail || effectiveRecPhone || cleanLegacyBackup || '').trim();
         const primaryTargetRaw = String(user.contact || user.email || rawContact).trim();
+        const primaryContactNorm = normalizeContact(user.contact || '');
+        const primaryEmailNorm = String(user.email || '').trim().toLowerCase();
+
+        const matchesPrimary =
+            (normalizedContact && primaryContactNorm && normalizedContact.toLowerCase() === primaryContactNorm.toLowerCase()) ||
+            (isEmailInput && primaryEmailNorm && rawContact.toLowerCase() === primaryEmailNorm);
+        const matchesRecEmail = isEmailInput && Boolean(effectiveRecEmail) && rawContact.toLowerCase() === effectiveRecEmail;
+        const matchesRecPhone = !isEmailInput && Boolean(effectiveRecPhone) && normalizedContact === effectiveRecPhone;
+
+        const preferredChannel = String(req.body.preferredChannel || req.body.channel || '').trim().toLowerCase();
+        const manualRecoveryTarget = normalizeContact(req.body.recoveryTarget || req.body.target || '');
         const requestBackup = Boolean(req.body.useBackupContact);
 
         let destination = normalizedContact;
         let isRecovery = false;
 
-        const cleanRawDigits = rawContact.replace(/[\s\-()]/g, '');
-        const cleanUserRecPhone = (user.recoveryPhone || '').replace(/[\s\-()]/g, '');
-        const cleanUserBackupDigits = backupTargetRaw.replace(/[\s\-()]/g, '');
-
-        if (requestBackup && backupTargetRaw) {
-            destination = backupTargetRaw.includes('@')
-                ? backupTargetRaw.toLowerCase()
-                : normalizeContact(backupTargetRaw);
+        // 1. Direct match against a specific recovery field ALWAYS dispatches to that exact matched destination
+        if (!matchesPrimary && matchesRecEmail) {
+            destination = effectiveRecEmail;
             isRecovery = true;
-        } else if (isEmailInput && user.recoveryEmail && rawContact.toLowerCase() === user.recoveryEmail.toLowerCase()) {
-            destination = user.recoveryEmail.toLowerCase();
+        } else if (!matchesPrimary && matchesRecPhone) {
+            destination = effectiveRecPhone;
             isRecovery = true;
-        } else if (isEmailInput && backupTargetRaw.includes('@') && rawContact.toLowerCase() === backupTargetRaw.toLowerCase()) {
-            destination = backupTargetRaw.toLowerCase();
+        } else if (manualRecoveryTarget) {
+            if (effectiveRecEmail && manualRecoveryTarget.toLowerCase() === effectiveRecEmail) {
+                destination = effectiveRecEmail;
+                isRecovery = true;
+            } else if (effectiveRecPhone && manualRecoveryTarget === effectiveRecPhone) {
+                destination = effectiveRecPhone;
+                isRecovery = true;
+            } else if (
+                (primaryContactNorm && manualRecoveryTarget.toLowerCase() === primaryContactNorm.toLowerCase()) ||
+                (primaryEmailNorm && manualRecoveryTarget.toLowerCase() === primaryEmailNorm)
+            ) {
+                destination = manualRecoveryTarget;
+                isRecovery = false;
+            } else {
+                return res.status(400).json({ message: 'Selected recovery destination does not match this account.' });
+            }
+        } else if (preferredChannel === 'recoveryemail' || preferredChannel === 'recovery_email') {
+            if (!effectiveRecEmail) {
+                return res.status(400).json({ message: 'No recovery email is configured for this account.' });
+            }
+            destination = effectiveRecEmail;
             isRecovery = true;
-        } else if (!isEmailInput && cleanUserRecPhone && (cleanRawDigits === cleanUserRecPhone || normalizeContact(rawContact) === normalizeContact(user.recoveryPhone))) {
-            destination = normalizeContact(user.recoveryPhone);
+        } else if (preferredChannel === 'recoveryphone' || preferredChannel === 'recovery_phone') {
+            if (!effectiveRecPhone) {
+                return res.status(400).json({ message: 'No recovery phone is configured for this account.' });
+            }
+            destination = effectiveRecPhone;
             isRecovery = true;
-        } else if (!isEmailInput && cleanUserBackupDigits && !backupTargetRaw.includes('@') && (cleanRawDigits === cleanUserBackupDigits || normalizeContact(rawContact) === normalizeContact(backupTargetRaw))) {
-            destination = normalizeContact(backupTargetRaw);
-            isRecovery = true;
+        } else if (preferredChannel === 'email') {
+            if ((requestBackup || !primaryTargetRaw.includes('@')) && effectiveRecEmail) {
+                destination = effectiveRecEmail;
+                isRecovery = true;
+            } else if (primaryEmailNorm) {
+                destination = primaryEmailNorm;
+                isRecovery = false;
+            } else if (effectiveRecEmail) {
+                destination = effectiveRecEmail;
+                isRecovery = true;
+            }
+        } else if (preferredChannel === 'phone' || preferredChannel === 'sms') {
+            if ((requestBackup || primaryTargetRaw.includes('@')) && effectiveRecPhone) {
+                destination = effectiveRecPhone;
+                isRecovery = true;
+            } else if (primaryContactNorm && !primaryContactNorm.includes('@')) {
+                destination = primaryContactNorm;
+                isRecovery = false;
+            } else if (effectiveRecPhone) {
+                destination = effectiveRecPhone;
+                isRecovery = true;
+            }
+        } else if (requestBackup) {
+            const fallbackBackup = cleanLegacyBackupNorm || effectiveRecEmail || effectiveRecPhone;
+            if (fallbackBackup) {
+                destination = fallbackBackup;
+                isRecovery = true;
+            }
         }
 
         const otp = crypto.randomInt(100000, 1000000).toString();
@@ -741,22 +1320,37 @@ exports.forgotPassword = async (req, res) => {
         }
 
         try {
-            if (process.env.NODE_ENV !== 'test') {
-                if (isDestEmail) {
-                    // Send OTP via email
-                    await sendEmail({ 
-                        email: destination, 
-                        subject: 'G-TRAMS: Account Recovery OTP', 
-                        message: `Your OTP for G-TRAMS password reset is: ${otp}\n\nThis code is valid for 10 minutes only.${isRecovery ? '\n\nNote: This code was requested using your registered Recovery Email.' : ''}` 
-                    });
-                } else {
-                    // Send OTP via SMS (TextBee / Semaphore)
-                    await sendSms({
-                        phone: destination,
-                        message: `G-TRAMS LGU Gasan: Ang inyong password reset OTP code ay ${otp}. Huwag itong ibahagi kahit kanino.${isRecovery ? ' (Sent to recovery phone)' : ''}`
-                    });
-                }
+            const sendResult = await dispatchOtpMessage({
+                destination,
+                subject: 'G-TRAMS: Account Recovery OTP',
+                emailMessage: `Your OTP for G-TRAMS password reset is: ${otp}\n\nThis code is valid for 10 minutes only.${isRecovery ? '\n\nNote: This code was requested using your registered Recovery Email.' : ''}`,
+                smsMessage: `G-TRAMS LGU Gasan: Ang inyong password reset OTP code ay ${otp}. Huwag itong ibahagi kahit kanino.${isRecovery ? ' (Sent to recovery phone)' : ''}`
+            });
+
+            if (!sendResult || !sendResult.success) {
+                await User.findOneAndUpdate(
+                    { _id: user._id, otp: user.otp, otpPurpose: user.otpPurpose },
+                    { $unset: { otp: 1, otpExpire: 1 }, $set: { otpAttempts: 0, otpPurpose: '', otpRecipient: '' } }
+                ).catch(() => {});
+                const errDetail = typeof sendResult?.details === 'string' ? sendResult.details : JSON.stringify(sendResult?.details || sendResult?.error || '');
+                const isSmsIssue = errDetail.includes('approved') || errDetail.includes('credit') || errDetail.includes('balance');
+                return res.status(503).json({
+                    message: isSmsIssue
+                        ? 'SMS gateway has insufficient credits or is unverified. Please use your email address or contact support.'
+                        : 'Unable to deliver verification code right now. Please try again.'
+                });
             }
+
+            // M3: Mint short-lived signed resetChallengeToken binding uid & exact target recipient
+            const resetChallengeToken = jwt.sign(
+                {
+                    uid: String(user._id),
+                    purpose: 'password_reset',
+                    recipient: destination
+                },
+                getJwtSecret(),
+                { algorithm: 'HS256', expiresIn: '15m' }
+            );
 
             return res.status(200).json({ 
                 message: isRecovery 
@@ -764,7 +1358,12 @@ exports.forgotPassword = async (req, res) => {
                     : `OTP sent successfully to your ${isDestEmail ? 'email' : 'SMS'}.`,
                 recoveryUsed: isRecovery,
                 destination: isRecovery ? maskContactInfo(destination) : undefined,
+                resetChallengeToken,
                 hasBackupContact: Boolean(backupTargetRaw && backupTargetRaw.toLowerCase() !== primaryTargetRaw.toLowerCase()),
+                hasRecoveryEmail: Boolean(effectiveRecEmail),
+                hasRecoveryPhone: Boolean(effectiveRecPhone),
+                maskedRecoveryEmail: effectiveRecEmail ? maskContactInfo(effectiveRecEmail) : '',
+                maskedRecoveryPhone: effectiveRecPhone ? maskContactInfo(effectiveRecPhone) : '',
                 maskedBackupContact: backupTargetRaw ? maskContactInfo(backupTargetRaw) : '',
                 maskedPrimaryContact: primaryTargetRaw ? maskContactInfo(primaryTargetRaw) : '',
                 ...(process.env.NODE_ENV === 'test' ? { testOtp: otp } : {})
@@ -773,14 +1372,14 @@ exports.forgotPassword = async (req, res) => {
             console.error("FORGOT PASSWORD OTP SEND ERROR:", err?.response?.data || err.message);
             await User.findOneAndUpdate(
                 { _id: user._id, otp: user.otp, otpPurpose: user.otpPurpose },
-                { $unset: { otp: 1, otpExpire: 1, otpAttempts: 1, otpPurpose: 1, otpRecipient: 1 } }
+                { $unset: { otp: 1, otpExpire: 1 }, $set: { otpAttempts: 0, otpPurpose: '', otpRecipient: '' } }
             ).catch(() => {});
             const errDetail = typeof err?.response?.data === 'string' ? err.response.data : JSON.stringify(err?.response?.data || '');
             const isSmsIssue = errDetail.includes('approved') || errDetail.includes('credit') || errDetail.includes('balance');
-            return res.status(500).json({ 
+            return res.status(503).json({ 
                 message: isSmsIssue 
                     ? 'SMS gateway has insufficient credits or is unverified. Please use your email address or contact support.' 
-                    : `Error sending OTP code: ${err.message}. Please try again.` 
+                    : 'Unable to deliver verification code right now. Please try again.' 
             });
         }
     } catch (error) {
@@ -792,14 +1391,20 @@ exports.forgotPassword = async (req, res) => {
 // Reset password
 exports.resetPassword = async (req, res) => {
     try {
-        const { contact, otp, newPassword } = req.body;
-        if (typeof contact !== 'string' || typeof otp !== 'string' || typeof newPassword !== 'string') {
+        const { contact, otp, newPassword, resetChallengeToken } = req.body;
+        const hasChallengeToken = typeof resetChallengeToken === 'string' && resetChallengeToken.trim().length > 0;
+
+        if (typeof otp !== 'string' || typeof newPassword !== 'string') {
             return res.status(400).json({ message: 'Contact, OTP code, and new password are required.' });
         }
-        const rawContact = contact.trim();
+        if (!hasChallengeToken && typeof contact !== 'string') {
+            return res.status(400).json({ message: 'Contact, OTP code, and new password are required.' });
+        }
+
+        const rawContact = typeof contact === 'string' ? contact.trim() : '';
         const normalizedOtp = otp.trim();
 
-        if (!rawContact || !normalizedOtp) {
+        if ((!hasChallengeToken && !rawContact) || !normalizedOtp) {
             return res.status(400).json({ message: 'Contact and OTP code are required.' });
         }
 
@@ -819,10 +1424,32 @@ exports.resetPassword = async (req, res) => {
             }
         }
 
-        let user = await User.findOne(getPrimaryContactQueryFilter(rawContact));
-        if (!user) {
-            user = await User.findOne(getContactQueryFilter(rawContact));
+        let user = null;
+        let challengeRecipient = '';
+
+        // M3: Bind account lookup & otpRecipient directly to signed resetChallengeToken when provided
+        if (hasChallengeToken) {
+            let decodedChallenge;
+            try {
+                decodedChallenge = jwt.verify(resetChallengeToken.trim(), getJwtSecret(), { algorithms: ['HS256'] });
+            } catch {
+                return res.status(400).json({ message: 'Invalid or expired password reset session. Please request a new OTP.' });
+            }
+            if (!decodedChallenge || decodedChallenge.purpose !== 'password_reset' || !decodedChallenge.uid || !decodedChallenge.recipient) {
+                return res.status(400).json({ message: 'Invalid or expired password reset session. Please request a new OTP.' });
+            }
+            if (!mongoose.Types.ObjectId.isValid(decodedChallenge.uid)) {
+                return res.status(400).json({ message: 'Invalid or expired password reset session. Please request a new OTP.' });
+            }
+            challengeRecipient = String(decodedChallenge.recipient).trim();
+            user = await User.findById(decodedChallenge.uid);
+        } else {
+            user = await User.findOne(getPrimaryContactQueryFilter(rawContact));
+            if (!user) {
+                user = await User.findOne(getContactQueryFilter(rawContact));
+            }
         }
+
         if (!user || !user.isVerified || !user.otp || !user.otpExpire || user.otpExpire <= Date.now()) {
             return res.status(400).json({ message: 'Invalid or expired OTP code.' });
         }
@@ -832,11 +1459,15 @@ exports.resetPassword = async (req, res) => {
             return res.status(400).json({ message: 'Invalid or expired OTP code.' });
         }
 
-        if (!user.otpRecipient && process.env.NODE_ENV !== 'test') {
+        if (!user.otpRecipient && (hasChallengeToken || process.env.NODE_ENV !== 'test')) {
             return res.status(400).json({ message: 'Invalid or expired OTP code.' });
         }
 
-        if (user.otpRecipient) {
+        if (hasChallengeToken) {
+            if (!user.otpRecipient || normalizeContact(user.otpRecipient) !== normalizeContact(challengeRecipient)) {
+                return res.status(400).json({ message: 'Invalid or expired OTP code.' });
+            }
+        } else if (user.otpRecipient) {
             const normInput = normalizeContact(rawContact);
             const normRecipient = normalizeContact(user.otpRecipient);
             const recoveryTargets = [user.backupContact, user.recoveryEmail, user.recoveryPhone]
@@ -892,6 +1523,7 @@ exports.resetPassword = async (req, res) => {
                     otpPurpose: '',
                     otpRecipient: '',
                     password: hashedPassword,
+                    hasLocalPassword: true,
                     failedLoginAttempts: 0,
                     lockUntil: null,
                     passwordChangedAt: new Date()
@@ -954,6 +1586,7 @@ exports.changePassword = async (req, res) => {
         if (!isMatch) return res.status(400).json({ message: 'Incorrect old password.' });
         
         user.password = newPassword;
+        user.hasLocalPassword = true;
         user.tokenVersion = (user.tokenVersion || 0) + 1;
         user.passwordChangedAt = new Date();
         await user.save();
@@ -972,6 +1605,103 @@ exports.changePassword = async (req, res) => {
         res.status(200).json({ message: 'Password changed successfully.', token: newToken });
     } catch (error) {
         res.status(500).json({ message: 'Server error' });
+    }
+};
+
+// Request OTP to verify ownership of a recovery email or phone before binding (H2 + M1)
+exports.requestRecoveryOtp = async (req, res) => {
+    try {
+        const rawTarget = String(req.body?.target || '').trim();
+        if (!rawTarget) {
+            return res.status(400).json({ message: 'Recovery target email or Philippine mobile number is required.' });
+        }
+
+        const isTargetEmail = rawTarget.includes('@');
+        if (isTargetEmail ? !isValidEmailFormat(rawTarget) : !isValidPhMobileFormat(rawTarget)) {
+            return res.status(400).json({
+                message: isTargetEmail
+                    ? 'Please provide a valid recovery email address.'
+                    : 'Please provide a valid Philippine mobile number (e.g. 09XXXXXXXXX).'
+            });
+        }
+
+        const normalizedTarget = normalizeContact(rawTarget);
+        const currentUser = await User.findById(req.user._id || req.user.id);
+        if (!currentUser) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        const primaryContactNorm = normalizeContact(currentUser.contact || '');
+        const primaryEmailNorm = String(currentUser.email || '').trim().toLowerCase();
+        if (
+            normalizedTarget.toLowerCase() === primaryContactNorm.toLowerCase() ||
+            (isTargetEmail && primaryEmailNorm && normalizedTarget.toLowerCase() === primaryEmailNorm)
+        ) {
+            return res.status(400).json({
+                message: isTargetEmail
+                    ? 'Ang Recovery Email ay dapat iba sa inyong pangunahing contact email.'
+                    : 'Ang Recovery Phone ay dapat iba sa inyong pangunahing numero ng telepono.'
+            });
+        }
+
+        const collision = await User.findOne({
+            _id: { $ne: currentUser._id },
+            ...getPrimaryContactQueryFilter(normalizedTarget)
+        });
+        if (collision) {
+            return res.status(400).json({
+                message: 'Ang inilagay na recovery detail ay ginagamit na bilang pangunahing contact ng ibang rehistradong account.'
+            });
+        }
+
+        const otp = crypto.randomInt(100000, 1000000).toString();
+        currentUser.otp = hashOtp(otp);
+        currentUser.otpPurpose = 'recovery_bind';
+        currentUser.otpRecipient = normalizedTarget;
+        currentUser.otpExpire = new Date(Date.now() + 10 * 60 * 1000);
+        currentUser.otpAttempts = 0;
+        await currentUser.save();
+
+        if (process.env.NODE_ENV === 'test') {
+            console.log(`[DEV/TEST OTP] Recovery Bind OTP for ${normalizedTarget}: ${otp}`);
+        }
+
+        try {
+            const sendResult = await dispatchOtpMessage({
+                destination: normalizedTarget,
+                subject: 'G-TRAMS: Recovery Contact Verification Code',
+                emailMessage: `Your G-TRAMS verification code to bind this recovery email is: ${otp}\n\nThis code is valid for 10 minutes only.`,
+                smsMessage: `G-TRAMS LGU Gasan: Ang inyong recovery verification code ay ${otp}. Valid ito sa loob ng 10 minuto.`
+            });
+
+            if (!sendResult || !sendResult.success) {
+                await User.findOneAndUpdate(
+                    { _id: currentUser._id, otp: currentUser.otp, otpPurpose: 'recovery_bind' },
+                    { $unset: { otp: 1, otpExpire: 1 }, $set: { otpAttempts: 0, otpPurpose: '', otpRecipient: '' } }
+                ).catch(() => {});
+                return res.status(503).json({
+                    message: 'Unable to deliver verification code right now. Please try again.'
+                });
+            }
+        } catch (sendErr) {
+            console.error('REQUEST RECOVERY OTP SEND ERROR:', sendErr.message);
+            await User.findOneAndUpdate(
+                { _id: currentUser._id, otp: currentUser.otp, otpPurpose: 'recovery_bind' },
+                { $unset: { otp: 1, otpExpire: 1 }, $set: { otpAttempts: 0, otpPurpose: '', otpRecipient: '' } }
+            ).catch(() => {});
+            return res.status(503).json({
+                message: 'Unable to deliver verification code right now. Please try again.'
+            });
+        }
+
+        return res.status(200).json({
+            message: `Verification code sent to ${maskContactInfo(normalizedTarget)}.`,
+            destination: maskContactInfo(normalizedTarget),
+            ...(process.env.NODE_ENV === 'test' ? { testOtp: otp } : {})
+        });
+    } catch (error) {
+        console.error('REQUEST RECOVERY OTP ERROR:', error);
+        return res.status(500).json({ message: 'Server error' });
     }
 };
 
@@ -1036,57 +1766,21 @@ exports.updateUser = async (req, res) => {
             return res.status(400).json({ message: 'Invalid role selected.' });
         }
 
-        // 4. Enforce single-instance institutional roles for LLSA I (bplo_staff) and Municipal Cashier (cashier)
-        if (rawRequestedRole === 'bplo_staff') {
-            const existingLlsa = await User.findOne({
-                _id: { $ne: req.params.id },
-                role: { $in: ['bplo_staff', 'bplo staff'] },
-                isActive: { $ne: false }
-            });
-            if (existingLlsa) {
-                return res.status(400).json({
-                    message: `May nakatalaga nang aktibong LLSA I Staff (${existingLlsa.name}). Tanging 1 aktibong LLSA I (Franchising Staff) account lamang ang pinapayagan.`
-                });
-            }
-        }
-
-        if (rawRequestedRole === 'cashier') {
-            const existingCashier = await User.findOne({
-                _id: { $ne: req.params.id },
-                role: 'cashier',
-                isActive: { $ne: false }
-            });
-            if (existingCashier) {
-                return res.status(400).json({
-                    message: `May nakatalaga nang aktibong Municipal Cashier (${existingCashier.name}). Tanging 1 aktibong Municipal Cashier account lamang ang pinapayagan.`
-                });
-            }
-        }
-
-        // 5. Enforce 1 TODA President per TODA Association
+        // 4 & 5. Enforce single-instance institutional roles (bplo_staff, cashier, 1 toda_president per TODA)
         let targetToda = existingUser.todaAssociation || 'NON-TODA';
         if (rawRequestedRole === 'toda_president') {
             targetToda = (req.body.todaAssociation !== undefined ? req.body.todaAssociation : existingUser.todaAssociation || '').trim();
-            if (!targetToda || targetToda.toUpperCase() === 'NON-TODA') {
-                return res.status(400).json({ 
-                    message: 'A TODA President must be assigned to an active TODA Association (cannot be NON-TODA).' 
-                });
-            }
-
-            const escaped = targetToda.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const existingPresident = await User.findOne({
-                _id: { $ne: req.params.id },
-                role: { $in: ['toda_president', 'toda president'] },
-                todaAssociation: { $regex: new RegExp(`^${escaped}$`, 'i') },
-                isActive: { $ne: false }
-            });
-            if (existingPresident) {
-                return res.status(400).json({
-                    message: `May nakatalaga nang TODA President para sa ${targetToda} (${existingPresident.name}). Tanging 1 TODA President lamang ang pinapayagan bawat asosasyon.`
-                });
-            }
         } else if (rawRequestedRole === 'bplo_staff' || rawRequestedRole === 'cashier') {
             targetToda = 'NON-TODA';
+        }
+
+        const roleConflict = await checkSingletonRoleConflict({
+            targetUserId: req.params.id,
+            normalizedRole: rawRequestedRole,
+            todaAssociation: targetToda
+        });
+        if (roleConflict.conflict) {
+            return res.status(400).json({ message: roleConflict.message });
         }
 
         // 6. Strict whitelist update (prevents mass-assignment injection)
@@ -1137,6 +1831,12 @@ exports.deleteUser = async (req, res) => {
         }
 
         const user = await User.findByIdAndDelete(req.params.id);
+
+        // Release any claimed TodaRoster entry held by the deleted user
+        await TodaRoster.updateMany(
+            { $or: [{ registeredUser: existingUser._id }, { claimedBy: existingUser._id }] },
+            { $set: { registeredUser: null, claimedBy: null } }
+        ).catch(() => {});
 
         logAudit(req, {
             action: 'USER_DELETED',
@@ -1191,51 +1891,174 @@ exports.updateProfile = async (req, res) => {
                         message: rosterReport.message || 'TODA affiliation change blocked: You must be listed in the official TODA Masterlist for this association.'
                     });
                 }
+                const claimConflict = await findVerifiedRosterClaimConflict({
+                    todaAssociation: cleanToda,
+                    bodyNumber: candidateBodyNo,
+                    excludeUserId: currentUser._id
+                });
+                if (claimConflict.conflict) {
+                    return res.status(409).json({
+                        message: 'Ang TODA association at Body Number na ito ay na-claim na ng ibang verified operator account.'
+                    });
+                }
             }
         }
 
-        const isContactChanging = contact !== undefined && normalizeContact(contact) !== normalizeContact(currentUser.contact);
-        const isRecEmailChanging = req.body.recoveryEmail !== undefined && String(req.body.recoveryEmail || '').trim().toLowerCase() !== String(currentUser.recoveryEmail || '').trim().toLowerCase();
-        const isRecPhoneChanging = req.body.recoveryPhone !== undefined && normalizeContact(req.body.recoveryPhone) !== normalizeContact(currentUser.recoveryPhone);
-        const isGoogleLinked = currentUser.authProvider === 'google' || Boolean(currentUser.googleId);
-        const isInitialGoogleRecoverySetup =
-            isGoogleLinked &&
-            currentUser.authProvider === 'google' &&
-            !isContactChanging &&
-            !currentUser.recoveryEmail &&
-            !currentUser.recoveryPhone &&
-            !currentUser.backupContact;
+        const rawReqRecEmail = req.body.recoveryEmail !== undefined ? String(req.body.recoveryEmail || '').trim().toLowerCase() : undefined;
+        const rawReqRecPhone = req.body.recoveryPhone !== undefined ? String(req.body.recoveryPhone || '').trim() : undefined;
+        const clearRecovery = req.body.clearRecovery === true || req.body.clearRecovery === 'true';
+        const enforceReauth = req.body.enforceReauth === true || req.body.enforceReauth === 'true';
 
-        if ((isContactChanging || isRecEmailChanging || isRecPhoneChanging) && !isInitialGoogleRecoverySetup && process.env.NODE_ENV !== 'test') {
-            const suppliedPassword = String(req.body.currentPassword || req.body.password || '').trim();
-            if (!suppliedPassword || !(await currentUser.matchPassword(suppliedPassword))) {
-                return res.status(401).json({
-                    message: isGoogleLinked
-                        ? 'Reauthentication with your current password is required to change primary or recovery contact details on a Google-linked account.'
-                        : 'Current password is required to change primary or recovery contact details.'
+        const dbRecEmail = String(currentUser.recoveryEmail || '').trim().toLowerCase();
+        const dbRecPhone = String(currentUser.recoveryPhone || '').trim();
+        const dbBackup = String(currentUser.backupContact || '').trim();
+
+        const hydratedLegacyEmail = (!dbRecEmail && !dbRecPhone && dbBackup && dbBackup.includes('@')) ? dbBackup.toLowerCase() : '';
+        const hydratedLegacyPhone = (!dbRecEmail && !dbRecPhone && dbBackup && !dbBackup.includes('@')) ? dbBackup : '';
+
+        const isContactChanging = contact !== undefined && normalizeContact(contact) !== normalizeContact(currentUser.contact);
+        // M2: Only treat recovery fields as changing when genuinely changed (do not treat echoed legacy backupContact or blank-to-blank as a change)
+        const isRecEmailChanging = rawReqRecEmail !== undefined &&
+            rawReqRecEmail !== dbRecEmail &&
+            !(hydratedLegacyEmail && rawReqRecEmail === hydratedLegacyEmail);
+        const isRecPhoneChanging = rawReqRecPhone !== undefined &&
+            normalizeContact(rawReqRecPhone) !== normalizeContact(dbRecPhone) &&
+            !(hydratedLegacyPhone && normalizeContact(rawReqRecPhone) === normalizeContact(hydratedLegacyPhone));
+        const isClearingExistingRecovery = clearRecovery && Boolean(dbBackup || dbRecEmail || dbRecPhone);
+
+        const isGoogleLinked = currentUser.authProvider === 'google' || Boolean(currentUser.googleId);
+        const hasLocalPass = currentUser.hasLocalPassword !== false;
+        const isSensitiveContactChange = isContactChanging || isRecEmailChanging || isRecPhoneChanging || isClearingExistingRecovery;
+        const shouldEnforceReauth = process.env.NODE_ENV !== 'test' || enforceReauth;
+
+        // Track whether a Google-only user is binding a new non-empty recovery target requiring atomic recovery_bind OTP consumption
+        let recoveryOtpRequired = false;
+        let expectedRecoveryOtpTarget = '';
+
+        // H2: Always require reauthentication on sensitive contact/recovery changes (no unauthenticated initial Google bypass)
+        if (isSensitiveContactChange && shouldEnforceReauth) {
+            if (hasLocalPass) {
+                const suppliedPassword = String(req.body.currentPassword || req.body.password || '').trim();
+                if (!suppliedPassword || !(await currentUser.matchPassword(suppliedPassword))) {
+                    return res.status(401).json({
+                        message: isGoogleLinked
+                            ? 'Reauthentication with your current password is required to change primary or recovery contact details on a Google-linked account.'
+                            : 'Current password is required to change primary or recovery contact details.'
+                    });
+                }
+            } else {
+                // True Google-only account (hasLocalPassword === false): require fresh verified Google token
+                const googleReauthIdToken = String(
+                    req.body.googleReauthToken || req.body.googleCredential || req.body.googleIdToken || ''
+                ).trim();
+                const googleReauthAccessToken = String(req.body.googleAccessToken || '').trim();
+
+                if (!googleReauthIdToken && !googleReauthAccessToken) {
+                    return res.status(401).json({
+                        message: 'Fresh Google sign-in reauthentication is required to change primary or recovery contact details.'
+                    });
+                }
+
+                const googleReauth = await verifyGoogleReauthForUser({
+                    idToken: googleReauthIdToken,
+                    accessToken: googleReauthAccessToken,
+                    user: currentUser
                 });
+                if (!googleReauth.valid) {
+                    return res.status(401).json({
+                        message: googleReauth.message || 'Google reauthentication failed or does not match your account.'
+                    });
+                }
+
+                // When setting a non-empty recoveryEmail or recoveryPhone on a Google-only account, require destination OTP
+                if (!clearRecovery) {
+                    const newRecoveryTargets = [];
+                    if (isRecEmailChanging && rawReqRecEmail) {
+                        newRecoveryTargets.push(normalizeContact(rawReqRecEmail));
+                    }
+                    if (isRecPhoneChanging && rawReqRecPhone) {
+                        newRecoveryTargets.push(normalizeContact(rawReqRecPhone));
+                    }
+
+                    if (newRecoveryTargets.length > 1) {
+                        return res.status(400).json({
+                            message: 'Please verify and save one recovery contact (email or phone) at a time.'
+                        });
+                    }
+
+                    if (newRecoveryTargets.length === 1) {
+                        recoveryOtpRequired = true;
+                        expectedRecoveryOtpTarget = newRecoveryTargets[0];
+
+                        const suppliedRecoveryOtp = String(req.body.recoveryOtp || '').trim();
+                        if (!suppliedRecoveryOtp) {
+                            return res.status(400).json({
+                                message: 'Verification code (recoveryOtp) sent to your new recovery contact is required.'
+                            });
+                        }
+
+                        if (
+                            !currentUser.otp ||
+                            !currentUser.otpExpire ||
+                            currentUser.otpExpire <= Date.now() ||
+                            currentUser.otpPurpose !== 'recovery_bind' ||
+                            !currentUser.otpRecipient ||
+                            normalizeContact(currentUser.otpRecipient) !== expectedRecoveryOtpTarget
+                        ) {
+                            return res.status(400).json({
+                                message: 'Invalid or expired recovery verification code. Please request a new code.'
+                            });
+                        }
+
+                        if ((currentUser.otpAttempts || 0) >= 5) {
+                            await User.findOneAndUpdate(
+                                { _id: currentUser._id, otp: currentUser.otp, otpAttempts: { $gte: 5 } },
+                                { $unset: { otp: 1, otpExpire: 1 }, $set: { otpAttempts: 0, otpPurpose: '', otpRecipient: '' } }
+                            );
+                            return res.status(429).json({
+                                message: 'Too many invalid verification attempts. Please request a new recovery code.'
+                            });
+                        }
+
+                        if (!verifyHashedOtp(currentUser.otp, suppliedRecoveryOtp)) {
+                            const lockedOut = await recordInvalidOtpAttempt(currentUser);
+                            if (lockedOut) {
+                                return res.status(429).json({
+                                    message: 'Too many invalid verification attempts. Please request a new recovery code.'
+                                });
+                            }
+                            return res.status(400).json({
+                                message: 'Invalid or expired recovery verification code.'
+                            });
+                        }
+                    }
+                }
             }
         }
 
         const effectivePrimaryContact = contact !== undefined ? normalizeContact(contact) : normalizeContact(currentUser.contact);
-        if (req.body.recoveryEmail !== undefined) {
-            const candidateRecEmail = String(req.body.recoveryEmail || '').trim().toLowerCase();
-            if (candidateRecEmail && !candidateRecEmail.includes('@')) {
+        if (isRecEmailChanging && rawReqRecEmail) {
+            if (!isValidEmailFormat(rawReqRecEmail)) {
                 return res.status(400).json({ message: 'Invalid recovery email format.' });
             }
-            if (candidateRecEmail && candidateRecEmail === effectivePrimaryContact.toLowerCase()) {
+            if (rawReqRecEmail === effectivePrimaryContact.toLowerCase()) {
                 return res.status(400).json({ message: 'Ang Recovery Email ay dapat iba sa inyong pangunahing contact email.' });
             }
         }
-        if (req.body.recoveryPhone !== undefined) {
-            const candidateRecPhone = normalizeContact(req.body.recoveryPhone);
+        if (isRecPhoneChanging && rawReqRecPhone) {
+            const candidateRecPhone = normalizeContact(rawReqRecPhone);
             if (candidateRecPhone && candidateRecPhone === effectivePrimaryContact) {
                 return res.status(400).json({ message: 'Ang Recovery Phone ay dapat iba sa inyong pangunahing numero ng telepono.' });
             }
         }
 
         // Prevent recoveryEmail / recoveryPhone / contact from colliding with another user's primary contact
-        for (const candidateContact of [contact, req.body.recoveryEmail, req.body.recoveryPhone].filter(Boolean)) {
+        const collisionCandidates = [
+            isContactChanging ? contact : null,
+            isRecEmailChanging ? rawReqRecEmail : null,
+            isRecPhoneChanging ? rawReqRecPhone : null
+        ].filter(Boolean);
+        for (const candidateContact of collisionCandidates) {
             const collision = await User.findOne({
                 _id: { $ne: userId },
                 ...getPrimaryContactQueryFilter(candidateContact)
@@ -1251,13 +2074,20 @@ exports.updateProfile = async (req, res) => {
         if (name !== undefined) updateData.name = name;
         if (address !== undefined) updateData.address = address;
         if (contact !== undefined) updateData.contact = normalizeContact(contact);
-        if (req.body.recoveryEmail !== undefined) updateData.recoveryEmail = String(req.body.recoveryEmail || '').trim().toLowerCase();
-        if (req.body.recoveryPhone !== undefined) updateData.recoveryPhone = String(req.body.recoveryPhone || '').trim();
-        if (req.body.recoveryEmail !== undefined || req.body.recoveryPhone !== undefined) {
-            const nextRecPhone = req.body.recoveryPhone !== undefined ? String(req.body.recoveryPhone || '').trim() : String(currentUser.recoveryPhone || '').trim();
-            const nextRecEmail = req.body.recoveryEmail !== undefined ? String(req.body.recoveryEmail || '').trim().toLowerCase() : String(currentUser.recoveryEmail || '').trim().toLowerCase();
+
+        // M2: Only modify recovery fields / backupContact when genuinely changing or explicitly cleared
+        if (clearRecovery) {
+            updateData.recoveryEmail = '';
+            updateData.recoveryPhone = '';
+            updateData.backupContact = '';
+        } else if (isRecEmailChanging || isRecPhoneChanging) {
+            if (isRecEmailChanging) updateData.recoveryEmail = rawReqRecEmail;
+            if (isRecPhoneChanging) updateData.recoveryPhone = rawReqRecPhone;
+            const nextRecPhone = isRecPhoneChanging ? rawReqRecPhone : dbRecPhone;
+            const nextRecEmail = isRecEmailChanging ? rawReqRecEmail : dbRecEmail;
             updateData.backupContact = nextRecPhone || nextRecEmail || '';
         }
+
         if (req.body.emergencyContact !== undefined) updateData.emergencyContact = String(req.body.emergencyContact || '').trim();
         if (todaAssociation !== undefined && currentUserRole !== 'toda_president') updateData.todaAssociation = todaAssociation;
         if (language !== undefined) updateData.language = language;
@@ -1267,11 +2097,42 @@ exports.updateProfile = async (req, res) => {
             updateData.profilePic = req.file.path; 
         }
 
-        const updatedUser = await User.findByIdAndUpdate(
-            userId, 
-            updateData, 
-            { returnDocument: 'after' }
-        ).select('-password -otp -otpExpire -otpAttempts -otpPurpose -otpRecipient -passwordResetToken');
+        let updatedUser;
+        if (recoveryOtpRequired) {
+            // Atomically consume the recovery_bind OTP together with persisting the profile update
+            updatedUser = await User.findOneAndUpdate(
+                {
+                    _id: userId,
+                    otp: currentUser.otp,
+                    otpPurpose: 'recovery_bind',
+                    otpRecipient: currentUser.otpRecipient,
+                    otpExpire: { $gt: new Date() },
+                    otpAttempts: { $lt: 5 }
+                },
+                {
+                    $set: {
+                        ...updateData,
+                        otpAttempts: 0,
+                        otpPurpose: '',
+                        otpRecipient: ''
+                    },
+                    $unset: { otp: 1, otpExpire: 1 }
+                },
+                { returnDocument: 'after' }
+            ).select('-password -otp -otpExpire -otpAttempts -otpPurpose -otpRecipient -passwordResetToken');
+
+            if (!updatedUser) {
+                return res.status(400).json({
+                    message: 'Invalid or expired recovery verification code. Please request a new code.'
+                });
+            }
+        } else {
+            updatedUser = await User.findByIdAndUpdate(
+                userId, 
+                updateData, 
+                { returnDocument: 'after' }
+            ).select('-password -otp -otpExpire -otpAttempts -otpPurpose -otpRecipient -passwordResetToken');
+        }
 
         res.status(200).json(sanitizeUserObject(updatedUser));
     } catch (error) {
@@ -1303,6 +2164,19 @@ exports.toggleUserStatus = async (req, res) => {
         }
 
         const newStatus = user.isActive === false ? true : false; 
+
+        // M14: Before reactivating an account, enforce singleton institutional role uniqueness
+        if (newStatus === true) {
+            const userRoleNorm = String(user.role || '').toLowerCase().trim().replace(/[\s-]+/g, '_');
+            const roleConflict = await checkSingletonRoleConflict({
+                targetUserId: user._id,
+                normalizedRole: userRoleNorm,
+                todaAssociation: user.todaAssociation
+            });
+            if (roleConflict.conflict) {
+                return res.status(409).json({ message: roleConflict.message });
+            }
+        }
 
         const updateData = { isActive: newStatus };
         if (newStatus === false) {
@@ -1699,7 +2573,10 @@ exports.googleAuth = async (req, res) => {
                 user.otpPurpose = '';
                 user.otpRecipient = '';
             }
-            if (user.authProvider !== 'google') {
+            // H2: Do NOT overwrite authProvider to 'google' when linking Google onto an existing local account
+            if (user.authProvider === 'local') {
+                user.hasLocalPassword = true;
+            } else if (!user.authProvider) {
                 user.authProvider = 'google';
             }
             user.lastActive = new Date();
@@ -1762,12 +2639,11 @@ exports.googleAuth = async (req, res) => {
 
         const fullName = (onboardingData?.fullName || onboardingData?.name || googleName || email.split('@')[0]).trim();
         const address = (onboardingData?.address || 'Gasan, Marinduque').trim();
-        const rawContact = (onboardingData?.contact || onboardingData?.email || email).trim();
-        const contact = normalizeContact(rawContact) || email;
+        const rawSubmittedContact = String(onboardingData?.contact || onboardingData?.phone || onboardingData?.email || email).trim();
         const todaAssociation = (onboardingData?.todaAssociation || 'NON-TODA').trim();
 
-        // Check if account with this primary contact already exists
-        const contactFilter = getPrimaryContactQueryFilter(rawContact);
+        // Check if account with this submitted contact / phone already exists (prevents hijacking another user's account)
+        const contactFilter = getPrimaryContactQueryFilter(rawSubmittedContact);
         const existingContact = await User.findOne(contactFilter);
 
         if (existingContact) {
@@ -1831,7 +2707,12 @@ exports.googleAuth = async (req, res) => {
                 existingContact.otpPurpose = '';
                 existingContact.otpRecipient = '';
             }
-            existingContact.authProvider = 'google';
+            // H2: Preserve local authProvider & hasLocalPassword when linking Google onto an existing local user
+            if (existingContact.authProvider === 'local') {
+                existingContact.hasLocalPassword = true;
+            } else if (!existingContact.authProvider) {
+                existingContact.authProvider = 'google';
+            }
             if (googlePicture && !existingContact.profilePic) existingContact.profilePic = googlePicture;
             existingContact.lastActive = new Date();
             existingContact.lastLogin = new Date();
@@ -1868,6 +2749,13 @@ exports.googleAuth = async (req, res) => {
         // Public Google sign-in strictly registers as 'operator' (privilege escalation prevention)
         const assignedRole = 'operator';
         const bodyNumber = String(onboardingData?.bodyNumber || onboardingData?.unitNo || '').trim().toUpperCase();
+        let matchingRosterDoc = null;
+        const hasClaimableSlot = Boolean(
+            todaAssociation &&
+            todaAssociation.toUpperCase() !== 'NON-TODA' &&
+            bodyNumber &&
+            normalizeBodyNumber(bodyNumber)
+        );
 
         if (!bodyNumber) {
             if (process.env.NODE_ENV !== 'test') {
@@ -1891,11 +2779,35 @@ exports.googleAuth = async (req, res) => {
                     advisory: rosterReport.advisory
                 });
             }
+
+            // H3: Prevent a TODA association + normalized body number from being claimed by a second verified operator
+            if (hasClaimableSlot) {
+                const claimConflict = await findVerifiedRosterClaimConflict({
+                    todaAssociation,
+                    bodyNumber
+                });
+                if (claimConflict.conflict) {
+                    return res.status(409).json({
+                        success: false,
+                        status: 'already_claimed',
+                        message: 'Ang TODA association at Body Number na ito ay nakarehistro at na-claim na ng ibang verified operator account.'
+                    });
+                }
+                matchingRosterDoc = claimConflict.matchingRosterDoc;
+            }
         }
 
-        // Create new operator user with isVerified: true (NO 6-DIGIT OTP CODE REQUIRED!)
+        // M4: NEVER set an unverified user-entered phone as primary contact of a verified Google account.
+        // Always keep verified Google email as primary contact; store optional user-supplied phone in emergencyContact.
+        const submittedPhoneCandidate =
+            onboardingData?.phone ||
+            (onboardingData?.contact && !String(onboardingData.contact).includes('@') ? onboardingData.contact : '') ||
+            onboardingData?.emergencyContact ||
+            '';
+        const emergencyContact = submittedPhoneCandidate ? normalizeContact(submittedPhoneCandidate) : '';
+
+        // Create new Google-only operator user (authProvider: 'google', hasLocalPassword: false)
         const randomPass = crypto.randomBytes(24).toString('base64').replace(/[^a-zA-Z0-9]/g, '') + 'G!9a';
-        const chosenPassword = (onboardingData?.password && onboardingData.password.length >= 6) ? onboardingData.password : randomPass;
         const rawBackupContact = onboardingData?.backupContact || req.body?.backupContact || '';
         const backupContact = rawBackupContact ? normalizeContact(rawBackupContact) : '';
         const rawRecoveryEmail = onboardingData?.recoveryEmail || req.body?.recoveryEmail || (backupContact && backupContact.includes('@') ? backupContact : '');
@@ -1903,27 +2815,73 @@ exports.googleAuth = async (req, res) => {
         const rawRecoveryPhone = onboardingData?.recoveryPhone || req.body?.recoveryPhone || (backupContact && !backupContact.includes('@') ? backupContact : '');
         const recoveryPhone = rawRecoveryPhone ? String(rawRecoveryPhone).trim() : '';
 
+        const newUserId = new mongoose.Types.ObjectId();
+        let claimedRosterId = null;
+
+        // H3: Atomically claim TodaRoster entry before creating the verified account
+        if (hasClaimableSlot && matchingRosterDoc) {
+            const claimResult = await claimTodaRosterSlot({
+                matchingRosterDoc,
+                userId: newUserId
+            });
+            if (!claimResult.claimed) {
+                return res.status(409).json({
+                    success: false,
+                    status: 'already_claimed',
+                    message: 'Ang TODA association at Body Number na ito ay nakarehistro at na-claim na ng ibang verified operator account.'
+                });
+            }
+            claimedRosterId = claimResult.rosterId;
+        }
+
         user = new User({
+            _id: newUserId,
             name: fullName,
             address: address,
-            contact: contact,
+            contact: email,
             backupContact,
             email: email,
             recoveryEmail,
             recoveryPhone,
+            emergencyContact,
             googleId: googleId || '',
-            password: chosenPassword,
+            password: randomPass,
             role: assignedRole,
             todaAssociation: todaAssociation,
             bodyNumber: bodyNumber,
             isVerified: true, // Automatically verified via Google!
             profilePic: googlePicture || '',
             authProvider: 'google',
+            hasLocalPassword: false,
             lastActive: new Date(),
             lastLogin: new Date()
         });
 
-        await user.save();
+        try {
+            await user.save();
+        } catch (saveErr) {
+            if (claimedRosterId) {
+                await releaseTodaRosterSlot({ rosterId: claimedRosterId, userId: newUserId });
+            }
+            throw saveErr;
+        }
+
+        // Race-safe fallback guard when no TodaRoster row anchored the claim
+        if (hasClaimableSlot && !claimedRosterId) {
+            const lostRace = await hasLostVerifiedUserSlotRace({
+                todaAssociation,
+                bodyNumber,
+                userId: user._id
+            });
+            if (lostRace) {
+                await User.deleteOne({ _id: user._id }).catch(() => {});
+                return res.status(409).json({
+                    success: false,
+                    status: 'already_claimed',
+                    message: 'Ang TODA association at Body Number na ito ay nakarehistro at na-claim na ng ibang verified operator account.'
+                });
+            }
+        }
 
         logAudit(req, {
             action: 'USER_REGISTERED_GOOGLE',
@@ -1948,17 +2906,42 @@ exports.googleAuth = async (req, res) => {
     }
 };
 
-// Submit an appeal for a deactivated account
+// Submit an appeal for a deactivated account (supports local password AND Google-only reauth — M4)
 exports.submitAppeal = async (req, res) => {
     try {
-        const { contact, password, message } = req.body;
-        
-        if (!contact || !password || !message) {
-            return res.status(400).json({ message: 'Contact, password, and appeal message are required.' });
+        const { contact, password, message, googleCredential, googleAccessToken, idToken, accessToken } = req.body;
+        const cleanMessage = String(message || '').trim();
+        const rawContact = String(contact || '').trim();
+        const googleIdToken = String(googleCredential || req.body.googleReauthToken || req.body.googleIdToken || idToken || req.body.credential || '').trim();
+        const googleAccToken = String(googleAccessToken || accessToken || req.body.access_token || '').trim();
+        const hasGoogleAuth = Boolean(googleIdToken || googleAccToken);
+
+        if (!cleanMessage || (!rawContact && !hasGoogleAuth)) {
+            return res.status(400).json({ message: 'Contact, credentials (password or Google verification), and appeal message are required.' });
         }
 
-        const rawContact = String(contact).trim();
-        const user = await User.findOne(getContactQueryFilter(rawContact));
+        let user = null;
+        if (rawContact) {
+            user = await User.findOne(getPrimaryContactQueryFilter(rawContact));
+            if (!user) {
+                user = await User.findOne(getContactQueryFilter(rawContact));
+            }
+        } else if (hasGoogleAuth) {
+            const verified = await verifyGoogleTokens({ idToken: googleIdToken, accessToken: googleAccToken, allowTestJwtFallback: true });
+            if (verified.sawUnverifiedGoogleEmail || (process.env.NODE_ENV !== 'test' && !verified.emailVerified) || (!verified.email && !verified.googleId)) {
+                return res.status(401).json({ message: 'Google verification failed.' });
+            }
+            const lookupClauses = [];
+            if (verified.googleId) lookupClauses.push({ googleId: verified.googleId });
+            if (verified.email) {
+                const esc = verified.email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                lookupClauses.push({ email: { $regex: new RegExp(`^${esc}$`, 'i') } });
+                lookupClauses.push({ contact: { $regex: new RegExp(`^${esc}$`, 'i') } });
+            }
+            if (lookupClauses.length > 0) {
+                user = await User.findOne({ $or: lookupClauses });
+            }
+        }
 
         if (!user) {
             return res.status(404).json({ message: 'User not found.' });
@@ -1968,12 +2951,37 @@ exports.submitAppeal = async (req, res) => {
             return res.status(400).json({ message: 'Account is not deactivated.' });
         }
 
-        const isMatch = await user.matchPassword(password);
-        if (!isMatch) {
-            return res.status(401).json({ message: 'Invalid password.' });
+        const isGoogleOnlyUser = user.hasLocalPassword === false;
+        const isGoogleAccount = isGoogleOnlyUser || user.authProvider === 'google' || Boolean(user.googleId);
+
+        if (hasGoogleAuth && isGoogleAccount) {
+            const googleCheck = await verifyGoogleReauthForUser({
+                idToken: googleIdToken,
+                accessToken: googleAccToken,
+                user
+            });
+            if (!googleCheck.valid) {
+                return res.status(401).json({ message: googleCheck.message || 'Google verification failed for this account.' });
+            }
+        } else {
+            if (!password) {
+                return res.status(400).json({
+                    message: isGoogleOnlyUser
+                        ? 'This Google account requires Google verification to submit an appeal.'
+                        : 'Contact, password, and appeal message are required.'
+                });
+            }
+            const isMatch = await user.matchPassword(password);
+            if (!isMatch) {
+                return res.status(401).json({
+                    message: isGoogleOnlyUser
+                        ? 'This Google account does not have a local password. Please verify with Google to submit your appeal.'
+                        : 'Invalid password.'
+                });
+            }
         }
 
-        user.appealMessage = message;
+        user.appealMessage = cleanMessage;
         user.appealStatus = 'pending';
         await user.save();
 
@@ -2009,12 +3017,18 @@ exports.verifyOperator = async (req, res) => {
 
         const formatVerifiedUnit = (f, ownerActive = true) => {
             const ownerIsInactive = ownerActive === false;
-            const expiryMs = f.expiryDate ? new Date(f.expiryDate).getTime() : null;
+            const effectiveExpiryDate = f.expiryDate || f.previousExpiryDate || null;
+            const expiryMs = effectiveExpiryDate ? new Date(effectiveExpiryDate).getTime() : null;
             const hasValidExpiry = expiryMs !== null && !Number.isNaN(expiryMs);
             const isDateExpired = hasValidExpiry && expiryMs < Date.now();
             const isMissingOrInvalidExpiry = !hasValidExpiry;
             const rawStatus = f.status;
-            const isActiveStatus = ['Active', 'Active - Under Warning'].includes(rawStatus);
+            // M7: Keep previously issued unexpired permit valid while early renewal is pending
+            const isValidRenewalInFlight =
+                Boolean(f.isRenewalPending) &&
+                ['Active', 'Active - Under Warning'].includes(f.previousStatus) &&
+                ['Pending', 'Pending for Approval', 'For Payment', 'For Signing', 'Ready for Pickup'].includes(rawStatus);
+            const isActiveStatus = ['Active', 'Active - Under Warning'].includes(rawStatus) || isValidRenewalInFlight;
             const isCurrentlyValid = !ownerIsInactive && isActiveStatus && !f.isArchived && hasValidExpiry && !isDateExpired;
             let validityStatus = 'INACTIVE';
             if (ownerIsInactive) {
@@ -2031,11 +3045,12 @@ exports.verifyOperator = async (req, res) => {
             return {
                 make: f.make,
                 plateNo: f.plateNo,
-                status: isActiveStatus && isDateExpired ? 'Expired' : rawStatus,
+                status: isActiveStatus && isDateExpired ? 'Expired' : (isValidRenewalInFlight && isCurrentlyValid ? f.previousStatus : rawStatus),
                 todaName: f.todaName,
                 approvalDate: f.approvalDate,
-                expiryDate: f.expiryDate,
+                expiryDate: effectiveExpiryDate,
                 mtopNo: f.mtopNo,
+                isRenewalPending: Boolean(f.isRenewalPending),
                 isCurrentlyValid,
                 validityStatus
             };
@@ -2060,7 +3075,7 @@ exports.verifyOperator = async (req, res) => {
             const userFranchises = await Franchise.find({ 
                 operator: user._id,
                 isArchived: { $ne: true }
-            }).select('make plateNo status todaName approvalDate expiryDate mtopNo isArchived');
+            }).select('make plateNo status todaName approvalDate expiryDate mtopNo isArchived isRenewalPending previousStatus previousExpiryDate');
 
             const ownerIsActive = user.isActive !== false;
             const formattedFranchises = (userFranchises || []).map((f) => formatVerifiedUnit(f, ownerIsActive));
@@ -2111,7 +3126,8 @@ exports.verifyOperator = async (req, res) => {
 
         if (franchise) {
             const opUser = franchise.operator;
-            const ownerIsActive = opUser ? opUser.isActive !== false : true;
+            // L6: Treat missing / deleted operator account as inactive (never default orphaned permits to active)
+            const ownerIsActive = Boolean(opUser && opUser.isActive !== false);
             const opName = franchise.fullName || opUser?.name || opUser?.fullName || 'Registered Operator';
             let formattedProfilePic = opUser?.profilePic || '';
             if (formattedProfilePic && !formattedProfilePic.startsWith('http') && baseUrl) {

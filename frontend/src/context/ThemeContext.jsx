@@ -51,7 +51,7 @@ export const ThemeProvider = ({ children }) => {
     const token = localStorage.getItem('token');
     if (token) {
       try {
-        await fetch(`${import.meta.env.VITE_API_URL}/api/v1/auth/profile`, {
+        const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/v1/auth/profile`, {
           method: 'PUT',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -59,6 +59,13 @@ export const ThemeProvider = ({ children }) => {
           },
           body: JSON.stringify({ theme: valid })
         });
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          console.warn(
+            `Failed to sync theme with backend (HTTP ${res.status}):`,
+            errData.message || res.statusText
+          );
+        }
       } catch (err) {
         console.error('Failed to sync theme with backend:', err);
       }

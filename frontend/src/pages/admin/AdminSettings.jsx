@@ -91,9 +91,10 @@ const AdminSettings = () => {
     inAppToastAlerts: localStorage.getItem('gtrams_toast_alerts') !== 'false'
   });
 
-  // Announcements state
+  // Announcements state (clientKey is UI-only; never send synthetic _id to Mongoose)
   const [announcements, setAnnouncements] = useState([
     {
+      clientKey: 'default-1',
       title: 'Franchise Renewal Schedule',
       desc: 'All registered tricycle operators must complete annual MTOP renewal before designated deadline to maintain active status.',
       type: 'alert',
@@ -101,6 +102,7 @@ const AdminSettings = () => {
       isActive: true
     },
     {
+      clientKey: 'default-2',
       title: 'Digital MTOP & QR Verification',
       desc: 'Approved operators can now view and download their digitally signed MTOP certificates with verifiable QR codes directly from their dashboard.',
       type: 'info',
@@ -108,6 +110,7 @@ const AdminSettings = () => {
       isActive: true
     },
     {
+      clientKey: 'default-3',
       title: 'Online Application Support',
       desc: 'Municipal Tricycle Franchising staff are available to assist operators with online registration, document scanning, and route zoning inquiries.',
       type: 'event',
@@ -460,8 +463,13 @@ const AdminSettings = () => {
                 return newState;
               });
 
-              if (Array.isArray(d.announcements) && d.announcements.length > 0) {
-                setAnnouncements(d.announcements);
+              if (Array.isArray(d.announcements)) {
+                setAnnouncements(
+                  d.announcements.map((item, idx) => ({
+                    ...item,
+                    clientKey: item?._id ? String(item._id) : `loaded-${idx}-${Date.now()}`
+                  }))
+                );
               }
             }
           }
@@ -929,17 +937,31 @@ const AdminSettings = () => {
     setAnnouncements(prev => prev.filter((_, i) => i !== idx));
   };
 
+  const handleClearAllAnnouncements = () => {
+    setAnnouncements([]);
+    showToast('All announcements cleared from draft. Click "Publish to Homepage" to save.', 'info');
+  };
+
   const handleAddAnnouncement = () => {
-    if (!newAnnouncement.title || !newAnnouncement.title.trim()) {
+    const title = (newAnnouncement.title || '').trim();
+    const desc = (newAnnouncement.desc || '').trim();
+    if (!title) {
       showToast('Announcement title is required.', 'error');
+      return;
+    }
+    if (!desc) {
+      showToast('Announcement description is required.', 'error');
       return;
     }
     setAnnouncements(prev => [
       ...prev,
       {
-        ...newAnnouncement,
-        isActive: true,
-        _id: `custom-${Date.now()}`
+        clientKey: `draft-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+        title,
+        desc,
+        type: newAnnouncement.type || 'info',
+        date: (newAnnouncement.date || '').trim() || 'General Advisory',
+        isActive: true
       }
     ]);
     setNewAnnouncement({
@@ -952,6 +974,28 @@ const AdminSettings = () => {
   };
 
   const handleSaveAnnouncements = async () => {
+    const OBJECT_ID_HEX_RE = /^[a-f0-9]{24}$/i;
+    const sanitized = announcements.map((item) => {
+      const clean = {
+        title: String(item.title || '').trim(),
+        desc: String(item.desc || '').trim(),
+        type: ['alert', 'info', 'event'].includes(item.type) ? item.type : 'info',
+        date: String(item.date || 'General Advisory').trim() || 'General Advisory',
+        isActive: item.isActive !== false
+      };
+      const rawId = item._id !== undefined && item._id !== null ? String(item._id).trim() : '';
+      if (OBJECT_ID_HEX_RE.test(rawId)) {
+        clean._id = rawId;
+      }
+      return clean;
+    });
+
+    const invalidIdx = sanitized.findIndex((a) => !a.title || !a.desc);
+    if (invalidIdx !== -1) {
+      showToast(`Announcement #${invalidIdx + 1} requires both a title and description.`, 'error');
+      return;
+    }
+
     setIsSavingAnnouncements(true);
     try {
       const token = localStorage.getItem('token');
@@ -961,10 +1005,26 @@ const AdminSettings = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({ announcements })
+        body: JSON.stringify({ announcements: sanitized })
       });
       if (res.ok) {
-        showToast('Homepage announcements updated and published successfully!', 'success');
+        const savedJson = await res.json().catch(() => ({}));
+        const persisted = Array.isArray(savedJson.data?.announcements)
+          ? savedJson.data.announcements
+          : sanitized;
+        setAnnouncements(
+          persisted.map((item, idx) => ({
+            ...item,
+            clientKey: item?._id ? String(item._id) : `saved-${idx}-${Date.now()}`
+          }))
+        );
+        window.dispatchEvent(new Event('gtrams_settings_updated'));
+        showToast(
+          persisted.length === 0
+            ? 'All homepage announcements cleared and published.'
+            : `Published ${persisted.length} homepage announcement${persisted.length === 1 ? '' : 's'} successfully!`,
+          'success'
+        );
       } else {
         const errJson = await res.json().catch(() => ({}));
         showToast(errJson.message || 'Failed to publish announcements.', 'error');
@@ -1620,6 +1680,177 @@ const AdminSettings = () => {
                 </div>
               </div>
 
+              {/* HOMEPAGE BULLETIN BOARD ANNOUNCEMENTS */}
+              <div className="bg-white dark:bg-[#1C1917] p-5 sm:p-6 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm transition-colors space-y-5">
+                <div className="flex items-center justify-between pb-4 border-b border-[#E4E1DC] dark:border-[#2E2A27] flex-wrap gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] rounded-lg">
+                      <Megaphone size={18} />
+                    </div>
+                    <div>
+                      <h2 className="text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
+                        Homepage Announcements ({announcements.length})
+                      </h2>
+                      <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                        Manage public advisories displayed on the G-TRAMS Municipal Bulletin Board
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    {announcements.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={handleClearAllAnnouncements}
+                        disabled={isSavingAnnouncements}
+                        className="px-3 py-1.5 rounded-lg text-xs font-semibold text-red-700 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 hover:bg-red-100 dark:hover:bg-red-950/60 transition-colors cursor-pointer disabled:opacity-50"
+                      >
+                        Clear All
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={handleSaveAnnouncements}
+                      disabled={isSavingAnnouncements}
+                      className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#9E2A2B] hover:bg-[#7A1B22] text-white shadow-sm transition-colors cursor-pointer disabled:opacity-50"
+                    >
+                      {isSavingAnnouncements ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                      <span>{isSavingAnnouncements ? 'Publishing...' : 'Publish to Homepage'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Active / Drafted Announcements List */}
+                {announcements.length === 0 ? (
+                  <div className="p-5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-center text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                    No announcements drafted. Add an announcement below or click <strong>Publish to Homepage</strong> to clear the bulletin board.
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {announcements.map((item, idx) => (
+                      <div
+                        key={item.clientKey || item._id || idx}
+                        className="p-3.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] space-y-2.5"
+                      >
+                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center">
+                          <div className="sm:col-span-5">
+                            <label className="block text-[10px] font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase mb-1">
+                              Title
+                            </label>
+                            <input
+                              type="text"
+                              value={item.title || ''}
+                              onChange={(e) => handleUpdateAnnouncement(idx, 'title', e.target.value)}
+                              className={inputClasses}
+                              placeholder="Announcement title"
+                            />
+                          </div>
+                          <div className="sm:col-span-3">
+                            <label className="block text-[10px] font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase mb-1">
+                              Category
+                            </label>
+                            <select
+                              value={item.type || 'info'}
+                              onChange={(e) => handleUpdateAnnouncement(idx, 'type', e.target.value)}
+                              className={inputClasses}
+                            >
+                              <option value="info">Info</option>
+                              <option value="alert">Alert</option>
+                              <option value="event">Event</option>
+                            </select>
+                          </div>
+                          <div className="sm:col-span-3">
+                            <label className="block text-[10px] font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase mb-1">
+                              Date / Tag
+                            </label>
+                            <input
+                              type="text"
+                              value={item.date || ''}
+                              onChange={(e) => handleUpdateAnnouncement(idx, 'date', e.target.value)}
+                              className={inputClasses}
+                              placeholder="General Advisory"
+                            />
+                          </div>
+                          <div className="sm:col-span-1 flex items-end justify-end sm:pt-4 gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteAnnouncement(idx)}
+                              className="p-2 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 border border-transparent hover:border-red-200 dark:hover:border-red-900/50 transition-colors cursor-pointer"
+                              title="Remove announcement"
+                              aria-label="Remove announcement"
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="block text-[10px] font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase mb-1">
+                            Description
+                          </label>
+                          <textarea
+                            rows={2}
+                            value={item.desc || ''}
+                            onChange={(e) => handleUpdateAnnouncement(idx, 'desc', e.target.value)}
+                            className={inputClasses}
+                            placeholder="Write official advisory message..."
+                          />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Draft New Announcement Form */}
+                <div className="p-4 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] space-y-3">
+                  <p className="text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] flex items-center gap-1.5">
+                    <Plus size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" /> Draft New Announcement
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                    <input
+                      type="text"
+                      value={newAnnouncement.title}
+                      onChange={(e) => setNewAnnouncement(prev => ({ ...prev, title: e.target.value }))}
+                      placeholder="Announcement title (required)"
+                      className={inputClasses}
+                    />
+                    <select
+                      value={newAnnouncement.type}
+                      onChange={(e) => setNewAnnouncement(prev => ({ ...prev, type: e.target.value }))}
+                      className={inputClasses}
+                    >
+                      <option value="info">Info Notice</option>
+                      <option value="alert">Urgent Alert</option>
+                      <option value="event">Schedule / Event</option>
+                    </select>
+                    <input
+                      type="text"
+                      value={newAnnouncement.date}
+                      onChange={(e) => setNewAnnouncement(prev => ({ ...prev, date: e.target.value }))}
+                      placeholder="Date / Label (e.g. Annual Cycle)"
+                      className={inputClasses}
+                    />
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-end">
+                    <textarea
+                      rows={2}
+                      value={newAnnouncement.desc}
+                      onChange={(e) => setNewAnnouncement(prev => ({ ...prev, desc: e.target.value }))}
+                      placeholder="Announcement description (required)"
+                      className={`${inputClasses} flex-1`}
+                    />
+                    <button
+                      type="button"
+                      onClick={handleAddAnnouncement}
+                      className="px-4 py-2 bg-[#1F1D1B] dark:bg-[#2E2A27] hover:bg-[#9E2A2B] text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shrink-0"
+                    >
+                      <Plus size={14} />
+                      <span>Add Draft</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
               {/* SAVE BUTTON FOR SYSTEM CONFIG */}
               <div className="flex justify-end pt-2">
                 <button
@@ -2190,7 +2421,7 @@ const AdminSettings = () => {
 
       {/* SAVE CHANGES CONFIRMATION MODAL */}
       {confirmModal.isOpen && (
-        <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
           <div
             className="absolute inset-0 bg-black/60"
             onClick={() => !isProcessing && setConfirmModal({ isOpen: false, type: null, data: null })}

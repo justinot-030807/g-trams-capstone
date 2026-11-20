@@ -9,6 +9,7 @@ import {
 } from 'lucide-react';
 import MtopCertificateModal from '../../components/admin/MtopCertificateModal';
 import AdminApplicationSummaryModal from '../../components/admin/AdminApplicationSummaryModal';
+import ApplicationDossierModal from '../../components/admin/ApplicationDossierModal';
 import OfficialApplicationFormModal from '../../components/common/OfficialApplicationFormModal';
 import { useSocket } from '../../context/SocketContext';
 import { evaluateDocumentValidity } from '../../utils/dateValidity';
@@ -94,6 +95,8 @@ const FranchiseReviewPage = () => {
   const [isPrintOpen, setIsPrintOpen] = useState(false);
   const [isAppFormOpen, setIsAppFormOpen] = useState(false);
   const [isDossierOpen, setIsDossierOpen] = useState(false);
+  const [isPrintableDossierOpen, setIsPrintableDossierOpen] = useState(false);
+  const [franchiseFee, setFranchiseFee] = useState(500);
   const [showViolationConfirmModal, setShowViolationConfirmModal] = useState(false);
 
   // Accordion Toggle States
@@ -181,20 +184,61 @@ const FranchiseReviewPage = () => {
     fetchQueue();
   }, [id, fetchCurrentApp, fetchQueue]);
 
-  // Pre-payment record check (violations, prior franchises, New vs Renewal)
-  const [recordCheck, setRecordCheck] = useState({ loading: true, data: null });
+  // Live municipal franchise fee from /api/v1/settings
   useEffect(() => {
-    if (!id) return;
-    let cancelled = false;
-    setRecordCheck({ loading: true, data: null });
-    fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${id}/record-check`, {
-      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    let active = true;
+    const token = localStorage.getItem('token');
+    fetch(`${import.meta.env.VITE_API_URL}/api/v1/settings`, {
+      headers: token ? { 'Authorization': `Bearer ${token}` } : {}
     })
       .then(res => (res.ok ? res.json() : null))
-      .then(data => { if (!cancelled) setRecordCheck({ loading: false, data }); })
-      .catch(() => { if (!cancelled) setRecordCheck({ loading: false, data: null }); });
-    return () => { cancelled = true; };
-  }, [id]);
+      .then(json => {
+        const fee = json?.data?.franchiseFee ?? json?.franchiseFee;
+        if (active && fee != null && Number.isFinite(Number(fee)) && Number(fee) > 0) {
+          setFranchiseFee(Number(fee));
+        }
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, []);
+
+  // Pre-payment record check (real Violation collection records, sanctions, prior franchises, TODA roster)
+  const [recordCheck, setRecordCheck] = useState({ loading: true, data: null });
+  const [recordCheckError, setRecordCheckError] = useState(null);
+  const recordCheckReqIdRef = useRef(0);
+
+  const fetchRecordCheck = useCallback(async (franchiseId) => {
+    if (!franchiseId) return;
+    const reqId = ++recordCheckReqIdRef.current;
+    setRecordCheck({ loading: true, data: null });
+    setRecordCheckError(null);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${franchiseId}/record-check`, {
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+      });
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        throw new Error(errBody?.message || errBody?.error || `Server responded with HTTP ${res.status}`);
+      }
+      const data = await res.json();
+      if (reqId !== recordCheckReqIdRef.current) return;
+      setRecordCheck({ loading: false, data });
+      if (data?.hasViolations || (data?.totalViolations ?? 0) > 0) {
+        setIsRecordCheckOpen(true);
+      }
+    } catch (err) {
+      if (reqId !== recordCheckReqIdRef.current) return;
+      console.error('Record check fetch failed:', err);
+      setRecordCheck({ loading: false, data: null });
+      setRecordCheckError(err?.message || 'Could not verify sanction history — retry before approving');
+    }
+  }, []);
+
+  useEffect(() => {
+    if (id) {
+      fetchRecordCheck(id);
+    }
+  }, [id, fetchRecordCheck]);
 
   // Concurrency: Socket Review Locking
   useEffect(() => {
@@ -798,6 +842,16 @@ const FranchiseReviewPage = () => {
             </button>
           )}
 
+          {/* Print Official Evaluation Dossier */}
+          <button
+            onClick={() => setIsPrintableDossierOpen(true)}
+            className="px-3 py-1.5 bg-white/10 hover:bg-white/15 text-white rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-colors border border-white/15 cursor-pointer"
+            title="Preview and Print Official Application Evaluation Dossier"
+          >
+            <Printer size={14} className="text-[#D4AF37]" />
+            <span className="hidden lg:inline">Print Dossier</span>
+          </button>
+
           {/* View Summary text button */}
           <button
             onClick={() => setIsDossierOpen(true)}
@@ -829,16 +883,38 @@ const FranchiseReviewPage = () => {
           {currentApp.status === 'Pending' || currentApp.status === 'Pending for Approval' ? (
             <button
               onClick={async () => {
-                const v = recordCheck.data?.violations?.length || 0;
-                if (v > 0) {
+                if (recordCheckError) {
                   const ok = await confirm({
-                    title: 'Confirm Sending with Prior Violations',
-                    description: `${currentApp.fullName} has ${v} revoked franchise${v > 1 ? 's' : ''} on record. Send to the cashier anyway?`,
-                    confirmLabel: 'Send to Cashier',
-                    cancelLabel: 'Cancel',
+                    title: 'Sanction History Unverified',
+                    description: 'Could not verify sanction history due to a connection or server error. Retry the record check before approving, or confirm to send to the cashier anyway.',
+                    confirmLabel: 'Send Anyway',
+                    cancelLabel: 'Go Back & Retry',
                     variant: 'danger'
                   });
                   if (!ok) return;
+                } else {
+                  const rcData = recordCheck.data;
+                  const totalV = rcData?.totalViolations ?? rcData?.violations?.length ?? 0;
+                  const unsettledV = rcData?.unsettledViolations ?? 0;
+                  const revokedV = rcData?.revokedCount ?? 0;
+                  const suspendedV = rcData?.suspendedCount ?? 0;
+                  const warningV = rcData?.warningCount ?? 0;
+                  if (rcData?.hasViolations || totalV > 0) {
+                    const breakdown = [
+                      unsettledV > 0 ? `${unsettledV} unsettled` : null,
+                      revokedV > 0 ? `${revokedV} revocation(s)` : null,
+                      suspendedV > 0 ? `${suspendedV} suspension(s)` : null,
+                      warningV > 0 ? `${warningV} warning(s)` : null
+                    ].filter(Boolean).join(', ');
+                    const ok = await confirm({
+                      title: 'Confirm Sending with Prior Violations',
+                      description: `${currentApp.fullName} has ${totalV} recorded violation/sanction entr${totalV === 1 ? 'y' : 'ies'}${breakdown ? ` (${breakdown})` : ''}. Send to the cashier anyway?`,
+                      confirmLabel: 'Send to Cashier',
+                      cancelLabel: 'Cancel',
+                      variant: 'danger'
+                    });
+                    if (!ok) return;
+                  }
                 }
                 handleUpdateStatus('For Payment', null, true);
               }}
@@ -962,12 +1038,20 @@ const FranchiseReviewPage = () => {
               </div>
             </div>
 
-            {/* 1b. RECORD CHECK — violations & history before cashier */}
+            {/* 1b. RECORD CHECK — real Violation collection & sanction history before cashier */}
             {(() => {
               const rc = recordCheck.data;
-              const hasViolations = Boolean(rc?.hasViolations && rc?.violations?.length > 0);
+              const violationRows = Array.isArray(rc?.violations) ? rc.violations : [];
+              const totalViolations = rc?.totalViolations ?? violationRows.length;
+              const unsettledViolations = rc?.unsettledViolations ?? 0;
+              const revokedCount = rc?.revokedCount ?? 0;
+              const suspendedCount = rc?.suspendedCount ?? 0;
+              const warningCount = rc?.warningCount ?? 0;
+              const hasViolations = Boolean(rc && (rc.hasViolations || totalViolations > 0 || revokedCount > 0 || suspendedCount > 0 || warningCount > 0));
               const nameMatchWarnings = Array.isArray(rc?.nameMatchWarnings) ? rc.nameMatchWarnings : [];
               const hasNameMatchWarnings = nameMatchWarnings.length > 0;
+              const hasCheckError = Boolean(!recordCheck.loading && (recordCheckError || !rc));
+
               return (
                 <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-2.5 space-y-1.5">
                   <div 
@@ -977,9 +1061,18 @@ const FranchiseReviewPage = () => {
                     <div className="flex items-center gap-1.5 min-w-0">
                       <ShieldCheck size={13} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0" />
                       <span className="text-xs font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] truncate">Record Check</span>
-                      {hasViolations ? (
-                        <span className="text-[10px] font-bold text-red-600 dark:text-red-400">
-                          ({rc.violations.length} Revoked)
+                      {recordCheck.loading ? (
+                        <span className="text-[10px] font-medium text-[#6B6761] dark:text-[#A8A29E] inline-flex items-center gap-1">
+                          <Loader2 size={10} className="animate-spin" />
+                          <span>Checking…</span>
+                        </span>
+                      ) : hasCheckError ? (
+                        <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400">
+                          (⚠ Unverified)
+                        </span>
+                      ) : hasViolations ? (
+                        <span className="text-[10px] font-bold text-red-600 dark:text-red-400 font-mono tabular-nums">
+                          ({totalViolations} Violation{totalViolations !== 1 ? 's' : ''}{unsettledViolations > 0 ? ` • ${unsettledViolations} Unsettled` : ''})
                         </span>
                       ) : hasNameMatchWarnings ? (
                         <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400">
@@ -1001,11 +1094,40 @@ const FranchiseReviewPage = () => {
                           {rc.todaStatus === 'verified_member' ? '✓ Roster' : '⚠ Flagged'}
                         </span>
                       )}
-                      <button type="button" className="text-[#6B6761] dark:text-[#A8A29E] p-0.5">
+                      <button type="button" className="text-[#6B6761] dark:text-[#A8A29E] p-0.5" aria-label="Toggle record check details">
                         {isRecordCheckOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
                       </button>
                     </div>
                   </div>
+
+                  {/* Persistent Amber Warning Banner when Record Check API Fails (never disguised as Clean) */}
+                  {hasCheckError && (
+                    <div
+                      role="alert"
+                      className="p-2 rounded-md bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 text-amber-900 dark:text-amber-200 flex items-start justify-between gap-2"
+                    >
+                      <div className="flex items-start gap-1.5 min-w-0">
+                        <AlertTriangle size={13} className="text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+                        <div className="text-[11px] leading-snug min-w-0">
+                          <p className="font-bold">Could not verify sanction history — retry before approving</p>
+                          {recordCheckError && recordCheckError !== 'Could not verify sanction history — retry before approving' && (
+                            <p className="text-[10px] text-amber-800/80 dark:text-amber-300/80 mt-0.5 break-words">{recordCheckError}</p>
+                          )}
+                        </div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          fetchRecordCheck(id);
+                        }}
+                        className="px-2 py-1 rounded-md bg-amber-700 hover:bg-amber-800 text-white text-[10px] font-semibold flex items-center gap-1 shrink-0 cursor-pointer transition-colors"
+                      >
+                        <RefreshCw size={10} />
+                        <span>Retry</span>
+                      </button>
+                    </div>
+                  )}
 
                   {/* Summary row when collapsed */}
                   {!isRecordCheckOpen && rc && rc.todaName && rc.todaName !== 'NON-TODA' && (
@@ -1023,33 +1145,107 @@ const FranchiseReviewPage = () => {
                     <div className="space-y-2 pt-1 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
                       {recordCheck.loading ? (
                         <div className="flex items-center gap-1.5 text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
-                          <Loader2 size={12} className="animate-spin" /> Checking past records…
+                          <Loader2 size={12} className="animate-spin" /> Checking past records &amp; violations…
                         </div>
                       ) : !rc ? (
-                        <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
-                          Past records could not be loaded.
+                        <p className="text-[11px] text-amber-800 dark:text-amber-300 font-medium">
+                          Could not verify sanction history — retry before approving.
                         </p>
                       ) : (
                         <>
+                          {/* Full Sanction Breakdown Metrics */}
+                          <div className="grid grid-cols-5 gap-1 text-center">
+                            <div className={`rounded-md py-1 px-1 border ${totalViolations > 0 ? 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50' : 'bg-[#F6F5F3] dark:bg-[#14110F] border-[#E4E1DC] dark:border-[#2E2A27]'}`}>
+                              <span className={`block text-xs font-bold font-mono tabular-nums ${totalViolations > 0 ? 'text-red-700 dark:text-red-400' : 'text-[#1F1D1B] dark:text-[#EAE7E1]'}`}>{totalViolations}</span>
+                              <span className="block text-[9px] text-[#6B6761] dark:text-[#A8A29E] truncate">Total</span>
+                            </div>
+                            <div className={`rounded-md py-1 px-1 border ${unsettledViolations > 0 ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/50' : 'bg-[#F6F5F3] dark:bg-[#14110F] border-[#E4E1DC] dark:border-[#2E2A27]'}`}>
+                              <span className={`block text-xs font-bold font-mono tabular-nums ${unsettledViolations > 0 ? 'text-amber-700 dark:text-amber-400' : 'text-[#1F1D1B] dark:text-[#EAE7E1]'}`}>{unsettledViolations}</span>
+                              <span className="block text-[9px] text-[#6B6761] dark:text-[#A8A29E] truncate">Unsettled</span>
+                            </div>
+                            <div className={`rounded-md py-1 px-1 border ${revokedCount > 0 ? 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-900/50' : 'bg-[#F6F5F3] dark:bg-[#14110F] border-[#E4E1DC] dark:border-[#2E2A27]'}`}>
+                              <span className={`block text-xs font-bold font-mono tabular-nums ${revokedCount > 0 ? 'text-red-700 dark:text-red-400' : 'text-[#1F1D1B] dark:text-[#EAE7E1]'}`}>{revokedCount}</span>
+                              <span className="block text-[9px] text-[#6B6761] dark:text-[#A8A29E] truncate">Revoked</span>
+                            </div>
+                            <div className={`rounded-md py-1 px-1 border ${suspendedCount > 0 ? 'bg-orange-50 dark:bg-orange-950/30 border-orange-200 dark:border-orange-900/50' : 'bg-[#F6F5F3] dark:bg-[#14110F] border-[#E4E1DC] dark:border-[#2E2A27]'}`}>
+                              <span className={`block text-xs font-bold font-mono tabular-nums ${suspendedCount > 0 ? 'text-orange-700 dark:text-orange-400' : 'text-[#1F1D1B] dark:text-[#EAE7E1]'}`}>{suspendedCount}</span>
+                              <span className="block text-[9px] text-[#6B6761] dark:text-[#A8A29E] truncate">Suspended</span>
+                            </div>
+                            <div className={`rounded-md py-1 px-1 border ${warningCount > 0 ? 'bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-900/50' : 'bg-[#F6F5F3] dark:bg-[#14110F] border-[#E4E1DC] dark:border-[#2E2A27]'}`}>
+                              <span className={`block text-xs font-bold font-mono tabular-nums ${warningCount > 0 ? 'text-amber-700 dark:text-amber-400' : 'text-[#1F1D1B] dark:text-[#EAE7E1]'}`}>{warningCount}</span>
+                              <span className="block text-[9px] text-[#6B6761] dark:text-[#A8A29E] truncate">Warnings</span>
+                            </div>
+                          </div>
+
                           {hasViolations ? (
                             <div className="space-y-1.5">
                               <p className="text-[11px] font-semibold text-red-700 dark:text-red-300 flex items-center gap-1">
-                                <AlertTriangle size={12} />
-                                {rc.violations.length} revoked franchise{rc.violations.length > 1 ? 's' : ''} on record
+                                <AlertTriangle size={12} className="shrink-0" />
+                                <span>
+                                  {totalViolations} sanction/violation record{totalViolations !== 1 ? 's' : ''} found
+                                  {unsettledViolations > 0 ? ` (${unsettledViolations} unsettled)` : ''}
+                                </span>
                               </p>
-                              {rc.violations.slice(0, 3).map(v => (
-                                <div key={v._id} className="text-[11px] bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 rounded-md px-2 py-1.5">
-                                  <div className="flex justify-between gap-2 font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                                    <span className="truncate">{v.plateNo || v.mtopNo || 'Unit'}</span>
-                                    <span className="text-[#6B6761] dark:text-[#A8A29E] font-normal shrink-0">{formatDate(v.updatedAt)}</span>
-                                  </div>
-                                  <p className="text-red-800 dark:text-red-300 leading-snug">{v.cancelReason || 'No reason recorded'}</p>
-                                </div>
-                              ))}
+                              <div className="max-h-56 overflow-y-auto space-y-1.5 pr-0.5">
+                                {violationRows.map((v, vIdx) => {
+                                  const isUnsettled = v.status === 'Active';
+                                  const sanctionLabel = v.sanction?.type || v.sanction?.resultingStatus || (v.source === 'franchise_revocation' ? 'Revocation' : '');
+                                  const fineAmount = Number(v.sanction?.fineAmount || 0);
+                                  return (
+                                    <div key={v._id || vIdx} className="text-[11px] bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-900/50 rounded-md px-2 py-1.5 space-y-1">
+                                      <div className="flex items-start justify-between gap-2">
+                                        <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1] leading-snug">
+                                          {v.violationType || (v.source === 'franchise_revocation' ? 'Revoked Franchise' : 'Recorded Violation')}
+                                        </span>
+                                        <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded uppercase shrink-0 ${
+                                          isUnsettled
+                                            ? 'bg-red-600 text-white'
+                                            : v.status === 'Settled'
+                                            ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800'
+                                            : 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800'
+                                        }`}>
+                                          {isUnsettled ? 'Unsettled' : (v.status || 'Recorded')}
+                                        </span>
+                                      </div>
+                                      <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-[#6B6761] dark:text-[#A8A29E]">
+                                        <span className="font-mono tabular-nums font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                                          {v.plateNo || v.mtopNo || 'Unit'}
+                                        </span>
+                                        {v.offenseNumber ? (
+                                          <span className="px-1 py-0.2 rounded bg-white/80 dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] font-mono tabular-nums">
+                                            Offense #{v.offenseNumber}
+                                          </span>
+                                        ) : null}
+                                        {v.severity && (
+                                          <span className="px-1 py-0.2 rounded bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 font-semibold">
+                                            {v.severity}
+                                          </span>
+                                        )}
+                                        {sanctionLabel && (
+                                          <span className="font-semibold text-red-700 dark:text-red-300">
+                                            &bull; {sanctionLabel}
+                                          </span>
+                                        )}
+                                        {fineAmount > 0 && (
+                                          <span className="font-mono tabular-nums font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                                            &bull; ₱{fineAmount.toLocaleString()}
+                                          </span>
+                                        )}
+                                        <span className="ml-auto shrink-0 font-mono tabular-nums">{formatDate(v.createdAt || v.updatedAt)}</span>
+                                      </div>
+                                      {(v.remarks || v.cancelReason) && (
+                                        <p className="text-[10.5px] text-red-800 dark:text-red-300 leading-snug">
+                                          {v.remarks || v.cancelReason}
+                                        </p>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
                             </div>
                           ) : (
                             <p className="text-[11px] text-emerald-700 dark:text-emerald-400 flex items-center gap-1">
-                              <CheckCircle2 size={12} /> No violations or revocations on record
+                              <CheckCircle2 size={12} /> Verified clear — 0 violations or sanctions on record
                             </p>
                           )}
 
@@ -2512,12 +2708,14 @@ const FranchiseReviewPage = () => {
       <AdminApplicationSummaryModal 
         isOpen={isDossierOpen} 
         onClose={() => setIsDossierOpen(false)} 
-        franchise={currentApp} 
+        franchise={currentApp}
+        franchiseFee={franchiseFee}
         onApprove={() => { 
           setIsDossierOpen(false); 
-          const verifiedViolationCount = recordCheck.data?.violations?.length || 0;
+          const verifiedViolationCount = recordCheck.data?.totalViolations ?? recordCheck.data?.violations?.length ?? 0;
           const nameWarningCount = Array.isArray(recordCheck.data?.nameMatchWarnings) ? recordCheck.data.nameMatchWarnings.length : 0;
-          if (selectedApp?.status === 'Pending' && (verifiedViolationCount > 0 || nameWarningCount > 0)) {
+          const isPendingApp = selectedApp?.status === 'Pending' || selectedApp?.status === 'Pending for Approval';
+          if (isPendingApp && (verifiedViolationCount > 0 || nameWarningCount > 0 || recordCheckError)) {
             setShowViolationConfirmModal(true);
             return;
           }
@@ -2530,12 +2728,47 @@ const FranchiseReviewPage = () => {
         isProcessing={isProcessing} 
       />
 
+      {/* Printable Official Application Evaluation Dossier Modal */}
+      <ApplicationDossierModal
+        isOpen={isPrintableDossierOpen}
+        onClose={() => setIsPrintableDossierOpen(false)}
+        franchise={currentApp}
+        franchiseFee={franchiseFee}
+        onApprove={() => {
+          setIsPrintableDossierOpen(false);
+          const verifiedViolationCount = recordCheck.data?.totalViolations ?? recordCheck.data?.violations?.length ?? 0;
+          const nameWarningCount = Array.isArray(recordCheck.data?.nameMatchWarnings) ? recordCheck.data.nameMatchWarnings.length : 0;
+          const isPendingApp = selectedApp?.status === 'Pending' || selectedApp?.status === 'Pending for Approval';
+          if (isPendingApp && (verifiedViolationCount > 0 || nameWarningCount > 0 || recordCheckError)) {
+            setShowViolationConfirmModal(true);
+            return;
+          }
+          handleUpdateStatus('For Payment', null, true);
+        }}
+        onReject={() => {
+          setIsPrintableDossierOpen(false);
+          setIsRejecting(true);
+        }}
+        isProcessing={isProcessing}
+      />
+
       {showViolationConfirmModal && (() => {
-        const verifiedViolationCount = recordCheck.data?.violations?.length || 0;
-        const nameMatchWarnings = Array.isArray(recordCheck.data?.nameMatchWarnings) ? recordCheck.data.nameMatchWarnings : [];
+        const rcData = recordCheck.data;
+        const verifiedViolationCount = rcData?.totalViolations ?? rcData?.violations?.length ?? 0;
+        const unsettledV = rcData?.unsettledViolations ?? 0;
+        const revokedV = rcData?.revokedCount ?? 0;
+        const suspendedV = rcData?.suspendedCount ?? 0;
+        const warningV = rcData?.warningCount ?? 0;
+        const nameMatchWarnings = Array.isArray(rcData?.nameMatchWarnings) ? rcData.nameMatchWarnings : [];
         const hasVerifiedViolations = verifiedViolationCount > 0;
+        const breakdown = [
+          unsettledV > 0 ? `${unsettledV} unsettled` : null,
+          revokedV > 0 ? `${revokedV} revocation(s)` : null,
+          suspendedV > 0 ? `${suspendedV} suspension(s)` : null,
+          warningV > 0 ? `${warningV} warning(s)` : null
+        ].filter(Boolean).join(', ');
         return (
-          <div className="fixed inset-0 z-[10002] bg-black/60 flex items-center justify-center p-4">
+          <div role="dialog" aria-modal="true" className="fixed inset-0 z-[10002] bg-black/60 flex items-center justify-center p-4">
             <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg max-w-md w-full p-5 shadow-lg space-y-4">
               <div className="flex items-start gap-3">
                 {hasVerifiedViolations ? (
@@ -2545,14 +2778,18 @@ const FranchiseReviewPage = () => {
                 )}
                 <div>
                   <h3 className="text-sm font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
-                    {hasVerifiedViolations
-                      ? 'Prior Violation / Revocation Record Found'
+                    {recordCheckError
+                      ? 'Sanction History Could Not Be Verified'
+                      : hasVerifiedViolations
+                      ? 'Prior Violation / Sanction Record Found'
                       : 'Possible Duplicate Name Match Found'}
                   </h3>
                   <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-1 leading-relaxed">
-                    {hasVerifiedViolations
-                      ? `${currentApp?.fullName} has ${verifiedViolationCount} verified revoked franchise record(s) linked to this account or unit. Send this application to the Municipal Cashier anyway?`
-                      : `No verified violations belong to ${currentApp?.fullName}, but ${nameMatchWarnings.length} revoked record(s) on a different account/unit share a similar name. Verify applicant identity before proceeding to the Municipal Cashier.`}
+                    {recordCheckError
+                      ? `Could not verify sanction history for ${currentApp?.fullName}. Retry the record check before approving, or proceed to the Municipal Cashier only if you have manually verified their standing.`
+                      : hasVerifiedViolations
+                      ? `${currentApp?.fullName} has ${verifiedViolationCount} recorded violation/sanction entr${verifiedViolationCount === 1 ? 'y' : 'ies'}${breakdown ? ` (${breakdown})` : ''} linked to this account or unit. Send this application to the Municipal Cashier anyway?`
+                      : `No verified violations belong to ${currentApp?.fullName}, but ${nameMatchWarnings.length} sanctioned record(s) on a different account/unit share a similar name. Verify applicant identity before proceeding to the Municipal Cashier.`}
                   </p>
                 </div>
               </div>

@@ -272,12 +272,42 @@ exports.verifyTodaRoster = async (req, res) => {
                 message: report.message
             });
         } else {
+            // H3: Public mismatch responses must NEVER expose another registered member's name or official body number
+            const cleanToda = String(todaAssociation).trim();
+            const cleanBody = String(bodyNumber).trim();
+            let safeMessage = report.message;
+
+            if (report.status === 'body_number_taken') {
+                safeMessage = `Ang Body No. "${cleanBody}" ay nakatalaga na sa ibang miyembro sa opisyal na masterlist ng ${cleanToda}.`;
+            } else if (report.status === 'wrong_body_number') {
+                safeMessage = `Hindi tumutugma ang inilagay na pangalan at Body Number sa opisyal na masterlist ng ${cleanToda}. Mangyaring suriin ang inyong Body Number o makipag-ugnayan sa inyong TODA President.`;
+            }
+
+            let safeAdvisory = null;
+            if (report.advisory && typeof report.advisory === 'object') {
+                safeAdvisory = { ...report.advisory };
+                if (report.status === 'body_number_taken') {
+                    safeAdvisory.reason = `Ang Body Number ${cleanBody} ay may umiiral nang lehitimong operator sa ${cleanToda}.`;
+                } else if (report.status === 'wrong_body_number') {
+                    safeAdvisory.reason = `Hindi tumutugma ang inilagay na Body Number (${cleanBody}) sa opisyal na talaan ng ${cleanToda}.`;
+                }
+                if (safeAdvisory.details && typeof safeAdvisory.details === 'object') {
+                    const sanitizedDetails = { ...safeAdvisory.details };
+                    delete sanitizedDetails.registeredTo;
+                    delete sanitizedDetails.officialBodyNumber;
+                    delete sanitizedDetails.matchedMember;
+                    delete sanitizedDetails.conflictMember;
+                    delete sanitizedDetails.ownerName;
+                    safeAdvisory.details = sanitizedDetails;
+                }
+            }
+
             return res.status(403).json({
                 success: false,
                 verified: false,
                 status: report.status,
-                message: report.message,
-                advisory: report.advisory
+                message: safeMessage,
+                advisory: safeAdvisory
             });
         }
     } catch (error) {
@@ -291,38 +321,45 @@ exports.verifyTodaRoster = async (req, res) => {
 };
 
 /**
- * Syncs extracted members from an approved submission into the TodaRoster collection
+ * Syncs extracted members from a submission into the TodaRoster collection using idempotent upserts.
+ * Propagates write errors so callers never mark a submission Approved on partial/failed sync (M9).
  */
-exports.syncApprovedRoster = async (submissionOrId) => {
-    try {
-        const submission = (submissionOrId && typeof submissionOrId === 'object' && submissionOrId.extractedMembers)
-            ? submissionOrId
-            : await TodaSubmission.findById(submissionOrId);
-        if (!submission || submission.status !== 'Approved') return;
+exports.syncSubmissionToRoster = async (submissionOrId, { allowPending = false } = {}) => {
+    const submission = (submissionOrId && typeof submissionOrId === 'object' && submissionOrId.extractedMembers)
+        ? submissionOrId
+        : await TodaSubmission.findById(submissionOrId);
+    if (!submission) return { syncedCount: 0 };
+    if (!allowPending && submission.status !== 'Approved') return { syncedCount: 0 };
 
-        const todaAssociation = (submission.todaAssociation || '').trim();
-        if (!todaAssociation || !Array.isArray(submission.extractedMembers)) return;
+    const todaAssociation = (submission.todaAssociation || '').trim();
+    if (!todaAssociation || !Array.isArray(submission.extractedMembers)) return { syncedCount: 0 };
 
-        for (const m of submission.extractedMembers) {
-            const operatorName = (m.operatorName || m.name || '').trim();
-            const bodyNumber = (m.bodyNumber || m.unitNo || '').trim().toUpperCase();
+    let syncedCount = 0;
+    for (const m of submission.extractedMembers) {
+        const operatorName = (m.operatorName || m.name || '').trim();
+        const bodyNumber = (m.bodyNumber || m.unitNo || '').trim().toUpperCase();
 
-            if (operatorName && bodyNumber) {
-                await TodaRoster.findOneAndUpdate(
-                    { todaAssociation, bodyNumber },
-                    {
+        if (operatorName && bodyNumber) {
+            await TodaRoster.findOneAndUpdate(
+                { todaAssociation, bodyNumber },
+                {
+                    $set: {
                         todaAssociation,
                         operatorName,
                         bodyNumber,
                         plateNo: m.plateNo || '',
                         status: 'Active',
                         submissionRef: submission._id
-                    },
-                    { upsert: true, new: true }
-                );
-            }
+                    }
+                },
+                { upsert: true, returnDocument: 'after', runValidators: true }
+            );
+            syncedCount += 1;
         }
-    } catch (err) {
-        console.error('Error syncing approved roster:', err);
     }
+
+    return { syncedCount };
 };
+
+// Backward-compatible alias
+exports.syncApprovedRoster = exports.syncSubmissionToRoster;

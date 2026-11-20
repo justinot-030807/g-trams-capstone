@@ -160,7 +160,9 @@ async function validateOperatorAgainstRoster({ fullName, todaAssociation, bodyNu
             bodyNumber: rm.bodyNumber,
             plateNo: rm.plateNo || '',
             source: 'roster',
-            rosterId: rm._id
+            rosterId: rm._id,
+            registeredUser: rm.registeredUser || null,
+            claimedBy: rm.claimedBy || null
         });
     }
 
@@ -217,19 +219,20 @@ async function validateOperatorAgainstRoster({ fullName, todaAssociation, bodyNu
             matchedMember: exactMatch.operatorName,
             matchedBodyNumber: exactMatch.bodyNumber,
             plateNo: exactMatch.plateNo,
+            rosterId: exactMatch.rosterId || null,
+            registeredUser: exactMatch.registeredUser || null,
+            claimedBy: exactMatch.claimedBy || null,
             message: `Napatunayan: Si "${exactMatch.operatorName}" ay opisyal na nakatala sa ${cleanToda} bilang may-ari ng Body No. ${exactMatch.bodyNumber}.`,
             advisory: null
         };
     }
 
-    // Scenario 2: Name found, but Body Number doesn't match
+    // Scenario 2: Name found, but Body Number doesn't match (never disclose official member details or assigned number)
     if (nameMatchWithOtherBodyNo) {
         return {
             isValid: false,
             status: 'wrong_body_number',
-            matchedMember: nameMatchWithOtherBodyNo.operatorName,
-            expectedBodyNumber: nameMatchWithOtherBodyNo.bodyNumber,
-            message: `Ang inyong pangalan ay nakatala sa ${cleanToda}, ngunit ang nakatalagang Body Number sa opisyal na masterlist ay "${nameMatchWithOtherBodyNo.bodyNumber}" (inilagay: "${cleanBodyNo}").`,
+            message: `Hindi tumutugma ang inilagay na Body Number ("${cleanBodyNo}") sa opisyal na masterlist ng ${cleanToda}. Pakiwasto ang inyong Body Number o makipag-ugnayan sa inyong TODA President.`,
             advisory: {
                 title: 'OPISYAL NA ADVISORY NG PAMAHALAANG BAYAN NG GASAN',
                 department: 'Business Permits and Licensing Office (BPLO) / Tricycle Franchising Division',
@@ -238,21 +241,19 @@ async function validateOperatorAgainstRoster({ fullName, todaAssociation, bodyNu
                 details: {
                     fullName: cleanName,
                     todaAssociation: cleanToda,
-                    enteredBodyNumber: cleanBodyNo,
-                    officialBodyNumber: nameMatchWithOtherBodyNo.bodyNumber || 'Hindi Naitakda'
+                    enteredBodyNumber: cleanBodyNo
                 },
                 action: `Pakiwasto ang inyong inilagay na Body Number ayon sa inyong opisyal na prangkisa/endorsement, o makipag-ugnayan sa inyong TODA President kung may pagbabago sa unit.`
             }
         };
     }
 
-    // Scenario 3: Body Number is registered to a different operator
+    // Scenario 3: Body Number is registered to a different operator (never disclose the other operator's name)
     if (bodyNoMatchWithOtherName) {
         return {
             isValid: false,
             status: 'body_number_taken',
-            conflictMember: bodyNoMatchWithOtherName.operatorName,
-            message: `Ang Body No. "${cleanBodyNo}" ay nakatalaga na sa ibang operator ("${bodyNoMatchWithOtherName.operatorName}") sa opisyal na masterlist ng ${cleanToda}.`,
+            message: `Ang Body No. "${cleanBodyNo}" ay nakatalaga na sa ibang rehistradong operator sa opisyal na masterlist ng ${cleanToda}.`,
             advisory: {
                 title: 'OPISYAL NA ADVISORY NG PAMAHALAANG BAYAN NG GASAN',
                 department: 'Business Permits and Licensing Office (BPLO) / Office of the Municipal Mayor',
@@ -261,8 +262,7 @@ async function validateOperatorAgainstRoster({ fullName, todaAssociation, bodyNu
                 details: {
                     fullName: cleanName,
                     todaAssociation: cleanToda,
-                    enteredBodyNumber: cleanBodyNo,
-                    registeredTo: bodyNoMatchWithOtherName.operatorName
+                    enteredBodyNumber: cleanBodyNo
                 },
                 action: 'Ipinagbabawal ang duplicate registration ng iisang Body Number. Kung may transaksyon ng bentahan o transfer of unit, mangyaring dalhin ang opisyal na Deed of Sale at TODA Board Resolution sa BPLO.'
             }
@@ -310,9 +310,8 @@ async function isBodyNumberTaken(candidateNo, todaAssociation) {
             return {
                 isTaken: true,
                 matchedBodyNumber: r.bodyNumber,
-                ownerName: r.operatorName,
                 source: 'TodaRoster',
-                reason: `Ang Body Number "${candidateNo}" ay nakatala na kay "${r.operatorName}" sa ${todaAssociation}.`
+                reason: `Ang Body Number "${candidateNo}" ay nakatala na sa opisyal na masterlist ng ${todaAssociation}.`
             };
         }
     }
@@ -329,7 +328,6 @@ async function isBodyNumberTaken(candidateNo, todaAssociation) {
                 return {
                     isTaken: true,
                     matchedBodyNumber: bNo,
-                    ownerName: m.operatorName || m.name,
                     source: 'TodaSubmission',
                     reason: `Ang Body Number "${candidateNo}" ay nakalaan na sa sertipikadong masterlist ng ${todaAssociation}.`
                 };
@@ -348,9 +346,8 @@ async function isBodyNumberTaken(candidateNo, todaAssociation) {
             return {
                 isTaken: true,
                 matchedBodyNumber: u.bodyNumber,
-                ownerName: u.name,
                 source: 'User',
-                reason: `Ang Body Number "${candidateNo}" ay aktibong ginagamit na ni "${u.name}".`
+                reason: `Ang Body Number "${candidateNo}" ay aktibong ginagamit na ng ibang operator sa ${todaAssociation}.`
             };
         }
     }

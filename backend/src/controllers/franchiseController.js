@@ -2,7 +2,9 @@ const mongoose = require('mongoose');
 const Franchise = require('../models/franchiseModel');
 const User = require('../models/userModel');
 const TodaSubmission = require('../models/todaSubmission');
-const { computeManilaExpiryDate } = require('../utils/phTime');
+const Violation = require('../models/violationModel');
+const PaymentLedger = require('../models/paymentLedgerModel');
+const { computeManilaExpiryDate, getManilaNow, getManilaDateString, isExpired } = require('../utils/phTime');
 const { logAudit } = require('../utils/auditLogger');
 const Notification = require('../models/notificationModel');
 const { emitToUser } = require('../config/socket');
@@ -12,6 +14,81 @@ const { isNameMatch } = require('../utils/nameMatcher');
 const { validateTodaJurisdiction, TODA_DIRECTORY } = require('../utils/todaDirectory');
 
 const escapeRegex = (s) => String(s || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+function collectExistingDocumentUrls(franchise) {
+    const allowed = new Set();
+    if (!franchise) return allowed;
+    for (const field of FranchiseService.DOCUMENT_URL_FIELDS) {
+        const val = franchise[field];
+        if (val && typeof val === 'string' && val.trim()) {
+            allowed.add(val.trim());
+        }
+    }
+    if (franchise.evidenceUrl && typeof franchise.evidenceUrl === 'string' && franchise.evidenceUrl.trim()) {
+        allowed.add(franchise.evidenceUrl.trim());
+    }
+    if (franchise.cancellationDetails?.letterUrl && typeof franchise.cancellationDetails.letterUrl === 'string' && franchise.cancellationDetails.letterUrl.trim()) {
+        allowed.add(franchise.cancellationDetails.letterUrl.trim());
+    }
+    return allowed;
+}
+
+function validateDocumentExpiryDate(rawVal, now = getManilaNow()) {
+    const str = String(rawVal || '').trim();
+    const parsed = new Date(str);
+    if (Number.isNaN(parsed.getTime())) {
+        return { invalid: true, expired: false, date: null };
+    }
+    // For date-only YYYY-MM-DD strings, treat validity through 23:59:59.999 Asia/Manila
+    const effectiveDate = /^\d{4}-\d{2}-\d{2}$/.test(str)
+        ? new Date(`${str}T23:59:59.999+08:00`)
+        : parsed;
+    return { invalid: false, expired: isExpired(effectiveDate, now), date: parsed };
+}
+
+/**
+ * M10: Canonical sequential MTOP number generator with atomic conditional update & duplicate retry.
+ * Only retries on mtopNo unique index collisions (never masks officialReceiptNo duplicates).
+ */
+async function executeAtomicUpdateWithMtop(filter, baseSetFields, { populateOperator = 'name address contact', maxRetries = 50 } = {}) {
+    const manilaDateStr = getManilaDateString(getManilaNow());
+    const currentYear = manilaDateStr ? manilaDateStr.slice(0, 4) : String(new Date().getFullYear());
+    const yearPrefix = `${currentYear}-`;
+    let lastErr = null;
+
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+        try {
+            const existingMtops = await Franchise.find({ mtopNo: { $regex: `^${yearPrefix}\\d+$` } })
+                .select('mtopNo')
+                .lean();
+            const seqNumbers = (Array.isArray(existingMtops) ? existingMtops : [])
+                .map(doc => parseInt(String(doc.mtopNo || '').replace(yearPrefix, ''), 10))
+                .filter(num => Number.isFinite(num) && num > 0);
+            const maxSeq = seqNumbers.length > 0 ? Math.max(...seqNumbers) : 0;
+            const nextSeq = maxSeq + 1;
+            const candidateMtopNo = `${yearPrefix}${String(nextSeq).padStart(3, '0')}`;
+
+            const query = Franchise.findOneAndUpdate(
+                filter,
+                { $set: { ...baseSetFields, mtopNo: candidateMtopNo } },
+                { returnDocument: 'after' }
+            );
+            return populateOperator ? await query.populate('operator', populateOperator) : await query;
+        } catch (err) {
+            lastErr = err;
+            const isMtopDuplicate = err && err.code === 11000 && (
+                (err.keyPattern && err.keyPattern.mtopNo) ||
+                String(err.message || '').includes('mtopNo')
+            );
+            if (isMtopDuplicate && attempt < maxRetries - 1) {
+                continue;
+            }
+            throw err;
+        }
+    }
+
+    throw lastErr;
+}
 
 const PAYABLE_PREDICATE = {
     status: 'For Payment',
@@ -127,18 +204,40 @@ const createFranchise = async (req, res) => {
             return '';
         };
 
+        const uploadedFields = new Set();
+        const resolveDocUrl = (fieldName, fileKeys) => {
+            const uploadedPath = findFilePath(fileKeys);
+            if (uploadedPath) {
+                uploadedFields.add(fieldName);
+                return uploadedPath;
+            }
+            return req.body[fieldName] || '';
+        };
+
         const data = {
             ...req.body,
-            orCrUrl: findFilePath(['orCrDocument', 'orCrUrl', 'orcr', 'doc_0']) || req.body.orCrUrl || '',
-            crUrl: findFilePath(['crDocument', 'crFile', 'crUrl']) || req.body.crUrl || '',
-            orUrl: findFilePath(['orDocument', 'orFile', 'orUrl']) || req.body.orUrl || '',
-            licenseUrl: findFilePath(['license', 'licenseUrl', 'doc_1']) || req.body.licenseUrl || '',
-            licenseBackUrl: findFilePath(['licenseBack', 'licenseBackUrl', 'doc_license_back']) || req.body.licenseBackUrl || '',
-            todaEndorsementUrl: findFilePath(['todaEndorsement', 'todaEndorsementUrl', 'toda', 'doc_2']) || req.body.todaEndorsementUrl || '',
-            brgyClearanceUrl: findFilePath(['brgyClearance', 'brgyClearanceUrl', 'brgy', 'doc_3']) || req.body.brgyClearanceUrl || '',
-            cedulaUrl: findFilePath(['cedulaDoc', 'cedulaUrl', 'cedula', 'doc_cedula', 'ctc']) || req.body.cedulaUrl || ''
+            orCrUrl: resolveDocUrl('orCrUrl', ['orCrDocument', 'orCrUrl', 'orcr', 'doc_0']),
+            crUrl: resolveDocUrl('crUrl', ['crDocument', 'crFile', 'crUrl']),
+            orUrl: resolveDocUrl('orUrl', ['orDocument', 'orFile', 'orUrl']),
+            licenseUrl: resolveDocUrl('licenseUrl', ['license', 'licenseUrl', 'doc_1']),
+            licenseBackUrl: resolveDocUrl('licenseBackUrl', ['licenseBack', 'licenseBackUrl', 'doc_license_back']),
+            todaEndorsementUrl: resolveDocUrl('todaEndorsementUrl', ['todaEndorsement', 'todaEndorsementUrl', 'toda', 'doc_2']),
+            brgyClearanceUrl: resolveDocUrl('brgyClearanceUrl', ['brgyClearance', 'brgyClearanceUrl', 'brgy', 'doc_3']),
+            cedulaUrl: resolveDocUrl('cedulaUrl', ['cedulaDoc', 'cedulaUrl', 'cedula', 'doc_cedula', 'ctc']),
+            unitPhotoUrl: resolveDocUrl('unitPhotoUrl', ['unitPhoto', 'unitPhotoUrl'])
         };
-        data.orCrUrl = data.orCrUrl || data.crUrl || data.orUrl || '';
+        if (!data.orCrUrl) {
+            if (data.crUrl) {
+                data.orCrUrl = data.crUrl;
+                if (uploadedFields.has('crUrl')) uploadedFields.add('orCrUrl');
+            } else if (data.orUrl) {
+                data.orCrUrl = data.orUrl;
+                if (uploadedFields.has('orUrl')) uploadedFields.add('orCrUrl');
+            }
+        }
+
+        // M6: Reject arbitrary external URLs passed in req.body for document fields
+        FranchiseService.validateDocumentUrls(data, new Set(), uploadedFields);
         
         if (typeof data.aiScannedData === 'string') {
             try { data.aiScannedData = JSON.parse(data.aiScannedData); } catch {}
@@ -156,7 +255,7 @@ const createFranchise = async (req, res) => {
         delete data.approvalDate;
         delete data.expiryDate;
 
-        const franchise = await FranchiseService.createFranchise(data, franchiseOwner);
+        const franchise = await FranchiseService.createFranchise(data, franchiseOwner, { uploadedFields });
 
         // Notify admins of new franchise submission
         if (!isAdmin) {
@@ -387,15 +486,29 @@ const updateFranchise = async (req, res) => {
         const toda = findFilePath(['todaEndorsement', 'todaEndorsementUrl', 'toda', 'doc_2']);
         const brgy = findFilePath(['brgyClearance', 'brgyClearanceUrl', 'brgy', 'doc_3']);
         const cedula = findFilePath(['cedulaDoc', 'cedulaUrl', 'cedula', 'doc_cedula', 'ctc']);
+        const unitPhoto = findFilePath(['unitPhoto', 'unitPhotoUrl']);
 
-        if (orCr) updateData.orCrUrl = orCr;
-        if (cr) { updateData.crUrl = cr; if (!updateData.orCrUrl) updateData.orCrUrl = cr; }
-        if (or) { updateData.orUrl = or; if (!updateData.orCrUrl && !updateData.crUrl) updateData.orCrUrl = or; }
-        if (lic) updateData.licenseUrl = lic;
-        if (licBack) updateData.licenseBackUrl = licBack;
-        if (toda) updateData.todaEndorsementUrl = toda;
-        if (brgy) updateData.brgyClearanceUrl = brgy;
-        if (cedula) updateData.cedulaUrl = cedula;
+        const uploadedFields = new Set();
+        if (orCr) { updateData.orCrUrl = orCr; uploadedFields.add('orCrUrl'); }
+        if (cr) { updateData.crUrl = cr; uploadedFields.add('crUrl'); if (!orCr) { updateData.orCrUrl = cr; uploadedFields.add('orCrUrl'); } }
+        if (or) { updateData.orUrl = or; uploadedFields.add('orUrl'); if (!orCr && !cr) { updateData.orCrUrl = or; uploadedFields.add('orCrUrl'); } }
+        if (lic) { updateData.licenseUrl = lic; uploadedFields.add('licenseUrl'); }
+        if (licBack) { updateData.licenseBackUrl = licBack; uploadedFields.add('licenseBackUrl'); }
+        if (toda) { updateData.todaEndorsementUrl = toda; uploadedFields.add('todaEndorsementUrl'); }
+        if (brgy) { updateData.brgyClearanceUrl = brgy; uploadedFields.add('brgyClearanceUrl'); }
+        if (cedula) { updateData.cedulaUrl = cedula; uploadedFields.add('cedulaUrl'); }
+        if (unitPhoto) { updateData.unitPhotoUrl = unitPhoto; uploadedFields.add('unitPhotoUrl'); }
+
+        // M6: Reject arbitrary external URLs passed in req.body (only fresh uploads, existing franchise URLs, or server-issued assets allowed)
+        const existingAllowedUrls = collectExistingDocumentUrls(existingFranchise);
+        try {
+            FranchiseService.validateDocumentUrls(updateData, existingAllowedUrls, uploadedFields);
+            if (req.body && req.body.unitPhotoUrl !== undefined && !uploadedFields.has('unitPhotoUrl')) {
+                FranchiseService.validateDocumentUrls({ unitPhotoUrl: req.body.unitPhotoUrl }, existingAllowedUrls, uploadedFields);
+            }
+        } catch (urlErr) {
+            return res.status(400).json({ message: urlErr.message });
+        }
 
         const updatedFranchise = await Franchise.findOneAndUpdate(
             { _id: req.params.id, status: existingFranchise.status },
@@ -506,10 +619,66 @@ const renewFranchise = async (req, res) => {
 
         const { 
             cedulaDate, cedulaAddress, cedulaSerialNo, cedulaAmount, ctcNo, 
-            dateIssued, placeIssued, orCrNo, orCrExpiryDate, crNo, orNo,
-            driverLicenseNo, driverLicenseSerialNo, driverLicenseExpiryDate,
+            dateIssued, placeIssued, orCrNo, orCrExpiryDate, orCrExpiry, crNo, orNo,
+            driverLicenseNo, driverLicenseSerialNo, driverLicenseExpiryDate, licenseExpiry,
             brgyClearanceNo, brgyClearanceDate, brgyIssuer
         } = req.body;
+
+        const now = getManilaNow();
+
+        // M7: Reject invalid or already-expired document expiry dates (in Asia/Manila time)
+        const rawOrCrExpiry = orCrExpiryDate !== undefined ? orCrExpiryDate : orCrExpiry;
+        let parsedOrCrExpiry = null;
+        if (rawOrCrExpiry !== undefined && rawOrCrExpiry !== null && String(rawOrCrExpiry).trim() !== '') {
+            const check = validateDocumentExpiryDate(rawOrCrExpiry, now);
+            if (check.invalid) {
+                return res.status(400).json({ message: 'Invalid OR/CR expiry date format.' });
+            }
+            if (check.expired) {
+                return res.status(400).json({ message: 'OR/CR document expiry date is already expired. Please submit a valid, unexpired OR/CR.' });
+            }
+            parsedOrCrExpiry = check.date;
+        }
+
+        const rawLicenseExpiry = driverLicenseExpiryDate !== undefined ? driverLicenseExpiryDate : licenseExpiry;
+        let parsedLicenseExpiry = null;
+        if (rawLicenseExpiry !== undefined && rawLicenseExpiry !== null && String(rawLicenseExpiry).trim() !== '') {
+            const check = validateDocumentExpiryDate(rawLicenseExpiry, now);
+            if (check.invalid) {
+                return res.status(400).json({ message: "Invalid driver's license expiry date format." });
+            }
+            if (check.expired) {
+                return res.status(400).json({ message: "Driver's license expiry date is already expired. Please submit a valid, unexpired license." });
+            }
+            parsedLicenseExpiry = check.date;
+        }
+
+        // M6: Validate uploaded files & reject arbitrary external document URLs in req.body
+        const uploadedFields = new Set();
+        const uploadedDocUpdates = {};
+        if (req.files) {
+            if (req.files['orcrFile'] && req.files['orcrFile'][0]) { uploadedDocUpdates.orCrUrl = req.files['orcrFile'][0].path; uploadedFields.add('orCrUrl'); }
+            if (req.files['orCrDocument'] && req.files['orCrDocument'][0]) { uploadedDocUpdates.orCrUrl = req.files['orCrDocument'][0].path; uploadedFields.add('orCrUrl'); }
+            if (req.files['crDocument'] && req.files['crDocument'][0]) { uploadedDocUpdates.crUrl = req.files['crDocument'][0].path; uploadedFields.add('crUrl'); }
+            if (req.files['orDocument'] && req.files['orDocument'][0]) { uploadedDocUpdates.orUrl = req.files['orDocument'][0].path; uploadedFields.add('orUrl'); }
+            if (req.files['cedulaDoc'] && req.files['cedulaDoc'][0]) { uploadedDocUpdates.cedulaUrl = req.files['cedulaDoc'][0].path; uploadedFields.add('cedulaUrl'); }
+            if (req.files['cedula'] && req.files['cedula'][0]) { uploadedDocUpdates.cedulaUrl = req.files['cedula'][0].path; uploadedFields.add('cedulaUrl'); }
+            if (req.files['license'] && req.files['license'][0]) { uploadedDocUpdates.licenseUrl = req.files['license'][0].path; uploadedFields.add('licenseUrl'); }
+            if (req.files['licenseBack'] && req.files['licenseBack'][0]) { uploadedDocUpdates.licenseBackUrl = req.files['licenseBack'][0].path; uploadedFields.add('licenseBackUrl'); }
+            if (req.files['brgyClearance'] && req.files['brgyClearance'][0]) { uploadedDocUpdates.brgyClearanceUrl = req.files['brgyClearance'][0].path; uploadedFields.add('brgyClearanceUrl'); }
+        }
+        const existingAllowedUrls = collectExistingDocumentUrls(existingFranchise);
+        try {
+            FranchiseService.validateDocumentUrls(req.body || {}, existingAllowedUrls, uploadedFields);
+        } catch (urlErr) {
+            return res.status(400).json({ message: urlErr.message });
+        }
+
+        // M7: Preserve live permit validity metadata & unexpired expiryDate during early renewal
+        const isUnexpiredLivePermit =
+            ['Active', 'Active - Under Warning'].includes(existingFranchise.status) &&
+            Boolean(existingFranchise.expiryDate) &&
+            !isExpired(existingFranchise.expiryDate, now);
 
         const setFields = {
             dateApplied: new Date(),
@@ -518,8 +687,11 @@ const renewFranchise = async (req, res) => {
             cedulaSerialNo: cedulaSerialNo || ctcNo || existingFranchise.cedulaSerialNo,
             cedulaAmount: cedulaAmount !== undefined ? Number(cedulaAmount) : (existingFranchise.cedulaAmount || 0),
             status: 'Pending',
+            previousStatus: existingFranchise.status,
+            previousExpiryDate: existingFranchise.expiryDate || null,
+            isRenewalPending: true,
             approvalDate: null,
-            expiryDate: null,
+            expiryDate: isUnexpiredLivePermit ? existingFranchise.expiryDate : null,
             cancelReason: '',
             rejectedField: '',
             isArchived: false,
@@ -533,31 +705,20 @@ const renewFranchise = async (req, res) => {
             paymentDate: null,
             paidByCashier: null,
             cashierName: '',
-            paymentRemarks: ''
+            paymentRemarks: '',
+            ...uploadedDocUpdates
         };
 
         if (orCrNo) setFields.orCrNo = orCrNo;
         if (crNo) setFields.crNo = crNo;
         if (orNo) setFields.orNo = orNo;
-        if (orCrExpiryDate && !isNaN(new Date(orCrExpiryDate).getTime())) setFields.orCrExpiryDate = new Date(orCrExpiryDate);
+        if (parsedOrCrExpiry) setFields.orCrExpiryDate = parsedOrCrExpiry;
         if (driverLicenseNo) setFields.driverLicenseNo = driverLicenseNo;
         if (driverLicenseSerialNo) setFields.driverLicenseSerialNo = driverLicenseSerialNo;
-        if (driverLicenseExpiryDate && !isNaN(new Date(driverLicenseExpiryDate).getTime())) setFields.driverLicenseExpiryDate = new Date(driverLicenseExpiryDate);
+        if (parsedLicenseExpiry) setFields.driverLicenseExpiryDate = parsedLicenseExpiry;
         if (brgyClearanceNo) setFields.brgyClearanceNo = brgyClearanceNo;
         if (brgyClearanceDate && !isNaN(new Date(brgyClearanceDate).getTime())) setFields.brgyClearanceDate = new Date(brgyClearanceDate);
         if (brgyIssuer) setFields.brgyIssuer = brgyIssuer;
-
-        if (req.files) {
-            if (req.files['orcrFile'] && req.files['orcrFile'][0]) setFields.orCrUrl = req.files['orcrFile'][0].path;
-            if (req.files['orCrDocument'] && req.files['orCrDocument'][0]) setFields.orCrUrl = req.files['orCrDocument'][0].path;
-            if (req.files['crDocument'] && req.files['crDocument'][0]) setFields.crUrl = req.files['crDocument'][0].path;
-            if (req.files['orDocument'] && req.files['orDocument'][0]) setFields.orUrl = req.files['orDocument'][0].path;
-            if (req.files['cedulaDoc'] && req.files['cedulaDoc'][0]) setFields.cedulaUrl = req.files['cedulaDoc'][0].path;
-            if (req.files['cedula'] && req.files['cedula'][0]) setFields.cedulaUrl = req.files['cedula'][0].path;
-            if (req.files['license'] && req.files['license'][0]) setFields.licenseUrl = req.files['license'][0].path;
-            if (req.files['licenseBack'] && req.files['licenseBack'][0]) setFields.licenseBackUrl = req.files['licenseBack'][0].path;
-            if (req.files['brgyClearance'] && req.files['brgyClearance'][0]) setFields.brgyClearanceUrl = req.files['brgyClearance'][0].path;
-        }
 
         const updateOps = { $set: setFields };
         if (existingFranchise.paymentStatus === 'Paid' || existingFranchise.officialReceiptNo) {
@@ -748,8 +909,14 @@ const updateFranchiseStatus = async (req, res) => {
             const validityYears = existingFranchise.applicationType === 'Renewal'
                 ? (sysSettings?.validityRenew || 1)
                 : (sysSettings?.validityNew || 3);
+            if (existingFranchise.isRenewalPending) {
+                updateData.approvalDate = new Date();
+            }
             const baseApproval = updateData.approvalDate || existingFranchise.approvalDate || new Date();
             updateData.expiryDate = computeManilaExpiryDate(baseApproval, validityYears);
+            updateData.isRenewalPending = false;
+            updateData.previousStatus = '';
+            updateData.previousExpiryDate = null;
         }
 
         const needsMtop = ['For Signing', 'Ready for Pickup', 'Active'].includes(status) && !existingFranchise.mtopNo;
@@ -761,38 +928,11 @@ const updateFranchiseStatus = async (req, res) => {
         let updatedFranchise = null;
 
         if (needsMtop) {
-            const currentYear = new Date().getFullYear();
-            const yearPrefix = `${currentYear}-`;
-            const MAX_MTOP_RETRIES = 50;
-            let lastErr = null;
-            for (let attempt = 0; attempt < MAX_MTOP_RETRIES; attempt++) {
-                try {
-                    const existingMtops = await Franchise.find({ mtopNo: { $regex: `^${yearPrefix}\\d+$` } })
-                        .select('mtopNo')
-                        .lean();
-                    const seqNumbers = (Array.isArray(existingMtops) ? existingMtops : [])
-                        .map(doc => parseInt(String(doc.mtopNo || '').replace(yearPrefix, ''), 10))
-                        .filter(num => Number.isFinite(num) && num > 0);
-                    const maxSeq = seqNumbers.length > 0 ? Math.max(...seqNumbers) : 0;
-                    const nextSeq = maxSeq + 1;
-                    updateData.mtopNo = `${yearPrefix}${String(nextSeq).padStart(3, '0')}`;
-
-                    updatedFranchise = await Franchise.findOneAndUpdate(
-                        atomicStatusFilter,
-                        { $set: updateData },
-                        { returnDocument: 'after' }
-                    ).populate('operator', 'name address contact');
-                    lastErr = null;
-                    break;
-                } catch (err) {
-                    lastErr = err;
-                    if (err && err.code === 11000 && attempt < MAX_MTOP_RETRIES - 1) {
-                        continue;
-                    }
-                    throw err;
-                }
-            }
-            if (lastErr) throw lastErr;
+            updatedFranchise = await executeAtomicUpdateWithMtop(
+                atomicStatusFilter,
+                updateData,
+                { populateOperator: 'name address contact' }
+            );
         } else {
             updatedFranchise = await Franchise.findOneAndUpdate(
                 atomicStatusFilter,
@@ -943,6 +1083,10 @@ const requestFranchiseCancellation = async (req, res) => {
         } else if (files.letter && files.letter[0]) {
             letterUrl = files.letter[0].path || files.letter[0].secure_url || '';
         } else if (req.body.letterUrl) {
+            const existingAllowedUrls = collectExistingDocumentUrls(franchise);
+            if (!FranchiseService.isTrustedDocumentUrl(req.body.letterUrl, existingAllowedUrls)) {
+                return res.status(400).json({ message: 'Invalid cancellation letter URL. Only uploaded files or trusted server asset URLs are allowed.' });
+            }
             letterUrl = req.body.letterUrl;
         }
 
@@ -1318,7 +1462,7 @@ const getFranchiseRecordCheck = async (req, res) => {
             return res.status(400).json({ message: 'Invalid franchise ID format.' });
         }
         const franchise = await Franchise.findById(req.params.id)
-            .select('operator fullName plateNo chassisNo motorNo applicationType todaName barangay address registeredOwner isOperatorDriver driverName cedulaFullName aiScannedData aiVerification');
+            .select('operator fullName plateNo chassisNo motorNo mtopNo status cancelReason updatedAt applicationType todaName barangay address registeredOwner isOperatorDriver driverName cedulaFullName aiScannedData aiVerification');
         if (!franchise) return res.status(404).json({ message: 'Franchise not found' });
 
         const escapeRegex = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -1339,11 +1483,11 @@ const getFranchiseRecordCheck = async (req, res) => {
         if (isValidIdentifier(franchise.chassisNo)) matchers.push({ chassisNo: exact(franchise.chassisNo) });
         if (isValidIdentifier(franchise.motorNo)) matchers.push({ motorNo: exact(franchise.motorNo) });
 
+        // M8: Remove arbitrary 50-record cap so no prior violations or franchises are silently missed
         const related = matchers.length
             ? await Franchise.find({ _id: { $ne: franchise._id }, $or: matchers })
                 .select('operator fullName plateNo chassisNo motorNo mtopNo status cancelReason applicationType dateApplied approvalDate updatedAt evidenceUrl')
                 .sort({ updatedAt: -1 })
-                .limit(50)
                 .lean()
             : [];
 
@@ -1360,11 +1504,102 @@ const getFranchiseRecordCheck = async (req, res) => {
         const verifiedRelated = related.filter(f => isOwnerMatched(f) || isUnitMatched(f));
         const nameOnlyRelated = related.filter(f => !isOwnerMatched(f) && !isUnitMatched(f));
 
-        const violations = verifiedRelated.filter(f => f.status === 'Revoked');
-        const nameMatchWarnings = nameOnlyRelated.filter(f => f.status === 'Revoked');
+        // M8: Query actual Violation collection directly (matching operator, franchiseId, or plateNo) without a 50-record cap
+        const allVerifiedFranchiseIds = [franchise._id, ...verifiedRelated.map(f => f._id)];
+        const violationMatchers = [
+            { franchise: { $in: allVerifiedFranchiseIds } }
+        ];
+        if (franchise.operator) {
+            violationMatchers.push({ operator: franchise.operator });
+        }
+        if (isValidIdentifier(franchise.plateNo)) {
+            violationMatchers.push({ plateNo: exact(franchise.plateNo) });
+        }
+
+        const violationDocs = await Violation.find({ $or: violationMatchers })
+            .sort({ createdAt: -1 })
+            .lean();
+
+        const normalizedViolationRecords = violationDocs.map((v) => ({
+            _id: v._id,
+            franchise: v.franchise,
+            operator: v.operator,
+            plateNo: v.plateNo,
+            bodyNumber: v.bodyNumber || '',
+            driverName: v.driverName || '',
+            violationType: v.violationType,
+            violationCode: v.violationCode || 'OTHER',
+            severity: v.severity || 'Medium',
+            isGrave: Boolean(v.isGrave),
+            offenseNumber: v.offenseNumber || 1,
+            sanction: v.sanction || null,
+            status: v.status || 'Active',
+            remarks: v.remarks || '',
+            evidenceUrl: v.evidenceUrl || '',
+            recordedByName: v.recordedByName || 'BPLO Staff',
+            settledAt: v.settledAt || null,
+            settledNotes: v.settledNotes || '',
+            createdAt: v.createdAt,
+            updatedAt: v.updatedAt || v.createdAt,
+            source: 'violation',
+            // Backward-compatible display text for legacy UI components
+            cancelReason: v.remarks
+                ? `${v.violationType}: ${v.remarks}`
+                : `${v.violationType}${v.sanction?.type ? ` (${v.sanction.type})` : ''}`
+        }));
+
+        const allVerifiedFranchisesForStanding = [
+            ...verifiedRelated,
+            ...(['Revoked', 'Suspended', 'Active - Under Warning'].includes(franchise.status) ? [franchise] : [])
+        ];
+
+        const revokedFranchises = allVerifiedFranchisesForStanding.filter(f => f.status === 'Revoked');
+        const suspendedFranchises = allVerifiedFranchisesForStanding.filter(f => f.status === 'Suspended');
+        const warningFranchises = allVerifiedFranchisesForStanding.filter(f => f.status === 'Active - Under Warning');
+
+        const violationRevocationFranchiseIds = new Set(
+            violationDocs
+                .filter(v => v.sanction?.resultingStatus === 'Revoked' || v.sanction?.type === 'Revocation')
+                .map(v => String(v.franchise))
+        );
+        const violationSuspensionFranchiseIds = new Set(
+            violationDocs
+                .filter(v => v.sanction?.resultingStatus === 'Suspended' || v.sanction?.type === 'Suspension')
+                .map(v => String(v.franchise))
+        );
+        const violationWarningFranchiseIds = new Set(
+            violationDocs
+                .filter(v => v.sanction?.resultingStatus === 'Active - Under Warning' || v.sanction?.type === 'Warning')
+                .map(v => String(v.franchise))
+        );
+
+        const legacyRevokedFranchises = revokedFranchises
+            .filter(f => !violationRevocationFranchiseIds.has(String(f._id)))
+            .map(f => ({ ...f, source: 'franchise_revocation' }));
+        const legacySuspendedFranchises = suspendedFranchises.filter(
+            f => !violationSuspensionFranchiseIds.has(String(f._id))
+        );
+        const legacyWarningFranchises = warningFranchises.filter(
+            f => !violationWarningFranchiseIds.has(String(f._id))
+        );
+
+        const violations = [...normalizedViolationRecords, ...legacyRevokedFranchises];
+        const totalViolations = violations.length;
+        const unsettledViolations = violationDocs.filter(v => v.status === 'Active').length;
+        const revokedCount = violationDocs.filter(
+            v => v.sanction?.resultingStatus === 'Revoked' || v.sanction?.type === 'Revocation'
+        ).length + legacyRevokedFranchises.length;
+        const suspendedCount = violationDocs.filter(
+            v => v.sanction?.resultingStatus === 'Suspended' || v.sanction?.type === 'Suspension'
+        ).length + legacySuspendedFranchises.length;
+        const warningCount = violationDocs.filter(
+            v => v.sanction?.resultingStatus === 'Active - Under Warning' || v.sanction?.type === 'Warning'
+        ).length + legacyWarningFranchises.length;
+
+        const nameMatchWarnings = nameOnlyRelated.filter(f => ['Revoked', 'Suspended', 'Active - Under Warning'].includes(f.status));
         const rejected = verifiedRelated.filter(f => f.status === 'Cancelled');
-        const pastFranchises = verifiedRelated.filter(f => ['Active', 'Expired', 'Revoked'].includes(f.status));
-        const activeUnits = verifiedRelated.filter(f => f.status === 'Active');
+        const pastFranchises = verifiedRelated.filter(f => ['Active', 'Active - Under Warning', 'Suspended', 'Expired', 'Revoked'].includes(f.status));
+        const activeUnits = verifiedRelated.filter(f => ['Active', 'Active - Under Warning'].includes(f.status));
 
         const appType = String(franchise.applicationType || 'New');
         const isRenewal = /renew/i.test(appType) || pastFranchises.length > 0;
@@ -1472,8 +1707,13 @@ const getFranchiseRecordCheck = async (req, res) => {
 
         res.status(200).json({
             applicationType: isRenewal ? 'Renewal' : 'New',
-            violationCount: violations.length,
-            hasViolations: violations.length > 0,
+            violationCount: totalViolations,
+            totalViolations,
+            unsettledViolations,
+            revokedCount,
+            suspendedCount,
+            warningCount,
+            hasViolations: totalViolations > 0 || revokedCount > 0 || suspendedCount > 0 || warningCount > 0,
             violations,
             nameMatchWarnings,
             rejected,
@@ -1499,45 +1739,168 @@ const getFranchiseRecordCheck = async (req, res) => {
 const getCashierQueue = async (req, res) => {
     try {
         const { q, status } = req.query;
-        let query = { isArchived: { $ne: true } };
+        const SystemSettings = require('../models/systemSettingsModel');
+        const settings = await SystemSettings.findOne().sort({ updatedAt: -1, createdAt: -1 }).lean().catch(() => null);
+        const franchiseFee = Number(settings?.franchiseFee) > 0 ? Number(settings.franchiseFee) : 500;
 
-        if (status) {
-            query.status = status;
-        } else {
-            // Unified payable predicate ('For Payment', Unpaid, Unarchived) plus already Paid records
-            query = {
-                isArchived: { $ne: true },
-                $or: [
-                    PAYABLE_PREDICATE,
-                    { paymentStatus: 'Paid' }
-                ]
-            };
+        // 1. Pending payable applications (unified payable predicate, or explicit status filter)
+        const pendingQuery = status
+            ? { isArchived: { $ne: true }, status }
+            : { ...PAYABLE_PREDICATE };
+
+        let pendingQueue = await Franchise.find(pendingQuery)
+            .populate('operator', 'name contact address')
+            .sort({ updatedAt: -1 })
+            .lean();
+
+        if (!status) {
+            pendingQueue = pendingQueue.filter(f => f.status === 'For Payment' && f.paymentStatus !== 'Paid' && f.isArchived !== true);
         }
 
-        let franchises = await Franchise.find(query)
-            .populate('operator', 'name contact address')
-            .sort({ paymentDate: -1, updatedAt: -1 });
+        // 2. Durable PaymentLedger (sorted newest first) + merge/dedupe legacy paid franchises & paymentHistory by officialReceiptNo (M11)
+        const [ledgerDocs, legacyPaidFranchises] = await Promise.all([
+            PaymentLedger.find().sort({ paymentDate: -1, createdAt: -1 }).lean(),
+            Franchise.find({
+                $or: [
+                    { paymentStatus: 'Paid' },
+                    { 'paymentHistory.0': { $exists: true } }
+                ]
+            })
+                .populate('operator', 'name contact address')
+                .lean()
+        ]);
+
+        const seenOrs = new Set();
+        const mergedLedger = [];
+
+        const normalizeLedgerItem = (raw) => {
+            const collectorName = raw.processedByName || raw.cashierName || 'Municipal Cashier';
+            const applicant = raw.applicantName || raw.fullName || '';
+            const toda = raw.todaAssociation || raw.todaName || '';
+            return {
+                _id: raw._id,
+                franchiseId: raw.franchiseId || raw._id,
+                ownerId: raw.ownerId || null,
+                applicantName: applicant,
+                fullName: applicant,
+                payerName: raw.payerName || applicant,
+                plateNo: raw.plateNo || '',
+                mtopNo: raw.mtopNo || '',
+                todaAssociation: toda,
+                todaName: toda,
+                applicationType: raw.applicationType || 'New',
+                officialReceiptNo: raw.officialReceiptNo || '',
+                amountPaid: Number(raw.amountPaid) || 0,
+                paymentMethod: raw.paymentMethod || 'Cash',
+                paymentDate: raw.paymentDate || raw.createdAt || null,
+                paymentRemarks: raw.paymentRemarks || '',
+                processedBy: raw.processedBy || raw.paidByCashier || null,
+                processedByName: collectorName,
+                cashierName: collectorName,
+                paymentStatus: 'Paid',
+                status: raw.franchiseStatus || raw.status || 'For Signing',
+                source: raw.source || 'ledger'
+            };
+        };
+
+        for (const doc of ledgerDocs) {
+            const orKey = String(doc.officialReceiptNo || '').trim().toUpperCase();
+            if (orKey) seenOrs.add(orKey);
+            mergedLedger.push(normalizeLedgerItem({ ...doc, source: 'ledger' }));
+        }
+
+        for (const f of legacyPaidFranchises) {
+            if (f.paymentStatus === 'Paid') {
+                const orKey = String(f.officialReceiptNo || '').trim().toUpperCase();
+                const dedupeKey = orKey || `LEGACY_FRANCHISE_${f._id}`;
+                if (!seenOrs.has(dedupeKey)) {
+                    seenOrs.add(dedupeKey);
+                    mergedLedger.push(normalizeLedgerItem({
+                        _id: f._id,
+                        franchiseId: f._id,
+                        ownerId: f.operator?._id || f.operator || null,
+                        applicantName: f.fullName || '',
+                        payerName: f.payerName || f.fullName || '',
+                        plateNo: f.plateNo || '',
+                        mtopNo: f.mtopNo || '',
+                        todaAssociation: f.todaName || '',
+                        applicationType: f.applicationType || 'New',
+                        officialReceiptNo: f.officialReceiptNo || '',
+                        amountPaid: f.amountPaid || 0,
+                        paymentMethod: f.paymentMethod || 'Cash',
+                        paymentDate: f.paymentDate || f.updatedAt || f.createdAt || null,
+                        paymentRemarks: f.paymentRemarks || '',
+                        processedBy: f.paidByCashier || null,
+                        processedByName: f.cashierName || 'Municipal Cashier',
+                        franchiseStatus: f.status,
+                        source: 'legacy_franchise'
+                    }));
+                }
+            }
+
+            if (Array.isArray(f.paymentHistory)) {
+                for (let idx = 0; idx < f.paymentHistory.length; idx++) {
+                    const hist = f.paymentHistory[idx];
+                    if (!hist) continue;
+                    const orKey = String(hist.officialReceiptNo || '').trim().toUpperCase();
+                    if (!orKey || seenOrs.has(orKey)) continue;
+                    seenOrs.add(orKey);
+                    mergedLedger.push(normalizeLedgerItem({
+                        _id: hist._id || `${f._id}_hist_${idx}`,
+                        franchiseId: f._id,
+                        ownerId: f.operator?._id || f.operator || null,
+                        applicantName: f.fullName || '',
+                        payerName: hist.payerName || f.fullName || '',
+                        plateNo: f.plateNo || '',
+                        mtopNo: hist.mtopNo || f.mtopNo || '',
+                        todaAssociation: f.todaName || '',
+                        applicationType: f.applicationType || 'Renewal',
+                        officialReceiptNo: hist.officialReceiptNo || '',
+                        amountPaid: hist.amountPaid || 0,
+                        paymentMethod: hist.paymentMethod || 'Cash',
+                        paymentDate: hist.paymentDate || hist.archivedAt || f.updatedAt || null,
+                        paymentRemarks: hist.paymentRemarks || '',
+                        processedBy: hist.paidByCashier || null,
+                        processedByName: hist.cashierName || 'Municipal Cashier',
+                        franchiseStatus: f.status,
+                        source: 'legacy_history'
+                    }));
+                }
+            }
+        }
+
+        mergedLedger.sort((a, b) => new Date(b.paymentDate || 0) - new Date(a.paymentDate || 0));
+
+        let filteredPending = pendingQueue;
+        let filteredLedger = mergedLedger;
 
         if (q && q.trim()) {
             const search = q.trim().toLowerCase();
-            franchises = franchises.filter(f => 
-                (f.plateNo && f.plateNo.toLowerCase().includes(search)) ||
-                (f.fullName && f.fullName.toLowerCase().includes(search)) ||
-                (f.payerName && f.payerName.toLowerCase().includes(search)) ||
-                (f.chassisNo && f.chassisNo.toLowerCase().includes(search)) ||
-                (f.motorNo && f.motorNo.toLowerCase().includes(search)) ||
-                (f.officialReceiptNo && f.officialReceiptNo.toLowerCase().includes(search)) ||
-                (f._id.toString().includes(search))
+            const matchesSearch = (item) => (
+                (item.plateNo && item.plateNo.toLowerCase().includes(search)) ||
+                (item.fullName && item.fullName.toLowerCase().includes(search)) ||
+                (item.applicantName && item.applicantName.toLowerCase().includes(search)) ||
+                (item.payerName && item.payerName.toLowerCase().includes(search)) ||
+                (item.mtopNo && item.mtopNo.toLowerCase().includes(search)) ||
+                (item.todaName && item.todaName.toLowerCase().includes(search)) ||
+                (item.todaAssociation && item.todaAssociation.toLowerCase().includes(search)) ||
+                (item.chassisNo && item.chassisNo.toLowerCase().includes(search)) ||
+                (item.motorNo && item.motorNo.toLowerCase().includes(search)) ||
+                (item.officialReceiptNo && item.officialReceiptNo.toLowerCase().includes(search)) ||
+                (item.processedByName && item.processedByName.toLowerCase().includes(search)) ||
+                (item._id && String(item._id).toLowerCase().includes(search))
             );
+            filteredPending = pendingQueue.filter(matchesSearch);
+            filteredLedger = mergedLedger.filter(matchesSearch);
         }
 
-        const pendingQueue = franchises.filter(f => f.status === 'For Payment' && f.paymentStatus !== 'Paid' && f.isArchived !== true);
-        const recentlyPaid = franchises.filter(f => f.paymentStatus === 'Paid');
-
         res.status(200).json({
-            pendingQueue,
-            recentlyPaid,
-            all: franchises
+            pendingPayment: filteredPending,
+            pendingQueue: filteredPending,
+            recentlyPaid: filteredLedger,
+            paymentLedger: filteredLedger,
+            franchiseFee,
+            all: [...filteredPending, ...filteredLedger]
         });
     } catch (error) {
         console.error('Error fetching cashier queue:', error);
@@ -1571,13 +1934,16 @@ const processCashierPayment = async (req, res) => {
             });
         }
 
-        const duplicateOr = await Franchise.findOne({
-            $or: [
-                { _id: { $ne: req.params.id }, officialReceiptNo: cleanOrNo },
-                { 'paymentHistory.officialReceiptNo': cleanOrNo }
-            ]
-        });
-        if (duplicateOr) {
+        const [duplicateOr, duplicateLedgerOr] = await Promise.all([
+            Franchise.findOne({
+                $or: [
+                    { _id: { $ne: req.params.id }, officialReceiptNo: cleanOrNo },
+                    { 'paymentHistory.officialReceiptNo': cleanOrNo }
+                ]
+            }).select('_id').lean(),
+            PaymentLedger.findOne({ officialReceiptNo: cleanOrNo }).select('_id').lean()
+        ]);
+        if (duplicateOr || duplicateLedgerOr) {
             return res.status(409).json({
                 message: `Official Receipt Number '${cleanOrNo}' is already recorded on another franchise or historical payment.`
             });
@@ -1608,29 +1974,84 @@ const processCashierPayment = async (req, res) => {
 
         const now = new Date();
         const resolvedPayerName = (payerName && payerName.trim()) ? payerName.trim().toUpperCase() : existing.fullName;
+        const cashierDisplayName = req.user.name || 'Municipal Cashier';
 
-        // Atomic update guard against concurrent double-processing and ineligible states
-        const franchise = await Franchise.findOneAndUpdate(
-            { _id: req.params.id, ...PAYABLE_PREDICATE },
-            {
-                $set: {
-                    paymentStatus: 'Paid',
-                    officialReceiptNo: cleanOrNo,
-                    payerName: resolvedPayerName,
-                    amountPaid: validAmount,
-                    paymentMethod: resolvedMethod,
-                    paymentDate: now,
-                    paidByCashier: req.user._id,
-                    cashierName: req.user.name || 'Municipal Cashier',
-                    paymentRemarks: paymentRemarks || '',
-                    status: 'For Signing'
-                }
-            },
-            { returnDocument: 'after' }
-        ).populate('operator', 'name contact');
+        const paymentSetFields = {
+            paymentStatus: 'Paid',
+            officialReceiptNo: cleanOrNo,
+            payerName: resolvedPayerName,
+            amountPaid: validAmount,
+            paymentMethod: resolvedMethod,
+            paymentDate: now,
+            paidByCashier: req.user._id,
+            cashierName: cashierDisplayName,
+            paymentRemarks: paymentRemarks || '',
+            status: 'For Signing'
+        };
+
+        // M10: Assign canonical mtopNo automatically when moving into For Signing if not yet assigned
+        const priorMtopNo = existing.mtopNo || '';
+        const needsCanonicalMtop = !priorMtopNo;
+        let franchise = null;
+
+        if (needsCanonicalMtop) {
+            franchise = await executeAtomicUpdateWithMtop(
+                { _id: req.params.id, ...PAYABLE_PREDICATE },
+                paymentSetFields,
+                { populateOperator: 'name contact' }
+            );
+        } else {
+            franchise = await Franchise.findOneAndUpdate(
+                { _id: req.params.id, ...PAYABLE_PREDICATE },
+                { $set: paymentSetFields },
+                { returnDocument: 'after' }
+            ).populate('operator', 'name contact');
+        }
 
         if (!franchise) {
             return res.status(409).json({ message: 'Franchise payment has already been recorded and processed.' });
+        }
+
+        // M11: Persist permanent PaymentLedger record alongside the atomic franchise payment update
+        let ledgerEntry = null;
+        try {
+            ledgerEntry = await PaymentLedger.create({
+                franchiseId: franchise._id,
+                ownerId: franchise.operator?._id || franchise.operator || null,
+                applicantName: franchise.fullName || '',
+                payerName: franchise.payerName || resolvedPayerName,
+                plateNo: franchise.plateNo || '',
+                mtopNo: franchise.mtopNo || '',
+                todaAssociation: franchise.todaName || '',
+                applicationType: franchise.applicationType || 'New',
+                officialReceiptNo: franchise.officialReceiptNo,
+                amountPaid: franchise.amountPaid,
+                paymentMethod: franchise.paymentMethod || resolvedMethod,
+                paymentDate: franchise.paymentDate || now,
+                paymentRemarks: franchise.paymentRemarks || '',
+                processedBy: req.user._id,
+                processedByName: cashierDisplayName
+            });
+        } catch (ledgerErr) {
+            // Compensate franchise payment fields so Franchise and PaymentLedger never diverge
+            await Franchise.findByIdAndUpdate(franchise._id, {
+                $set: {
+                    paymentStatus: 'Unpaid',
+                    officialReceiptNo: '',
+                    payerName: '',
+                    amountPaid: 0,
+                    paymentMethod: '',
+                    paymentDate: null,
+                    paidByCashier: null,
+                    cashierName: '',
+                    paymentRemarks: '',
+                    status: 'For Payment',
+                    ...(needsCanonicalMtop ? { mtopNo: priorMtopNo } : {})
+                }
+            }).catch((rbErr) => {
+                console.error('[CashierPayment] CRITICAL: Rollback failed after PaymentLedger error:', rbErr.message);
+            });
+            throw ledgerErr;
         }
 
         // Notify operator of official receipt
@@ -1662,15 +2083,18 @@ const processCashierPayment = async (req, res) => {
             targetId: franchise._id,
             details: {
                 plateNo: franchise.plateNo,
+                mtopNo: franchise.mtopNo,
                 officialReceiptNo: franchise.officialReceiptNo,
                 amountPaid: franchise.amountPaid,
-                cashier: req.user.name
+                cashier: cashierDisplayName,
+                ledgerId: ledgerEntry ? String(ledgerEntry._id) : ''
             }
         });
 
         res.status(200).json({
             message: 'Payment recorded successfully under Official Receipt No. ' + franchise.officialReceiptNo,
-            franchise
+            franchise,
+            ledgerEntry
         });
     } catch (error) {
         console.error('Error processing cashier payment:', error);

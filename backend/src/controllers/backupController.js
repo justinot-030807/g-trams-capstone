@@ -140,6 +140,12 @@ exports.downloadDirectSnapshot = async (req, res) => {
 exports.restoreFromFile = async (req, res) => {
     try {
         req.setTimeout(180000); // 3 minute allowance
+        if (backupService.isRestoreInProgress()) {
+            return res.status(409).json({
+                success: false,
+                message: 'Database restore is already in progress. Please retry shortly.'
+            });
+        }
         const authCheck = await verifyRestoreAdminPassword(req);
         if (!authCheck.authorized) {
             return res.status(authCheck.status).json({ success: false, message: authCheck.message });
@@ -173,7 +179,8 @@ exports.restoreFromFile = async (req, res) => {
     } catch (error) {
         console.error('[BackupController] Error restoring from file:', error);
         const isClientError = /Invalid|Corrupted|checksum|decrypt|missing|empty|Array/i.test(error.message || '');
-        res.status(isClientError ? 400 : 500).json({
+        const statusCode = error.statusCode || (isClientError ? 400 : 500);
+        res.status(statusCode).json({
             success: false,
             message: `Restore failed: ${error.message}`
         });
@@ -186,6 +193,12 @@ exports.restoreFromFile = async (req, res) => {
 exports.restoreFromUpload = async (req, res) => {
     try {
         req.setTimeout(180000);
+        if (backupService.isRestoreInProgress()) {
+            return res.status(409).json({
+                success: false,
+                message: 'Database restore is already in progress. Please retry shortly.'
+            });
+        }
         const authCheck = await verifyRestoreAdminPassword(req);
         if (!authCheck.authorized) {
             return res.status(authCheck.status).json({ success: false, message: authCheck.message });
@@ -212,7 +225,8 @@ exports.restoreFromUpload = async (req, res) => {
     } catch (error) {
         console.error('[BackupController] Error restoring from upload:', error);
         const isClientError = /Invalid|Corrupted|checksum|decrypt|missing|empty|Array/i.test(error.message || '');
-        res.status(isClientError ? 400 : 500).json({
+        const statusCode = error.statusCode || (isClientError ? 400 : 500);
+        res.status(statusCode).json({
             success: false,
             message: `Restore error: ${error.message}`
         });

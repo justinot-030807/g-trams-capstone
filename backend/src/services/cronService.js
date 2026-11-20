@@ -4,21 +4,28 @@ const Notification = require('../models/notificationModel');
 const SystemSettings = require('../models/systemSettingsModel');
 const { emitToUser } = require('../config/socket');
 const { sendPushToUser } = require('./pushService');
+const { isRestoreInProgress } = require('./backupService');
 const { 
     MANILA_TIMEZONE, 
     getManilaNow, 
     calculateDaysRemaining, 
     formatManilaDate,
-    computeManilaExpiryDate
+    computeManilaExpiryDate,
+    isExpired
 } = require('../utils/phTime');
 
 /**
  * Synchronize expired franchises in MongoDB
- * Identifies all 'Active' franchises that have reached their expiration date
- * and transitions their status to 'Expired', notifying the operator.
+ * Identifies all 'Active' / 'Active - Under Warning' franchises that have reached their expiration date
+ * and atomically transitions their status to 'Expired', notifying the operator ONLY on successful transition.
  */
 async function syncFranchiseStatuses() {
     try {
+        if (isRestoreInProgress()) {
+            console.log('[CRON] Skipping syncFranchiseStatuses: database restore in progress.');
+            return { count: 0, skipped: true };
+        }
+
         const now = getManilaNow();
         await Franchise.updateMany({ status: 'Suspended', suspensionEndDate: { $ne: null, $lte: now } }, { $set: { status: 'Active - Under Warning', suspensionEndDate: null, currentSanction: 'Warning' } }).catch(() => {});
 
@@ -26,50 +33,96 @@ async function syncFranchiseStatuses() {
         const validityNew = Number(settings?.validityNew) > 0 ? Number(settings.validityNew) : 3;
         const validityRenew = Number(settings?.validityRenew) > 0 ? Number(settings.validityRenew) : 1;
 
-        // Reconcile any active permits missing an explicit expiryDate using configured term validity
+        // Reconcile any legacy active permits missing an explicit expiryDate using configured term validity
         const missingExpiryDocs = await Franchise.find({
             status: { $in: ['Active', 'Active - Under Warning'] },
-            expiryDate: null,
-            approvalDate: { $ne: null }
-        }).select('_id applicationType approvalDate').lean();
+            $or: [{ expiryDate: null }, { expiryDate: { $exists: false } }]
+        }).select('_id applicationType approvalDate dateApplied').lean();
 
         for (const doc of missingExpiryDocs) {
+            const baseDate = doc.approvalDate || doc.dateApplied;
+            if (!baseDate) continue;
             const termYears = doc.applicationType === 'Renewal' ? validityRenew : validityNew;
-            const computedExpiry = computeManilaExpiryDate(doc.approvalDate, termYears);
+            const computedExpiry = computeManilaExpiryDate(baseDate, termYears);
             if (computedExpiry) {
                 await Franchise.updateOne(
-                    { _id: doc._id, expiryDate: null },
+                    {
+                        _id: doc._id,
+                        $or: [{ expiryDate: null }, { expiryDate: { $exists: false } }]
+                    },
                     { $set: { expiryDate: computedExpiry } }
                 );
             }
         }
 
-        // Find active franchises that have reached their authoritative expiration date
-        const expiredFranchises = await Franchise.find({
+        // Query lean candidate active permits (avoids post-init dirty-tracking no-op on franchise.save())
+        const candidateFranchises = await Franchise.find({
             status: { $in: ['Active', 'Active - Under Warning'] },
-            expiryDate: { $lte: now }
-        }).populate('operator', 'name contact');
+            expiryDate: { $ne: null, $lte: now }
+        })
+            .select('_id operator plateNo mtopNo expiryDate approvalDate dateApplied applicationType status')
+            .lean();
 
-        if (expiredFranchises.length === 0) {
+        if (candidateFranchises.length === 0) {
             return { count: 0 };
         }
 
-        console.log(`[CRON] Found ${expiredFranchises.length} active franchise(s) past expiration date. Synchronizing to 'Expired'...`);
+        const expiredCandidates = candidateFranchises.filter((doc) => {
+            const termYears = doc.applicationType === 'Renewal' ? validityRenew : validityNew;
+            const effectiveExpiry = doc.expiryDate
+                || (doc.approvalDate ? computeManilaExpiryDate(doc.approvalDate, termYears) : null)
+                || (doc.dateApplied ? computeManilaExpiryDate(doc.dateApplied, termYears) : null);
+            if (!effectiveExpiry) return false;
+            return isExpired(effectiveExpiry, now) || new Date(effectiveExpiry).getTime() <= now.getTime();
+        });
 
-        for (const franchise of expiredFranchises) {
-            franchise.status = 'Expired';
-            if (!franchise.expiryDate && franchise.approvalDate) {
-                const termYears = franchise.applicationType === 'Renewal' ? validityRenew : validityNew;
-                franchise.expiryDate = computeManilaExpiryDate(franchise.approvalDate, termYears);
+        if (expiredCandidates.length === 0) {
+            return { count: 0 };
+        }
+
+        console.log(`[CRON] Found ${expiredCandidates.length} active franchise(s) past expiration date. Synchronizing atomically to 'Expired'...`);
+
+        let synchronizedCount = 0;
+
+        for (const doc of expiredCandidates) {
+            if (isRestoreInProgress()) {
+                console.log('[CRON] Halting syncFranchiseStatuses mid-pass: database restore started.');
+                break;
             }
-            await franchise.save();
 
-            // Notify operator of expiration
-            const operatorId = franchise.operator?._id || franchise.operator;
+            const termYears = doc.applicationType === 'Renewal' ? validityRenew : validityNew;
+            const effectiveExpiry = doc.expiryDate
+                || (doc.approvalDate ? computeManilaExpiryDate(doc.approvalDate, termYears) : null)
+                || (doc.dateApplied ? computeManilaExpiryDate(doc.dateApplied, termYears) : null)
+                || now;
+
+            // Atomic conditional DB write: guarantees DB persistence and prevents duplicate notifications across instances
+            const transitioned = await Franchise.findOneAndUpdate(
+                {
+                    _id: doc._id,
+                    status: { $in: ['Active', 'Active - Under Warning'] }
+                },
+                {
+                    $set: {
+                        status: 'Expired',
+                        expiryDate: effectiveExpiry
+                    }
+                },
+                { returnDocument: 'after' }
+            ).lean();
+
+            if (!transitioned) {
+                continue;
+            }
+
+            synchronizedCount += 1;
+
+            // Notify operator ONLY after atomic DB transition succeeds
+            const operatorId = transitioned.operator?._id || transitioned.operator || doc.operator;
             if (operatorId) {
-                const expiryFormatted = formatManilaDate(franchise.expiryDate || now);
+                const expiryFormatted = formatManilaDate(effectiveExpiry);
                 const notifTitle = 'Franchise Permit Expired';
-                const notifMessage = `Your franchise permit for unit ${franchise.plateNo || 'Tricycle'} expired on ${expiryFormatted}. Please submit your renewal application to avoid penalties and continue operations.`;
+                const notifMessage = `Your franchise permit for unit ${transitioned.plateNo || doc.plateNo || 'Tricycle'} expired on ${expiryFormatted}. Please submit your renewal application to avoid penalties and continue operations.`;
 
                 try {
                     const notif = await Notification.create({
@@ -77,14 +130,14 @@ async function syncFranchiseStatuses() {
                         type: 'status_change',
                         title: notifTitle,
                         message: notifMessage,
-                        relatedFranchise: franchise._id
+                        relatedFranchise: doc._id
                     });
 
                     emitToUser(String(operatorId), 'notification', notif);
                     sendPushToUser(operatorId, {
                         title: notifTitle,
                         message: notifMessage,
-                        url: `/renew-franchise/${franchise._id}`,
+                        url: `/renew-franchise/${doc._id}`,
                         type: 'status_change'
                     }).catch(err => console.warn('[CRON] Push alert failed:', err.message));
                 } catch (notifErr) {
@@ -93,8 +146,8 @@ async function syncFranchiseStatuses() {
             }
         }
 
-        console.log(`[CRON] Successfully synchronized ${expiredFranchises.length} franchise(s) to 'Expired'.`);
-        return { count: expiredFranchises.length };
+        console.log(`[CRON] Successfully synchronized ${synchronizedCount} franchise(s) to 'Expired'.`);
+        return { count: synchronizedCount };
     } catch (error) {
         console.error('[CRON ERROR] Error in syncFranchiseStatuses:', error);
         return { error: error.message };
@@ -108,6 +161,10 @@ async function syncFranchiseStatuses() {
  */
 async function sendRenewalReminders() {
     try {
+        if (isRestoreInProgress()) {
+            console.log('[CRON] Skipping sendRenewalReminders: database restore in progress.');
+            return { count: 0, selectedCount: 0, skipped: true };
+        }
         const now = getManilaNow();
         await Franchise.updateMany({ status: 'Suspended', suspensionEndDate: { $ne: null, $lte: now } }, { $set: { status: 'Active - Under Warning', suspensionEndDate: null, currentSanction: 'Warning' } }).catch(() => {});
 
@@ -217,6 +274,10 @@ async function sendRenewalReminders() {
  */
 async function autoArchiveOldExpired() {
     try {
+        if (isRestoreInProgress()) {
+            console.log('[CRON] Skipping autoArchiveOldExpired: database restore in progress.');
+            return { modifiedCount: 0, skipped: true };
+        }
         const now = getManilaNow();
         await Franchise.updateMany({ status: 'Suspended', suspensionEndDate: { $ne: null, $lte: now } }, { $set: { status: 'Active - Under Warning', suspensionEndDate: null, currentSanction: 'Warning' } }).catch(() => {});
         const oneYearAgo = new Date(now);
@@ -256,6 +317,10 @@ function startFranchiseCronJobs() {
 
     // Daily Midnight Cron Job at 00:00:00 (Asia/Manila)
     const midnightTask = cron.schedule('0 0 * * *', async () => {
+        if (isRestoreInProgress()) {
+            console.log('[CRON] Skipping daily midnight maintenance tasks: database restore in progress.');
+            return;
+        }
         console.log(`[CRON] Running daily midnight maintenance tasks at ${new Date().toISOString()} (${MANILA_TIMEZONE})...`);
         await syncFranchiseStatuses();
         await sendRenewalReminders();
@@ -269,6 +334,10 @@ function startFranchiseCronJobs() {
     // Weekly Automated Database Backup at Sunday 00:00:00 (Asia/Manila)
     const backupService = require('./backupService');
     cron.schedule('0 0 * * 0', async () => {
+        if (isRestoreInProgress()) {
+            console.log('[CRON] Skipping weekly automated database backup: database restore in progress.');
+            return;
+        }
         console.log(`[CRON] Running weekly automated database backup at ${new Date().toISOString()} (${MANILA_TIMEZONE})...`);
         try {
             const res = await backupService.createBackupFile({

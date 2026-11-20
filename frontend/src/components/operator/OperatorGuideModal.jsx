@@ -26,7 +26,7 @@ const OperatorGuideModal = ({ isOpen, onClose, defaultTab = 'apply' }) => {
     },
     {
       q: "Paano magbayad at kailan makukuha ang MTOP?",
-      a: "Kapag naaprubahan ang inyong requirements sa review, magtungo sa Municipal Treasury / Cashier upang bayaran ang franchise fee gamit ang inyong Plate Number o pangalan. Kapag napirmahan na ng Punong Bayan, kunin ang inyong opisyal na MTOP Certificate at sticker sa BPLO / Licensing Office."
+      a: "Kapag naaprubahan ang inyong requirements sa review, magtungo sa Municipal Treasury / Cashier upang bayaran ang franchise fee gamit ang inyong Plate Number o pangalan. Kapag napirmahan na ng mga opisyal, kunin ang inyong opisyal na MTOP Certificate at sticker sa Sangguniang Bayan / Franchising Office (LLSA I)."
     },
     {
       q: "Ilang tricycle ang pinapayagang maiparehistro ng isang operator?",
@@ -43,7 +43,7 @@ const OperatorGuideModal = ({ isOpen, onClose, defaultTab = 'apply' }) => {
     },
     {
       q: "How do I pay and when do I claim my MTOP?",
-      a: "Once your application passes technical review, proceed to the Municipal Treasury / Cashier window to pay the franchise fee using your Plate Number or Name. Once signed by municipal officials, claim your official MTOP Certificate and franchise sticker at the BPLO / Licensing Office."
+      a: "Once your application passes technical review, proceed to the Municipal Treasury / Cashier window to pay the franchise fee using your Plate Number or Name. Once signed by municipal officials, claim your official MTOP Certificate and franchise sticker at the Sangguniang Bayan / Franchising Office (LLSA I)."
     },
     {
       q: "How many tricycles can a single operator register?",
@@ -75,7 +75,7 @@ const OperatorGuideModal = ({ isOpen, onClose, defaultTab = 'apply' }) => {
                   {isFilipino ? 'Gabay sa Operator & Portal FAQs' : 'Operator Guide & Portal FAQs'}
                 </h3>
                 <p className="text-xs text-[#D4AF37] font-medium mt-0.5 truncate">
-                  Gasan Tricycle Regulatory &amp; Automated Management System
+                  Gasan Tricycle Records &amp; Application Management System
                 </p>
               </div>
             </div>
@@ -261,8 +261,8 @@ const OperatorGuideModal = ({ isOpen, onClose, defaultTab = 'apply' }) => {
                     </h4>
                     <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] leading-relaxed font-normal">
                       {isFilipino 
-                        ? 'Kapag naaprubahan ang requirements, magbayad sa Municipal Treasury / Cashier window gamit ang iyong Plate Number. Matapos mapirmahan ng mga opisyal, kunin ang inyong opisyal na MTOP Certificate at sticker sa BPLO.'
-                        : 'Once approved, pay the franchise fee at the Municipal Cashier window using your Plate Number. After executive signatures, claim your official dry-sealed MTOP certificate and sticker at the BPLO.'}
+                        ? 'Kapag naaprubahan ang requirements, magbayad sa Municipal Treasury / Cashier window gamit ang iyong Plate Number. Matapos mapirmahan ng mga opisyal, kunin ang inyong opisyal na MTOP Certificate at sticker sa Sangguniang Bayan / Franchising Office (LLSA I).'
+                        : 'Once approved, pay the franchise fee at the Municipal Cashier window using your Plate Number. After executive signatures, claim your official dry-sealed MTOP certificate and sticker at the Sangguniang Bayan / Franchising Office (LLSA I).'}
                     </p>
                   </div>
                 </div>
@@ -320,10 +320,10 @@ const OperatorGuideModal = ({ isOpen, onClose, defaultTab = 'apply' }) => {
                   <span className="w-6 h-6 rounded-md bg-[#9E2A2B]/10 text-[#9E2A2B] dark:bg-[#D4AF37]/15 dark:text-[#D4AF37] flex items-center justify-center text-xs font-bold shrink-0">4</span>
                   <div>
                     <h5 className="text-xs font-bold text-[#1F1D1B] dark:text-white">
-                      {isFilipino ? 'For Signing & Pickup (Pirma at Pagkuha sa BPLO)' : 'Signing & Pickup'}
+                      {isFilipino ? 'For Signing & Pickup (Pirma at Pagkuha sa Sangguniang Bayan / Franchising Office)' : 'Signing & Pickup'}
                     </h5>
                     <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
-                      {isFilipino ? 'Kumpirmado na ang bayad. Pipirmahan ng Punong Bayan at kukunin ang opisyal na MTOP at sticker sa BPLO.' : 'Payment confirmed. Routes for Mayor/SB signature, then claimed at BPLO.'}
+                      {isFilipino ? 'Kumpirmado na ang bayad. Pipirmahan ng mga opisyal at kukunin ang opisyal na MTOP at sticker sa Sangguniang Bayan / Franchising Office (LLSA I).' : 'Payment confirmed. Routes for Mayor/SB signature, then claimed at the Sangguniang Bayan / Franchising Office (LLSA I).'}
                     </p>
                   </div>
                 </div>

@@ -1,16 +1,45 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { 
   Printer, X, FileText, CheckCircle2, AlertTriangle, ShieldCheck, 
-  User, Check, ExternalLink, Calendar, MapPin, Hash, Phone, Clock
+  User, ExternalLink
 } from 'lucide-react';
-import { GASAN_ZONES } from '../operator/TodaZoneGuideModal';
-import { formatZoneLabel, normalizeZone } from '../../utils/constants';
+import { formatZoneLabel } from '../../utils/constants';
 import { getServerNow } from '../../utils/serverTime';
 import TricycleIcon from '../common/TricycleIcon';
 import { cleanText, formatVehicleMake, formatVehicleModelYear } from '../../utils/vehicleFormatters';
 
-const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReject, isProcessing = false }) => {
+const ApplicationDossierModal = ({
+  isOpen,
+  onClose,
+  franchise,
+  franchiseFee: franchiseFeeProp,
+  onApprove,
+  onReject,
+  isProcessing = false
+}) => {
   const dossierRef = useRef(null);
+  const [fetchedFee, setFetchedFee] = useState(() => {
+    const cached = Number(localStorage.getItem('franchise_fee'));
+    return Number.isFinite(cached) && cached > 0 ? cached : 500;
+  });
+
+  useEffect(() => {
+    if (!isOpen || (franchiseFeeProp != null && Number(franchiseFeeProp) > 0)) return;
+    let active = true;
+    const token = localStorage.getItem('token');
+    fetch(`${import.meta.env.VITE_API_URL}/api/v1/settings`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : {}
+    })
+      .then((res) => (res.ok ? res.json() : null))
+      .then((json) => {
+        const fee = json?.data?.franchiseFee ?? json?.franchiseFee;
+        if (active && fee != null && Number.isFinite(Number(fee)) && Number(fee) > 0) {
+          setFetchedFee(Number(fee));
+        }
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, [isOpen, franchiseFeeProp]);
 
   useEffect(() => {
     if (isOpen) {
@@ -26,7 +55,27 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
     };
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') onClose?.();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, onClose]);
+
   if (!isOpen || !franchise) return null;
+
+  const effectiveFee =
+    franchiseFeeProp != null && Number.isFinite(Number(franchiseFeeProp)) && Number(franchiseFeeProp) > 0
+      ? Number(franchiseFeeProp)
+      : fetchedFee;
+  const assessedAmount =
+    franchise?.paymentStatus === 'Paid' && Number(franchise?.amountPaid) > 0
+      ? Number(franchise.amountPaid)
+      : effectiveFee;
+  const isPendingStatus = franchise.status === 'Pending' || franchise.status === 'Pending for Approval';
+  const canonicalMtopNo = String(franchise.mtopNo || '').trim();
 
   const handlePrint = () => {
     window.print();
@@ -50,11 +99,13 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
   };
 
   const isOperatorDriver = franchise.isOperatorDriver !== false;
-  const zoneInfo = GASAN_ZONES.find(z => z.id === normalizeZone(franchise.zone));
 
   return (
     <div 
-      id="printable-dossier-modal-root" 
+      id="printable-dossier-modal-root"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Application Dossier and Evaluation Sheet"
       className="fixed inset-0 z-[120] bg-black/75 overflow-y-auto overscroll-contain print:p-0 print:bg-white print:static print:inset-auto print:overflow-hidden flex flex-col items-center justify-start p-2 sm:p-6 pb-28 pt-2 print:m-0"
     >
       <div className="w-full max-w-[840px] flex flex-col items-center shrink-0 print:max-w-full print:m-0">
@@ -69,7 +120,7 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
               <h2 className="text-xs sm:text-sm font-semibold text-white flex items-center gap-2">
                 <span>Application Dossier &amp; Evaluation Sheet</span>
                 <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
-                  franchise.status === 'Pending' 
+                  isPendingStatus 
                     ? 'bg-amber-500/20 text-amber-300 border-amber-500/30'
                     : franchise.status === 'Active'
                     ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/30'
@@ -78,7 +129,9 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
                   {franchise.status}
                 </span>
               </h2>
-              <p className="text-[11px] text-[#A8A29E]">Pre-Approval Official Municipal Dossier</p>
+              <p className="text-[11px] text-[#A8A29E]">
+                Pre-Approval Official Municipal Dossier{canonicalMtopNo ? ` • MTOP ${canonicalMtopNo}` : ''}
+              </p>
             </div>
           </div>
 
@@ -92,7 +145,7 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
               <span className="hidden sm:inline">Print Dossier</span>
             </button>
 
-            {franchise.status === 'Pending' && onApprove && (
+            {isPendingStatus && onApprove && (
               <button
                 type="button"
                 onClick={onApprove}
@@ -100,11 +153,11 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
                 className="px-3.5 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all shadow-sm cursor-pointer disabled:opacity-50"
               >
                 <CheckCircle2 size={14} />
-                <span>Approve for Signing</span>
+                <span>Send to Cashier</span>
               </button>
             )}
 
-            {franchise.status === 'Pending' && onReject && (
+            {isPendingStatus && onReject && (
               <button
                 type="button"
                 onClick={onReject}
@@ -118,6 +171,7 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
             <button
               type="button"
               onClick={onClose}
+              aria-label="Close dossier preview"
               className="p-1.5 rounded-lg hover:bg-white/10 text-[#A8A29E] hover:text-white transition-colors cursor-pointer"
             >
               <X size={18} />
@@ -196,7 +250,7 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
           <div className="flex items-center justify-between border-b-2 border-[#7A1B22] pb-4 mb-5">
             <div className="flex items-center gap-3">
               <img 
-                src="/assets/logos/gasan-logo.png" 
+                src="/gasan-logo.png" 
                 alt="Gasan Seal" 
                 className="w-16 h-16 object-contain shrink-0"
                 onError={(e) => { e.target.style.display = 'none'; }}
@@ -221,7 +275,12 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
               <span className="inline-block px-3 py-1 bg-[#7A1B22]/10 border border-[#7A1B22]/30 text-[#7A1B22] font-extrabold text-xs uppercase tracking-wider rounded-lg mb-1">
                 Evaluation Dossier
               </span>
-              <p className="text-[10px] font-mono text-[#6B6761]">
+              {canonicalMtopNo && (
+                <p className="text-[11px] font-mono tabular-nums font-bold text-[#9E2A2B]">
+                  MTOP NO: {canonicalMtopNo}
+                </p>
+              )}
+              <p className="text-[10px] font-mono tabular-nums text-[#6B6761]">
                 APP ID: {String(franchise._id).slice(-8).toUpperCase()}
               </p>
               <p className="text-[10px] text-[#6B6761] font-semibold">
@@ -244,39 +303,39 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
 
             {/* AI Document Discrepancy & Modification Notice */}
             {Array.isArray(franchise?.aiDiscrepancies) && franchise.aiDiscrepancies.length > 0 && (
-              <div className="border border-amber-300 dark:border-amber-800 bg-amber-50/80 dark:bg-amber-950/40 rounded-xl p-3.5 space-y-2">
+              <div className="border border-amber-300 bg-amber-50/80 rounded-xl p-3.5 space-y-2">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-1.5 font-bold text-xs uppercase tracking-wider text-amber-800 dark:text-amber-300">
-                    <AlertTriangle size={15} className="text-amber-600 dark:text-amber-400 shrink-0" />
+                  <div className="flex items-center gap-1.5 font-bold text-xs uppercase tracking-wider text-amber-800">
+                    <AlertTriangle size={15} className="text-amber-600 shrink-0" />
                     <span>AI Flagged Document Modifications ({franchise.aiDiscrepancies.length})</span>
                   </div>
-                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-200/80 dark:bg-amber-900/60 text-amber-900 dark:text-amber-200">
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-200/80 text-amber-900">
                     Audit Alert
                   </span>
                 </div>
-                <p className="text-[11px] text-amber-800/90 dark:text-amber-300/90">
+                <p className="text-[11px] text-amber-800/90">
                   The applicant modified the following field(s) differing from the values detected on uploaded document images:
                 </p>
                 <div className="space-y-1.5">
                   {(franchise.aiDiscrepancies || []).map((d, i) => (
-                    <div key={i} className="bg-white dark:bg-[#1C1917] p-2.5 rounded-lg border border-amber-200 dark:border-amber-900/50 space-y-1 text-xs">
-                      <div className="font-bold text-[#1F1D1B] dark:text-[#F6F5F3] text-[11px]">{d.label || d.field}</div>
+                    <div key={i} className="bg-white p-2.5 rounded-lg border border-amber-200 space-y-1 text-xs">
+                      <div className="font-bold text-[#1F1D1B] text-[11px]">{d.label || d.field}</div>
                       <div className="grid grid-cols-2 gap-2 text-[11px]">
-                        <div className="p-1.5 rounded bg-red-50 dark:bg-red-950/30 border border-red-200/80 dark:border-red-900/40">
-                          <span className="text-[10px] text-red-600 dark:text-red-400 font-bold block uppercase">Detected from Image</span>
-                          <span className="font-mono font-bold text-red-700 dark:text-red-300 truncate block">
+                        <div className="p-1.5 rounded bg-red-50 border border-red-200/80">
+                          <span className="text-[10px] text-red-600 font-bold block uppercase">Detected from Image</span>
+                          <span className="font-mono font-bold text-red-700 truncate block">
                             {d.scannedValue || '—'} {d.severity === 'critical' ? '(Expired)' : ''}
                           </span>
                         </div>
-                        <div className="p-1.5 rounded bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27]">
-                          <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-bold block uppercase">Entered by Applicant</span>
-                          <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3] truncate block">
+                        <div className="p-1.5 rounded bg-[#F6F5F3] border border-[#E4E1DC]">
+                          <span className="text-[10px] text-[#6B6761] font-bold block uppercase">Entered by Applicant</span>
+                          <span className="font-mono font-bold text-[#1F1D1B] truncate block">
                             {d.enteredValue || '—'}
                           </span>
                         </div>
                       </div>
                       {d.reason && (
-                        <p className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] leading-snug pt-0.5">
+                        <p className="text-[10px] text-[#6B6761] leading-snug pt-0.5">
                           {d.reason}
                         </p>
                       )}
@@ -546,11 +605,13 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
                 </div>
                 <div>
                   <span className="text-[10px] font-bold text-[#6B6761] uppercase tracking-wider block">Amount Assessed / Paid</span>
-                  <span className="text-xs font-mono tabular-nums font-bold text-[#1F1D1B]">₱{franchise?.amountPaid != null ? Number(franchise.amountPaid).toLocaleString() : '500'}.00</span>
+                  <span className="text-xs font-mono tabular-nums font-bold text-[#1F1D1B]">
+                    ₱{assessedAmount.toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
                 </div>
                 <div>
                   <span className="text-[10px] font-bold text-[#6B6761] uppercase tracking-wider block">Cashier In-Charge</span>
-                  <span className="text-xs font-semibold text-[#1F1D1B]">{franchise?.cashierName || 'Treasury Staff'}</span>
+                  <span className="text-xs font-semibold text-[#1F1D1B]">{franchise?.processedByName || franchise?.cashierName || 'Treasury Staff'}</span>
                 </div>
                 <div>
                   <span className="text-[10px] font-bold text-[#6B6761] uppercase tracking-wider block">Payment Date</span>
@@ -581,7 +642,7 @@ const ApplicationDossierModal = ({ isOpen, onClose, franchise, onApprove, onReje
                 <p className="text-[10px] font-bold uppercase text-[#6B6761] mb-8">Official Recommendation:</p>
                 <div className="border-t border-[#1F1D1B] pt-1 flex flex-col items-center">
                   <span className="text-xs font-extrabold uppercase text-[#7A1B22]">
-                    {franchise?.status === 'Pending' ? 'RECOMMENDED FOR APPROVAL' : (franchise?.status || '').toUpperCase()}
+                    {isPendingStatus ? 'RECOMMENDED FOR APPROVAL' : (franchise?.status || '').toUpperCase()}
                   </span>
                   <p className="text-[10px] text-[#6B6761]">Subject to Final Executive Signing</p>
                 </div>

@@ -43,6 +43,9 @@ const BatchMtopModal = ({ isOpen, onClose, units = [] }) => {
   return (
     <div
       id="printable-batch-mtop-root"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Batch MTOP Certificate Print Job"
       className="fixed inset-0 z-[220] bg-black/75 overflow-y-auto overscroll-contain print:p-0 print:bg-white print:static print:inset-auto print:overflow-visible"
     >
       <div className="min-h-full w-full flex flex-col items-center justify-start p-2 sm:p-6 pb-28 pt-2 print:p-0 print:m-0">
@@ -174,12 +177,14 @@ const BatchMtopModal = ({ isOpen, onClose, units = [] }) => {
                 expiryDate = formatShortDate(exp);
               }
 
-              const rawMtop = String(unit.mtopNumber || unit.franchiseNumber || '').trim();
+              const rawMtop = String(unit.mtopNo || unit.mtopNumber || unit.franchiseNumber || '').trim();
               const yearSeqMatch = rawMtop.match(/(20\d{2})\D+(\d+)/);
-              const mtopYearPrefix = yearSeqMatch ? `${yearSeqMatch[1]} - ` : `${validYear} - `;
+              const hasCanonicalMtop = Boolean(rawMtop);
+              const mtopYearPrefix = yearSeqMatch ? `${yearSeqMatch[1]} - ` : '';
               const mtopSeqNo = yearSeqMatch
                 ? yearSeqMatch[2]
-                : (rawMtop.replace(/^MTOP-GASAN-/i, '') || String(unit.plateNo || unit.plateNumber || unit._id || '186').slice(-4).toUpperCase());
+                : (hasCanonicalMtop ? rawMtop.replace(/^MTOP-GASAN-/i, '') : 'PENDING MTOP');
+              const mtopDisplay = hasCanonicalMtop ? `${mtopYearPrefix}${mtopSeqNo}` : 'PENDING MTOP';
 
               const applicantName = (
                 unit.fullName ||
@@ -210,7 +215,7 @@ const BatchMtopModal = ({ isOpen, onClose, units = [] }) => {
                     <span className="flex items-center gap-1.5 text-amber-300">
                       <Award size={13} /> Certificate #{index + 1} of {units.length}
                     </span>
-                    <span>{applicantName} &bull; Plate: {plateVal}</span>
+                    <span>{applicantName} &bull; MTOP: {mtopDisplay} &bull; Plate: {plateVal}</span>
                   </div>
 
                   <div className="w-full max-w-[820px] overflow-x-auto pb-2 custom-scrollbar flex justify-start sm:justify-center">
@@ -242,8 +247,16 @@ const BatchMtopModal = ({ isOpen, onClose, units = [] }) => {
                           <div className="w-[16px] shrink-0 text-center">:</div>
                           <div className="flex-1 font-bold border-b border-black px-2 pb-[1px] uppercase truncate">{applicantName}</div>
                           <div className="w-[46px] shrink-0 text-right pr-2">No</div>
-                          <div className="w-[62px] shrink-0 font-bold border-b border-black text-right pb-[1px]">{mtopYearPrefix}</div>
-                          <div className="w-[88px] shrink-0 font-bold border-b border-black pl-1 pb-[1px]">{mtopSeqNo}</div>
+                          {hasCanonicalMtop && yearSeqMatch ? (
+                            <>
+                              <div className="w-[62px] shrink-0 font-bold border-b border-black text-right pb-[1px]">{mtopYearPrefix}</div>
+                              <div className="w-[88px] shrink-0 font-bold border-b border-black pl-1 pb-[1px]">{mtopSeqNo}</div>
+                            </>
+                          ) : (
+                            <div className="w-[150px] shrink-0 font-bold border-b border-black text-center pb-[1px]">
+                              {mtopDisplay}
+                            </div>
+                          )}
                         </div>
 
                         {/* Row 13 */}
@@ -370,7 +383,7 @@ const BatchMtopModal = ({ isOpen, onClose, units = [] }) => {
                               />
                               <div className="text-left text-[7.5pt] leading-tight text-[#1F1D1B] font-sans">
                                 <div className="font-bold text-black">G-TRAMS VERIFIED</div>
-                                <div>MTOP No: {mtopYearPrefix}{mtopSeqNo}</div>
+                                <div>MTOP No: {mtopDisplay}</div>
                                 <div>Plate: {plateVal}</div>
                               </div>
                             </div>

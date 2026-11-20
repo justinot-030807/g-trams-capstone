@@ -27,7 +27,7 @@ router.post('/subscribe', async (req, res) => {
   try {
     const { subscription, preferences, deviceType } = req.body;
 
-    if (!subscription || !subscription.endpoint || !subscription.keys) {
+    if (!subscription || !subscription.endpoint || !subscription.keys || !subscription.keys.p256dh || !subscription.keys.auth) {
       return res.status(400).json({ message: 'Invalid push subscription payload' });
     }
 
@@ -43,31 +43,32 @@ router.post('/subscribe', async (req, res) => {
     }
     const userAgent = req.headers['user-agent'] || '';
 
-    // Verify ownership if endpoint already exists
+    // Check if endpoint was previously bound to another user on this shared device
     const existingSub = await PushSubscription.findOne({ endpoint }).select('user').lean();
-    if (existingSub && existingSub.user && String(existingSub.user) !== String(req.user._id)) {
-      return res.status(403).json({ message: 'Subscription endpoint is already bound to another user account' });
-    }
+    const rebound = Boolean(existingSub && existingSub.user && String(existingSub.user) !== String(req.user._id));
 
-    // Update if endpoint exists for this user, otherwise insert
+    // Reassign endpoint to current authenticated user on shared devices, or upsert if new
     const updatedSub = await PushSubscription.findOneAndUpdate(
-      { endpoint, user: req.user._id },
+      { endpoint },
       {
-        user: req.user._id,
-        endpoint,
-        keys: {
-          p256dh: keys.p256dh,
-          auth: keys.auth
-        },
-        preferences: sanitizePreferences(preferences),
-        userAgent,
-        deviceType: typeof deviceType === 'string' && deviceType.trim() ? deviceType.trim().slice(0, 64) : 'Mobile Device'
+        $set: {
+          user: req.user._id,
+          endpoint,
+          keys: {
+            p256dh: keys.p256dh,
+            auth: keys.auth
+          },
+          preferences: sanitizePreferences(preferences),
+          userAgent,
+          deviceType: typeof deviceType === 'string' && deviceType.trim() ? deviceType.trim().slice(0, 64) : 'Mobile Device'
+        }
       },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
     res.status(200).json({
       success: true,
+      rebound,
       message: 'Push notification subscription saved successfully',
       subscription: updatedSub
     });

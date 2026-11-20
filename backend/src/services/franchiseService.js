@@ -7,6 +7,72 @@ const {
     isExpired 
 } = require('../utils/phTime');
 
+const DOCUMENT_URL_FIELDS = [
+    'orCrUrl',
+    'crUrl',
+    'orUrl',
+    'licenseUrl',
+    'licenseBackUrl',
+    'todaEndorsementUrl',
+    'brgyClearanceUrl',
+    'cedulaUrl',
+    'unitPhotoUrl'
+];
+
+/**
+ * M6: Validate document URLs to reject arbitrary external http(s) URLs and unsafe schemes.
+ * Allows:
+ *  (a) fresh files uploaded via req.files (bypassed via uploadedFields)
+ *  (b) existing URLs already persisted on the operator's own franchise record
+ *  (c) local /uploads/... or Cloudinary (https://res.cloudinary.com/...) server-issued URLs
+ */
+function isTrustedDocumentUrl(rawUrl, existingAllowedUrls = new Set()) {
+    if (rawUrl === undefined || rawUrl === null) return true;
+    const val = String(rawUrl).trim();
+    if (!val) return true;
+
+    if (existingAllowedUrls && existingAllowedUrls.has(val)) {
+        return true;
+    }
+
+    if (val.startsWith('/uploads/') && !val.includes('..') && !val.startsWith('//')) {
+        return true;
+    }
+
+    try {
+        const parsed = new URL(val);
+        if (parsed.protocol === 'https:' && parsed.hostname.toLowerCase() === 'res.cloudinary.com') {
+            return true;
+        }
+        return false;
+    } catch {
+        // Not an absolute URL with a scheme
+    }
+
+    // Explicitly block protocol-relative and dangerous pseudo-schemes
+    if (/^(javascript|data|vbscript|file):/i.test(val) || val.startsWith('//') || val.includes('..')) {
+        return false;
+    }
+
+    // In test mode, allow local mock/diskStorage paths (e.g., os.tmpdir() paths from multer test storage)
+    if (process.env.NODE_ENV === 'test' && !/^https?:\/\//i.test(val)) {
+        return true;
+    }
+
+    return false;
+}
+
+function validateDocumentUrls(payload = {}, existingAllowedUrls = new Set(), uploadedFields = new Set()) {
+    for (const field of DOCUMENT_URL_FIELDS) {
+        if (uploadedFields && uploadedFields.has(field)) continue;
+        if (payload[field] !== undefined && !isTrustedDocumentUrl(payload[field], existingAllowedUrls)) {
+            const err = new Error(`Invalid document URL for "${field}". Only uploaded files or server-issued asset URLs are allowed.`);
+            err.statusCode = 400;
+            throw err;
+        }
+    }
+}
+
 class FranchiseService {
     /**
      * Generate franchise statistics and analytics
@@ -138,7 +204,10 @@ class FranchiseService {
     /**
      * Create a new franchise application
      */
-    static async createFranchise(data, operatorId) {
+    static async createFranchise(data, operatorId, { uploadedFields = new Set() } = {}) {
+        // M6: Reject arbitrary external document URLs before creating any record
+        validateDocumentUrls(data, new Set(), uploadedFields);
+
         const motorNo = String(data.motorNo || '').trim().toUpperCase();
         const chassisNo = String(data.chassisNo || '').trim().toUpperCase();
         const plateNo = String(data.plateNo || '').trim().toUpperCase();
@@ -457,5 +526,9 @@ class FranchiseService {
         };
     }
 }
+
+FranchiseService.DOCUMENT_URL_FIELDS = DOCUMENT_URL_FIELDS;
+FranchiseService.isTrustedDocumentUrl = isTrustedDocumentUrl;
+FranchiseService.validateDocumentUrls = validateDocumentUrls;
 
 module.exports = FranchiseService;

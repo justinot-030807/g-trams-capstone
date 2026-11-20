@@ -5,6 +5,8 @@ const Notification = require('../models/notificationModel');
 const { emitToUser } = require('../config/socket');
 const { logAudit } = require('../utils/auditLogger');
 
+const SANCTIONABLE_FRANCHISE_STATUSES = ['Active', 'Active - Under Warning', 'Suspended'];
+
 /**
  * Get paginated violations list with filtering
  */
@@ -183,6 +185,14 @@ const recordViolation = async (req, res) => {
             return res.status(404).json({ success: false, message: 'Target franchise not found.' });
         }
 
+        // H5: Restrict standing-changing sanctions strictly to operational/issued permits
+        if (!SANCTIONABLE_FRANCHISE_STATUSES.includes(franchise.status) || franchise.isArchived === true) {
+            return res.status(400).json({
+                success: false,
+                message: 'Sanctions can only be recorded against active or currently suspended permits.'
+            });
+        }
+
         // Fetch authoritative system policy
         let settings = await SystemSettings.findOne().sort({ updatedAt: -1, createdAt: -1 });
         const policyTiers = settings?.violationPolicy?.tiers || {};
@@ -310,7 +320,12 @@ const recordViolation = async (req, res) => {
 
         try {
             updatedFranchise = await Franchise.findOneAndUpdate(
-                { _id: franchise._id, ...activeCountFilter },
+                {
+                    _id: franchise._id,
+                    status: { $in: SANCTIONABLE_FRANCHISE_STATUSES },
+                    isArchived: { $ne: true },
+                    ...activeCountFilter
+                },
                 {
                     $inc: { activeViolationCount: 1 },
                     $set: franchiseSetFields
@@ -336,7 +351,7 @@ const recordViolation = async (req, res) => {
             }
             return res.status(409).json({
                 success: false,
-                message: 'Concurrent violation update detected on this franchise. Please refresh and try again.'
+                message: 'Concurrent violation update or ineligible franchise status detected. Please refresh and try again.'
             });
         }
 
@@ -418,40 +433,109 @@ const settleOrLiftViolation = async (req, res) => {
         const { id } = req.params;
         const { settledNotes = '' } = req.body;
 
-        const violation = await Violation.findById(id);
-        if (!violation) {
+        const existingViolation = await Violation.findById(id);
+        if (!existingViolation) {
             return res.status(404).json({ success: false, message: 'Violation record not found.' });
         }
 
-        violation.status = 'Settled';
-        violation.settledAt = new Date();
-        violation.settledNotes = settledNotes;
-        violation.settledBy = req.user._id;
-        await violation.save();
+        if (existingViolation.status !== 'Active') {
+            return res.status(409).json({
+                success: false,
+                message: 'Violation has already been settled or lifted.'
+            });
+        }
 
-        // Check if there are other remaining active violations on this franchise
-        const remainingActiveCount = await Violation.countDocuments({
-            franchise: violation.franchise,
-            status: 'Active'
-        });
+        const priorViolationState = {
+            status: existingViolation.status,
+            settledAt: existingViolation.settledAt || null,
+            settledNotes: existingViolation.settledNotes || '',
+            settledBy: existingViolation.settledBy || null
+        };
 
-        const franchise = await Franchise.findById(violation.franchise);
-        if (franchise) {
-            franchise.activeViolationCount = remainingActiveCount;
-            if (remainingActiveCount === 0 && (franchise.status === 'Suspended' || franchise.status === 'Active - Under Warning')) {
-                // Restore franchise to fully Active status
-                franchise.status = 'Active';
-                franchise.currentSanction = 'Good Standing (Violations Settled)';
-                franchise.suspensionEndDate = null;
-                franchise.suspensionReason = '';
-            } else if (remainingActiveCount === 1 && franchise.status === 'Suspended') {
-                // If 2nd offense settled but 1st offense still logged as warning
-                franchise.status = 'Active - Under Warning';
-                franchise.currentSanction = 'Warning (Active)';
-                franchise.suspensionEndDate = null;
-                franchise.suspensionReason = '';
+        const settledAt = new Date();
+        const violation = await Violation.findOneAndUpdate(
+            { _id: id, status: 'Active' },
+            {
+                $set: {
+                    status: 'Settled',
+                    settledAt,
+                    settledNotes,
+                    settledBy: req.user._id
+                }
+            },
+            { returnDocument: 'after' }
+        );
+
+        if (!violation) {
+            return res.status(409).json({
+                success: false,
+                message: 'Violation was already settled or modified concurrently.'
+            });
+        }
+
+        const rollbackViolation = async () => {
+            await Violation.findByIdAndUpdate(violation._id, {
+                $set: priorViolationState
+            });
+        };
+
+        let updatedFranchise = null;
+        try {
+            // Check if there are other remaining active violations on this franchise
+            const remainingActiveCount = await Violation.countDocuments({
+                franchise: violation.franchise,
+                status: 'Active'
+            });
+
+            const franchise = await Franchise.findById(violation.franchise);
+            if (franchise) {
+                const franchiseSetFields = {
+                    activeViolationCount: remainingActiveCount
+                };
+                let statusGuarded = false;
+
+                if (remainingActiveCount === 0 && (franchise.status === 'Suspended' || franchise.status === 'Active - Under Warning')) {
+                    // Restore franchise to fully Active status
+                    franchiseSetFields.status = 'Active';
+                    franchiseSetFields.currentSanction = 'Good Standing (Violations Settled)';
+                    franchiseSetFields.suspensionEndDate = null;
+                    franchiseSetFields.suspensionReason = '';
+                    statusGuarded = true;
+                } else if (remainingActiveCount === 1 && franchise.status === 'Suspended') {
+                    // If 2nd offense settled but 1st offense still logged as warning
+                    franchiseSetFields.status = 'Active - Under Warning';
+                    franchiseSetFields.currentSanction = 'Warning (Active)';
+                    franchiseSetFields.suspensionEndDate = null;
+                    franchiseSetFields.suspensionReason = '';
+                    statusGuarded = true;
+                }
+
+                const filter = statusGuarded
+                    ? { _id: franchise._id, status: franchise.status }
+                    : { _id: franchise._id };
+
+                updatedFranchise = await Franchise.findOneAndUpdate(
+                    filter,
+                    { $set: franchiseSetFields },
+                    { returnDocument: 'after' }
+                );
+
+                if (!updatedFranchise) {
+                    await rollbackViolation();
+                    return res.status(409).json({
+                        success: false,
+                        message: 'Concurrent franchise standing change detected while settling violation. Please refresh and try again.'
+                    });
+                }
             }
-            await franchise.save();
+        } catch (franchiseErr) {
+            try {
+                await rollbackViolation();
+            } catch (cleanupErr) {
+                console.error(`[ViolationController] CRITICAL: Failed to roll back Violation ${violation._id} after franchise standing update failure:`, cleanupErr);
+                throw cleanupErr;
+            }
+            throw franchiseErr;
         }
 
         logAudit(req, {
@@ -462,7 +546,7 @@ const settleOrLiftViolation = async (req, res) => {
                 franchiseId: String(violation.franchise),
                 plateNo: violation.plateNo,
                 settledNotes,
-                resultingFranchiseStatus: franchise?.status
+                resultingFranchiseStatus: updatedFranchise?.status
             }
         });
 
@@ -470,7 +554,7 @@ const settleOrLiftViolation = async (req, res) => {
             success: true,
             message: 'Violation successfully settled. Franchise standing updated.',
             violation,
-            franchiseStatus: franchise?.status
+            franchiseStatus: updatedFranchise?.status
         });
     } catch (error) {
         console.error('Error settling violation:', error);

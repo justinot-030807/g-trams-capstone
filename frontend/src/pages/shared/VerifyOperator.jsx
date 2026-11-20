@@ -77,7 +77,7 @@ const VerifyOperator = () => {
   };
 
   const getUnitValidity = (unit) => {
-    if (!unit) return { isValid: false, label: 'INACTIVE', rawStatus: '' };
+    if (!unit) return { isValid: false, label: 'INACTIVE', rawStatus: '', isRenewalPending: false };
     const expiredByDate = isUnitExpiredByDate(unit);
     const hasValidExpiryDate = Boolean(unit?.expiryDate) && !isNaN(new Date(unit.expiryDate).getTime());
     const ownerInactive =
@@ -115,7 +115,7 @@ const VerifyOperator = () => {
       label = 'EXPIRED';
     }
 
-    return { isValid, label, rawStatus };
+    return { isValid, label, rawStatus, isRenewalPending: Boolean(unit.isRenewalPending) };
   };
 
   const isOwnerInactive = operator.isActive === false || operator.validityStatus === 'INACTIVE_OWNER';
@@ -144,9 +144,15 @@ const VerifyOperator = () => {
       bannerTitle = 'UNVERIFIED PERMIT EXPIRY — NOT VERIFIED';
     } else if (scannedValidity.isValid) {
       bannerClasses = 'bg-[#9E2A2B] border-[#7A1B22]';
-      bannerTitle = scannedValidity.rawStatus === 'Active - Under Warning'
-        ? 'ACTIVE PERMIT (UNDER WARNING)'
-        : 'VERIFIED ACTIVE PERMIT';
+      if (scannedValidity.isRenewalPending) {
+        bannerTitle = scannedValidity.rawStatus === 'Active - Under Warning'
+          ? 'VALID PERMIT (UNDER WARNING • RENEWAL IN PROGRESS)'
+          : 'VALID PERMIT (RENEWAL IN PROGRESS)';
+      } else {
+        bannerTitle = scannedValidity.rawStatus === 'Active - Under Warning'
+          ? 'ACTIVE PERMIT (UNDER WARNING)'
+          : 'VERIFIED ACTIVE PERMIT';
+      }
     } else if (scannedValidity.label === 'PENDING') {
       bannerClasses = 'bg-amber-700 border-amber-900';
       bannerTitle = `PERMIT NOT ACTIVE (${(scannedValidity.rawStatus || 'PENDING').toUpperCase()})`;
@@ -244,6 +250,11 @@ const VerifyOperator = () => {
                           : `Status: ${scannedValidity.rawStatus || scannedValidity.label}`}
                       </p>
                     )}
+                    {scannedValidity.isValid && scannedValidity.isRenewalPending && (
+                      <p className="text-[11px] font-semibold text-amber-800 dark:text-amber-300 mt-1">
+                        Valid Permit (Renewal In Progress)
+                      </p>
+                    )}
                   </div>
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded text-white uppercase tracking-wider shrink-0 ${
                     scannedValidity.isValid && scannedValidity.rawStatus !== 'Active - Under Warning' ? 'bg-emerald-600' :
@@ -290,11 +301,16 @@ const VerifyOperator = () => {
                       : ` • ${unitValidity.label}`;
                     return (
                       <div key={i} className="bg-white dark:bg-[#1C1917] p-2.5 rounded-md border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-between gap-2">
-                        <div>
+                        <div className="min-w-0">
                           <p className="text-xs font-bold font-mono text-[#1F1D1B] dark:text-white uppercase tracking-wider">{f.plateNo || 'PENDING'}</p>
                           <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] font-medium truncate max-w-[200px]">
                             {f.make || 'Tricycle Unit'}{subLabel}
                           </p>
+                          {unitValidity.isValid && unitValidity.isRenewalPending && (
+                            <p className="text-[10px] font-semibold text-amber-800 dark:text-amber-300 mt-0.5">
+                              Valid Permit (Renewal In Progress)
+                            </p>
+                          )}
                         </div>
                         <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border shrink-0 ${
                           unitValidity.isValid && effectiveStatus !== 'Active - Under Warning' ? 'bg-emerald-500/10 text-emerald-800 dark:text-emerald-300 border-emerald-600/30' :

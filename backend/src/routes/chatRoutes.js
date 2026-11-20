@@ -10,10 +10,22 @@ const { logAudit } = require('../utils/auditLogger');
 
 const STAFF_ROLES = ['admin', 'administrator', 'Administrator', 'system_admin', 'system admin', 'bplo_staff', 'bplo staff'];
 
+function isStaffRoleValue(role) {
+  const normalized = String(role || '').toLowerCase().trim().replace(/[\s-]+/g, '_');
+  return ['system_admin', 'admin', 'administrator', 'bplo_staff'].includes(normalized);
+}
+
 function isStaffUser(user) {
   if (!user || user.isActive === false) return false;
-  const normalized = String(user.role || '').toLowerCase().trim().replace(/[\s-]+/g, '_');
-  return ['system_admin', 'admin', 'administrator', 'bplo_staff'].includes(normalized);
+  return isStaffRoleValue(user.role);
+}
+
+async function isAuthorizedForThread(thread, user, participantUserMap = null) {
+  if (!thread || !user) return false;
+  if (isStaffUser(user)) return true;
+  if (thread.isAnnouncement) return true;
+  const map = participantUserMap || (await buildParticipantUserMap([thread]));
+  return canNonStaffAccessSupportThread(thread, user, map);
 }
 
 function isOperatorOrPresidentRole(role) {
@@ -476,6 +488,7 @@ router.post('/messages', async (req, res) => {
     const newMessage = await ChatMessage.create({
       thread: thread._id,
       sender: req.user._id,
+      senderRole: req.user.role,
       message,
       readBy: [req.user._id]
     });
@@ -512,6 +525,7 @@ router.post('/messages', async (req, res) => {
       const notification = await Notification.create({
         recipient: recId,
         type: 'chat',
+        threadId: thread._id,
         title: notifTitle,
         message: notifMsg
       });
@@ -569,6 +583,7 @@ router.post('/messages', async (req, res) => {
             emitToUser(req.user._id.toString(), 'notification', await Notification.create({
               recipient: req.user._id,
               type: 'chat',
+              threadId: thread._id,
               title: 'Auto-Reply from GTRAMS',
               message: autoReply
             }));
@@ -629,8 +644,8 @@ router.put('/messages/:threadId/read', async (req, res) => {
         );
 
         await Notification.updateMany(
-          { recipient: req.user._id, type: 'chat', isRead: false },
-          { isRead: true }
+          { recipient: req.user._id, type: 'chat', threadId: thread._id, isRead: false },
+          { $set: { isRead: true } }
         );
 
         emitToUser(req.user._id.toString(), 'chat_read', { threadId: thread._id });
@@ -640,6 +655,11 @@ router.put('/messages/:threadId/read', async (req, res) => {
       await ChatMessage.updateMany(
         { thread: thread._id, sender: { $nin: adminIds }, isRead: false },
         { $set: { isRead: true }, $addToSet: { readBy: req.user._id } }
+      );
+
+      await Notification.updateMany(
+        { recipient: req.user._id, type: 'chat', threadId: thread._id, isRead: false },
+        { $set: { isRead: true } }
       );
 
       emitToAdmins('chat_read', { threadId: thread._id });
@@ -652,8 +672,8 @@ router.put('/messages/:threadId/read', async (req, res) => {
       );
 
       await Notification.updateMany(
-        { recipient: req.user._id, type: 'chat', isRead: false },
-        { isRead: true }
+        { recipient: req.user._id, type: 'chat', threadId: thread._id, isRead: false },
+        { $set: { isRead: true } }
       );
 
       emitToUser(req.user._id.toString(), 'chat_read', { threadId: thread._id });
@@ -722,6 +742,7 @@ router.post('/broadcast', async (req, res) => {
     const newMessage = await ChatMessage.create({
       thread: thread._id,
       sender: req.user._id,
+      senderRole: req.user.role,
       message: fullMessage,
       targetToda,
       targetStatus,
@@ -741,6 +762,7 @@ router.post('/broadcast', async (req, res) => {
     const notificationsToInsert = users.map(user => ({
       recipient: user._id,
       type: 'chat',
+      threadId: thread._id,
       title: notifTitle,
       message: `Admin broadcasted an announcement${targetToda !== 'ALL' ? ` for ${targetToda}` : ''}`
     }));
@@ -785,6 +807,40 @@ router.delete('/messages/:messageId', async (req, res) => {
     if (!message) return res.status(404).json({ message: 'Message not found' });
 
     const isAdmin = isStaffUser(req.user);
+    const thread = await ChatThread.findById(message.thread);
+    if (!thread) {
+      if (!isAdmin) {
+        return res.status(403).json({ message: 'Unauthorized to delete this message' });
+      }
+    } else {
+      const participantUserMap = await buildParticipantUserMap([thread]);
+      const hasThreadAccess = await isAuthorizedForThread(thread, req.user, participantUserMap);
+      if (!hasThreadAccess) {
+        return res.status(403).json({ message: 'Unauthorized to delete messages in this thread' });
+      }
+
+      // Announcement messages are official staff communications — only current staff may delete them
+      if (thread.isAnnouncement && !isAdmin) {
+        return res.status(403).json({ message: 'Only current staff can delete announcement messages' });
+      }
+
+      // In support threads, non-staff may only delete messages authored by the current thread owner
+      if (!isAdmin) {
+        const activeStaff = await getActiveStaffUsers();
+        const activeStaffIdSet = new Set(activeStaff.map(a => String(a._id)));
+        const ownerId = resolveSupportThreadOwnerId(thread, activeStaffIdSet, participantUserMap);
+        if (!ownerId || String(message.sender) !== String(ownerId)) {
+          return res.status(403).json({ message: 'Only current staff can delete official staff replies' });
+        }
+      }
+    }
+
+    // If the message records a staff senderRole, only current staff may delete it (blocks demoted former staff)
+    const rawSenderRole = typeof message.get === 'function' ? message.get('senderRole') : message.senderRole;
+    if (isStaffRoleValue(rawSenderRole) && !isAdmin) {
+      return res.status(403).json({ message: 'Only current staff can delete staff messages' });
+    }
+
     if (String(message.sender) !== String(req.user._id) && !isAdmin) {
       return res.status(403).json({ message: 'Unauthorized to delete this message' });
     }

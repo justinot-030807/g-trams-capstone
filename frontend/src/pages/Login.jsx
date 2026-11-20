@@ -88,7 +88,15 @@ const Login = () => {
         if (response.status === 503) {
           setError(data.message || 'The system is undergoing maintenance. Access is restricted for non-admin users.');
         } else if (response.status === 403 && data.accountDeactivated === true) {
-          navigate('/account-deactivated', { state: { contact: data.contact, reason: data.reason, appealStatus: data.appealStatus } });
+          navigate('/account-deactivated', {
+            state: {
+              contact: data.contact || formData.contact,
+              reason: data.reason,
+              appealStatus: data.appealStatus,
+              hasLocalPassword: data.hasLocalPassword,
+              authProvider: data.authProvider
+            }
+          });
         } else if (response.status === 429) {
           const secs = data.retryAfterSeconds || 60;
           setLockoutSeconds(secs);
@@ -353,7 +361,9 @@ const Login = () => {
                         state: {
                           contact: err.contact || formData.contact,
                           reason: err.reason,
-                          appealStatus: err.appealStatus
+                          appealStatus: err.appealStatus,
+                          hasLocalPassword: err.hasLocalPassword,
+                          authProvider: err.authProvider || 'google'
                         }
                       });
                     } else {
