@@ -229,7 +229,8 @@ const MODELS = {
     chat_threads: ChatThread,
     chat_messages: ChatMessage,
     push_subscriptions: require('../models/pushSubscriptionModel'),
-    payment_ledgers: require('../models/paymentLedgerModel')
+    payment_ledgers: require('../models/paymentLedgerModel'),
+    mtop_counters: require('../models/mtopCounterModel')
 };
 
 const BACKUP_DIR = process.env.BACKUP_DIR
@@ -255,7 +256,9 @@ async function assembleBackupPayload() {
 
     for (const [key, model] of Object.entries(MODELS)) {
         try {
-            let docs = await model.find().lean();
+            const query = model.find();
+            if (key === 'franchises') query.select('+pendingExpiryNotifications +paymentSettlement');
+            let docs = await query.lean();
             
             // Data Privacy Act compliance: sanitize ephemeral security tokens on user records
             if (key === 'users') {
@@ -593,6 +596,9 @@ async function stageRestoreCollections(collections, targetEntries) {
  */
 async function restoreFromBackup(backupPayload, { triggeredBy = 'System Admin', onRestored } = {}) {
     const collections = await validateBackupPayload(backupPayload);
+    if (!collections.mtop_counters && (collections.franchises || collections.payment_ledgers)) {
+        collections.mtop_counters = [];
+    }
     // Collections absent in legacy archives (including payment_ledgers) are left intact.
     const targetEntries = Object.entries(MODELS).filter(([key]) => Object.hasOwn(collections, key));
 
@@ -624,6 +630,36 @@ async function restoreFromBackup(backupPayload, { triggeredBy = 'System Admin', 
             } else {
                 rollbackSnapshot[key] = await model.find().lean();
             }
+        }
+
+        if (collections.mtop_counters) {
+            const highWaterMarks = new Map();
+            const retain = (year, sequence) => {
+                if (Number.isSafeInteger(sequence) && sequence >= 0) {
+                    highWaterMarks.set(year, Math.max(highWaterMarks.get(year) ?? 0, sequence));
+                }
+            };
+            const retainNumber = mtopNo => {
+                const match = /^(\d{4})-(\d+)$/.exec(mtopNo);
+                if (match) retain(match[1], Number(match[2]));
+            };
+            for (const { _id, sequence } of [...rollbackSnapshot.mtop_counters, ...collections.mtop_counters]) {
+                retain(_id, sequence);
+            }
+            const liveNumberRecords = {
+                franchises: rollbackSnapshot.franchises ?? await MODELS.franchises.find()
+                    .select('mtopNo paymentHistory.mtopNo').lean(),
+                payment_ledgers: rollbackSnapshot.payment_ledgers ?? await MODELS.payment_ledgers.find()
+                    .select('mtopNo').lean()
+            };
+            for (const source of [collections, liveNumberRecords]) {
+                for (const franchise of source.franchises || []) {
+                    retainNumber(franchise.mtopNo);
+                    for (const payment of franchise.paymentHistory || []) retainNumber(payment.mtopNo);
+                }
+                for (const payment of source.payment_ledgers || []) retainNumber(payment.mtopNo);
+            }
+            collections.mtop_counters = [...highWaterMarks].map(([_id, sequence]) => ({ _id, sequence }));
         }
 
         const recoveryRecord = await SystemLock.collection.updateOne(

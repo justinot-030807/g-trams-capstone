@@ -1,11 +1,89 @@
+const { randomUUID } = require('node:crypto');
 const Violation = require('../models/violationModel');
 const Franchise = require('../models/franchiseModel');
 const SystemSettings = require('../models/systemSettingsModel');
 const Notification = require('../models/notificationModel');
 const { emitToUser } = require('../config/socket');
 const { logAudit } = require('../utils/auditLogger');
+const { getIssuedPermit, hasIssuedPermitSnapshot, issuedPermitSnapshotQuery } = require('../utils/issuedPermit');
+const { isExpired } = require('../utils/phTime');
 
 const SANCTIONABLE_FRANCHISE_STATUSES = ['Active', 'Active - Under Warning', 'Suspended'];
+const CITATION_REVOCATION_LABEL = /^Revocation \((?:\d+(?:st|nd|rd|th) Offense|Active)\)$/;
+const DISCIPLINE_LEASE_MS = 10 * 60 * 1000;
+
+// A citation and its franchise are separate documents, even on standalone MongoDB.
+async function acquireDisciplineWrite(franchiseId) {
+    const locks = Franchise.db.collection('system_locks');
+    const _id = `franchise_discipline:${Franchise.schema.path('_id').cast(franchiseId)}`;
+    const ownerId = randomUUID();
+    const now = new Date();
+    await locks.deleteOne({ _id, expiresAt: { $lte: now } });
+    try {
+        await locks.insertOne({ _id, ownerId, acquiredAt: now, expiresAt: new Date(now.getTime() + DISCIPLINE_LEASE_MS) });
+    } catch (error) {
+        if (error.code === 11000) return null;
+        throw error;
+    }
+
+    return async () => {
+        await locks.deleteOne({ _id, ownerId }).catch((error) => {
+            console.error('Failed to release franchise discipline lease:', error);
+        });
+    };
+}
+
+function disciplineTarget(franchise) {
+    const permit = getIssuedPermit(franchise);
+    const hasSnapshot = hasIssuedPermitSnapshot(franchise);
+    const statusField = hasSnapshot ? 'previousStatus' : 'status';
+    const expiryField = hasSnapshot ? 'previousExpiryDate' : 'expiryDate';
+    const renewalSnapshot = issuedPermitSnapshotQuery();
+    const filter = {
+        [statusField]: hasSnapshot ? permit.status : franchise.get('status', null, { getters: false }),
+        [expiryField]: permit.expiryDate ?? null,
+        ...(hasSnapshot ? { $and: [renewalSnapshot] } : { $nor: [renewalSnapshot] })
+    };
+    return { permit, hasSnapshot, statusField, filter };
+}
+
+function offenseLabel(offenseNumber) {
+    const suffix = offenseNumber === 1 ? 'st' : offenseNumber === 2 ? 'nd' : offenseNumber === 3 ? 'rd' : 'th';
+    return `${offenseNumber}${suffix} Offense`;
+}
+
+function settlementStanding(remaining, expiryDate, now) {
+    const revocation = remaining.find(({ sanction }) => sanction?.type === 'Revocation');
+    if (revocation) {
+        const offense = revocation.offenseNumber ? offenseLabel(revocation.offenseNumber) : 'Active';
+        return { status: 'Revoked', currentSanction: `Revocation (${offense})`, revocation };
+    }
+
+    const suspension = remaining.find(({ sanction }) => sanction?.type === 'Suspension' &&
+        (!sanction.suspensionEndDate || sanction.suspensionEndDate > now));
+    if (suspension) {
+        const offense = offenseLabel(suspension.offenseNumber);
+        return {
+            status: 'Suspended',
+            currentSanction: `Suspension (${offense})`,
+            suspensionEndDate: suspension.sanction.suspensionEndDate ?? null,
+            suspensionReason: `${suspension.violationType} (${offense})`
+        };
+    }
+
+    if (isExpired(expiryDate, now)) {
+        return { status: 'Expired', currentSanction: '' };
+    }
+    return remaining.length
+        ? { status: 'Active - Under Warning', currentSanction: 'Warning (Active)' }
+        : { status: 'Active', currentSanction: 'Good Standing (Violations Settled)' };
+}
+
+function citationRevocationReason({ isGrave, violationType }) {
+    return isGrave
+        ? `Revoked due to Grave Violation: ${violationType}`
+        : `Revoked due to 3rd Offense Violation: ${violationType}`;
+}
 
 /**
  * Get paginated violations list with filtering
@@ -156,10 +234,11 @@ const getOperatorViolationHistory = async (req, res) => {
  * Record a new violation with 3-Tier Progressive Discipline Engine:
  * - 1st Offense: Official Warning (Active - Under Warning)
  * - 2nd Offense: Fine & Suspension (Suspended)
- * - 3rd Offense: Permanent Revocation (Revoked)
+ * - 3rd Offense: Revocation (Revoked)
  * - Grave Offense: Direct Revocation (Revoked)
  */
 const recordViolation = async (req, res) => {
+    let releaseDisciplineWrite;
     try {
         const {
             franchiseId,
@@ -180,13 +259,20 @@ const recordViolation = async (req, res) => {
             });
         }
 
+        releaseDisciplineWrite = await acquireDisciplineWrite(franchiseId);
+        if (!releaseDisciplineWrite) {
+            return res.status(409).json({ success: false, message: 'A discipline update is already in progress. Please try again.' });
+        }
+
         const franchise = await Franchise.findById(franchiseId).populate('operator');
         if (!franchise) {
             return res.status(404).json({ success: false, message: 'Target franchise not found.' });
         }
 
         // H5: Restrict standing-changing sanctions strictly to operational/issued permits
-        if (!SANCTIONABLE_FRANCHISE_STATUSES.includes(franchise.status) || franchise.isArchived === true) {
+        const target = disciplineTarget(franchise);
+        if (!SANCTIONABLE_FRANCHISE_STATUSES.includes(target.permit.status) ||
+            isExpired(target.permit.expiryDate) || franchise.isArchived === true) {
             return res.status(400).json({
                 success: false,
                 message: 'Sanctions can only be recorded against active or currently suspended permits.'
@@ -270,7 +356,7 @@ const recordViolation = async (req, res) => {
         }
 
         const operatorRef = franchise.operator?._id || franchise.operator || null;
-        const sanctionLabel = `${sanctionType} (${offenseNumber}${offenseNumber === 1 ? 'st' : offenseNumber === 2 ? 'nd' : offenseNumber === 3 ? 'rd' : 'th'} Offense)`;
+        const sanctionLabel = `${sanctionType} (${offenseLabel(offenseNumber)})`;
 
         // Save new violation record cleanly, then atomically update the franchise with rollback on conflict/failure
         const violation = await Violation.create({
@@ -300,16 +386,14 @@ const recordViolation = async (req, res) => {
         });
 
         const franchiseSetFields = {
-            status: resultingStatus,
+            [target.statusField]: resultingStatus,
             currentSanction: sanctionLabel
         };
         if (resultingStatus === 'Suspended') {
             franchiseSetFields.suspensionEndDate = suspensionEndDate;
             franchiseSetFields.suspensionReason = `${violationType} (2nd Offense)`;
-        } else if (resultingStatus === 'Revoked') {
-            franchiseSetFields.cancelReason = isGrave
-                ? `Revoked due to Grave Violation: ${violationType}`
-                : `Revoked due to 3rd Offense Violation: ${violationType}`;
+        } else if (resultingStatus === 'Revoked' && !target.hasSnapshot) {
+            franchiseSetFields.cancelReason = citationRevocationReason(violation);
             if (evidenceUrl) franchiseSetFields.evidenceUrl = evidenceUrl;
         }
 
@@ -322,7 +406,7 @@ const recordViolation = async (req, res) => {
             updatedFranchise = await Franchise.findOneAndUpdate(
                 {
                     _id: franchise._id,
-                    status: { $in: SANCTIONABLE_FRANCHISE_STATUSES },
+                    ...target.filter,
                     isArchived: { $ne: true },
                     ...activeCountFilter
                 },
@@ -354,6 +438,9 @@ const recordViolation = async (req, res) => {
                 message: 'Concurrent violation update or ineligible franchise status detected. Please refresh and try again.'
             });
         }
+
+        await releaseDisciplineWrite();
+        releaseDisciplineWrite = null;
 
         // Notify Operator in real-time
         try {
@@ -414,7 +501,7 @@ const recordViolation = async (req, res) => {
             violation,
             franchise: {
                 _id: updatedFranchise._id,
-                status: updatedFranchise.status,
+                status: getIssuedPermit(updatedFranchise).status,
                 currentSanction: updatedFranchise.currentSanction,
                 suspensionEndDate: updatedFranchise.suspensionEndDate
             }
@@ -422,6 +509,8 @@ const recordViolation = async (req, res) => {
     } catch (error) {
         console.error('Error recording violation:', error);
         res.status(500).json({ success: false, message: 'Server error while processing violation.' });
+    } finally {
+        await releaseDisciplineWrite?.();
     }
 };
 
@@ -429,6 +518,7 @@ const recordViolation = async (req, res) => {
  * Settle violation fine or lift suspension (BPLO Staff / Admin)
  */
 const settleOrLiftViolation = async (req, res) => {
+    let releaseDisciplineWrite;
     try {
         const { id } = req.params;
         const { settledNotes = '' } = req.body;
@@ -445,6 +535,12 @@ const settleOrLiftViolation = async (req, res) => {
             });
         }
 
+        releaseDisciplineWrite = await acquireDisciplineWrite(existingViolation.franchise);
+        if (!releaseDisciplineWrite) {
+            return res.status(409).json({ success: false, message: 'A discipline update is already in progress. Please try again.' });
+        }
+
+        const franchise = await Franchise.findById(existingViolation.franchise);
         const priorViolationState = {
             status: existingViolation.status,
             settledAt: existingViolation.settledAt || null,
@@ -474,59 +570,56 @@ const settleOrLiftViolation = async (req, res) => {
         }
 
         const rollbackViolation = async () => {
-            await Violation.findByIdAndUpdate(violation._id, {
-                $set: priorViolationState
-            });
+            const result = await Violation.updateOne(
+                { _id: violation._id, status: 'Settled', settledAt, settledBy: req.user._id },
+                { $set: priorViolationState }
+            );
+            if (result.matchedCount !== 1) {
+                throw new Error(`Violation ${violation._id} changed after settlement.`);
+            }
         };
 
         let updatedFranchise = null;
         try {
-            // Check if there are other remaining active violations on this franchise
-            const remainingActiveCount = await Violation.countDocuments({
-                franchise: violation.franchise,
-                status: 'Active'
-            });
-
-            const franchise = await Franchise.findById(violation.franchise);
             if (franchise) {
+                const remaining = await Violation.find({ franchise: violation.franchise, status: 'Active' })
+                    .select('sanction offenseNumber violationType isGrave evidenceUrl')
+                    .sort({ 'sanction.suspensionEndDate': -1, _id: 1 })
+                    .lean();
+                const target = disciplineTarget(franchise);
+                const { status, expiryDate } = target.permit;
                 const franchiseSetFields = {
-                    activeViolationCount: remainingActiveCount
+                    activeViolationCount: remaining.length
                 };
-                let statusGuarded = false;
 
-                if (remainingActiveCount === 0 && (franchise.status === 'Suspended' || franchise.status === 'Active - Under Warning')) {
-                    // Restore franchise to fully Active status
-                    franchiseSetFields.status = 'Active';
-                    franchiseSetFields.currentSanction = 'Good Standing (Violations Settled)';
-                    franchiseSetFields.suspensionEndDate = null;
-                    franchiseSetFields.suspensionReason = '';
-                    statusGuarded = true;
-                } else if (remainingActiveCount === 1 && franchise.status === 'Suspended') {
-                    // If 2nd offense settled but 1st offense still logged as warning
-                    franchiseSetFields.status = 'Active - Under Warning';
-                    franchiseSetFields.currentSanction = 'Warning (Active)';
-                    franchiseSetFields.suspensionEndDate = null;
-                    franchiseSetFields.suspensionReason = '';
-                    statusGuarded = true;
+                const citationRevoked = status === 'Revoked' && CITATION_REVOCATION_LABEL.test(franchise.currentSanction);
+                if ((citationRevoked || SANCTIONABLE_FRANCHISE_STATUSES.includes(status)) && franchise.isArchived !== true) {
+                    const { status: standing, revocation, ...sanctionFields } = settlementStanding(remaining, expiryDate, settledAt);
+                    Object.assign(franchiseSetFields, {
+                        [target.statusField]: standing,
+                        suspensionEndDate: null,
+                        suspensionReason: '',
+                        ...sanctionFields
+                    });
+                    if (!target.hasSnapshot && (citationRevoked || revocation)) {
+                        franchiseSetFields.cancelReason = revocation ? citationRevocationReason(revocation) : '';
+                        if (revocation?.evidenceUrl) {
+                            franchiseSetFields.evidenceUrl = revocation.evidenceUrl;
+                        } else if (violation.sanction?.type === 'Revocation' && franchise.evidenceUrl === violation.evidenceUrl) {
+                            franchiseSetFields.evidenceUrl = '';
+                        }
+                    }
                 }
 
-                const filter = statusGuarded
-                    ? { _id: franchise._id, status: franchise.status }
-                    : { _id: franchise._id };
-
                 updatedFranchise = await Franchise.findOneAndUpdate(
-                    filter,
+                    {
+                        _id: franchise._id,
+                        ...target.filter,
+                        updatedAt: franchise.updatedAt ?? null
+                    },
                     { $set: franchiseSetFields },
                     { returnDocument: 'after' }
                 );
-
-                if (!updatedFranchise) {
-                    await rollbackViolation();
-                    return res.status(409).json({
-                        success: false,
-                        message: 'Concurrent franchise standing change detected while settling violation. Please refresh and try again.'
-                    });
-                }
             }
         } catch (franchiseErr) {
             try {
@@ -538,6 +631,18 @@ const settleOrLiftViolation = async (req, res) => {
             throw franchiseErr;
         }
 
+        if (franchise && !updatedFranchise) {
+            await rollbackViolation();
+            return res.status(409).json({
+                success: false,
+                message: 'Concurrent franchise standing change detected while settling violation. Please refresh and try again.'
+            });
+        }
+
+        await releaseDisciplineWrite();
+        releaseDisciplineWrite = null;
+
+        const resultingFranchiseStatus = updatedFranchise ? getIssuedPermit(updatedFranchise).status : undefined;
         logAudit(req, {
             action: 'VIOLATION_SETTLED',
             targetType: 'Violation',
@@ -546,7 +651,7 @@ const settleOrLiftViolation = async (req, res) => {
                 franchiseId: String(violation.franchise),
                 plateNo: violation.plateNo,
                 settledNotes,
-                resultingFranchiseStatus: updatedFranchise?.status
+                resultingFranchiseStatus
             }
         });
 
@@ -554,11 +659,13 @@ const settleOrLiftViolation = async (req, res) => {
             success: true,
             message: 'Violation successfully settled. Franchise standing updated.',
             violation,
-            franchiseStatus: updatedFranchise?.status
+            franchiseStatus: resultingFranchiseStatus
         });
     } catch (error) {
         console.error('Error settling violation:', error);
         res.status(500).json({ success: false, message: 'Failed to settle violation.' });
+    } finally {
+        await releaseDisciplineWrite?.();
     }
 };
 

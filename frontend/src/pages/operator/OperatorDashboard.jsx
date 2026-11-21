@@ -458,6 +458,10 @@ const OperatorDashboard = () => {
 
   const handleFixIssues = (targetUnit) => {
     if (!targetUnit) return;
+    if (targetUnit.applicationType === 'Renewal') {
+      navigate(`/renew-franchise/${targetUnit._id}`);
+      return;
+    }
     const ownerUserId = (() => {
       try {
         const u = JSON.parse(localStorage.getItem('user') || '{}');
@@ -1294,6 +1298,12 @@ const OperatorDashboard = () => {
 
                 <div id={unitIndex === 0 ? "tour-tracker-section" : undefined}>
                   {renderApplicationTracker(unit?.status)}
+                  {unit.issuedPermit && (
+                    <p className="mb-3 text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                      Issued permit · {unit.issuedPermit.status}
+                      {unit.issuedPermit.expiryDate && ` · Expires ${getExpirationDate(unit.issuedPermit)}`}
+                    </p>
+                  )}
 
                   {(unit?.status === 'Active' || unit?.status === 'Active - Under Warning') && (() => {
                     const daysRemaining = calculateDaysRemaining(unit);
@@ -1582,21 +1592,21 @@ const OperatorDashboard = () => {
                 ) : (
                   <div className="flex flex-col sm:flex-row items-center w-full gap-2">
                     <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="w-full sm:flex-1 bg-[#F6F5F3] hover:bg-[#EAE7E1] dark:bg-[#14110F] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] px-4 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors active:scale-95 cursor-pointer shadow-sm">{t('dashboard.btnViewDetails', 'View Details')}</button>
-                    {(unit?.status === 'Pending' || unit?.status === 'For Signing' || unit?.status === 'Ready for Pickup') && (
-                      <button 
-                        onClick={() => setCancelModal({
-                          isOpen: true,
-                          unit,
-                          reason: CANCEL_REASONS[0],
-                          customReason: '',
-                          isSubmitting: false
-                        })}
-                        className="w-full sm:w-auto bg-white dark:bg-[#1C1917] hover:bg-[#FEE2E2]/50 text-[#B91C1C] dark:text-[#EF4444] border border-[#EF4444]/40 px-3.5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shrink-0"
-                      >
-                        <XCircle size={14} /> Cancel
-                      </button>
-                    )}
                   </div>
+                )}
+                {['Pending', 'Pending for Approval', 'For Payment'].includes(unit.status) && unit.paymentStatus !== 'Paid' && (
+                  <button
+                    onClick={() => setCancelModal({
+                      isOpen: true,
+                      unit,
+                      reason: CANCEL_REASONS[0],
+                      customReason: '',
+                      isSubmitting: false
+                    })}
+                    className="w-full sm:w-auto bg-white dark:bg-[#1C1917] hover:bg-[#FEE2E2]/50 text-[#B91C1C] dark:text-[#EF4444] border border-[#EF4444]/40 px-3.5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shrink-0"
+                  >
+                    <XCircle size={14} /> Withdraw
+                  </button>
                 )}
               </div>
             </div>

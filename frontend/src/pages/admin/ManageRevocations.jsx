@@ -101,9 +101,9 @@ const ManageRevocations = () => {
         const raw = await res.json();
         const allFranchises = Array.isArray(raw) ? raw : (raw?.data || []);
         // Only show relevant franchises (Active, Warning, Suspended, Revoked)
-        const relevant = allFranchises.filter(f => 
-          ['Active', 'Active - Under Warning', 'Suspended', 'Revoked'].includes(f.status)
-        );
+        const relevant = allFranchises
+          .map(f => f.issuedPermit ? { ...f, status: f.issuedPermit.status } : f)
+          .filter(f => ['Active', 'Active - Under Warning', 'Suspended', 'Revoked'].includes(f.status));
         setFranchises(relevant);
       }
     } catch (error) {

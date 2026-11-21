@@ -652,23 +652,23 @@ describe('Module 5: Apply and Renew Franchise Applications', () => {
         expect(res.body.message).toContain('already registered');
     });
 
-    it('M5-03: BPLO Staff should approve franchise (Pending → For Signing)', async () => {
-        const franchise = await createTestFranchise({ status: 'Pending', paymentStatus: 'Paid' });
+    it('M5-03: BPLO Staff should approve franchise (Pending → For Payment)', async () => {
+        const franchise = await createTestFranchise({ status: 'Pending', paymentStatus: 'Unpaid' });
 
         // System Admin should be blocked by RBAC
         const adminRes = await request(app)
             .put(`/api/v1/franchises/${franchise._id}/status`)
             .set('Authorization', `Bearer ${adminToken}`)
-            .send({ status: 'For Signing' });
+            .send({ status: 'For Payment' });
         expect(adminRes.status).toBe(403);
 
         const res = await request(app)
             .put(`/api/v1/franchises/${franchise._id}/status`)
             .set('Authorization', `Bearer ${bploToken}`)
-            .send({ status: 'For Signing' });
+            .send({ status: 'For Payment' });
 
         expect(res.status).toBe(200);
-        expect(res.body.status).toBe('For Signing');
+        expect(res.body.status).toBe('For Payment');
         expect(res.body.approvalDate).toBeDefined();
     });
 
@@ -938,7 +938,7 @@ describe('Module 7: Generate System Reports', () => {
 describe('Module 8: Manage Franchise Cancellation and Revocation', () => {
 
     it('M8-01: Operator should cancel a Pending franchise application', async () => {
-        const franchise = await createTestFranchise({ status: 'Pending', plateNo: 'CANCEL-001' });
+        const franchise = await createTestFranchise({ status: 'Pending', paymentStatus: 'Unpaid', plateNo: 'CANCEL-001' });
 
         const res = await request(app)
             .put(`/api/v1/franchises/${franchise._id}/cancel`)
@@ -951,16 +951,16 @@ describe('Module 8: Manage Franchise Cancellation and Revocation', () => {
         expect(res.body.cancelReason).toBe('Changed my mind');
     });
 
-    it('M8-02: Operator should cancel a For Signing application', async () => {
-        const franchise = await createTestFranchise({ status: 'For Signing', plateNo: 'CANCEL-FS-001' });
+    it('M8-02: Operator cannot withdraw a paid For Signing application', async () => {
+        const franchise = await createTestFranchise({ status: 'For Signing', paymentStatus: 'Paid', plateNo: 'CANCEL-FS-001' });
 
         const res = await request(app)
             .put(`/api/v1/franchises/${franchise._id}/cancel`)
             .set('Authorization', `Bearer ${operatorToken}`)
             .send({ cancelReason: 'Found duplicate entry' });
 
-        expect(res.status).toBe(200);
-        expect(res.body.status).toBe('Cancelled');
+        expect(res.status).toBe(400);
+        expect((await Franchise.findById(franchise._id)).status).toBe('For Signing');
     });
 
     it('M8-03: Operator should NOT cancel an Active franchise', async () => {
@@ -972,7 +972,7 @@ describe('Module 8: Manage Franchise Cancellation and Revocation', () => {
             .send({ cancelReason: 'Trying to cancel active' });
 
         expect(res.status).toBe(400);
-        expect(res.body.message).toContain('pending or unreleased');
+        expect(res.body.message).toContain('Only unpaid pending applications');
     });
 
     it('M8-04: BPLO Staff should revoke an active franchise with violation reason', async () => {

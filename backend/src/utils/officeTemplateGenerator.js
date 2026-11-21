@@ -399,7 +399,7 @@ function generateCancellationDocx(franchise = {}) {
     const reqParts = getOrdinalParts(franchise.cancellationRequestedAt || cancelDate);
     const orDateParts = getOrdinalParts(franchise.cancellationOrDate || cancelDate);
 
-    const rawMtop = String(franchise.mtopNumber || franchise.franchiseNumber || `${cancelParts.year}-001`)
+    const rawMtop = String(franchise.mtopNo || franchise.mtopNumber || franchise.franchiseNumber || 'N/A')
         .replace(/^MTOP-GASAN-/i, '');
 
     const replacements = {

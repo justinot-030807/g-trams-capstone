@@ -315,6 +315,9 @@ describe('Document Metadata Persistence & Re-application Workflow Test Suite', (
             cedulaAddress: 'Gasan',
             cedulaSerialNo: 'CED-OLD-005',
             status: 'Cancelled',
+            applicationType: 'Renewal',
+            previousStatus: 'Expired',
+            previousExpiryDate: new Date(Date.now() - 86400000),
             cancelReason: 'Expired with deficiencies',
             rejectedField: 'orCrDocument',
             isArchived: true

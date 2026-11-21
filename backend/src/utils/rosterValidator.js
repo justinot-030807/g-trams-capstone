@@ -1,6 +1,7 @@
 const { isNameMatch } = require('./nameMatcher');
 const TodaSubmission = require('../models/todaSubmission');
 const TodaRoster = require('../models/todaModel');
+const { rosterAssociation, rosterBodyKey, sameRosterName } = require('./rosterClaims');
 
 /**
  * Normalizes body number for flexible comparison
@@ -54,9 +55,7 @@ function isBodyNumberMatch(inputNo, rosterNo) {
  * Builds resilient search condition for matching TODA names
  */
 function buildTodaSearchRegex(todaName) {
-    const clean = String(todaName || '').trim();
-    const escaped = clean.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    return new RegExp(`^${escaped}$`, 'i');
+    return rosterAssociation(todaName).pattern;
 }
 
 /**
@@ -74,7 +73,7 @@ function buildTodaSearchRegex(todaName) {
  * @param {string} params.bodyNumber Body number entered by applicant
  * @returns {Promise<object>} Validation report with advisory notice
  */
-async function validateOperatorAgainstRoster({ fullName, todaAssociation, bodyNumber }) {
+async function validateOperatorAgainstRoster({ fullName, todaAssociation, bodyNumber, session }) {
     const cleanName = String(fullName || '').trim();
     const cleanToda = String(todaAssociation || '').trim();
     const cleanBodyNo = String(bodyNumber || '').trim();
@@ -125,23 +124,32 @@ async function validateOperatorAgainstRoster({ fullName, todaAssociation, bodyNu
     //    B. TodaRoster records (direct masterlist collection)
     const approvedSubmissions = await TodaSubmission.find({
         status: 'Approved',
-        $or: [{ todaAssociation: todaRegex }, { fileName: todaRegex }]
-    }).select('extractedMembers todaAssociation fileName createdAt').lean();
+        $or: [{ todaAssociation: todaRegex }, { todaAssociation: { $in: ['', null] }, fileName: todaRegex }]
+    }).select('extractedMembers todaAssociation fileName createdAt').session(session ?? null).lean();
 
     const directRosterMembers = await TodaRoster.find({
-        todaAssociation: todaRegex,
-        status: 'Active'
-    }).lean();
+        todaAssociation: todaRegex
+    }).session(session ?? null).lean();
 
     // Aggregate all official members into normalized list
     const combinedMembers = [];
+    const directCounts = new Map();
+    for (const row of directRosterMembers) {
+        const key = rosterBodyKey(row.bodyNumber);
+        directCounts.set(key, (directCounts.get(key) || 0) + 1);
+    }
+    const legacyNames = new Map();
+    const ambiguousKeys = new Set();
 
     for (const sub of approvedSubmissions) {
         if (Array.isArray(sub.extractedMembers)) {
             for (const m of sub.extractedMembers) {
                 const name = (m.operatorName || m.name || '').trim();
                 const bNo = (m.bodyNumber || m.unitNo || '').trim();
-                if (name) {
+                const key = rosterBodyKey(bNo);
+                if (name && !directCounts.has(key)) {
+                    if (key && legacyNames.has(key) && !sameRosterName(legacyNames.get(key), name)) ambiguousKeys.add(key);
+                    legacyNames.set(key, name);
                     combinedMembers.push({
                         operatorName: name,
                         bodyNumber: bNo,
@@ -155,6 +163,7 @@ async function validateOperatorAgainstRoster({ fullName, todaAssociation, bodyNu
     }
 
     for (const rm of directRosterMembers) {
+        if (rm.status !== 'Active' || directCounts.get(rosterBodyKey(rm.bodyNumber)) !== 1) continue;
         combinedMembers.push({
             operatorName: rm.operatorName,
             bodyNumber: rm.bodyNumber,
@@ -194,6 +203,7 @@ async function validateOperatorAgainstRoster({ fullName, todaAssociation, bodyNu
     let bodyNoMatchWithOtherName = null;
 
     for (const record of combinedMembers) {
+        if (ambiguousKeys.has(rosterBodyKey(record.bodyNumber))) continue;
         const isName = isNameMatch(cleanName, record.operatorName);
         const isBody = isBodyNumberMatch(cleanBodyNo, record.bodyNumber);
 

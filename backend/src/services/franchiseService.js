@@ -1,4 +1,5 @@
 const Franchise = require('../models/franchiseModel');
+const { currentIssuedSnapshotQuery } = require('../utils/issuedPermit');
 const { 
     getManilaNow, 
     getManilaStartOfDay, 
@@ -219,17 +220,18 @@ class FranchiseService {
         if (plateNo) identifierMatchers.push({ plateNo: { $regex: new RegExp(`^${escapeRegex(plateNo)}$`, 'i') } });
 
         if (identifierMatchers.length > 0) {
+            const issuedSnapshot = currentIssuedSnapshotQuery();
             const existingTricycle = await Franchise.findOne({
                 $or: identifierMatchers,
                 isArchived: { $ne: true },
-                status: { $nin: ['Cancelled'] }
+                $and: [{ $or: [{ status: { $ne: 'Cancelled' } }, issuedSnapshot] }]
             });
 
             if (existingTricycle) {
                 throw new Error('Tricycle (Plate/Motor/Chassis) is already registered.');
             }
             await Franchise.updateMany(
-                { $or: identifierMatchers, status: 'Cancelled', isArchived: false },
+                { $or: identifierMatchers, $nor: [issuedSnapshot], status: 'Cancelled', isArchived: false },
                 { $set: { isArchived: true } }
             );
         }
@@ -247,7 +249,10 @@ class FranchiseService {
             const currentActiveOrPending = await Franchise.countDocuments({
                 operator: operatorId,
                 isArchived: { $ne: true },
-                status: { $nin: ['Cancelled', 'Rejected', 'Revoked', 'Expired'] }
+                $or: [
+                    { status: { $nin: ['Cancelled', 'Rejected', 'Revoked', 'Expired'] } },
+                    currentIssuedSnapshotQuery()
+                ]
             });
             if (currentActiveOrPending >= maxUnits) {
                 throw new Error(`Maximum fleet limit reached (${maxUnits} units per operator).`);

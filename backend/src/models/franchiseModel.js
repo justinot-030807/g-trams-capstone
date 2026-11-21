@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const { computeManilaExpiryDate, calculateDaysRemaining, isExpired } = require('../utils/phTime');
+const { getIssuedPermit, hasIssuedPermitSnapshot, OPERATING_STATUSES } = require('../utils/issuedPermit');
 
 const franchiseSchema = new mongoose.Schema({
     operator: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
@@ -70,6 +71,15 @@ const franchiseSchema = new mongoose.Schema({
     dateApplied: { type: Date, default: Date.now },
     approvalDate: { type: Date },
     expiryDate: { type: Date, index: true },
+    // Write the alert event atomically with expiry, including on standalone MongoDB.
+    pendingExpiryNotifications: {
+        type: [{
+            recipient: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+            message: { type: String, required: true }
+        }],
+        default: undefined,
+        select: false
+    },
     lastRenewalReminderSentAt: { type: Date, default: null },
     previousStatus: { type: String, default: '' },
     previousExpiryDate: { type: Date, default: null },
@@ -147,6 +157,22 @@ const franchiseSchema = new mongoose.Schema({
     paidByCashier: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
     cashierName: { type: String, default: '' },
     paymentRemarks: { type: String, default: '' },
+    // An in-flight treasury settlement stays private and blocks competing workflow writes.
+    paymentSettlement: {
+        type: new mongoose.Schema({
+            ledgerId: mongoose.Schema.Types.ObjectId,
+            officialReceiptNo: String,
+            payerName: String,
+            amountPaid: Number,
+            paymentMethod: String,
+            paymentDate: Date,
+            paidByCashier: mongoose.Schema.Types.ObjectId,
+            cashierName: String,
+            paymentRemarks: String,
+            allocatedMtop: Boolean
+        }, { _id: false }),
+        select: false
+    },
     paymentHistory: [{
         officialReceiptNo: { type: String, default: '' },
         amountPaid: { type: Number, default: 0 },
@@ -209,6 +235,15 @@ function evaluateFranchiseDocument(doc) {
 }
 
 // Virtual properties for server-authoritative countdown and expiration state
+franchiseSchema.virtual('issuedPermit').get(function() {
+    if (!hasIssuedPermitSnapshot(this)) return undefined;
+    const permit = getIssuedPermit(this);
+    return {
+        ...permit,
+        status: OPERATING_STATUSES.includes(permit.status) && isExpired(permit.expiryDate) ? 'Expired' : permit.status
+    };
+});
+
 franchiseSchema.virtual('daysRemaining').get(function() {
     const years = this.applicationType === 'Renewal' ? 1 : 3;
     const effectiveExpiry = this.expiryDate || (this.approvalDate ? computeManilaExpiryDate(this.approvalDate, years) : null);

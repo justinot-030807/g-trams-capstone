@@ -28,6 +28,20 @@ function settingsArchive(franchiseFees = [650]) {
     return { manifest: { system: 'G-TRAMS', checksum }, collections };
 }
 
+test('M6 preserves the higher issued MTOP sequence when restoring an older archive', async () => {
+    const MtopCounter = require('../../src/models/mtopCounterModel');
+    await MtopCounter.create([{ _id: '2035', sequence: 800 }, { _id: '2036', sequence: 10 }]);
+    const archive = {
+        manifest: { system: 'G-TRAMS' },
+        collections: { mtop_counters: [{ _id: '2035', sequence: 500 }, { _id: '2036', sequence: 100 }] }
+    };
+
+    await backupService.restoreFromBackup(archive);
+    expect(await MtopCounter.find().sort('_id').lean()).toEqual([
+        { _id: '2035', sequence: 800 }, { _id: '2036', sequence: 100 }
+    ]);
+});
+
 async function waitForRestoreLock() {
     const deadline = Date.now() + 3000;
     while (Date.now() < deadline) {

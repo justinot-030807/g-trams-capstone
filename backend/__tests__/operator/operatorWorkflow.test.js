@@ -214,7 +214,8 @@ describe('Operator Workflow & Field Operations Test Suite', () => {
     });
 
     // 4. Franchise Renewal Workflow
-    it('OP-04: Operator should be able to submit renewal for an expired or active franchise', async () => {
+    it('OP-04: Operator can renew an active franchise within its renewal window', async () => {
+        const expiryDate = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000);
         const franchise = await Franchise.create({
             operator: operatorUser._id,
             fullName: operatorUser.name,
@@ -229,7 +230,8 @@ describe('Operator Workflow & Field Operations Test Suite', () => {
             cedulaDate: new Date('2025-01-01'),
             cedulaAddress: 'Gasan',
             cedulaSerialNo: 'CED-OLD',
-            status: 'Active'
+            status: 'Active',
+            expiryDate
         });
 
         const res = await request(app)
@@ -243,6 +245,8 @@ describe('Operator Workflow & Field Operations Test Suite', () => {
         const updated = await Franchise.findById(franchise._id);
         expect(updated.status).toBe('Pending');
         expect(updated.applicationType).toBe('Renewal');
+        expect(updated.previousStatus).toBe('Active');
+        expect(updated.previousExpiryDate).toEqual(expiryDate);
     });
 
     // 5. Operator Franchise Cancellation

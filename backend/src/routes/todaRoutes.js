@@ -15,6 +15,8 @@ const { isNameMatch } = require('../utils/nameMatcher');
 const { syncSubmissionToRoster, getNextBodyNumber, addIndividualMember } = require('../controllers/todaController');
 const { resolveTodaAssociation, todaAssociationPattern } = require('../controllers/franchiseController');
 const { logAudit } = require('../utils/auditLogger');
+const { findRosterSlot, rosterBodyKey, rosterClaimKey, rosterConflict, rosterOwners, sameRosterName } = require('../utils/rosterClaims');
+const { withRosterMutation } = require('../utils/rosterMutation');
 
 function getOfficialToda(value) {
     const entry = resolveTodaAssociation(value);
@@ -340,15 +342,15 @@ router.put('/approve/:id', protect, authorize('bplo_staff'), async (req, res) =>
             }
         }
 
-        // M9: Synchronize extracted members into TodaRoster using idempotent upserts BEFORE committing status='Approved'
-        // If sync fails, the error propagates and the submission remains Pending so retries work cleanly.
-        await syncSubmissionToRoster(existing, { allowPending: true });
-
-        const updatedSubmission = await TodaSubmission.findOneAndUpdate(
-            { _id: req.params.id, status: { $ne: 'Approved' }, updatedAt: expectedDate || existing.updatedAt },
-            { $set: { status: 'Approved' } },
-            { returnDocument: 'after' }
-        );
+        const updatedSubmission = await withRosterMutation(TodaSubmission.db, async writes => {
+            const approved = await writes.update(TodaSubmission,
+                { _id: existing._id, status: existing.status, updatedAt: expectedDate || existing.updatedAt },
+                { $set: { status: 'Approved' } }
+            );
+            if (!approved) return null;
+            await syncSubmissionToRoster(approved, writes);
+            return approved;
+        });
 
         if (!updatedSubmission) {
             return res.status(409).json({ message: 'Submission was modified concurrently. Please refresh and try again.' });
@@ -357,15 +359,93 @@ router.put('/approve/:id', protect, authorize('bplo_staff'), async (req, res) =>
         logAudit(req, { action: 'TODA_ROSTER_APPROVED', targetType: 'TODA', targetId: updatedSubmission._id, details: { todaName: updatedSubmission.todaAssociation, presidentName: updatedSubmission.presidentName, fileName: updatedSubmission.fileName, extractedCount: updatedSubmission.extractedCount || (updatedSubmission.extractedMembers || []).length, previousStatus: existing.status, newStatus: 'Approved' } });
         res.status(200).json({ message: 'Approved successfully', submission: updatedSubmission });
     } catch (error) {
+        if (error.statusCode === 409 || error.code === 11000) {
+            return res.status(409).json({ message: error.statusCode === 409 ? error.message : 'Roster changed concurrently. Please refresh and try again.' });
+        }
         console.error('[TodaRoster] Submission approval/sync failed:', error);
         res.status(500).json({ message: 'Failed to synchronize TODA roster members. Submission remains Pending and can be retried.' });
     }
 });
 
+function isRemovalOperator(user) {
+    return ['operator', 'driver'].includes(String(user.role).trim().toLowerCase());
+}
+
+const submissionMemberName = member => member.operatorName || member.name || '';
+const submissionMemberBody = member => member.bodyNumber || member.unitNo || '';
+
+async function resolveRemovalTarget(todaEntry, selector, session) {
+    const association = todaAssociationPattern(todaEntry);
+    const userScope = { todaAssociation: association, role: { $in: ['operator', 'driver'] } };
+    let user = null;
+    let roster = null;
+    let submission = null;
+    let entry = null;
+
+    if (selector.userId) {
+        user = await User.findOne({ ...userScope, _id: selector.userId }).session(session ?? null);
+        if (!user) return null;
+    }
+    if (selector.rosterId) {
+        roster = await TodaRoster.findOne({ _id: selector.rosterId, todaAssociation: association }).session(session ?? null);
+        if (!roster) return null;
+    }
+    if (selector.entryId) {
+        const submissions = await TodaSubmission.find({
+            todaAssociation: association,
+            status: 'Approved',
+            ...(selector.submissionId && { _id: selector.submissionId })
+        }).session(session ?? null);
+        const matches = submissions.filter(sub => sub.extractedMembers.some(item => String(item._id) === selector.entryId));
+        if (matches.length !== 1) return null;
+        submission = matches[0];
+        entry = submission.extractedMembers.find(item => String(item._id) === selector.entryId);
+    }
+
+    const bodyNumber = user ? user.bodyNumber : (roster?.bodyNumber || (entry && submissionMemberBody(entry)));
+    const key = rosterBodyKey(bodyNumber);
+    const slot = await findRosterSlot(todaEntry.id, bodyNumber, session);
+    if (roster && (!slot || String(slot._id) !== String(roster._id))) return null;
+    if (entry && slot && !sameRosterName(submissionMemberName(entry), slot.operatorName)) return null;
+    if (entry && rosterBodyKey(submissionMemberBody(entry)) !== key) return null;
+    roster = slot;
+
+    if (!roster && user) {
+        if (!key) return null;
+        const approved = await TodaSubmission.find({ todaAssociation: association, status: 'Approved' }).session(session ?? null);
+        const copies = approved.flatMap(sub => sub.extractedMembers)
+            .filter(item => rosterBodyKey(submissionMemberBody(item)) === key);
+        if (!copies.length || copies.some(item => !sameRosterName(submissionMemberName(item), user.name))) return null;
+        if (!entry) {
+            entry = copies[0];
+            submission = approved.find(sub => sub.extractedMembers.includes(entry));
+        }
+    }
+
+    if (!user && !roster && !entry) return null;
+    const memberName = roster?.operatorName || (entry && submissionMemberName(entry));
+    const owners = roster ? rosterOwners(roster) : [];
+    if (!memberName || owners.length > 1) return null;
+
+    if (user) {
+        if (owners.length ? owners[0] !== String(user._id) : !sameRosterName(memberName, user.name)) return null;
+    } else if (owners.length) {
+        user = await User.findById(owners[0]).session(session ?? null);
+        if (!user || !isRemovalOperator(user) || !association.test(user.todaAssociation) || rosterBodyKey(user.bodyNumber) !== key) return null;
+    } else if (key) {
+        const users = await User.find(userScope).session(session ?? null);
+        const matches = users.filter(candidate => rosterBodyKey(candidate.bodyNumber) === key);
+        if (matches.length > 1 || (matches[0] && !sameRosterName(memberName, matches[0].name))) return null;
+        user = matches[0] || null;
+    }
+
+    return { user, roster, submission, entry, key, memberName };
+}
+
 // Submit member removal / kick request (TODA President / BPLO Staff)
 router.post('/removal-requests', protect, authorize('bplo_staff', 'toda president', 'toda_president'), async (req, res) => {
     try {
-        const { memberId, memberName: bodyMemberName, reason, details, todaName: bodyTodaName, targetRosterId: bodyTargetRosterId } = req.body;
+        const { memberId, reason, details, todaName: bodyTodaName, targetRosterId: bodyTargetRosterId } = req.body;
         if (!memberId || !reason || !details) {
             return res.status(400).json({ message: 'Member ID, reason, and detailed explanation are required.' });
         }
@@ -392,105 +472,32 @@ router.post('/removal-requests', protect, authorize('bplo_staff', 'toda presiden
         }
 
         const presidentToda = todaEntry.id;
-        const todaExactRegex = todaAssociationPattern(todaEntry);
-
         const rawIdStr = String(memberId).trim();
-        let member = null;
-        let targetRosterId = null;
-        let targetSubmissionId = null;
-        let targetSubmissionMemberId = '';
-        let resolvedName = (bodyMemberName || '').trim();
-        let resolvedContact = '';
-        let resolvedAddress = '';
-        let foundInAssociation = false;
-
-        if (mongoose.Types.ObjectId.isValid(rawIdStr) && !rawIdStr.startsWith('roster-')) {
-            member = await User.findOne({ _id: rawIdStr, todaAssociation: todaExactRegex });
-            if (member) {
-                foundInAssociation = true;
-                // Link exact TodaRoster record if explicitly specified or bound to this user
-                if (bodyTargetRosterId && mongoose.Types.ObjectId.isValid(String(bodyTargetRosterId))) {
-                    const explicitRoster = await TodaRoster.findOne({ _id: bodyTargetRosterId, todaAssociation: todaExactRegex }).select('_id');
-                    if (explicitRoster) targetRosterId = explicitRoster._id;
-                }
-                if (!targetRosterId) {
-                    const linkedRoster = await TodaRoster.findOne({
-                        todaAssociation: todaExactRegex,
-                        $or: [{ registeredUser: member._id }, { claimedBy: member._id }]
-                    }).select('_id');
-                    if (linkedRoster) targetRosterId = linkedRoster._id;
-                }
-            } else {
-                // Also check if the ObjectId belongs directly to a TodaRoster document within this TODA
-                const directDoc = await TodaRoster.findOne({ _id: rawIdStr, todaAssociation: todaExactRegex });
-                if (directDoc) {
-                    foundInAssociation = true;
-                    targetRosterId = directDoc._id;
-                    resolvedName = directDoc.operatorName || resolvedName;
-                    resolvedContact = directDoc.contact || '';
-                    resolvedAddress = directDoc.remarks || 'TODA Masterlist Member';
-                    const linkedUserId = directDoc.registeredUser || directDoc.claimedBy;
-                    if (linkedUserId) {
-                        member = await User.findOne({ _id: linkedUserId, todaAssociation: todaExactRegex });
-                    }
-                }
-            }
-        } else if (rawIdStr.startsWith('roster-direct-')) {
-            const rosterDocId = rawIdStr.replace('roster-direct-', '');
-            if (mongoose.Types.ObjectId.isValid(rosterDocId)) {
-                const directDoc = await TodaRoster.findOne({ _id: rosterDocId, todaAssociation: todaExactRegex });
-                if (directDoc) {
-                    foundInAssociation = true;
-                    targetRosterId = directDoc._id;
-                    resolvedName = directDoc.operatorName || resolvedName;
-                    resolvedContact = directDoc.contact || '';
-                    resolvedAddress = directDoc.remarks || 'TODA Masterlist Member';
-                    const linkedUserId = directDoc.registeredUser || directDoc.claimedBy;
-                    if (linkedUserId) {
-                        member = await User.findOne({ _id: linkedUserId, todaAssociation: todaExactRegex });
-                    }
-                }
-            }
+        let selector;
+        if (rawIdStr.startsWith('roster-direct-')) {
+            const rosterId = rawIdStr.slice('roster-direct-'.length);
+            if (mongoose.isObjectIdOrHexString(rosterId)) selector = { rosterId };
         } else if (rawIdStr.startsWith('roster-')) {
-            const subMemberId = rawIdStr.replace('roster-', '');
-            const submissions = await TodaSubmission.find({ todaAssociation: todaExactRegex });
-            for (const sub of submissions) {
-                const found = (sub.extractedMembers || []).find(
-                    m => String(m._id) === subMemberId
-                ) || (sub.extractedMembers || []).find(
-                    m => resolvedName && isNameMatch(m.name || m.operatorName, resolvedName)
-                );
-                if (found) {
-                    foundInAssociation = true;
-                    targetSubmissionId = sub._id;
-                    targetSubmissionMemberId = found._id ? String(found._id) : '';
-                    resolvedName = found.name || found.operatorName || resolvedName;
-                    resolvedAddress = 'Endorsed Masterlist Record';
-                    const foundBody = String(found.bodyNumber || found.unitNo || '').trim().toUpperCase();
-                    if (foundBody) {
-                        const matchedRoster = await TodaRoster.findOne({
-                            todaAssociation: todaExactRegex,
-                            bodyNumber: foundBody
-                        }).select('_id');
-                        if (matchedRoster) targetRosterId = matchedRoster._id;
-                    }
-                    break;
-                }
-            }
+            const entryId = rawIdStr.slice('roster-'.length);
+            if (mongoose.isObjectIdOrHexString(entryId)) selector = { entryId };
+        } else if (mongoose.isObjectIdOrHexString(rawIdStr)) {
+            const accountExists = await User.exists({ _id: rawIdStr });
+            selector = accountExists ? { userId: rawIdStr } : { rosterId: rawIdStr };
         }
 
-        if (!foundInAssociation || (!member && !resolvedName)) {
-            return res.status(404).json({ message: `Operator member not found within ${presidentToda}.` });
+        const target = selector && await resolveRemovalTarget(todaEntry, selector);
+        if (!target) {
+            return res.status(404).json({ message: `An exact operator roster entry could not be resolved within ${presidentToda}.` });
         }
-
-        if (member) {
-            if (getOfficialToda(member.todaAssociation)?.id !== presidentToda) {
-                return res.status(403).json({ message: `Operator is not affiliated with ${presidentToda}.` });
-            }
-            resolvedName = member.name;
-            resolvedContact = member.contact || '';
-            resolvedAddress = member.address || '';
+        const { user: member, roster, submission, entry, memberName: resolvedName } = target;
+        if (bodyTargetRosterId && String(bodyTargetRosterId) !== String(roster?._id)) {
+            return res.status(409).json({ message: 'The selected roster entry does not belong to this member.' });
         }
+        const targetRosterId = roster?._id || null;
+        const targetSubmissionId = submission?._id || null;
+        const targetSubmissionMemberId = entry?._id ? String(entry._id) : '';
+        const resolvedContact = member?.contact || roster?.contact || '';
+        const resolvedAddress = member?.address || roster?.remarks || 'TODA Masterlist Member';
 
         const removalReq = await TodaRemovalRequest.create({
             todaName: presidentToda,
@@ -536,6 +543,7 @@ router.post('/removal-requests', protect, authorize('bplo_staff', 'toda presiden
             }
         });
     } catch (error) {
+        if (error.statusCode === 409) return res.status(409).json({ message: error.message });
         console.error('Error filing removal request:', error);
         res.status(500).json({ message: 'Failed to file removal request.' });
     }
@@ -584,173 +592,67 @@ router.put('/removal-requests/:id/approve', protect, authorize('bplo_staff'), as
             return res.status(400).json({ message: 'Removal request does not specify a valid TODA association.' });
         }
 
-        const targetTodaName = todaEntry.id;
         const todaExactRegex = todaAssociationPattern(todaEntry);
-        const trimmedName = String(existing.memberName || '').trim();
-        const exactNameRegex = trimmedName
-            ? new RegExp(`^${trimmedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i')
-            : null;
-
         const targetRosterId = existing.get('targetRosterId') || null;
         const targetSubmissionId = existing.get('targetSubmissionId') || null;
-        const targetSubmissionMemberId = String(existing.get('targetSubmissionMemberId') || '').trim();
+        const targetSubmissionMemberId = String(existing.get('targetSubmissionMemberId') || '');
 
-        // M9: Resolve exact target roster row without widening deletion to same-name rows when targetRosterId is present
-        let targetRosterDoc = null;
-        let matchingRosterIds = [];
-        if (targetRosterId) {
-            targetRosterDoc = await TodaRoster.findOne({ _id: targetRosterId, todaAssociation: todaExactRegex });
-            if (targetRosterDoc) {
-                matchingRosterIds = [targetRosterDoc._id];
+        const request = await withRosterMutation(TodaRemovalRequest.db, async writes => {
+            const pending = { _id: existing._id, status: 'Pending', updatedAt: existing.updatedAt };
+            if (!(await TodaRemovalRequest.exists(pending).session(writes.session ?? null))) {
+                throw rosterConflict('Removal request was already processed concurrently.');
             }
-        } else if (existing.member) {
-            const linkedRosters = await TodaRoster.find({
-                todaAssociation: todaExactRegex,
-                $or: [{ registeredUser: existing.member }, { claimedBy: existing.member }]
-            });
-            if (linkedRosters.length > 0) {
-                matchingRosterIds = linkedRosters.map(r => r._id);
-                targetRosterDoc = linkedRosters[0];
-            } else {
-                const rosterCandidates = await TodaRoster.find({ todaAssociation: todaExactRegex });
-                matchingRosterIds = rosterCandidates
-                    .filter(r => trimmedName && isNameMatch(r.operatorName, trimmedName))
-                    .map(r => r._id);
+            const target = await resolveRemovalTarget(todaEntry, {
+                userId: existing.member,
+                rosterId: targetRosterId,
+                submissionId: targetSubmissionId,
+                entryId: targetSubmissionMemberId
+            }, writes.session);
+
+            if (!target || String(target.user?._id || '') !== String(existing.member || '') ||
+                !sameRosterName(target.memberName, existing.memberName)) {
+                throw rosterConflict('The requested member or roster affiliation has changed. File a new removal request.');
             }
-        } else {
-            const rosterCandidates = await TodaRoster.find({ todaAssociation: todaExactRegex });
-            matchingRosterIds = rosterCandidates
-                .filter(r => trimmedName && isNameMatch(r.operatorName, trimmedName))
-                .map(r => r._id);
-        }
 
-        const targetUserId = existing.member || targetRosterDoc?.registeredUser || targetRosterDoc?.claimedBy || null;
-        const targetBodyNumber = String(targetRosterDoc?.bodyNumber || '').trim().toUpperCase();
+            if (target.user) {
+                const disaffiliated = await writes.update(User,
+                    { _id: target.user._id, todaAssociation: todaExactRegex },
+                    { $set: { todaAssociation: 'NON-TODA', bodyNumber: '' } }
+                );
+                if (!disaffiliated) throw rosterConflict('The member affiliation changed concurrently.');
+                await writes.updateMany(Franchise,
+                    { operator: target.user._id, todaName: todaExactRegex },
+                    { $set: { todaName: 'NON-TODA', bodyNumber: '' } }
+                );
+            }
 
-        const matchingSubmissions = targetSubmissionId
-            ? await TodaSubmission.find({ _id: targetSubmissionId, todaAssociation: todaExactRegex })
-            : await TodaSubmission.find({ todaAssociation: todaExactRegex });
-
-        const hasSubmissionMemberMatch = matchingSubmissions.some(sub =>
-            Array.isArray(sub.extractedMembers) &&
-            sub.extractedMembers.some(m => {
-                if (targetSubmissionMemberId) {
-                    return String(m._id) === targetSubmissionMemberId;
-                }
-                if (targetBodyNumber) {
-                    return String(m.bodyNumber || m.unitNo || '').trim().toUpperCase() === targetBodyNumber;
-                }
-                return Boolean(trimmedName) && isNameMatch(m.name || m.operatorName || '', trimmedName);
-            })
-        );
-
-        let hasValidAffiliation = matchingRosterIds.length > 0 || hasSubmissionMemberMatch;
-        if (targetUserId) {
-            const [targetUserDoc, matchedFranchise, matchedRegisteredRoster] = await Promise.all([
-                User.findById(targetUserId).select('todaAssociation').lean(),
-                Franchise.findOne({ operator: targetUserId, todaName: todaExactRegex }).select('_id').lean(),
-                TodaRoster.findOne({
-                    todaAssociation: todaExactRegex,
-                    $or: [{ registeredUser: targetUserId }, { claimedBy: targetUserId }]
-                }).select('_id').lean()
-            ]);
-            const userMatchesToda = Boolean(targetUserDoc && todaExactRegex.test(String(targetUserDoc.todaAssociation || '').trim()));
-            if (userMatchesToda || matchedFranchise || matchedRegisteredRoster) {
-                hasValidAffiliation = true;
-            } else if (targetUserDoc && !targetRosterDoc) {
-                const currentUserToda = String(targetUserDoc.todaAssociation || '').trim();
-                // Reject if the registered user is no longer affiliated with targetTodaName (e.g. transferred or already NON-TODA)
-                if (currentUserToda && !todaExactRegex.test(currentUserToda)) {
-                    hasValidAffiliation = false;
+            const submissions = await TodaSubmission.find({ todaAssociation: todaExactRegex }).session(writes.session ?? null);
+            for (const sub of submissions) {
+                const keep = sub.extractedMembers.filter(item => {
+                    if (String(sub._id) === String(targetSubmissionId) && String(item._id) === targetSubmissionMemberId) return false;
+                    return !target.key || rosterBodyKey(submissionMemberBody(item)) !== target.key ||
+                        !sameRosterName(submissionMemberName(item), target.memberName);
+                });
+                if (keep.length !== sub.extractedMembers.length) {
+                    const updated = await writes.update(TodaSubmission,
+                        { _id: sub._id, updatedAt: sub.updatedAt },
+                        { $set: { extractedMembers: keep.map(item => item.toObject()), extractedCount: keep.length } }
+                    );
+                    if (!updated) throw rosterConflict('A masterlist changed concurrently.');
                 }
             }
-        } else if (!targetRosterId && exactNameRegex) {
-            // Only fall back to name lookup for legacy requests that lack both member and targetRosterId
-            const [matchedUser, matchedFranchise] = await Promise.all([
-                User.findOne({ name: exactNameRegex, todaAssociation: todaExactRegex }).select('_id').lean(),
-                Franchise.findOne({ fullName: exactNameRegex, todaName: todaExactRegex }).select('_id').lean()
-            ]);
-            if (matchedUser || matchedFranchise) {
-                hasValidAffiliation = true;
+            if (target.roster) {
+                const { _id, operatorName, registeredUser, claimedBy } = target.roster;
+                const removed = await writes.remove(TodaRoster, { _id, operatorName, registeredUser: registeredUser || null, claimedBy: claimedBy || null });
+                if (!removed) throw rosterConflict('The roster entry changed concurrently.');
             }
-        }
-
-        if (!hasValidAffiliation) {
-            return res.status(409).json({
-                message: `Target member is no longer affiliated with ${targetTodaName}.`
-            });
-        }
-
-        // M9: Execute all downstream user/franchise/roster/submission updates BEFORE marking the request Approved!
-        // If any downstream write throws, the removal request stays Pending so approval can be retried cleanly.
-
-        // 1. Disaffiliate registered User member & franchises strictly scoped to targetTodaName
-        if (targetUserId) {
-            await User.findOneAndUpdate(
-                { _id: targetUserId, todaAssociation: todaExactRegex },
-                { $set: { todaAssociation: 'NON-TODA', bodyNumber: '' } }
+            const decided = await writes.update(TodaRemovalRequest,
+                pending,
+                { $set: { status: 'Approved', adminRemarks: adminRemarks.trim(), reviewedBy: req.user._id, reviewedAt: new Date() } }
             );
-            await Franchise.updateMany(
-                { operator: targetUserId, todaName: todaExactRegex },
-                { $set: { todaName: 'NON-TODA', bodyNumber: '' } }
-            );
-        } else if (!targetRosterId && !targetSubmissionMemberId && exactNameRegex) {
-            // Legacy name-only fallback (never runs when targetRosterId or targetSubmissionMemberId identifies a specific row)
-            await User.updateMany(
-                { name: exactNameRegex, todaAssociation: todaExactRegex },
-                { $set: { todaAssociation: 'NON-TODA', bodyNumber: '' } }
-            );
-            await Franchise.updateMany(
-                { fullName: exactNameRegex, todaName: todaExactRegex },
-                { $set: { todaName: 'NON-TODA', bodyNumber: '' } }
-            );
-        }
-
-        // 2. Remove matching member from TodaRoster — strictly by _id: targetRosterId when present!
-        if (targetRosterId) {
-            await TodaRoster.deleteOne({ _id: targetRosterId, todaAssociation: todaExactRegex });
-        } else if (matchingRosterIds.length > 0) {
-            await TodaRoster.deleteMany({ _id: { $in: matchingRosterIds }, todaAssociation: todaExactRegex });
-        }
-
-        // 3. Pull matching member from TodaSubmission.extractedMembers (strictly scoped)
-        if (targetSubmissionMemberId || targetBodyNumber || (!targetRosterId && trimmedName)) {
-            for (const sub of matchingSubmissions) {
-                if (Array.isArray(sub.extractedMembers) && sub.extractedMembers.length > 0) {
-                    const beforeLen = sub.extractedMembers.length;
-                    sub.extractedMembers = sub.extractedMembers.filter(m => {
-                        if (targetSubmissionMemberId) {
-                            return String(m._id) !== targetSubmissionMemberId;
-                        }
-                        if (targetBodyNumber) {
-                            return String(m.bodyNumber || m.unitNo || '').trim().toUpperCase() !== targetBodyNumber;
-                        }
-                        return !isNameMatch(m.name || m.operatorName || '', trimmedName);
-                    });
-                    if (sub.extractedMembers.length !== beforeLen) {
-                        sub.extractedCount = sub.extractedMembers.length;
-                        await sub.save();
-                    }
-                }
-            }
-        }
-
-        // 4. Commit removal request status to Approved ONLY after all downstream updates succeeded
-        const request = await TodaRemovalRequest.findOneAndUpdate(
-            { _id: req.params.id, status: 'Pending' },
-            {
-                $set: {
-                    status: 'Approved',
-                    adminRemarks: adminRemarks.trim(),
-                    reviewedBy: req.user._id,
-                    reviewedAt: new Date()
-                }
-            },
-            { returnDocument: 'after' }
-        );
-        if (!request) {
-            return res.status(409).json({ message: 'Removal request was already processed concurrently.' });
-        }
+            if (!decided) throw rosterConflict('Removal request was already processed concurrently.');
+            return decided;
+        });
 
         logAudit(req, {
             action: 'TODA_REMOVAL_APPROVED',
@@ -767,6 +669,7 @@ router.put('/removal-requests/:id/approve', protect, authorize('bplo_staff'), as
 
         res.status(200).json({ message: `Member ${request.memberName} officially disaffiliated from ${request.todaName}.`, request });
     } catch (error) {
+        if (error.statusCode === 409) return res.status(409).json({ message: error.message });
         console.error('Error approving removal request:', error);
         res.status(500).json({ message: 'Failed to approve removal request.' });
     }
@@ -1119,13 +1022,10 @@ const handleAddSingleMember = async (req, res) => {
 
         // 1. Strict Duplicate Check on Compound Key (todaAssociation + bodyNumber)
         const targetToda = todaEntry.id;
-        const todaRegex = todaAssociationPattern(todaEntry);
-        const bodyRegex = new RegExp(`^${cleanBodyNumber.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i');
-
-        const existingBodyInRoster = await TodaRoster.findOne({
-            todaAssociation: todaRegex,
-            bodyNumber: bodyRegex
-        });
+        if (!rosterBodyKey(cleanBodyNumber)) {
+            return res.status(400).json({ message: 'Assigned body number is required' });
+        }
+        const existingBodyInRoster = await findRosterSlot(targetToda, cleanBodyNumber);
 
         if (existingBodyInRoster) {
             return res.status(409).json({
@@ -1155,6 +1055,7 @@ const handleAddSingleMember = async (req, res) => {
             todaAssociation: targetToda,
             operatorName: cleanName,
             bodyNumber: cleanBodyNumber,
+            claimKey: rosterClaimKey(targetToda, cleanBodyNumber),
             plateNo: cleanPlateNo,
             contact: cleanContact,
             status: 'Active',
@@ -1166,7 +1067,7 @@ const handleAddSingleMember = async (req, res) => {
             member: newRosterEntry
         });
     } catch (error) {
-        if (error.code === 11000) {
+        if (error.code === 11000 || error.statusCode === 409) {
             return res.status(409).json({
                 message: 'Database constraint violation: Body Number already exists in this association.',
                 conflictField: 'bodyNumber'

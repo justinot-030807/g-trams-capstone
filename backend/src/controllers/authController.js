@@ -9,8 +9,11 @@ const sendSms = require('../utils/sendSms');
 const axios = require('axios');
 const crypto = require('crypto');
 const { logAudit } = require('../utils/auditLogger');
-const { validateOperatorAgainstRoster, normalizeBodyNumber, isBodyNumberMatch } = require('../utils/rosterValidator');
-const { verifyTodaRoster } = require('./todaController');
+const { validateOperatorAgainstRoster, normalizeBodyNumber } = require('../utils/rosterValidator');
+const { isNameMatch } = require('../utils/nameMatcher');
+const { claimRosterRow, findRosterSlot, releaseRosterClaims, rosterAssociation, rosterBodyKey, rosterClaimKey, rosterConflict, rosterOwners } = require('../utils/rosterClaims');
+const { withRosterMutation } = require('../utils/rosterMutation');
+const { verifyTodaRoster, rosterIneligible } = require('./todaController');
 const { disconnectUserSockets } = require('../config/socket');
 
 // Helper to canonicalize contact input (email in lowercase, Philippine mobile number to 09XXXXXXXXX)
@@ -226,115 +229,96 @@ const dispatchOtpMessage = async ({ destination, subject, emailMessage, smsMessa
     return { success: true, data: smsRes };
 };
 
-// Helper: Check if a TODA Association + normalized Body Number is already claimed by another verified operator or TodaRoster row (H3)
-const findVerifiedRosterClaimConflict = async ({ todaAssociation, bodyNumber, excludeUserId = null }) => {
-    const cleanToda = String(todaAssociation || '').trim();
-    const cleanBody = String(bodyNumber || '').trim();
-    if (!cleanToda || cleanToda.toUpperCase() === 'NON-TODA' || !cleanBody || !normalizeBodyNumber(cleanBody)) {
-        return { conflict: false, matchingRosterDoc: null };
-    }
+const isOperatorRole = role => ['operator', 'driver'].includes(String(role).trim().toLowerCase());
 
-    const escapedToda = cleanToda.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const todaRegex = new RegExp(`^${escapedToda}$`, 'i');
+const operatorStateFilter = user => ({
+    _id: user._id,
+    role: user.role,
+    todaAssociation: !user.todaAssociation || user.todaAssociation === 'NON-TODA'
+        ? { $in: [user.todaAssociation || 'NON-TODA', '', null] }
+        : user.todaAssociation,
+    bodyNumber: user.bodyNumber || { $in: ['', null] }
+});
 
-    const userFilter = {
-        todaAssociation: todaRegex,
+async function findVerifiedRosterClaimConflict({ todaAssociation, bodyNumber, excludeUserId, session }) {
+    const association = rosterAssociation(todaAssociation);
+    const key = rosterBodyKey(bodyNumber);
+    if (!association.id || association.id === 'NON-TODA' || !key) return { conflict: false, matchingRosterDoc: null };
+
+    const verifiedUsers = await User.find({
+        todaAssociation: association.pattern,
+        role: { $in: ['operator', 'driver'] },
         isVerified: true,
-        bodyNumber: { $exists: true, $ne: '' }
-    };
-    if (excludeUserId) {
-        userFilter._id = { $ne: excludeUserId };
-    }
+        bodyNumber: { $exists: true, $ne: '' },
+        ...(excludeUserId && { _id: { $ne: excludeUserId } })
+    }).select('_id bodyNumber').session(session ?? null).lean();
+    if (verifiedUsers.some(user => rosterBodyKey(user.bodyNumber) === key)) return { conflict: true };
 
-    const verifiedUsers = await User.find(userFilter).select('_id bodyNumber').lean();
-    for (const u of verifiedUsers) {
-        if (isBodyNumberMatch(cleanBody, u.bodyNumber)) {
-            return { conflict: true, reason: 'already_claimed_user', matchingRosterDoc: null };
-        }
+    try {
+        const row = await findRosterSlot(association.id, bodyNumber, session);
+        const conflict = row && (row.status !== 'Active' || rosterOwners(row).some(owner => owner !== String(excludeUserId)));
+        return { conflict: Boolean(conflict), matchingRosterDoc: row };
+    } catch (error) {
+        if (error.statusCode === 409) return { conflict: true };
+        throw error;
     }
+}
 
-    const rosterDocs = await TodaRoster.find({ todaAssociation: todaRegex }).lean();
-    let matchingRosterDoc = null;
-    for (const r of rosterDocs) {
-        if (isBodyNumberMatch(cleanBody, r.bodyNumber)) {
-            matchingRosterDoc = r;
-            const existingClaimant = r.registeredUser || r.claimedBy || null;
-            if (existingClaimant && (!excludeUserId || String(existingClaimant) !== String(excludeUserId))) {
-                return { conflict: true, reason: 'already_claimed_roster', matchingRosterDoc: r };
-            }
-            break;
-        }
+async function claimTodaRosterSlot({ matchingRosterDoc, userId, operatorName }) {
+    if (!isNameMatch(operatorName, matchingRosterDoc.operatorName)) return { claimed: false };
+    try {
+        const row = await withRosterMutation(TodaRoster.db, writes => claimRosterRow(matchingRosterDoc, userId, writes));
+        return { claimed: true, rosterId: row._id };
+    } catch (error) {
+        if (error.statusCode === 409 || error.code === 11000) return { claimed: false };
+        throw error;
     }
+}
 
-    return { conflict: false, matchingRosterDoc };
-};
+const releaseTodaRosterSlot = ({ rosterId, userId }) => withRosterMutation(TodaRoster.db, async writes => {
+    const verified = await User.exists({ _id: userId, isVerified: true }).session(writes.session ?? null);
+    if (!verified) await releaseRosterClaims(userId, { criteria: { _id: rosterId }, writes });
+});
 
-// Atomically claim a TodaRoster entry for a user (syncs both claimedBy & registeredUser)
-const claimTodaRosterSlot = async ({ matchingRosterDoc, userId }) => {
-    if (!matchingRosterDoc || !matchingRosterDoc._id) {
-        return { claimed: true, rosterId: null };
-    }
-    const updated = await TodaRoster.findOneAndUpdate(
-        {
-            _id: matchingRosterDoc._id,
-            $and: [
-                {
-                    $or: [
-                        { registeredUser: null },
-                        { registeredUser: { $exists: false } },
-                        { registeredUser: userId }
-                    ]
-                },
-                {
-                    $or: [
-                        { claimedBy: null },
-                        { claimedBy: { $exists: false } },
-                        { claimedBy: userId }
-                    ]
-                }
-            ]
-        },
-        { $set: { registeredUser: userId, claimedBy: userId } },
-        { returnDocument: 'after' }
-    );
-    if (!updated) {
-        return { claimed: false, rosterId: null };
-    }
-    return { claimed: true, rosterId: updated._id };
-};
-
-const releaseTodaRosterSlot = async ({ rosterId, userId }) => {
-    if (!rosterId || !userId) return;
-    await TodaRoster.updateOne(
-        {
-            _id: rosterId,
-            $or: [{ registeredUser: userId }, { claimedBy: userId }]
-        },
-        { $set: { registeredUser: null, claimedBy: null } }
-    ).catch(() => {});
-};
-
-// Race-safe fallback guard when no TodaRoster row exists to anchor atomic locking
-const hasLostVerifiedUserSlotRace = async ({ todaAssociation, bodyNumber, userId }) => {
-    const cleanToda = String(todaAssociation || '').trim();
-    const cleanBody = String(bodyNumber || '').trim();
-    if (!cleanToda || cleanToda.toUpperCase() === 'NON-TODA' || !cleanBody || !normalizeBodyNumber(cleanBody)) {
-        return false;
-    }
-    const escapedToda = cleanToda.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const todaRegex = new RegExp(`^${escapedToda}$`, 'i');
+async function hasLostVerifiedUserSlotRace({ todaAssociation, bodyNumber, userId }) {
+    const association = rosterAssociation(todaAssociation);
+    const key = rosterBodyKey(bodyNumber);
+    if (!association.id || association.id === 'NON-TODA' || !key) return false;
     const allVerified = await User.find({
-        todaAssociation: todaRegex,
+        todaAssociation: association.pattern,
+        role: { $in: ['operator', 'driver'] },
         isVerified: true,
         bodyNumber: { $exists: true, $ne: '' }
-    })
-        .select('_id bodyNumber')
-        .sort({ _id: 1 })
-        .lean();
+    }).select('_id bodyNumber').sort({ _id: 1 }).lean();
+    const first = allVerified.find(user => rosterBodyKey(user.bodyNumber) === key);
+    return Boolean(first && String(first._id) !== String(userId));
+}
 
-    const matching = allVerified.filter((u) => isBodyNumberMatch(cleanBody, u.bodyNumber));
-    return matching.length > 1 && String(matching[0]._id) !== String(userId);
-};
+async function claimOperatorTransfer({ user, association, bodyNumber, writes }) {
+    const { session } = writes;
+    const { conflict, matchingRosterDoc } = await findVerifiedRosterClaimConflict({
+        todaAssociation: association, bodyNumber, excludeUserId: user._id, session
+    });
+    if (conflict) throw rosterConflict('This TODA Body Number is unavailable.');
+
+    const report = await validateOperatorAgainstRoster({
+        fullName: user.name, todaAssociation: association, bodyNumber, session
+    });
+    if (!report.isValid) {
+        throw Object.assign(new Error('TODA affiliation change requires a matching official roster entry.'), { statusCode: 403 });
+    }
+
+    // Older approved submissions may predate direct roster rows.
+    const row = matchingRosterDoc || await writes.create(TodaRoster, {
+        todaAssociation: association,
+        operatorName: report.matchedMember,
+        bodyNumber: report.matchedBodyNumber,
+        plateNo: report.plateNo,
+        claimKey: rosterClaimKey(association, report.matchedBodyNumber)
+    });
+    await claimRosterRow(row, user._id, writes);
+    return row;
+}
 
 // Shared singleton institutional role uniqueness guard (M14)
 const checkSingletonRoleConflict = async ({ targetUserId, normalizedRole, todaAssociation }) => {
@@ -761,12 +745,7 @@ exports.register = async (req, res) => {
             });
 
             if (!rosterReport.isValid && process.env.NODE_ENV !== 'test') {
-                return res.status(403).json({
-                    success: false,
-                    message: rosterReport.message || 'REGISTRATION BLOCKED: HINDI NAKATALA SA OPISYAL NA TODA MASTERLIST',
-                    status: rosterReport.status,
-                    advisory: rosterReport.advisory
-                });
+                return res.status(403).json(rosterIneligible);
             }
 
             // H3: Prevent a TODA association + normalized body number from being claimed by a second verified operator
@@ -997,7 +976,8 @@ exports.verifyOTP = async (req, res) => {
             if (claimConflict.matchingRosterDoc) {
                 const claimResult = await claimTodaRosterSlot({
                     matchingRosterDoc: claimConflict.matchingRosterDoc,
-                    userId: user._id
+                    userId: user._id,
+                    operatorName: user.name
                 });
                 if (!claimResult.claimed) {
                     return res.status(409).json({
@@ -1860,15 +1840,26 @@ exports.updateUser = async (req, res) => {
             role: rawRequestedRole,
             todaAssociation: targetToda
         };
+        const operatorRoleChanged = isOperatorRole(currentRoleNorm) !== isOperatorRole(rawRequestedRole);
+        if (operatorRoleChanged) {
+            whitelistUpdate.bodyNumber = '';
+            if (isOperatorRole(rawRequestedRole)) whitelistUpdate.todaAssociation = 'NON-TODA';
+        }
         if (rawRequestedRole !== currentRoleNorm) {
             whitelistUpdate.tokenVersion = (existingUser.tokenVersion || 0) + 1;
         }
 
-        const updatedUser = await User.findByIdAndUpdate(
-            req.params.id, 
-            { $set: whitelistUpdate }, 
-            { returnDocument: 'after' }
-        ).select('-password -otp -otpExpire -otpAttempts -otpPurpose -otpRecipient -passwordResetToken');
+        const accountFilter = operatorStateFilter(existingUser);
+        const accountUpdate = { $set: whitelistUpdate };
+        const updatedUser = operatorRoleChanged
+            ? await withRosterMutation(User.db, async writes => {
+                const updated = await writes.update(User, accountFilter, accountUpdate);
+                if (updated) await releaseRosterClaims(existingUser._id, { writes });
+                return updated;
+            })
+            : await User.findOneAndUpdate(accountFilter, accountUpdate, { returnDocument: 'after' }).select(USER_SENSITIVE_SELECT);
+
+        if (!updatedUser) return res.status(409).json({ message: 'Account details changed. Please try again.' });
 
         if (rawRequestedRole !== currentRoleNorm || updatedUser.isActive !== existingUser.isActive) {
             disconnectUserSockets(updatedUser._id);
@@ -1883,6 +1874,7 @@ exports.updateUser = async (req, res) => {
 
         res.status(200).json(sanitizeUserObject(updatedUser));
     } catch (error) {
+        if (error.statusCode === 409) return res.status(409).json({ message: error.message });
         res.status(500).json({ message: error.message || 'Error updating user' });
     }
 };
@@ -1902,13 +1894,12 @@ exports.deleteUser = async (req, res) => {
             return res.status(403).json({ message: 'Cannot delete a System Administrator account.' });
         }
 
-        const user = await User.findByIdAndDelete(req.params.id);
-
-        // Release any claimed TodaRoster entry held by the deleted user
-        await TodaRoster.updateMany(
-            { $or: [{ registeredUser: existingUser._id }, { claimedBy: existingUser._id }] },
-            { $set: { registeredUser: null, claimedBy: null } }
-        ).catch(() => {});
+        const user = await withRosterMutation(User.db, async writes => {
+            const removed = await writes.remove(User, operatorStateFilter(existingUser));
+            if (removed) await releaseRosterClaims(existingUser._id, { writes });
+            return removed;
+        });
+        if (!user) return res.status(409).json({ message: 'Account details changed. Please try again.' });
 
         logAudit(req, {
             action: 'USER_DELETED',
@@ -1919,6 +1910,8 @@ exports.deleteUser = async (req, res) => {
 
         res.status(200).json({ message: 'User successfully deleted' });
     } catch (error) {
+        if (error.statusCode === 409) return res.status(409).json({ message: error.message });
+        console.error('Error deleting user:', error);
         res.status(500).json({ message: 'Error deleting user' });
     }
 };
@@ -1944,35 +1937,23 @@ exports.updateProfile = async (req, res) => {
                     message: 'TODA President association assignments are managed by BPLO / System Administrator and cannot be changed or self-assigned from your profile.'
                 });
             }
-        } else if (currentUserRole === 'operator' && todaAssociation !== undefined) {
-            const cleanToda = String(todaAssociation).trim() || 'NON-TODA';
-            const existingToda = String(currentUser.todaAssociation || 'NON-TODA').trim();
-            if (
-                cleanToda.toUpperCase() !== 'NON-TODA' &&
-                cleanToda.toUpperCase() !== existingToda.toUpperCase() &&
-                process.env.NODE_ENV !== 'test'
-            ) {
-                const candidateBodyNo = String(req.body.bodyNumber || currentUser.bodyNumber || '').trim().toUpperCase();
-                const rosterReport = await validateOperatorAgainstRoster({
-                    fullName: String(name || currentUser.name || '').trim(),
-                    todaAssociation: cleanToda,
-                    bodyNumber: candidateBodyNo
-                });
-                if (!rosterReport.isValid) {
-                    return res.status(403).json({
-                        message: rosterReport.message || 'TODA affiliation change blocked: You must be listed in the official TODA Masterlist for this association.'
-                    });
+        }
+
+        let transfer = null;
+        if (isOperatorRole(currentUserRole) && (todaAssociation !== undefined || req.body.bodyNumber !== undefined)) {
+            if ((todaAssociation !== undefined && typeof todaAssociation !== 'string') ||
+                (req.body.bodyNumber !== undefined && typeof req.body.bodyNumber !== 'string')) {
+                return res.status(400).json({ message: 'Select an official TODA and provide a valid Body Number.' });
+            }
+            const currentAssociation = rosterAssociation(currentUser.todaAssociation || 'NON-TODA');
+            const association = rosterAssociation(todaAssociation === undefined
+                ? currentAssociation.id : (todaAssociation.trim() || 'NON-TODA'));
+            const bodyNumber = association.id === 'NON-TODA' ? '' : (req.body.bodyNumber ?? currentUser.bodyNumber);
+            if (association.id !== currentAssociation.id || rosterBodyKey(bodyNumber) !== rosterBodyKey(currentUser.bodyNumber)) {
+                if (!association.official || (association.id !== 'NON-TODA' && !rosterBodyKey(bodyNumber))) {
+                    return res.status(400).json({ message: 'Select an official TODA and provide a valid Body Number.' });
                 }
-                const claimConflict = await findVerifiedRosterClaimConflict({
-                    todaAssociation: cleanToda,
-                    bodyNumber: candidateBodyNo,
-                    excludeUserId: currentUser._id
-                });
-                if (claimConflict.conflict) {
-                    return res.status(409).json({
-                        message: 'Ang TODA association at Body Number na ito ay na-claim na ng ibang verified operator account.'
-                    });
-                }
+                transfer = { association: association.id, bodyNumber };
             }
         }
 
@@ -2110,7 +2091,9 @@ exports.updateProfile = async (req, res) => {
         }
 
         if (req.body.emergencyContact !== undefined) updateData.emergencyContact = String(req.body.emergencyContact || '').trim();
-        if (todaAssociation !== undefined && currentUserRole !== 'toda_president') updateData.todaAssociation = todaAssociation;
+        if (todaAssociation !== undefined && currentUserRole !== 'toda_president' && !isOperatorRole(currentUserRole)) {
+            updateData.todaAssociation = todaAssociation;
+        }
         if (language !== undefined) updateData.language = language;
         if (theme !== undefined) updateData.theme = theme;
         
@@ -2140,13 +2123,32 @@ exports.updateProfile = async (req, res) => {
                 otpAttempts: { $lt: 5 }
             });
         }
-        const updatedUser = await User.findOneAndUpdate(filter, update, { returnDocument: 'after' }).select(USER_SENSITIVE_SELECT);
+        const updatedUser = transfer
+            ? await withRosterMutation(User.db, async writes => {
+                const row = transfer.association === 'NON-TODA' ? null : await claimOperatorTransfer({
+                    user: currentUser, association: transfer.association, bodyNumber: transfer.bodyNumber, writes
+                });
+                const updated = await writes.update(User, { ...filter, ...operatorStateFilter(currentUser), name: currentUser.name }, {
+                    ...update,
+                    $set: { ...updateData, todaAssociation: transfer.association, bodyNumber: row?.bodyNumber || '' }
+                });
+                if (!updated) throw rosterConflict('Account details or verification code changed. Please try again.');
+                await releaseRosterClaims(currentUser._id, { writes, criteria: row ? { _id: { $ne: row._id } } : {} });
+                return updated;
+            })
+            : await User.findOneAndUpdate(filter, update, { returnDocument: 'after' }).select(USER_SENSITIVE_SELECT);
         if (!updatedUser) {
             return res.status(409).json({ message: 'Account details or verification code changed. Please try again.' });
         }
 
         res.status(200).json(sanitizeUserObject(updatedUser));
     } catch (error) {
+        if (error.statusCode === 403 || error.statusCode === 409) {
+            return res.status(error.statusCode).json({ message: error.message });
+        }
+        if (error.code === 11000 && error.keyPattern?.claimKey) {
+            return res.status(409).json({ message: 'This TODA Body Number is unavailable.' });
+        }
         console.error("Profile Update Error:", error);
         res.status(500).json({ message: 'Error updating profile' });
     }
@@ -2655,12 +2657,7 @@ exports.googleAuth = async (req, res) => {
             });
 
             if (!rosterReport.isValid && process.env.NODE_ENV !== 'test') {
-                return res.status(403).json({
-                    success: false,
-                    message: rosterReport.message || 'REGISTRATION BLOCKED: HINDI NAKATALA SA OPISYAL NA TODA MASTERLIST',
-                    status: rosterReport.status,
-                    advisory: rosterReport.advisory
-                });
+                return res.status(403).json(rosterIneligible);
             }
 
             // H3: Prevent a TODA association + normalized body number from being claimed by a second verified operator
@@ -2708,7 +2705,8 @@ exports.googleAuth = async (req, res) => {
         if (hasClaimableSlot && matchingRosterDoc) {
             const claimResult = await claimTodaRosterSlot({
                 matchingRosterDoc,
-                userId: newUserId
+                userId: newUserId,
+                operatorName: fullName
             });
             if (!claimResult.claimed) {
                 return res.status(409).json({
@@ -2903,20 +2901,15 @@ exports.verifyOperator = async (req, res) => {
             return res.status(400).json({ message: 'Verification ID is required.' });
         }
 
+        const { getIssuedPermit, hasIssuedPermitSnapshot, OPERATING_STATUSES } = require('../utils/issuedPermit');
         const formatVerifiedUnit = (f, ownerActive = true) => {
             const ownerIsInactive = ownerActive === false;
-            const effectiveExpiryDate = f.expiryDate || f.previousExpiryDate || null;
+            const { status: issuedStatus, expiryDate: effectiveExpiryDate } = getIssuedPermit(f);
             const expiryMs = effectiveExpiryDate ? new Date(effectiveExpiryDate).getTime() : null;
             const hasValidExpiry = expiryMs !== null && !Number.isNaN(expiryMs);
             const isDateExpired = hasValidExpiry && expiryMs < Date.now();
             const isMissingOrInvalidExpiry = !hasValidExpiry;
-            const rawStatus = f.status;
-            // M7: Keep previously issued unexpired permit valid while early renewal is pending
-            const isValidRenewalInFlight =
-                Boolean(f.isRenewalPending) &&
-                ['Active', 'Active - Under Warning'].includes(f.previousStatus) &&
-                ['Pending', 'Pending for Approval', 'For Payment', 'For Signing', 'Ready for Pickup'].includes(rawStatus);
-            const isActiveStatus = ['Active', 'Active - Under Warning'].includes(rawStatus) || isValidRenewalInFlight;
+            const isActiveStatus = OPERATING_STATUSES.includes(issuedStatus);
             const isCurrentlyValid = !ownerIsInactive && isActiveStatus && !f.isArchived && hasValidExpiry && !isDateExpired;
             let validityStatus = 'INACTIVE';
             if (ownerIsInactive) {
@@ -2925,20 +2918,21 @@ exports.verifyOperator = async (req, res) => {
                 validityStatus = 'UNVERIFIED_EXPIRY';
             } else if (isCurrentlyValid) {
                 validityStatus = 'VALID';
-            } else if (rawStatus === 'Expired' || (isActiveStatus && isDateExpired)) {
+            } else if (issuedStatus === 'Expired' || (isActiveStatus && isDateExpired)) {
                 validityStatus = 'EXPIRED';
-            } else if (['Pending', 'Pending for Approval', 'For Payment', 'For Signing', 'Ready for Pickup', 'Cancellation Requested'].includes(rawStatus)) {
+            } else if (['Pending', 'Pending for Approval', 'For Payment', 'For Signing', 'Ready for Pickup', 'Cancellation Requested'].includes(issuedStatus)) {
                 validityStatus = 'PENDING';
             }
             return {
                 make: f.make,
                 plateNo: f.plateNo,
-                status: isActiveStatus && isDateExpired ? 'Expired' : (isValidRenewalInFlight && isCurrentlyValid ? f.previousStatus : rawStatus),
+                status: isActiveStatus && isDateExpired ? 'Expired' : issuedStatus,
                 todaName: f.todaName,
                 approvalDate: f.approvalDate,
                 expiryDate: effectiveExpiryDate,
                 mtopNo: f.mtopNo,
-                isRenewalPending: Boolean(f.isRenewalPending),
+                isRenewalPending: Boolean(f.isRenewalPending && f.status !== 'Cancelled'),
+                ...(hasIssuedPermitSnapshot(f) ? { renewalStatus: f.status } : {}),
                 isCurrentlyValid,
                 validityStatus
             };
@@ -2963,7 +2957,7 @@ exports.verifyOperator = async (req, res) => {
             const userFranchises = await Franchise.find({ 
                 operator: user._id,
                 isArchived: { $ne: true }
-            }).select('make plateNo status todaName approvalDate expiryDate mtopNo isArchived isRenewalPending previousStatus previousExpiryDate');
+            }).select('make plateNo status todaName approvalDate expiryDate mtopNo isArchived applicationType isRenewalPending previousStatus previousExpiryDate');
 
             const ownerIsActive = user.isActive !== false;
             const formattedFranchises = (userFranchises || []).map((f) => formatVerifiedUnit(f, ownerIsActive));

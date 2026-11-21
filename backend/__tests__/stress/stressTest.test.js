@@ -202,7 +202,7 @@ describe('GTRAMS API Stress Tests', () => {
         cedulaAddress: 'Gasan',
         cedulaSerialNo: `CSN-${i}`,
         status: 'Pending',
-        paymentStatus: 'Paid',
+        paymentStatus: 'Unpaid',
         applicationType: 'New'
       });
     }
@@ -212,7 +212,7 @@ describe('GTRAMS API Stress Tests', () => {
       request(app)
         .put(`/api/v1/franchises/${franchiseDoc._id}/status`)
         .set('Authorization', `Bearer ${bploToken}`)
-        .send({ status: 'For Signing' })
+        .send({ status: 'For Payment' })
     );
 
     const { results, succeeded, failed } = await measureConcurrent('Batch Approval Under Load', updatePromises);
@@ -220,8 +220,8 @@ describe('GTRAMS API Stress Tests', () => {
     expect(failed).toBe(0);
     expect(succeeded).toBe(numApps);
     
-    // Verify in DB that all 30 actually transitioned to 'For Signing'
-    const updatedCount = await Franchise.countDocuments({ status: 'For Signing' });
+    // Verify that BPLO approval sent all 30 unpaid applications to the Cashier.
+    const updatedCount = await Franchise.countDocuments({ _id: { $in: inserted.map(doc => doc._id) }, status: 'For Payment' });
     expect(updatedCount).toBe(numApps);
   }, 60000);
 

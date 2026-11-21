@@ -69,6 +69,7 @@ const RenewFranchise = () => {
 
   const ctcData = { ctcNumber: formData.ctcNo, dateIssued: formData.dateIssued, placeIssued: formData.placeIssued };
   const [orcrFile, setOrcrFile] = useState(null);
+  const [licenseFile, setLicenseFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState('');
   const [cedulaFile, setCedulaFile] = useState(null);
   const [cedulaPreviewUrl, setCedulaPreviewUrl] = useState('');
@@ -264,6 +265,10 @@ const RenewFranchise = () => {
       showToast("Expired Driver's License: Renewal with LTO is required before franchise renewal.", 'error');
       return;
     }
+    if (franchise?.driverLicenseExpiryDate && getManilaDateStr(new Date(franchise.driverLicenseExpiryDate)) < today && !licenseFile) {
+      showToast("Upload the replacement driver's license before submitting.", 'error');
+      return;
+    }
 
     setIsSubmitting(true);
     const slowNetTimer = setTimeout(() => {
@@ -287,6 +292,7 @@ const RenewFranchise = () => {
     if (orcrFile) {
       submitData.append('orcrFile', orcrFile);
     }
+    if (licenseFile) submitData.append('license', licenseFile);
     if (cedulaFile) {
       submitData.append('cedulaDoc', cedulaFile);
     }
@@ -784,6 +790,18 @@ const RenewFranchise = () => {
                     </p>
                   </div>
                 )}
+                <div>
+                  <label htmlFor="renewal-license" className="block mb-1.5 text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                    Replacement driver’s license
+                  </label>
+                  <input
+                    id="renewal-license"
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,application/pdf"
+                    onChange={(event) => setLicenseFile(event.target.files?.[0] || null)}
+                    className="min-h-[44px] w-full max-w-xl rounded-lg border border-[#E4E1DC] px-3 py-2 text-sm dark:border-[#2E2A27]"
+                  />
+                </div>
               </div>
 
               {/* Payment & Collection Notice */}

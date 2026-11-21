@@ -89,9 +89,24 @@ const paymentLedgerSchema = new mongoose.Schema({
         trim: true
     }
 }, {
-    timestamps: true
+    timestamps: true,
+    writeConcern: { w: 'majority', j: true }
 });
 
 paymentLedgerSchema.index({ paymentDate: -1, createdAt: -1 });
+
+paymentLedgerSchema.statics.recordSettlement = async function (entry) {
+    try {
+        return await this.create(entry);
+    } catch (error) {
+        if (error.code !== 11000) throw error;
+
+        // A retry may reach this point after the first insert was already committed.
+        const recorded = await this.findOne({ officialReceiptNo: entry.officialReceiptNo }).readConcern('majority');
+        if (!recorded) throw error;
+        return recorded._id.equals(entry._id) && recorded.franchiseId.equals(entry.franchiseId)
+            ? recorded : null;
+    }
+};
 
 module.exports = mongoose.models.PaymentLedger || mongoose.model('PaymentLedger', paymentLedgerSchema);

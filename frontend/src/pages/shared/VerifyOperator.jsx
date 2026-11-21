@@ -78,7 +78,9 @@ const VerifyOperator = () => {
 
   const getUnitValidity = (unit) => {
     if (!unit) return { isValid: false, label: 'INACTIVE', rawStatus: '', isRenewalPending: false };
-    const expiredByDate = isUnitExpiredByDate(unit);
+    const expiredByDate = unit.renewalStatus && unit.validityStatus
+      ? unit.validityStatus === 'EXPIRED'
+      : isUnitExpiredByDate(unit);
     const hasValidExpiryDate = Boolean(unit?.expiryDate) && !isNaN(new Date(unit.expiryDate).getTime());
     const ownerInactive =
       operator.isActive === false ||

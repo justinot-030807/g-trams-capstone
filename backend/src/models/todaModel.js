@@ -47,6 +47,7 @@ const todaRosterSchema = new mongoose.Schema({
         ref: 'User',
         default: null
     },
+    claimKey: { type: String },
     submissionRef: {
         type: mongoose.Schema.Types.ObjectId,
         ref: 'todaSubmission',
@@ -63,5 +64,6 @@ todaRosterSchema.index({ todaAssociation: 1, bodyNumber: 1 }, { unique: true });
 todaRosterSchema.index({ todaAssociation: 1, operatorName: 1 });
 todaRosterSchema.index({ bodyNumber: 1 });
 todaRosterSchema.index({ claimedBy: 1 });
+todaRosterSchema.index({ claimKey: 1 }, { unique: true, sparse: true });
 
 module.exports = mongoose.model('TodaRoster', todaRosterSchema);

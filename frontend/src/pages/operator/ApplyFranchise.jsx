@@ -471,7 +471,6 @@ const ApplyFranchise = () => {
     setReapplyTarget(null);
     setFocusField('');
     setCurrentStep(1);
-    setTodaMembershipStatus(null);
     setFormData(getCleanFormDefaults());
   };
 
@@ -573,49 +572,6 @@ const ApplyFranchise = () => {
       }
     }
   }, [formData.todaName]);
-
-  // Live TODA Roster Membership Status Check
-  const [todaMembershipStatus, setTodaMembershipStatus] = useState(null);
-  const [isCheckingTodaMembership, setIsCheckingTodaMembership] = useState(false);
-
-  useEffect(() => {
-    const currentToda = formData.todaName || loggedInToda;
-    if (!currentToda || currentToda === 'NON-TODA' || !formData.fullName) {
-      setTodaMembershipStatus(null);
-      return;
-    }
-
-    const timer = setTimeout(async () => {
-      setIsCheckingTodaMembership(true);
-      try {
-        const query = new URLSearchParams({
-          todaName: currentToda,
-          name: formData.fullName || '',
-          barangay: formData.address || ''
-        });
-        const baseUrl = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
-        const res = await fetch(`${baseUrl}/api/v1/franchises/check-toda-member?${query.toString()}`);
-        if (res.ok) {
-          const data = await res.json();
-          setTodaMembershipStatus(data);
-          if (data.matchedPlateNo && formMode === 'New') {
-            setFormData(prev => {
-              if (!prev.plateNo || !prev.plateNo.trim()) {
-                return { ...prev, plateNo: String(data.matchedPlateNo).trim().toUpperCase() };
-              }
-              return prev;
-            });
-          }
-        }
-      } catch (err) {
-        console.error('Error checking TODA membership in application:', err);
-      } finally {
-        setIsCheckingTodaMembership(false);
-      }
-    }, 450);
-
-    return () => clearTimeout(timer);
-  }, [formData.todaName, formData.fullName, formData.address, loggedInToda, formMode]);
 
   const getCurrentUserId = () => getStoredUserId();
 
@@ -864,7 +820,6 @@ const ApplyFranchise = () => {
 
     setFormData(getCleanFormDefaults({
       ...userDefaults,
-      plateNo: userDefaults.plateNo || (todaMembershipStatus?.matchedPlateNo ? String(todaMembershipStatus.matchedPlateNo).trim().toUpperCase() : ''),
       cedulaCitizenship: 'Filipino'
     }));
   };
