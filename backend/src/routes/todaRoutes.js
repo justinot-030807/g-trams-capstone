@@ -13,7 +13,21 @@ const { protect, authorize } = require('../middleware/authMiddleware');
 const { extractTodaRosterFromDocument } = require('../services/documentVerificationService');
 const { isNameMatch } = require('../utils/nameMatcher');
 const { syncSubmissionToRoster, getNextBodyNumber, addIndividualMember } = require('../controllers/todaController');
+const { resolveTodaAssociation, todaAssociationPattern } = require('../controllers/franchiseController');
 const { logAudit } = require('../utils/auditLogger');
+
+function getOfficialToda(value) {
+    const entry = resolveTodaAssociation(value);
+    return entry?.id === 'NON-TODA' ? null : entry;
+}
+
+function requirePresidentAssociation(req, res, next) {
+    const role = String(req.user.role).toLowerCase().trim().replace(/[\s-]+/g, '_');
+    if (role === 'toda_president' && !getOfficialToda(req.user.todaAssociation)) {
+        return res.status(403).json({ message: 'Your TODA President account must be assigned to an official TODA association.' });
+    }
+    next();
+}
 
 // Ensure removal requests persist exact roster/submission target IDs without widening deletion to same-name rows (M9)
 (function ensureRemovalRequestTargetPaths() {
@@ -51,14 +65,14 @@ const memoryUpload = multer({
 });
 
 // Auto-generate next unique body number for a TODA (strictly no duplicates)
-router.get('/rosters', protect, authorize('bplo_staff', 'admin', 'system_admin'), async (req, res) => { try { const rosters = await TodaRoster.find().sort({ todaAssociation: 1, bodyNumber: 1 }); res.status(200).json(rosters); } catch (error) { res.status(500).json({ message: 'Error fetching TODA rosters' }); } });
-router.get('/next-body-number', protect, authorize('bplo_staff', 'toda president', 'toda_president', 'admin', 'system_admin'), getNextBodyNumber);
+router.get('/rosters', protect, authorize('bplo_staff'), async (req, res) => { try { const rosters = await TodaRoster.find().sort({ todaAssociation: 1, bodyNumber: 1 }); res.status(200).json(rosters); } catch (error) { res.status(500).json({ message: 'Error fetching TODA rosters' }); } });
+router.get('/next-body-number', protect, authorize('bplo_staff', 'toda_president'), requirePresidentAssociation, getNextBodyNumber);
 
 // Register an individual member (when only one operator joins a TODA)
-router.post('/members/individual', protect, authorize('bplo_staff', 'toda president', 'toda_president'), addIndividualMember);
+router.post('/members/individual', protect, authorize('bplo_staff', 'toda_president'), requirePresidentAssociation, addIndividualMember);
 
 // Real-time AI OCR scanning for roster documents (zero Cloudinary delay, memory buffer)
-router.post('/scan-roster', protect, authorize('bplo_staff', 'toda president', 'toda_president'), memoryUpload.single('file'), async (req, res) => {
+router.post('/scan-roster', protect, authorize('bplo_staff', 'toda_president'), requirePresidentAssociation, memoryUpload.single('file'), async (req, res) => {
     try {
         let input = null;
 
@@ -123,14 +137,14 @@ router.post('/scan-roster', protect, authorize('bplo_staff', 'toda president', '
 });
 
 // Upload member list (TODA President) with AI OCR Roster Parsing
-router.post('/upload', protect, authorize('bplo_staff', 'toda president', 'toda_president'), upload.single('file'), async (req, res) => {
+router.post('/upload', protect, authorize('bplo_staff', 'toda_president'), requirePresidentAssociation, upload.single('file'), async (req, res) => {
     try {
         if (!req.file) return res.status(400).json({ message: 'No file uploaded' });
 
         let extractedMembers = [];
         let extractedCount = 0;
         let ocrNotes = '';
-        let todaAssociation = req.user.todaAssociation || '';
+        let todaAssociation = getOfficialToda(req.user.todaAssociation)?.id || '';
 
         // If client already pre-scanned and confirmed members:
         if (req.body.extractedMembers) {
@@ -171,8 +185,8 @@ router.post('/upload', protect, authorize('bplo_staff', 'toda president', 'toda_
                     })).filter(m => Boolean(m.name || m.operatorName));
                     extractedCount = extractedMembers.length;
                     ocrNotes = ocr.notes || '';
-                    if (ocr.todaAssociation && (!todaAssociation || todaAssociation === 'NON-TODA')) {
-                        todaAssociation = ocr.todaAssociation;
+                    if (!todaAssociation) {
+                        todaAssociation = getOfficialToda(ocr.todaAssociation)?.id || '';
                     }
                 }
             } catch (ocrErr) {
@@ -357,29 +371,28 @@ router.post('/removal-requests', protect, authorize('bplo_staff', 'toda presiden
         }
 
         const userRole = String(req.user?.role || '').toLowerCase().trim().replace(/[\s-]+/g, '_');
-        const isStaff = userRole === 'bplo_staff' || userRole === 'admin' || userRole === 'system_admin';
+        const isStaff = userRole === 'bplo_staff';
 
         // Determine and strictly scope target TODA association
-        let presidentToda = '';
+        let todaEntry;
         if (isStaff) {
-            presidentToda = String(bodyTodaName || req.user.todaAssociation || '').trim();
+            todaEntry = getOfficialToda(bodyTodaName || req.user.todaAssociation);
         } else {
-            const assignedToda = String(req.user.todaAssociation || '').trim();
-            if (!assignedToda || assignedToda.toUpperCase() === 'NON-TODA') {
+            todaEntry = getOfficialToda(req.user.todaAssociation);
+            if (!todaEntry) {
                 return res.status(403).json({ message: 'ACCESS DENIED: Your TODA President account must be assigned to an official TODA association.' });
             }
-            if (bodyTodaName && String(bodyTodaName).trim().toUpperCase() !== assignedToda.toUpperCase()) {
+            if (bodyTodaName && getOfficialToda(bodyTodaName)?.id !== todaEntry.id) {
                 return res.status(403).json({ message: 'ACCESS DENIED: You can only file removal requests for your own assigned TODA association.' });
             }
-            presidentToda = assignedToda;
         }
 
-        if (!presidentToda || presidentToda.toUpperCase() === 'NON-TODA') {
+        if (!todaEntry) {
             return res.status(400).json({ message: 'You must have a registered TODA Association to submit removal requests.' });
         }
 
-        const escapedToda = presidentToda.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const todaExactRegex = new RegExp(`^${escapedToda}$`, 'i');
+        const presidentToda = todaEntry.id;
+        const todaExactRegex = todaAssociationPattern(todaEntry);
 
         const rawIdStr = String(memberId).trim();
         let member = null;
@@ -471,8 +484,7 @@ router.post('/removal-requests', protect, authorize('bplo_staff', 'toda presiden
         }
 
         if (member) {
-            const memberToda = (member.todaAssociation || '').trim();
-            if (!memberToda || memberToda.toUpperCase() === 'NON-TODA' || memberToda.toUpperCase() !== presidentToda.toUpperCase()) {
+            if (getOfficialToda(member.todaAssociation)?.id !== presidentToda) {
                 return res.status(403).json({ message: `Operator is not affiliated with ${presidentToda}.` });
             }
             resolvedName = member.name;
@@ -533,16 +545,15 @@ router.post('/removal-requests', protect, authorize('bplo_staff', 'toda presiden
 router.get('/removal-requests', protect, authorize('bplo_staff', 'toda president', 'toda_president'), async (req, res) => {
     try {
         const userRole = String(req.user?.role || '').toLowerCase().trim().replace(/[\s-]+/g, '_');
-        const isStaff = userRole === 'bplo_staff' || userRole === 'admin' || userRole === 'system_admin';
+        const isStaff = userRole === 'bplo_staff';
 
         let query = {};
         if (!isStaff) {
-            const presidentToda = (req.user.todaAssociation || '').trim();
-            if (!presidentToda || presidentToda.toUpperCase() === 'NON-TODA') {
+            const todaEntry = getOfficialToda(req.user.todaAssociation);
+            if (!todaEntry) {
                 return res.status(200).json([]);
             }
-            const escaped = presidentToda.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            query.todaName = new RegExp(`^${escaped}$`, 'i');
+            query.todaName = todaAssociationPattern(todaEntry);
         }
 
         const requests = await TodaRemovalRequest.find(query)
@@ -568,13 +579,13 @@ router.put('/removal-requests/:id/approve', protect, authorize('bplo_staff'), as
             return res.status(400).json({ message: `Request has already been ${existing.status.toLowerCase()}.` });
         }
 
-        const targetTodaName = String(existing.todaName || '').trim();
-        if (!targetTodaName || targetTodaName.toUpperCase() === 'NON-TODA') {
+        const todaEntry = getOfficialToda(existing.todaName);
+        if (!todaEntry) {
             return res.status(400).json({ message: 'Removal request does not specify a valid TODA association.' });
         }
 
-        const escapedToda = targetTodaName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const todaExactRegex = new RegExp(`^${escapedToda}$`, 'i');
+        const targetTodaName = todaEntry.id;
+        const todaExactRegex = todaAssociationPattern(todaEntry);
         const trimmedName = String(existing.memberName || '').trim();
         const exactNameRegex = trimmedName
             ? new RegExp(`^${trimmedName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i')
@@ -806,7 +817,7 @@ router.put('/removal-requests/:id/reject', protect, authorize('bplo_staff'), asy
 });
 
 // Get user submissions
-router.get('/my-submissions', protect, async (req, res) => {
+router.get('/my-submissions', protect, authorize('bplo_staff', 'toda_president'), async (req, res) => {
     try {
         const mySubmissions = await TodaSubmission.find({ submittedBy: req.user._id }).sort({ createdAt: -1 });
         res.status(200).json(mySubmissions);
@@ -815,27 +826,22 @@ router.get('/my-submissions', protect, async (req, res) => {
     }
 });
 
-// Get all members, operators, and registered tricycle units under the TODA Association (for TODA Presidents / Admin)
-router.get('/my-members', protect, authorize('toda_president', 'toda president', 'bplo_staff', 'system_admin', 'admin'), async (req, res) => {
+// Get members, operators, and registered tricycle units for one TODA association.
+router.get('/my-members', protect, authorize('toda_president', 'bplo_staff'), async (req, res) => {
     try {
-        // Determine the target TODA association
-        let todaName = (req.query.todaName || '').trim();
         const userRole = String(req.user?.role || '').toLowerCase().trim().replace(/[\s-]+/g, '_');
-        const isAdmin = userRole === 'admin' || userRole === 'administrator' || userRole === 'bplo_staff' || userRole === 'system_admin';
+        const assignedToda = getOfficialToda(req.user.todaAssociation);
+        const requestedName = req.query.todaName;
+        const todaEntry = requestedName ? getOfficialToda(requestedName) : assignedToda;
 
-        if (!todaName) {
-            if (req.user.todaAssociation && req.user.todaAssociation !== 'NON-TODA') {
-                todaName = req.user.todaAssociation.trim();
-            }
-        } else if (!isAdmin) {
-            // Non-admin users are restricted to viewing only their own assigned TODA association
-            const userToda = (req.user.todaAssociation || '').trim();
-            if (userToda.toUpperCase() !== todaName.toUpperCase()) {
-                return res.status(403).json({ message: 'ACCESS DENIED: You can only view members of your own TODA association.' });
-            }
+        if (userRole === 'toda_president' && requestedName && (!assignedToda || todaEntry?.id !== assignedToda.id)) {
+            return res.status(403).json({ message: 'ACCESS DENIED: You can only view members of your own TODA association.' });
+        }
+        if (requestedName && !todaEntry) {
+            return res.status(400).json({ message: 'Select an official TODA association.' });
         }
 
-        if (!todaName || todaName.toUpperCase() === 'NON-TODA') {
+        if (!todaEntry) {
             return res.status(200).json({
                 todaName: req.user.todaAssociation || 'NON-TODA',
                 stats: { totalMembers: 0, totalUnits: 0, activeUnits: 0, pendingUnits: 0, expiredUnits: 0 },
@@ -843,8 +849,8 @@ router.get('/my-members', protect, authorize('toda_president', 'toda president',
             });
         }
 
-        const escapedToda = todaName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const todaRegex = new RegExp(`^${escapedToda}$`, 'i');
+        const todaName = todaEntry.id;
+        const todaRegex = todaAssociationPattern(todaEntry);
 
         // 1. Fetch all franchises matching this TODA
         const franchises = await Franchise.find({ todaName: todaRegex })
@@ -983,7 +989,7 @@ router.get('/my-members', protect, authorize('toda_president', 'toda president',
         // 4. Fetch approved TODA Submissions to include endorsed masterlist members
         const approvedSubmissions = await TodaSubmission.find({
             status: 'Approved',
-            $or: [{ todaAssociation: todaRegex }, { fileName: todaRegex }]
+            todaAssociation: todaRegex
         }).sort({ createdAt: -1 });
 
         const latestApprovedSub = approvedSubmissions[0] || null;
@@ -1085,16 +1091,16 @@ const handleAddSingleMember = async (req, res) => {
         const { operatorName, bodyNumber, plateNo, contact, remarks, todaAssociation } = req.body;
         const userRole = String(req.user?.role || '').toLowerCase().trim().replace(/[\s-]+/g, '_');
         const isTodaPres = userRole === 'toda_president';
+        const assignedToda = getOfficialToda(req.user.todaAssociation);
         if (isTodaPres) {
-            const assignedToda = (req.user.todaAssociation || '').trim();
-            if (!assignedToda || assignedToda.toUpperCase() === 'NON-TODA') {
+            if (!assignedToda) {
                 return res.status(403).json({ message: 'Your TODA President account does not have an assigned TODA association.' });
             }
-            if (todaAssociation && todaAssociation.trim().toUpperCase() !== assignedToda.toUpperCase()) {
+            if (todaAssociation && getOfficialToda(todaAssociation)?.id !== assignedToda.id) {
                 return res.status(403).json({ message: 'You can only add members to your own assigned TODA association.' });
             }
         }
-        const targetToda = (isTodaPres ? (req.user.todaAssociation || '') : (todaAssociation || req.user.todaAssociation || '')).trim();
+        const todaEntry = isTodaPres || !todaAssociation ? assignedToda : getOfficialToda(todaAssociation);
 
         if (!operatorName || !operatorName.trim()) {
             return res.status(400).json({ message: 'Operator full name is required' });
@@ -1102,7 +1108,7 @@ const handleAddSingleMember = async (req, res) => {
         if (!bodyNumber || !bodyNumber.trim()) {
             return res.status(400).json({ message: 'Assigned body number is required' });
         }
-        if (!targetToda) {
+        if (!todaEntry) {
             return res.status(400).json({ message: 'TODA association could not be determined' });
         }
 
@@ -1112,8 +1118,8 @@ const handleAddSingleMember = async (req, res) => {
         const cleanContact = (contact || '').trim();
 
         // 1. Strict Duplicate Check on Compound Key (todaAssociation + bodyNumber)
-        const escapedToda = targetToda.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const todaRegex = new RegExp(`^${escapedToda}$`, 'i');
+        const targetToda = todaEntry.id;
+        const todaRegex = todaAssociationPattern(todaEntry);
         const bodyRegex = new RegExp(`^${cleanBodyNumber.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i');
 
         const existingBodyInRoster = await TodaRoster.findOne({
@@ -1136,7 +1142,7 @@ const handleAddSingleMember = async (req, res) => {
                 plateNo: plateRegex,
                 status: { $in: ['Active', 'Pending', 'For Signing', 'Ready for Pickup'] }
             });
-            if (existingPlate && existingPlate.todaName?.toUpperCase() !== targetToda.toUpperCase()) {
+            if (existingPlate && getOfficialToda(existingPlate.todaName)?.id !== targetToda) {
                 return res.status(409).json({
                     message: `Vehicle plate number "${cleanPlateNo}" is already actively associated with ${existingPlate.todaName}. A unit cannot belong to multiple TODAs simultaneously.`,
                     conflictField: 'plateNo'

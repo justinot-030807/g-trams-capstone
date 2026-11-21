@@ -121,6 +121,32 @@ const getJwtSecret = () => {
     return secret;
 };
 
+const hasLocalCredential = (user) => user.hasLocalPassword !== false &&
+    (user.authProvider !== 'google' || Boolean(user.passwordChangedAt || user.localPasswordConfirmedAt));
+
+const verifiedPrimaryContact = (user) => (
+    user.isContactVerified === true || (user.isContactVerified === undefined && user.isVerified === true)
+        ? normalizeContact(user.contact)
+        : ''
+);
+
+const verifiedPrimaryContacts = (user) => [
+    verifiedPrimaryContact(user),
+    user.isEmailVerified === true ? normalizeContact(user.email) : ''
+].filter(Boolean);
+
+const verifiedRecoveryContacts = (user) => [
+    user.isRecoveryEmailVerified === true ? normalizeContact(user.recoveryEmail) : '',
+    user.isRecoveryPhoneVerified === true ? normalizeContact(user.recoveryPhone) : ''
+].filter(Boolean);
+
+const contactVersion = (user) => user.contactSecurityVersion || 0;
+const contactVersionFilter = (user) => ({
+    contactSecurityVersion: contactVersion(user) || { $in: [0, null] }
+});
+const clearContactOtp = { otpAttempts: 0, otpPurpose: '', otpRecipient: '' };
+const unsetContactOtp = { otp: 1, otpExpire: 1 };
+
 const USER_SENSITIVE_SELECT = '-password -otp -otpExpire -otpAttempts -otpPurpose -otpRecipient -passwordResetToken -failedLoginAttempts -lockUntil';
 
 const sanitizeUserObject = (userDocOrObj) => {
@@ -137,7 +163,9 @@ const sanitizeUserObject = (userDocOrObj) => {
     delete obj.lockUntil;
 
     // Expose whether user has a local password configured (defaults to true for legacy local users)
-    obj.hasLocalPassword = obj.hasLocalPassword !== false;
+    obj.hasLocalPassword = hasLocalCredential(obj);
+    delete obj.contactSecurityVersion;
+    delete obj.localPasswordConfirmedAt;
 
     // Hydrate legacy backupContact into recoveryEmail / recoveryPhone when both typed fields are empty
     const cleanRecEmail = String(obj.recoveryEmail || '').trim();
@@ -584,11 +612,48 @@ const verifyGoogleReauthForUser = async ({ idToken, accessToken, user }) => {
     return { valid: true, verified };
 };
 
+const sessionFingerprint = (req) => crypto.createHash('sha256').update(req.headers.authorization || '').digest('hex');
+
+exports.googleStepUpChallenge = async (req, res) => {
+    if (hasLocalCredential(req.user) || !req.user.googleId) {
+        return res.status(400).json({ message: 'Google step-up requires a linked Google-only account.' });
+    }
+    res.set('Cache-Control', 'no-store');
+    return res.json({
+        nonce: jwt.sign({
+            purpose: 'google_profile_step_up',
+            userId: String(req.user._id),
+            session: sessionFingerprint(req),
+            version: contactVersion(req.user),
+            challenge: crypto.randomUUID()
+        }, getJwtSecret(), { algorithm: 'HS256', expiresIn: '3m' })
+    });
+};
+
+const verifyGoogleProfileStepUp = async (req, user) => {
+    const credential = String(req.body.googleReauthToken || '').trim();
+    const decoded = jwt.decode(credential);
+    if (!decoded || typeof decoded.nonce !== 'string' || !user.googleId) return false;
+    let challenge;
+    try {
+        challenge = jwt.verify(decoded.nonce, getJwtSecret(), { algorithms: ['HS256'] });
+    } catch {
+        return false;
+    }
+    if (challenge.purpose !== 'google_profile_step_up' || challenge.userId !== String(user._id) ||
+        challenge.session !== sessionFingerprint(req) || challenge.version !== contactVersion(user)) {
+        return false;
+    }
+    // The provider verifies the same signed credential whose nonce was read above.
+    const verified = await verifyGoogleTokens({ idToken: credential, allowTestJwtFallback: false });
+    return verified.emailVerified && verified.googleId === user.googleId;
+};
+
 const signSessionToken = (user) => {
     return jwt.sign(
         { id: user._id, role: user.role, tokenVersion: user.tokenVersion || 0, tokenType: 'access' },
         getJwtSecret(),
-        { algorithm: 'HS256', expiresIn: '1d' }
+        { algorithm: 'HS256', expiresIn: '1d', jwtid: crypto.randomUUID() }
     );
 };
 
@@ -778,6 +843,8 @@ exports.register = async (req, res) => {
             todaAssociation: normalizedToda,
             bodyNumber: normalizedBodyNo,
             isVerified: false,
+            isContactVerified: false,
+            isEmailVerified: false,
             otp: hashedOtp,
             otpExpire: Date.now() + 10 * 60 * 1000,
             otpAttempts: 0,
@@ -897,6 +964,8 @@ exports.verifyOTP = async (req, res) => {
         const isEmail = rawContact.includes('@');
         const setFields = {
             isVerified: true,
+            isContactVerified: true,
+            isEmailVerified: isEmail && (!user.email || normalizeContact(user.email) === normalizeContact(rawContact)),
             otpAttempts: 0,
             otpPurpose: '',
             otpRecipient: ''
@@ -1067,6 +1136,10 @@ exports.login = async (req, res) => {
             });
         }
         
+        if (!hasLocalCredential(user)) {
+            user.hasLocalPassword = true;
+            user.localPasswordConfirmedAt = new Date();
+        }
         user.lastActive = new Date();
         user.lastLogin = new Date();
         await user.save();
@@ -1083,11 +1156,6 @@ exports.login = async (req, res) => {
 exports.getUsers = async (req, res) => {
     try {
         res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-
-        // Immediately update caller's lastActive timestamp so their record in MongoDB is fresh
-        if (req.user && req.user._id) {
-            await User.findByIdAndUpdate(req.user._id, { lastActive: new Date() }).catch(() => {});
-        }
 
         const callerRole = String(req.user?.role || '').toLowerCase().trim().replace(/[\s-]+/g, '_');
         const isSystemAdmin = ['system_admin', 'admin', 'administrator'].includes(callerRole);
@@ -1215,17 +1283,13 @@ exports.forgotPassword = async (req, res) => {
 
         // Determine exact recovery/primary destination (M3)
         const isEmailInput = rawContact.includes('@');
-        const cleanRecEmail = String(user.recoveryEmail || '').trim().toLowerCase();
-        const cleanRecPhone = normalizeContact(user.recoveryPhone || '');
-        const cleanLegacyBackup = String(user.backupContact || '').trim();
-        const cleanLegacyBackupNorm = cleanLegacyBackup ? normalizeContact(cleanLegacyBackup) : '';
-        const effectiveRecEmail = cleanRecEmail || (cleanLegacyBackup && cleanLegacyBackup.includes('@') ? cleanLegacyBackup.toLowerCase() : '');
-        const effectiveRecPhone = cleanRecPhone || (cleanLegacyBackup && !cleanLegacyBackup.includes('@') ? cleanLegacyBackupNorm : '');
-
-        const backupTargetRaw = String(effectiveRecEmail || effectiveRecPhone || cleanLegacyBackup || '').trim();
-        const primaryTargetRaw = String(user.contact || user.email || rawContact).trim();
-        const primaryContactNorm = normalizeContact(user.contact || '');
-        const primaryEmailNorm = String(user.email || '').trim().toLowerCase();
+        const effectiveRecEmail = user.isRecoveryEmailVerified ? normalizeContact(user.recoveryEmail) : '';
+        const effectiveRecPhone = user.isRecoveryPhoneVerified ? normalizeContact(user.recoveryPhone) : '';
+        const backupTargetRaw = effectiveRecEmail || effectiveRecPhone;
+        const primaryContactNorm = verifiedPrimaryContact(user);
+        const primaryEmailNorm = (user.isEmailVerified === true ? normalizeContact(user.email) : '') ||
+            (primaryContactNorm.includes('@') ? primaryContactNorm : '');
+        const primaryTargetRaw = primaryContactNorm || primaryEmailNorm;
 
         const matchesPrimary =
             (normalizedContact && primaryContactNorm && normalizedContact.toLowerCase() === primaryContactNorm.toLowerCase()) ||
@@ -1298,20 +1362,27 @@ exports.forgotPassword = async (req, res) => {
                 isRecovery = true;
             }
         } else if (requestBackup) {
-            const fallbackBackup = cleanLegacyBackupNorm || effectiveRecEmail || effectiveRecPhone;
+            const fallbackBackup = effectiveRecEmail || effectiveRecPhone;
             if (fallbackBackup) {
                 destination = fallbackBackup;
                 isRecovery = true;
             }
         }
 
+        if (![...verifiedPrimaryContacts(user), ...verifiedRecoveryContacts(user)].includes(destination)) {
+            return res.status(400).json({ message: 'Choose a verified email or phone number to reset your password.' });
+        }
+
         const otp = crypto.randomInt(100000, 1000000).toString();
-        user.otp = hashOtp(otp);
-        user.otpExpire = Date.now() + 10 * 60 * 1000;
-        user.otpAttempts = 0;
-        user.otpPurpose = 'reset';
-        user.otpRecipient = destination;
-        await user.save();
+        const issuedUser = await User.findOneAndUpdate(
+            { _id: user._id, ...contactVersionFilter(user) },
+            { $set: { otp: hashOtp(otp), otpExpire: new Date(Date.now() + 10 * 60 * 1000), otpAttempts: 0, otpPurpose: 'reset', otpRecipient: destination } },
+            { returnDocument: 'after' }
+        );
+        if (!issuedUser) {
+            return res.status(409).json({ message: 'Account security details changed. Please request a new code.' });
+        }
+        user = issuedUser;
 
         const isDestEmail = destination.includes('@');
 
@@ -1346,10 +1417,12 @@ exports.forgotPassword = async (req, res) => {
                 {
                     uid: String(user._id),
                     purpose: 'password_reset',
-                    recipient: destination
+                    recipient: destination,
+                    contactSecurityVersion: contactVersion(user),
+                    otpExpiresAt: user.otpExpire.getTime()
                 },
                 getJwtSecret(),
-                { algorithm: 'HS256', expiresIn: '15m' }
+                { algorithm: 'HS256', expiresIn: '10m' }
             );
 
             return res.status(200).json({ 
@@ -1443,6 +1516,10 @@ exports.resetPassword = async (req, res) => {
             }
             challengeRecipient = String(decodedChallenge.recipient).trim();
             user = await User.findById(decodedChallenge.uid);
+            if (!user || decodedChallenge.contactSecurityVersion !== contactVersion(user) ||
+                decodedChallenge.otpExpiresAt !== user.otpExpire?.getTime()) {
+                return res.status(400).json({ message: 'Invalid or expired password reset session. Please request a new OTP.' });
+            }
         } else {
             user = await User.findOne(getPrimaryContactQueryFilter(rawContact));
             if (!user) {
@@ -1454,33 +1531,16 @@ exports.resetPassword = async (req, res) => {
             return res.status(400).json({ message: 'Invalid or expired OTP code.' });
         }
 
-        const isTestBlankPurpose = process.env.NODE_ENV === 'test' && !user.otpPurpose;
-        if (user.otpPurpose !== 'reset' && !isTestBlankPurpose) {
+        const storedRecipient = normalizeContact(user.otpRecipient);
+        const primaryTargets = verifiedPrimaryContacts(user);
+        const recoveryTargets = verifiedRecoveryContacts(user);
+        const input = normalizeContact(rawContact);
+        const matchesRequest = hasChallengeToken
+            ? storedRecipient === normalizeContact(challengeRecipient)
+            : input === storedRecipient || (recoveryTargets.includes(storedRecipient) && primaryTargets.includes(input));
+        if (user.otpPurpose !== 'reset' || !storedRecipient || !matchesRequest ||
+            ![...primaryTargets, ...recoveryTargets].includes(storedRecipient)) {
             return res.status(400).json({ message: 'Invalid or expired OTP code.' });
-        }
-
-        if (!user.otpRecipient && (hasChallengeToken || process.env.NODE_ENV !== 'test')) {
-            return res.status(400).json({ message: 'Invalid or expired OTP code.' });
-        }
-
-        if (hasChallengeToken) {
-            if (!user.otpRecipient || normalizeContact(user.otpRecipient) !== normalizeContact(challengeRecipient)) {
-                return res.status(400).json({ message: 'Invalid or expired OTP code.' });
-            }
-        } else if (user.otpRecipient) {
-            const normInput = normalizeContact(rawContact);
-            const normRecipient = normalizeContact(user.otpRecipient);
-            const recoveryTargets = [user.backupContact, user.recoveryEmail, user.recoveryPhone]
-                .map((v) => normalizeContact(v))
-                .filter(Boolean);
-            const primaryTargets = [user.contact, user.email]
-                .map((v) => normalizeContact(v))
-                .filter(Boolean);
-            const isDirectMatch = normInput === normRecipient;
-            const isPrimaryForRecoveryChallenge = recoveryTargets.includes(normRecipient) && primaryTargets.includes(normInput);
-            if (!isDirectMatch && !isPrimaryForRecoveryChallenge) {
-                return res.status(400).json({ message: 'Invalid or expired OTP code.' });
-            }
         }
 
         if ((user.otpAttempts || 0) >= 5) {
@@ -1506,14 +1566,14 @@ exports.resetPassword = async (req, res) => {
         }
 
         const hashedPassword = await User.hashPassword(newPassword);
-        const expectedPurposeQuery = isTestBlankPurpose ? { $in: ['reset', '', null] } : 'reset';
         const claimedUser = await User.findOneAndUpdate(
             {
                 _id: user._id,
                 otp: user.otp,
-                otpPurpose: expectedPurposeQuery,
-                ...(user.otpRecipient ? { otpRecipient: user.otpRecipient } : {}),
-                otpExpire: { $gt: new Date() },
+                otpPurpose: 'reset',
+                otpRecipient: user.otpRecipient,
+                ...contactVersionFilter(user),
+                otpExpire: { $eq: user.otpExpire, $gt: new Date() },
                 otpAttempts: { $lt: 5 }
             },
             {
@@ -1528,7 +1588,7 @@ exports.resetPassword = async (req, res) => {
                     lockUntil: null,
                     passwordChangedAt: new Date()
                 },
-                $inc: { tokenVersion: 1 }
+                $inc: { tokenVersion: 1, contactSecurityVersion: 1 }
             },
             { returnDocument: 'after' }
         );
@@ -1580,16 +1640,22 @@ exports.changePassword = async (req, res) => {
             return res.status(400).json({ message: 'New password must be different from your current password.' });
         }
 
-        const user = await User.findById(req.user._id);
-        if (!user) return res.status(404).json({ message: 'User not found' });
-        const isMatch = await user.matchPassword(oldPassword);
-        if (!isMatch) return res.status(400).json({ message: 'Incorrect old password.' });
-        
-        user.password = newPassword;
-        user.hasLocalPassword = true;
-        user.tokenVersion = (user.tokenVersion || 0) + 1;
-        user.passwordChangedAt = new Date();
-        await user.save();
+        const currentUser = await User.findById(req.user._id);
+        if (!currentUser) return res.status(404).json({ message: 'User not found' });
+        if (!(await currentUser.matchPassword(oldPassword))) {
+            return res.status(400).json({ message: 'Incorrect old password.' });
+        }
+
+        const user = await User.findOneAndUpdate(
+            { _id: currentUser._id, password: currentUser.password, ...contactVersionFilter(currentUser) },
+            {
+                $set: { ...clearContactOtp, password: await User.hashPassword(newPassword), hasLocalPassword: true, passwordChangedAt: new Date() },
+                $unset: unsetContactOtp,
+                $inc: { tokenVersion: 1, contactSecurityVersion: 1 }
+            },
+            { returnDocument: 'after' }
+        );
+        if (!user) return res.status(409).json({ message: 'Account security details changed. Please try again.' });
 
         disconnectUserSockets(user._id);
 
@@ -1634,8 +1700,8 @@ exports.requestRecoveryOtp = async (req, res) => {
         const primaryContactNorm = normalizeContact(currentUser.contact || '');
         const primaryEmailNorm = String(currentUser.email || '').trim().toLowerCase();
         if (
-            normalizedTarget.toLowerCase() === primaryContactNorm.toLowerCase() ||
-            (isTargetEmail && primaryEmailNorm && normalizedTarget.toLowerCase() === primaryEmailNorm)
+            (currentUser.isContactVerified && normalizedTarget === primaryContactNorm) ||
+            (isTargetEmail && currentUser.isEmailVerified && normalizedTarget === primaryEmailNorm)
         ) {
             return res.status(400).json({
                 message: isTargetEmail
@@ -1655,12 +1721,18 @@ exports.requestRecoveryOtp = async (req, res) => {
         }
 
         const otp = crypto.randomInt(100000, 1000000).toString();
-        currentUser.otp = hashOtp(otp);
-        currentUser.otpPurpose = 'recovery_bind';
-        currentUser.otpRecipient = normalizedTarget;
-        currentUser.otpExpire = new Date(Date.now() + 10 * 60 * 1000);
-        currentUser.otpAttempts = 0;
-        await currentUser.save();
+        const issuedUser = await User.findOneAndUpdate(
+            { _id: currentUser._id, ...contactVersionFilter(currentUser) },
+            { $set: {
+                otp: hashOtp(otp),
+                otpPurpose: 'recovery_bind',
+                otpRecipient: normalizedTarget,
+                otpExpire: new Date(Date.now() + 10 * 60 * 1000),
+                otpAttempts: 0
+            } },
+            { returnDocument: 'after' }
+        );
+        if (!issuedUser) return res.status(409).json({ message: 'Account security details changed. Please request a new code.' });
 
         if (process.env.NODE_ENV === 'test') {
             console.log(`[DEV/TEST OTP] Recovery Bind OTP for ${normalizedTarget}: ${otp}`);
@@ -1676,7 +1748,7 @@ exports.requestRecoveryOtp = async (req, res) => {
 
             if (!sendResult || !sendResult.success) {
                 await User.findOneAndUpdate(
-                    { _id: currentUser._id, otp: currentUser.otp, otpPurpose: 'recovery_bind' },
+                    { _id: currentUser._id, otp: issuedUser.otp, otpExpire: issuedUser.otpExpire, otpPurpose: 'recovery_bind' },
                     { $unset: { otp: 1, otpExpire: 1 }, $set: { otpAttempts: 0, otpPurpose: '', otpRecipient: '' } }
                 ).catch(() => {});
                 return res.status(503).json({
@@ -1686,7 +1758,7 @@ exports.requestRecoveryOtp = async (req, res) => {
         } catch (sendErr) {
             console.error('REQUEST RECOVERY OTP SEND ERROR:', sendErr.message);
             await User.findOneAndUpdate(
-                { _id: currentUser._id, otp: currentUser.otp, otpPurpose: 'recovery_bind' },
+                { _id: currentUser._id, otp: issuedUser.otp, otpExpire: issuedUser.otpExpire, otpPurpose: 'recovery_bind' },
                 { $unset: { otp: 1, otpExpire: 1 }, $set: { otpAttempts: 0, otpPurpose: '', otpRecipient: '' } }
             ).catch(() => {});
             return res.status(503).json({
@@ -1907,7 +1979,6 @@ exports.updateProfile = async (req, res) => {
         const rawReqRecEmail = req.body.recoveryEmail !== undefined ? String(req.body.recoveryEmail || '').trim().toLowerCase() : undefined;
         const rawReqRecPhone = req.body.recoveryPhone !== undefined ? String(req.body.recoveryPhone || '').trim() : undefined;
         const clearRecovery = req.body.clearRecovery === true || req.body.clearRecovery === 'true';
-        const enforceReauth = req.body.enforceReauth === true || req.body.enforceReauth === 'true';
 
         const dbRecEmail = String(currentUser.recoveryEmail || '').trim().toLowerCase();
         const dbRecPhone = String(currentUser.recoveryPhone || '').trim();
@@ -1926,113 +1997,52 @@ exports.updateProfile = async (req, res) => {
             !(hydratedLegacyPhone && normalizeContact(rawReqRecPhone) === normalizeContact(hydratedLegacyPhone));
         const isClearingExistingRecovery = clearRecovery && Boolean(dbBackup || dbRecEmail || dbRecPhone);
 
-        const isGoogleLinked = currentUser.authProvider === 'google' || Boolean(currentUser.googleId);
-        const hasLocalPass = currentUser.hasLocalPassword !== false;
-        const isSensitiveContactChange = isContactChanging || isRecEmailChanging || isRecPhoneChanging || isClearingExistingRecovery;
-        const shouldEnforceReauth = process.env.NODE_ENV !== 'test' || enforceReauth;
-
-        // Track whether a Google-only user is binding a new non-empty recovery target requiring atomic recovery_bind OTP consumption
-        let recoveryOtpRequired = false;
-        let expectedRecoveryOtpTarget = '';
-
-        // H2: Always require reauthentication on sensitive contact/recovery changes (no unauthenticated initial Google bypass)
-        if (isSensitiveContactChange && shouldEnforceReauth) {
-            if (hasLocalPass) {
-                const suppliedPassword = String(req.body.currentPassword || req.body.password || '').trim();
-                if (!suppliedPassword || !(await currentUser.matchPassword(suppliedPassword))) {
-                    return res.status(401).json({
-                        message: isGoogleLinked
-                            ? 'Reauthentication with your current password is required to change primary or recovery contact details on a Google-linked account.'
-                            : 'Current password is required to change primary or recovery contact details.'
-                    });
+        const verificationTarget = normalizeContact(req.body.verificationTarget);
+        const newContact = normalizeContact(contact ?? currentUser.contact);
+        const newEmail = normalizeContact(rawReqRecEmail ?? (dbRecEmail || hydratedLegacyEmail));
+        const newPhone = normalizeContact(rawReqRecPhone ?? (dbRecPhone || hydratedLegacyPhone));
+        const pending = [
+            { value: newContact, required: isContactChanging, verified: currentUser.isContactVerified, field: 'contact' },
+            { value: normalizeContact(currentUser.email), required: false, verified: currentUser.isEmailVerified, field: 'email' },
+            { value: clearRecovery ? '' : newEmail, required: !clearRecovery && isRecEmailChanging && Boolean(newEmail), verified: currentUser.isRecoveryEmailVerified, field: 'recoveryEmail' },
+            { value: clearRecovery ? '' : newPhone, required: !clearRecovery && isRecPhoneChanging && Boolean(newPhone), verified: currentUser.isRecoveryPhoneVerified, field: 'recoveryPhone' }
+        ];
+        const requiredTargets = new Set(pending.filter(entry => entry.required).map(entry => entry.value));
+        const selectedTarget = verificationTarget || [...requiredTargets][0];
+        const verifiedFields = selectedTarget
+            ? pending.filter(entry => entry.value === selectedTarget && (entry.required || !entry.verified))
+            : [];
+        const sensitive = isContactChanging || isRecEmailChanging || isRecPhoneChanging ||
+            isClearingExistingRecovery || Boolean(verificationTarget);
+        if (sensitive) {
+            if (hasLocalCredential(currentUser)) {
+                const password = req.body.currentPassword || req.body.password;
+                if (typeof password !== 'string' || !password || !(await currentUser.matchPassword(password))) {
+                    return res.status(401).json({ message: 'Current password is required to change contact or recovery details.' });
                 }
-            } else {
-                // True Google-only account (hasLocalPassword === false): require fresh verified Google token
-                const googleReauthIdToken = String(
-                    req.body.googleReauthToken || req.body.googleCredential || req.body.googleIdToken || ''
-                ).trim();
-                const googleReauthAccessToken = String(req.body.googleAccessToken || '').trim();
+            } else if (!(await verifyGoogleProfileStepUp(req, currentUser))) {
+                return res.status(401).json({ message: 'Confirm your Google identity again before changing contact or recovery details.' });
+            }
+        }
 
-                if (!googleReauthIdToken && !googleReauthAccessToken) {
-                    return res.status(401).json({
-                        message: 'Fresh Google sign-in reauthentication is required to change primary or recovery contact details.'
-                    });
-                }
-
-                const googleReauth = await verifyGoogleReauthForUser({
-                    idToken: googleReauthIdToken,
-                    accessToken: googleReauthAccessToken,
-                    user: currentUser
-                });
-                if (!googleReauth.valid) {
-                    return res.status(401).json({
-                        message: googleReauth.message || 'Google reauthentication failed or does not match your account.'
-                    });
-                }
-
-                // When setting a non-empty recoveryEmail or recoveryPhone on a Google-only account, require destination OTP
-                if (!clearRecovery) {
-                    const newRecoveryTargets = [];
-                    if (isRecEmailChanging && rawReqRecEmail) {
-                        newRecoveryTargets.push(normalizeContact(rawReqRecEmail));
-                    }
-                    if (isRecPhoneChanging && rawReqRecPhone) {
-                        newRecoveryTargets.push(normalizeContact(rawReqRecPhone));
-                    }
-
-                    if (newRecoveryTargets.length > 1) {
-                        return res.status(400).json({
-                            message: 'Please verify and save one recovery contact (email or phone) at a time.'
-                        });
-                    }
-
-                    if (newRecoveryTargets.length === 1) {
-                        recoveryOtpRequired = true;
-                        expectedRecoveryOtpTarget = newRecoveryTargets[0];
-
-                        const suppliedRecoveryOtp = String(req.body.recoveryOtp || '').trim();
-                        if (!suppliedRecoveryOtp) {
-                            return res.status(400).json({
-                                message: 'Verification code (recoveryOtp) sent to your new recovery contact is required.'
-                            });
-                        }
-
-                        if (
-                            !currentUser.otp ||
-                            !currentUser.otpExpire ||
-                            currentUser.otpExpire <= Date.now() ||
-                            currentUser.otpPurpose !== 'recovery_bind' ||
-                            !currentUser.otpRecipient ||
-                            normalizeContact(currentUser.otpRecipient) !== expectedRecoveryOtpTarget
-                        ) {
-                            return res.status(400).json({
-                                message: 'Invalid or expired recovery verification code. Please request a new code.'
-                            });
-                        }
-
-                        if ((currentUser.otpAttempts || 0) >= 5) {
-                            await User.findOneAndUpdate(
-                                { _id: currentUser._id, otp: currentUser.otp, otpAttempts: { $gte: 5 } },
-                                { $unset: { otp: 1, otpExpire: 1 }, $set: { otpAttempts: 0, otpPurpose: '', otpRecipient: '' } }
-                            );
-                            return res.status(429).json({
-                                message: 'Too many invalid verification attempts. Please request a new recovery code.'
-                            });
-                        }
-
-                        if (!verifyHashedOtp(currentUser.otp, suppliedRecoveryOtp)) {
-                            const lockedOut = await recordInvalidOtpAttempt(currentUser);
-                            if (lockedOut) {
-                                return res.status(429).json({
-                                    message: 'Too many invalid verification attempts. Please request a new recovery code.'
-                                });
-                            }
-                            return res.status(400).json({
-                                message: 'Invalid or expired recovery verification code.'
-                            });
-                        }
-                    }
-                }
+        if (requiredTargets.size > 1 || (requiredTargets.size && !requiredTargets.has(selectedTarget))) {
+            return res.status(400).json({ message: 'Verify and save one contact at a time.' });
+        }
+        if ((verificationTarget || requiredTargets.size) && !verifiedFields.length) {
+            return res.status(400).json({ message: 'Select an unverified contact to verify.' });
+        }
+        const recoveryOtpRequired = verifiedFields.length > 0;
+        if (recoveryOtpRequired) {
+            if (!currentUser.otp || currentUser.otpPurpose !== 'recovery_bind' ||
+                currentUser.otpRecipient !== selectedTarget || !currentUser.otpExpire || currentUser.otpExpire <= Date.now()) {
+                return res.status(400).json({ message: 'Request a verification code for this contact before saving.' });
+            }
+            if ((currentUser.otpAttempts || 0) >= 5) {
+                return res.status(429).json({ message: 'Too many verification attempts. Please request a new code.' });
+            }
+            if (!verifyHashedOtp(currentUser.otp, String(req.body.recoveryOtp || '').trim())) {
+                const locked = await recordInvalidOtpAttempt(currentUser);
+                return res.status(locked ? 429 : 400).json({ message: 'Invalid verification code. Request a new code if needed.' });
             }
         }
 
@@ -2073,16 +2083,27 @@ exports.updateProfile = async (req, res) => {
         let updateData = {};
         if (name !== undefined) updateData.name = name;
         if (address !== undefined) updateData.address = address;
-        if (contact !== undefined) updateData.contact = normalizeContact(contact);
+        if (isContactChanging) {
+            updateData.contact = newContact;
+            updateData.isContactVerified = false;
+        }
 
         // M2: Only modify recovery fields / backupContact when genuinely changing or explicitly cleared
         if (clearRecovery) {
             updateData.recoveryEmail = '';
             updateData.recoveryPhone = '';
             updateData.backupContact = '';
+            updateData.isRecoveryEmailVerified = false;
+            updateData.isRecoveryPhoneVerified = false;
         } else if (isRecEmailChanging || isRecPhoneChanging) {
-            if (isRecEmailChanging) updateData.recoveryEmail = rawReqRecEmail;
-            if (isRecPhoneChanging) updateData.recoveryPhone = rawReqRecPhone;
+            if (isRecEmailChanging) {
+                updateData.recoveryEmail = rawReqRecEmail;
+                updateData.isRecoveryEmailVerified = false;
+            }
+            if (isRecPhoneChanging) {
+                updateData.recoveryPhone = rawReqRecPhone;
+                updateData.isRecoveryPhoneVerified = false;
+            }
             const nextRecPhone = isRecPhoneChanging ? rawReqRecPhone : dbRecPhone;
             const nextRecEmail = isRecEmailChanging ? rawReqRecEmail : dbRecEmail;
             updateData.backupContact = nextRecPhone || nextRecEmail || '';
@@ -2097,41 +2118,31 @@ exports.updateProfile = async (req, res) => {
             updateData.profilePic = req.file.path; 
         }
 
-        let updatedUser;
-        if (recoveryOtpRequired) {
-            // Atomically consume the recovery_bind OTP together with persisting the profile update
-            updatedUser = await User.findOneAndUpdate(
-                {
-                    _id: userId,
-                    otp: currentUser.otp,
-                    otpPurpose: 'recovery_bind',
-                    otpRecipient: currentUser.otpRecipient,
-                    otpExpire: { $gt: new Date() },
-                    otpAttempts: { $lt: 5 }
-                },
-                {
-                    $set: {
-                        ...updateData,
-                        otpAttempts: 0,
-                        otpPurpose: '',
-                        otpRecipient: ''
-                    },
-                    $unset: { otp: 1, otpExpire: 1 }
-                },
-                { returnDocument: 'after' }
-            ).select('-password -otp -otpExpire -otpAttempts -otpPurpose -otpRecipient -passwordResetToken');
+        for (const { field } of verifiedFields) {
+            updateData[field] = selectedTarget;
+            updateData['is' + field[0].toUpperCase() + field.slice(1) + 'Verified'] = true;
+        }
 
-            if (!updatedUser) {
-                return res.status(400).json({
-                    message: 'Invalid or expired recovery verification code. Please request a new code.'
-                });
-            }
-        } else {
-            updatedUser = await User.findByIdAndUpdate(
-                userId, 
-                updateData, 
-                { returnDocument: 'after' }
-            ).select('-password -otp -otpExpire -otpAttempts -otpPurpose -otpRecipient -passwordResetToken');
+        const filter = { _id: userId };
+        const update = { $set: updateData };
+        if (sensitive) {
+            Object.assign(filter, contactVersionFilter(currentUser));
+            Object.assign(updateData, clearContactOtp);
+            update.$unset = unsetContactOtp;
+            update.$inc = { contactSecurityVersion: 1 };
+        }
+        if (recoveryOtpRequired) {
+            Object.assign(filter, {
+                otp: currentUser.otp,
+                otpPurpose: 'recovery_bind',
+                otpRecipient: selectedTarget,
+                otpExpire: { $eq: currentUser.otpExpire, $gt: new Date() },
+                otpAttempts: { $lt: 5 }
+            });
+        }
+        const updatedUser = await User.findOneAndUpdate(filter, update, { returnDocument: 'after' }).select(USER_SENSITIVE_SELECT);
+        if (!updatedUser) {
+            return res.status(409).json({ message: 'Account details or verification code changed. Please try again.' });
         }
 
         res.status(200).json(sanitizeUserObject(updatedUser));
@@ -2476,25 +2487,17 @@ exports.googleAuth = async (req, res) => {
         // Canonicalize email format
         email = email.toLowerCase().trim();
 
-        // Check if user already exists
-        let user = await User.findOne({
-            $or: [
-                { googleId: googleId ? googleId : '__no_google_id__' },
-                { email: { $regex: new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') } },
-                { contact: { $regex: new RegExp(`^${email.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}$`, 'i') } }
-            ]
-        });
+        // Prefer the stable Google subject. Email is only a candidate for a first binding.
+        let user = googleId ? await User.findOne({ googleId }) : null;
+        if (!user) user = await User.findOne(getPrimaryContactQueryFilter(email));
 
         // Check maintenance mode
         const sysSettings = await SystemSettings.findOne().sort({ updatedAt: -1, createdAt: -1 });
         const isMaintenance = sysSettings && sysSettings.maintenanceMode === true;
 
         if (user) {
-            // Verify Google subject identity matches if already linked
-            if (user.googleId && ((googleId && user.googleId !== googleId) || (process.env.NODE_ENV !== 'test' && !googleId))) {
-                return res.status(403).json({
-                    message: 'Google account identity mismatch.'
-                });
+            if (user.googleId && user.googleId !== googleId) {
+                return res.status(403).json({ message: 'Google account identity mismatch.' });
             }
 
             // Block deactivated accounts
@@ -2526,64 +2529,38 @@ exports.googleAuth = async (req, res) => {
                 });
             }
 
-            // In non-test mode, only auto-link an unlinked local account if active, non-staff/cashier, verified, and Google email is verified & matches
-            const emailMatchesAccount =
-                (user.email && user.email.toLowerCase() === email) ||
-                (user.contact && user.contact.toLowerCase() === email);
-            if (!user.googleId && process.env.NODE_ENV !== 'test') {
-                if (isStaffOrAdmin || !isOperatorOrToda) {
-                    return res.status(403).json({
-                        message: 'Administrative and Cashier accounts must log in using their official municipal credentials.'
-                    });
-                }
-                if (user.isActive === false) {
-                    return res.status(403).json({
-                        message: 'Your account has been deactivated.',
-                        accountDeactivated: true,
-                        reason: user.deactivationReason,
-                        appealStatus: user.appealStatus,
-                        contact: user.contact
-                    });
-                }
-                if (!emailVerified || !user.isVerified || !emailMatchesAccount) {
-                    return res.status(403).json({
-                        message: !user.isVerified
-                            ? 'An unverified account exists with this email. Please complete OTP verification or log in with your credentials first.'
-                            : 'Google account email must be verified and match the registered account to link.'
-                    });
-                }
+            const wasLocalUnlinked = !user.googleId;
+            const verifiedLocalEmail = verifiedPrimaryContacts(user).includes(email);
+            if (!googleId || !emailVerified || !user.isVerified || (wasLocalUnlinked &&
+                (!isOperatorOrToda || !verifiedLocalEmail))) {
+                return res.status(403).json({
+                    message: 'Google linking requires a verified local email. Sign in with your existing credentials to verify it first.'
+                });
             }
 
-            const wasLocalUnlinked = user.authProvider === 'local' && !user.googleId;
+            const changes = { lastActive: new Date(), lastLogin: new Date() };
+            if (wasLocalUnlinked) changes.googleId = googleId;
+            if (!user.profilePic && googlePicture) changes.profilePic = googlePicture;
+            if (!user.email || normalizeContact(user.email) === email) {
+                if (!user.email) changes.email = email;
+                if (!user.isEmailVerified) changes.isEmailVerified = true;
+            }
+            if (normalizeContact(user.contact) === email && !user.isContactVerified) {
+                changes.isContactVerified = true;
+            }
 
-            // Link googleId, email, profilePic
-            if (!user.googleId && googleId) {
-                user.googleId = googleId;
+            const filter = { _id: user._id, isActive: { $ne: false }, ...contactVersionFilter(user) };
+            filter.googleId = user.googleId || { $in: ['', null] };
+            const update = { $set: changes };
+            if (changes.email !== undefined || changes.isEmailVerified || changes.isContactVerified || wasLocalUnlinked) {
+                Object.assign(changes, clearContactOtp);
+                update.$unset = unsetContactOtp;
+                update.$inc = { contactSecurityVersion: 1 };
             }
-            if (!user.email) {
-                user.email = email;
-            }
-            if (!user.profilePic && googlePicture) {
-                user.profilePic = googlePicture;
-            }
-            if (!user.isVerified && process.env.NODE_ENV === 'test') {
-                user.isVerified = true;
-                user.otp = undefined;
-                user.otpExpire = undefined;
-                user.otpPurpose = '';
-                user.otpRecipient = '';
-            }
-            // H2: Do NOT overwrite authProvider to 'google' when linking Google onto an existing local account
-            if (user.authProvider === 'local') {
-                user.hasLocalPassword = true;
-            } else if (!user.authProvider) {
-                user.authProvider = 'google';
-            }
-            user.lastActive = new Date();
-            user.lastLogin = new Date();
-            await user.save();
+            user = await User.findOneAndUpdate(filter, update, { returnDocument: 'after' });
+            if (!user) return res.status(409).json({ message: 'Account details changed. Please sign in again.' });
 
-            if (wasLocalUnlinked && (emailVerified === true || process.env.NODE_ENV === 'test') && emailMatchesAccount) {
+            if (wasLocalUnlinked) {
                 logAudit(req, {
                     action: 'AUTH_GOOGLE_LINKED',
                     targetType: 'User',
@@ -2647,102 +2624,8 @@ exports.googleAuth = async (req, res) => {
         const existingContact = await User.findOne(contactFilter);
 
         if (existingContact) {
-            const isSameAccount =
-                (existingContact.email && existingContact.email.toLowerCase() === email) ||
-                (existingContact.contact && existingContact.contact.toLowerCase() === email);
-            if (!isSameAccount) {
-                return res.status(400).json({ 
-                    message: 'AN ACCOUNT WITH THIS CONTACT NUMBER ALREADY EXISTS. PLEASE LOG IN INSTEAD.' 
-                });
-            }
-            if (existingContact.googleId && ((googleId && existingContact.googleId !== googleId) || (process.env.NODE_ENV !== 'test' && !googleId))) {
-                return res.status(403).json({
-                    message: 'Google account identity mismatch.'
-                });
-            }
-            if (existingContact.isActive === false) {
-                return res.status(403).json({
-                    message: 'Your account has been deactivated.',
-                    accountDeactivated: true,
-                    reason: existingContact.deactivationReason,
-                    appealStatus: existingContact.appealStatus,
-                    contact: existingContact.contact
-                });
-            }
-            const existingRoleNorm = String(existingContact.role || '').toLowerCase().trim().replace(/[\s-]+/g, '_');
-            const isExistingStaffOrAdmin = ['admin', 'administrator', 'system_admin', 'bplo_staff', 'cashier'].includes(existingRoleNorm);
-            const isExistingOpOrToda = existingRoleNorm === 'operator' || existingRoleNorm === 'toda_president';
-            if (!isExistingOpOrToda && existingContact.authProvider !== 'google' && !existingContact.googleId) {
-                return res.status(403).json({
-                    message: 'Administrative and Cashier accounts must log in using their official municipal credentials.'
-                });
-            }
-            if (!existingContact.googleId && process.env.NODE_ENV !== 'test') {
-                if (isExistingStaffOrAdmin || !isExistingOpOrToda) {
-                    return res.status(403).json({
-                        message: 'Administrative and Cashier accounts must log in using their official municipal credentials.'
-                    });
-                }
-                if (!emailVerified || !existingContact.isVerified) {
-                    return res.status(403).json({
-                        message: !existingContact.isVerified
-                            ? 'An unverified account exists with this email. Please complete OTP verification or log in with your credentials first.'
-                            : 'Google account email must be verified to link an existing account.'
-                    });
-                }
-            }
-            const wasExistingLocalUnlinked = existingContact.authProvider === 'local' && !existingContact.googleId;
-            existingContact.googleId = googleId || existingContact.googleId || '';
-            existingContact.email = email;
-            if (address && (!existingContact.address || existingContact.address === 'Gasan, Marinduque')) {
-                existingContact.address = address;
-            }
-            if (todaAssociation && existingContact.todaAssociation === 'NON-TODA') {
-                existingContact.todaAssociation = todaAssociation;
-            }
-            if (!existingContact.isVerified && process.env.NODE_ENV === 'test') {
-                existingContact.isVerified = true;
-                existingContact.otp = undefined;
-                existingContact.otpExpire = undefined;
-                existingContact.otpPurpose = '';
-                existingContact.otpRecipient = '';
-            }
-            // H2: Preserve local authProvider & hasLocalPassword when linking Google onto an existing local user
-            if (existingContact.authProvider === 'local') {
-                existingContact.hasLocalPassword = true;
-            } else if (!existingContact.authProvider) {
-                existingContact.authProvider = 'google';
-            }
-            if (googlePicture && !existingContact.profilePic) existingContact.profilePic = googlePicture;
-            existingContact.lastActive = new Date();
-            existingContact.lastLogin = new Date();
-            await existingContact.save();
-
-            if (wasExistingLocalUnlinked && (emailVerified === true || process.env.NODE_ENV === 'test')) {
-                logAudit(req, {
-                    action: 'AUTH_GOOGLE_LINKED',
-                    targetType: 'User',
-                    targetId: existingContact._id,
-                    details: {
-                        name: existingContact.name,
-                        email: existingContact.email,
-                        contact: existingContact.contact,
-                        role: existingContact.role,
-                        previousProvider: 'local',
-                        googleId: existingContact.googleId || ''
-                    }
-                });
-            }
-
-            const token = signSessionToken(existingContact);
-            const userObj = sanitizeUserObject(existingContact);
-
-            return res.status(200).json({
-                isNewUser: false,
-                token,
-                role: existingContact.role,
-                name: existingContact.name,
-                user: userObj
+            return res.status(400).json({
+                message: 'AN ACCOUNT WITH THIS CONTACT ALREADY EXISTS. Please sign in with your existing credentials.'
             });
         }
 
@@ -2807,6 +2690,9 @@ exports.googleAuth = async (req, res) => {
         const emergencyContact = submittedPhoneCandidate ? normalizeContact(submittedPhoneCandidate) : '';
 
         // Create new Google-only operator user (authProvider: 'google', hasLocalPassword: false)
+        if (!googleId || !emailVerified) {
+            return res.status(403).json({ message: 'A verified Google account and subject are required.' });
+        }
         const randomPass = crypto.randomBytes(24).toString('base64').replace(/[^a-zA-Z0-9]/g, '') + 'G!9a';
         const rawBackupContact = onboardingData?.backupContact || req.body?.backupContact || '';
         const backupContact = rawBackupContact ? normalizeContact(rawBackupContact) : '';
@@ -2849,7 +2735,9 @@ exports.googleAuth = async (req, res) => {
             role: assignedRole,
             todaAssociation: todaAssociation,
             bodyNumber: bodyNumber,
-            isVerified: true, // Automatically verified via Google!
+            isVerified: true,
+            isContactVerified: true,
+            isEmailVerified: true,
             profilePic: googlePicture || '',
             authProvider: 'google',
             hasLocalPassword: false,
@@ -2951,7 +2839,7 @@ exports.submitAppeal = async (req, res) => {
             return res.status(400).json({ message: 'Account is not deactivated.' });
         }
 
-        const isGoogleOnlyUser = user.hasLocalPassword === false;
+        const isGoogleOnlyUser = !hasLocalCredential(user);
         const isGoogleAccount = isGoogleOnlyUser || user.authProvider === 'google' || Boolean(user.googleId);
 
         if (hasGoogleAuth && isGoogleAccount) {

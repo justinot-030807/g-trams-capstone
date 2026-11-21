@@ -27,11 +27,35 @@ function formatPhoneE164(rawPhone) {
   return digits.startsWith('+') ? digits : '+' + digits;
 }
 
+function isSuccessfulHttpResponse(response) {
+  return Number.isInteger(response?.status) && response.status >= 200 && response.status < 300;
+}
+
+function textBeeAccepted(response) {
+  const payload = response?.data;
+  const result = payload?.data;
+  if (!isSuccessfulHttpResponse(response) || !result || payload.success === false || payload.error || result.error) return false;
+
+  // The documented response is either a queued batch or immediate dispatch to the device.
+  const queued = result.success === true && typeof result.smsBatchId === 'string' && result.smsBatchId.trim().length > 0;
+  const dispatched = result.success === undefined && result.successCount === 1 && result.failureCount === 0;
+  return queued || dispatched;
+}
+
+function semaphoreAccepted(response) {
+  const payload = response?.data;
+  if (!isSuccessfulHttpResponse(response) || !Array.isArray(payload) || payload.length !== 1) return false;
+  const [item] = payload;
+  const id = item?.message_id;
+  return (typeof id === 'number' || typeof id === 'string') && /^\d+$/.test(String(id)) &&
+    ['queued', 'pending', 'sent'].includes(String(item.status).trim().toLowerCase());
+}
+
 /**
  * Sends an SMS message via TextBee (https://textbee.dev) or Semaphore fallback.
  * Environment Variables used on Render / .env:
  *   - TEXTBEE_API_KEY   (Required for TextBee)
- *   - TEXTBEE_DEVICE_ID (Required/Recommended for TextBee)
+ *   - TEXTBEE_DEVICE_ID (Optional; uses the account's default device when omitted)
  */
 async function sendSms({ phone, number, message }) {
   const rawTarget = phone || number;
@@ -56,6 +80,7 @@ async function sendSms({ phone, number, message }) {
   const textbeeDeviceId = (process.env.TEXTBEE_DEVICE_ID || '').trim();
   let lastError = null;
   let lastDetails = null;
+  let canUseFallback = true;
 
   // 1. Primary Gateway: TextBee (Android SMS Gateway)
   if (textbeeApiKey) {
@@ -64,82 +89,34 @@ async function sendSms({ phone, number, message }) {
       'Content-Type': 'application/json'
     };
 
-    const isTextBeePayloadSuccess = (res) => {
-      if (!res || res.status < 200 || res.status >= 300) return false;
-      if (res.data && typeof res.data === 'object') {
-        if (res.data.success === false || res.data.error) return false;
-        if (res.data.data && res.data.data.success === false) return false;
+    try {
+      const res = await axios.post(
+        'https://api.textbee.dev/api/v1/gateway/send-sms',
+        {
+          recipients: [formattedPhone],
+          message: String(message),
+          ...(textbeeDeviceId ? { deviceId: textbeeDeviceId } : {})
+        },
+        { headers, timeout: 10000 }
+      );
+      if (textBeeAccepted(res)) {
+        return { success: true, provider: 'textbee', deliveryStatus: 'accepted', data: res.data };
       }
-      return true;
-    };
-
-    // If TEXTBEE_DEVICE_ID is provided, try device-specific endpoint first, then gateway fallback
-    if (textbeeDeviceId) {
-      try {
-        const deviceUrl = `https://api.textbee.dev/api/v1/gateway/devices/${textbeeDeviceId}/send-sms`;
-        const res = await axios.post(
-          deviceUrl,
-          {
-            recipients: [formattedPhone],
-            message: String(message)
-          },
-          { headers, timeout: 10000 }
-        );
-        if (isTextBeePayloadSuccess(res)) {
-          return { success: true, provider: 'textbee', data: res.data };
-        }
-        lastError = res?.data?.message || res?.data?.error || 'TextBee device endpoint returned failure';
-        lastDetails = res?.data || null;
-      } catch (deviceErr) {
-        // Fallback to general gateway endpoint if device endpoint differs
-        try {
-          const gatewayUrl = 'https://api.textbee.dev/api/v1/gateway/send-sms';
-          const res = await axios.post(
-            gatewayUrl,
-            {
-              recipients: [formattedPhone],
-              message: String(message),
-              deviceId: textbeeDeviceId
-            },
-            { headers, timeout: 10000 }
-          );
-          if (isTextBeePayloadSuccess(res)) {
-            return { success: true, provider: 'textbee', data: res.data };
-          }
-          lastError = res?.data?.message || res?.data?.error || 'TextBee gateway returned failure';
-          lastDetails = res?.data || null;
-        } catch (fallbackErr) {
-          lastError = fallbackErr?.response?.data?.message || fallbackErr?.response?.data?.error || fallbackErr.message || 'TextBee SMS delivery failed';
-          lastDetails = fallbackErr?.response?.data || null;
-        }
-      }
-    } else {
-      // No deviceId specified — use default active device on TextBee account
-      try {
-        const gatewayUrl = 'https://api.textbee.dev/api/v1/gateway/send-sms';
-        const res = await axios.post(
-          gatewayUrl,
-          {
-            recipients: [formattedPhone],
-            message: String(message)
-          },
-          { headers, timeout: 10000 }
-        );
-        if (isTextBeePayloadSuccess(res)) {
-          return { success: true, provider: 'textbee', data: res.data };
-        }
-        lastError = res?.data?.message || res?.data?.error || 'TextBee gateway returned failure';
-        lastDetails = res?.data || null;
-      } catch (gatewayErr) {
-        lastError = gatewayErr?.response?.data?.message || gatewayErr?.response?.data?.error || gatewayErr.message || 'TextBee SMS delivery failed';
-        lastDetails = gatewayErr?.response?.data || null;
-      }
+      const result = res?.data?.data;
+      canUseFallback = result?.success === false || (result?.successCount === 0 && result?.failureCount === 1);
+      lastError = 'TextBee did not confirm SMS acceptance';
+    } catch (err) {
+      // A timeout or ambiguous response may follow acceptance. A second send could duplicate the SMS.
+      const status = err?.response?.status;
+      canUseFallback = [400, 401, 403, 404, 429].includes(status);
+      lastError = err?.response?.data?.message || err?.response?.data?.error || err.message || 'TextBee SMS request failed';
+      lastDetails = err?.response?.data || null;
     }
   }
 
   // 2. Secondary Fallback: Semaphore SMS API
   const semaphoreApiKey = (process.env.SEMAPHORE_API_KEY || '').trim();
-  if (semaphoreApiKey && semaphoreApiKey !== 'mock_key' && semaphoreApiKey !== 'test_key') {
+  if (canUseFallback && semaphoreApiKey && semaphoreApiKey !== 'mock_key' && semaphoreApiKey !== 'test_key') {
     try {
       const res = await axios.post(
         'https://api.semaphore.co/api/v4/messages',
@@ -151,16 +128,11 @@ async function sendSms({ phone, number, message }) {
         { timeout: 8000 }
       );
       const payload = res?.data;
-      const isSemaphoreError =
-        !res ||
-        res.status < 200 ||
-        res.status >= 300 ||
-        (payload && !Array.isArray(payload) && (payload.error || payload.status === 'error' || payload.success === false));
-      if (!isSemaphoreError) {
-        return { success: true, provider: 'semaphore', data: payload };
+      if (semaphoreAccepted(res)) {
+        return { success: true, provider: 'semaphore', deliveryStatus: 'accepted', data: payload };
       }
-      lastError = (typeof payload?.error === 'string' ? payload.error : JSON.stringify(payload?.error || payload)) || 'Semaphore SMS delivery failed';
-      lastDetails = payload || null;
+      lastError = typeof payload?.error === 'string' ? payload.error : 'Semaphore did not confirm SMS acceptance';
+      lastDetails = null;
     } catch (semErr) {
       lastError = semErr?.response?.data?.message || semErr?.response?.data?.error || semErr.message || 'Semaphore SMS delivery failed';
       lastDetails = semErr?.response?.data || null;
@@ -168,7 +140,7 @@ async function sendSms({ phone, number, message }) {
   }
 
   if (lastError) {
-    console.warn(`[SMS Gateway] Failed to deliver SMS to ${maskedPhone}: ${lastError}`);
+    console.warn(`[SMS Gateway] Failed to confirm SMS acceptance for ${maskedPhone}: ${lastError}`);
     return {
       success: false,
       error: String(lastError),

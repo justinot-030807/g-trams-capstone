@@ -436,9 +436,11 @@ describe('Registration & Auth Verification Flow', () => {
 
         const createdUser = await User.findOne({ contact: 'maria.cruz@gmail.com' });
         expect(createdUser).toBeDefined();
-        // Verify user OTP
-        createdUser.isVerified = true;
-        await createdUser.save();
+        const verification = await request(app).post('/api/v1/auth/verify-otp').send({
+            contact: regPayload.contact,
+            otp: regRes.body.testOtp
+        });
+        expect(verification.status).toBe(200);
 
         // User now clicks "Continue with Google" after registration
         const googleLoginRes = await request(app)

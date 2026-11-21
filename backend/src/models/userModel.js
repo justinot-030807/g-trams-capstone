@@ -36,6 +36,12 @@ const userSchema = new mongoose.Schema({
     bodyNumber: { type: String, default: '', trim: true },
 
     isVerified: { type: Boolean, default: false },
+    // Leave missing primary flags distinguishable from an explicit false on legacy records.
+    isContactVerified: { type: Boolean },
+    isEmailVerified: { type: Boolean },
+    isRecoveryEmailVerified: { type: Boolean, default: false },
+    isRecoveryPhoneVerified: { type: Boolean, default: false },
+    contactSecurityVersion: { type: Number, default: 0 },
     profilePic: { type: String, default: '' },
     otp: { type: String },
     otpExpire: { type: Date },
@@ -44,6 +50,7 @@ const userSchema = new mongoose.Schema({
     otpRecipient: { type: String, default: '' },
     tokenVersion: { type: Number, default: 0 },
     passwordChangedAt: { type: Date, default: null },
+    localPasswordConfirmedAt: { type: Date, default: null },
     failedLoginAttempts: { type: Number, default: 0 },
     lockUntil: { type: Date, default: null },
     isActive: { type: Boolean, default: true },
@@ -56,6 +63,7 @@ const userSchema = new mongoose.Schema({
     theme: { type: String, default: 'light' }
 }, { timestamps: true });
 
+userSchema.index({ googleId: 1 }, { unique: true, partialFilterExpression: { googleId: { $gt: '' } } });
 userSchema.index({ recoveryEmail: 1 }, { sparse: true });
 userSchema.index({ recoveryPhone: 1 }, { sparse: true });
 

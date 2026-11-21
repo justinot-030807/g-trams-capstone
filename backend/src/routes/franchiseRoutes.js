@@ -105,9 +105,9 @@ router.put('/:id/archive', protect, authorize('bplo_staff'), toggleArchiveFranch
 router.put('/:id/revoke', protect, authorize('bplo_staff'), upload.fields([{ name: 'evidence', maxCount: 1 }]), revokeFranchise);
 router.put('/:id/status', protect, authorize('bplo_staff'), updateFranchiseStatus);
 router.put('/:id/process-cancellation', protect, authorize('bplo_staff'), processFranchiseCancellation);
-router.get('/:id/record-check', protect, authorize('bplo_staff', 'cashier'), getFranchiseRecordCheck);
-router.post('/download-original-preview', protect, downloadOriginalPreview);
-router.get('/:id/download-original', protect, downloadOriginalTemplate);
+router.get('/:id/record-check', protect, authorize('bplo_staff'), getFranchiseRecordCheck);
+router.post('/download-original-preview', protect, authorize('operator', 'bplo_staff'), downloadOriginalPreview);
+router.get('/:id/download-original', protect, authorize('operator', 'bplo_staff'), downloadOriginalTemplate);
 
 // Operator routes
 router.get('/my-franchises', protect, authorize('operator', 'toda president'), getMyFranchises);
@@ -131,7 +131,7 @@ router.post('/:id/pay', protect, authorize('cashier'), processCashierPayment);
 
 // Update and delete franchise
 router.route('/:id')
-    .get(protect, getFranchiseById)
+    .get(protect, authorize('operator', 'bplo_staff', 'cashier'), getFranchiseById)
     .put(
         protect, 
         authorize('operator', 'toda president', 'toda_president', 'bplo_staff'),

@@ -12,8 +12,23 @@ import {
 import { useLanguage } from '../../context/LanguageContext';
 import { useTheme } from '../../context/ThemeContext';
 import { useConfirm } from '../../components/ui/ConfirmContext';
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle
+} from '../../components/ui/Dialog';
 import { SettingsSkeleton, TableRowsSkeleton } from '../../components/skeleton';
 import PageHeader from '../../components/common/PageHeader';
+
+const EMPTY_RESTORE_MODAL = {
+  filename: null,
+  file: null,
+  isRestoring: false,
+  confirmText: '',
+  adminPassword: '',
+  error: ''
+};
+
+const RESTORE_OUTCOME_UNKNOWN =
+  'The restore result could not be confirmed. Check the audit log before trying again.';
 
 const AdminSettings = () => {
   const navigate = useNavigate();
@@ -151,14 +166,11 @@ const AdminSettings = () => {
   });
   const [isLoadingBackups, setIsLoadingBackups] = useState(false);
   const [isBackingUp, setIsBackingUp] = useState(false);
-  const [restoreModal, setRestoreModal] = useState({
-    isOpen: false,
-    filename: null,
-    isRestoring: false,
-    confirmText: '',
-    error: ''
-  });
+  const [restoreModal, setRestoreModal] = useState(EMPTY_RESTORE_MODAL);
   const backupUploadInputRef = useRef(null);
+  const backupUploadButtonRef = useRef(null);
+  const restoreTriggerRef = useRef(null);
+  const restorePendingRef = useRef(false);
 
   const fetchBackups = async () => {
     setIsLoadingBackups(true);
@@ -276,70 +288,60 @@ const AdminSettings = () => {
       .catch(() => showToast('Error downloading file.', 'error'));
   };
 
-  const handleExecuteRestore = async () => {
-    if (restoreModal.confirmText.trim() !== 'RESTORE') {
-      setRestoreModal(prev => ({ ...prev, error: 'Pakitayp ang salitang RESTORE upang kumpirmahin.' }));
-      return;
-    }
-
-    setRestoreModal(prev => ({ ...prev, isRestoring: true, error: '' }));
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/backups/restore-file/${restoreModal.filename}`, {
-        method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (res.ok) {
-        showToast('Database successfully restored from archive!', 'success');
-        setRestoreModal({ isOpen: false, filename: null, isRestoring: false, confirmText: '', error: '' });
-        fetchBackups();
-      } else {
-        setRestoreModal(prev => ({ ...prev, isRestoring: false, error: data.message || 'Restore failed.' }));
-      }
-    } catch (err) {
-      setRestoreModal(prev => ({ ...prev, isRestoring: false, error: 'Server error during database restoration.' }));
-    }
+  const openArchiveRestore = (filename, trigger) => {
+    restoreTriggerRef.current = trigger;
+    setRestoreModal({ ...EMPTY_RESTORE_MODAL, filename });
   };
 
-  const handleUploadBackupRestore = async (e) => {
-    const file = e.target.files && e.target.files[0];
+  const handleUploadBackupRestore = (event) => {
+    const file = event.currentTarget.files?.[0];
+    event.currentTarget.value = '';
     if (!file) return;
+    restoreTriggerRef.current = backupUploadButtonRef.current;
+    setRestoreModal({ ...EMPTY_RESTORE_MODAL, filename: file.name, file });
+  };
 
-    const ok = await confirm({
-      title: 'Restore Database Backup',
-      description: `Are you sure you want to restore the database from "${file.name}"? All current records will be overwritten by the backup file contents.`,
-      confirmLabel: 'Restore Database',
-      cancelLabel: 'Cancel',
-      variant: 'danger'
-    });
-    if (!ok) {
-      e.target.value = '';
-      return;
-    }
+  const handleExecuteRestore = async (event) => {
+    event.preventDefault();
+    const { filename, file, confirmText, adminPassword } = restoreModal;
+    if (restorePendingRef.current || !filename || confirmText.trim() !== 'RESTORE' || !adminPassword) return;
 
-    showToast('Restoring database from upload... Please wait.', 'info', 6000);
-    const formData = new FormData();
-    formData.append('backupFile', file);
+    restorePendingRef.current = true;
+    setRestoreModal(prev => ({ ...prev, isRestoring: true, adminPassword: '', error: '' }));
 
     try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/backups/restore-upload`, {
+      const headers = { Authorization: `Bearer ${localStorage.getItem('token')}` };
+      let body;
+      if (file) {
+        body = new FormData();
+        body.append('adminPassword', adminPassword);
+        body.append('backupFile', file);
+      } else {
+        headers['Content-Type'] = 'application/json';
+        body = JSON.stringify({ adminPassword });
+      }
+
+      const endpoint = file ? 'restore-upload' : `restore-file/${encodeURIComponent(filename)}`;
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/backups/${endpoint}`, {
         method: 'POST',
-        headers: { 'Authorization': `Bearer ${token}` },
-        body: formData
+        headers,
+        body
       });
-      const data = await res.json();
-      if (res.ok) {
-        showToast('Database successfully restored from uploaded file!', 'success');
+      const data = await res.json().catch(() => null);
+      if (res.ok && data?.success) {
+        showToast('Database successfully restored from archive.', 'success');
+        setRestoreModal(EMPTY_RESTORE_MODAL);
         fetchBackups();
       } else {
-        showToast(data.message || 'Failed to restore database.', 'error');
+        const error = !data || [408, 502, 504].includes(res.status)
+          ? RESTORE_OUTCOME_UNKNOWN
+          : data.message || 'Restore failed.';
+        setRestoreModal(prev => ({ ...prev, isRestoring: false, error }));
       }
     } catch {
-      showToast('Error uploading and restoring backup file.', 'error');
+      setRestoreModal(prev => ({ ...prev, isRestoring: false, error: RESTORE_OUTCOME_UNKNOWN }));
     } finally {
-      e.target.value = '';
+      restorePendingRef.current = false;
     }
   };
 
@@ -2147,8 +2149,9 @@ const AdminSettings = () => {
 
                   <button
                     type="button"
+                    ref={backupUploadButtonRef}
                     onClick={() => backupUploadInputRef.current?.click()}
-                    className="px-3 py-2 rounded-lg text-xs font-bold bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#E4E1DC] dark:hover:bg-[#2E2A27] flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95 transition-all"
+                    className="min-h-[44px] px-3 py-2 rounded-lg text-xs font-bold bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] border border-[#E4E1DC] dark:border-[#2E2A27] hover:bg-[#E4E1DC] dark:hover:bg-[#2E2A27] flex items-center gap-1.5 cursor-pointer shadow-sm active:scale-95 transition-all"
                     title="Restore the database using an uploaded .json.gz backup archive"
                   >
                     <UploadCloud size={14} />
@@ -2249,8 +2252,8 @@ const AdminSettings = () => {
                             </button>
                             <button
                               type="button"
-                              onClick={() => setRestoreModal({ isOpen: true, filename: b.filename, isRestoring: false, confirmText: '', error: '' })}
-                              className="p-1.5 rounded-lg border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                              onClick={(event) => openArchiveRestore(b.filename, event.currentTarget)}
+                              className="min-h-[44px] p-1.5 rounded-lg border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 text-xs font-semibold flex items-center gap-1 cursor-pointer"
                             >
                               <RotateCcw size={13} />
                               <span>Restore</span>
@@ -2314,8 +2317,8 @@ const AdminSettings = () => {
 
                                   <button
                                     type="button"
-                                    onClick={() => setRestoreModal({ isOpen: true, filename: b.filename, isRestoring: false, confirmText: '', error: '' })}
-                                    className="p-1.5 rounded-lg border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 text-xs font-semibold flex items-center gap-1 cursor-pointer"
+                                    onClick={(event) => openArchiveRestore(b.filename, event.currentTarget)}
+                                    className="min-h-[44px] p-1.5 rounded-lg border border-amber-300 dark:border-amber-800 bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 text-xs font-semibold flex items-center gap-1 cursor-pointer"
                                     title="Restore database from this archive"
                                   >
                                     <RotateCcw size={13} />
@@ -2345,79 +2348,106 @@ const AdminSettings = () => {
         </div>
       )}
 
-          {/* RESTORE CONFIRMATION SAFETY MODAL */}
-          {restoreModal.isOpen && (
-            <div role="dialog" aria-modal="true" className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
-              <div
-                className="absolute inset-0 bg-black/60"
-                onClick={() => !restoreModal.isRestoring && setRestoreModal({ isOpen: false, filename: null, isRestoring: false, confirmText: '', error: '' })}
+      <Dialog
+        open={Boolean(restoreModal.filename)}
+        onOpenChange={(open) => {
+          if (!open && !restorePendingRef.current) setRestoreModal(EMPTY_RESTORE_MODAL);
+        }}
+      >
+        <DialogContent
+          showClose={false}
+          className="max-w-md max-h-[calc(100dvh-2rem)] overflow-y-auto"
+          onEscapeKeyDown={(event) => {
+            if (restorePendingRef.current) event.preventDefault();
+          }}
+          onPointerDownOutside={(event) => {
+            if (restorePendingRef.current) event.preventDefault();
+          }}
+          onCloseAutoFocus={(event) => {
+            event.preventDefault();
+            const trigger = restoreTriggerRef.current;
+            (trigger?.isConnected ? trigger : backupUploadButtonRef.current)?.focus();
+            restoreTriggerRef.current = null;
+          }}
+        >
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <AlertTriangle size={18} aria-hidden="true" className="shrink-0 text-[var(--status-danger-text)]" />
+              Restore database
+            </DialogTitle>
+            <DialogDescription>
+              The archive will overwrite current records in the collections it contains. A safety snapshot is saved before records are replaced.
+            </DialogDescription>
+          </DialogHeader>
+
+          <p className="mt-4 break-all rounded-lg border border-[var(--color-border)] bg-[var(--color-canvas)] p-3 font-mono text-xs text-[var(--text-main)]">
+            {restoreModal.filename}
+          </p>
+
+          <form onSubmit={handleExecuteRestore} className="mt-4 space-y-4">
+            <div className="space-y-1.5">
+              <label htmlFor="restore-confirm-text" className="block text-sm font-semibold">
+                Type <span className="font-mono">RESTORE</span> to confirm
+              </label>
+              <input
+                id="restore-confirm-text"
+                type="text"
+                autoComplete="off"
+                spellCheck={false}
+                required
+                disabled={restoreModal.isRestoring}
+                value={restoreModal.confirmText}
+                onChange={(event) => setRestoreModal(prev => ({ ...prev, confirmText: event.target.value, error: '' }))}
+                className="min-h-[44px] w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-canvas)] px-3 font-mono text-sm"
               />
-              <div className="relative bg-white dark:bg-[#1C1917] border border-red-300 dark:border-red-900/60 rounded-lg shadow-xl w-full max-w-md p-5 sm:p-6 transition-colors">
-                <div className="flex items-center gap-3 pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27] mb-3">
-                  <div className="w-9 h-9 rounded-lg bg-red-100 dark:bg-red-950/50 flex items-center justify-center text-red-600 dark:text-red-400 shrink-0">
-                    <AlertTriangle size={18} />
-                  </div>
-                  <div>
-                    <h3 className="text-sm font-bold text-red-700 dark:text-red-400">Database Restoration Guard</h3>
-                    <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">Disaster Recovery Confirmation</p>
-                  </div>
-                </div>
-
-                <div className="space-y-3 text-xs text-[#1F1D1B] dark:text-[#EAE7E1]">
-                  <p className="leading-relaxed">
-                    This action will overwrite the current database and restore all records from the archive:
-                  </p>
-                  <p className="p-2.5 rounded bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] font-mono text-[11px] font-bold text-red-700 dark:text-red-300 truncate">
-                    {restoreModal.filename}
-                  </p>
-                  <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] leading-relaxed">
-                    * The system will automatically create an emergency safety backup before restoring. To continue, please type <strong>RESTORE</strong> in the box below:
-                  </p>
-
-                  <input
-                    type="text"
-                    value={restoreModal.confirmText}
-                    onChange={(e) => setRestoreModal(prev => ({ ...prev, confirmText: e.target.value, error: '' }))}
-                    placeholder="Type RESTORE to confirm"
-                    className="w-full px-3 py-2 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-xs font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-red-600"
-                  />
-
-                  {restoreModal.error && (
-                    <p className="text-red-600 dark:text-red-400 font-bold text-[11px]">{restoreModal.error}</p>
-                  )}
-                </div>
-
-                <div className="flex items-center gap-2 pt-4 border-t border-[#E4E1DC] dark:border-[#2E2A27] mt-4">
-                  <button
-                    type="button"
-                    disabled={restoreModal.isRestoring}
-                    onClick={() => setRestoreModal({ isOpen: false, filename: null, isRestoring: false, confirmText: '', error: '' })}
-                    className="flex-1 py-2 rounded-lg font-bold text-xs bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#E4E1DC] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] cursor-pointer"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="button"
-                    disabled={restoreModal.isRestoring || restoreModal.confirmText.trim() !== 'RESTORE'}
-                    onClick={handleExecuteRestore}
-                    className="flex-1 py-2 rounded-lg font-bold text-xs bg-red-600 hover:bg-red-700 text-white flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-40"
-                  >
-                    {restoreModal.isRestoring ? (
-                      <>
-                        <Loader2 size={13} className="animate-spin" />
-                        <span>Restoring Data...</span>
-                      </>
-                    ) : (
-                      <>
-                        <RotateCcw size={13} />
-                        <span>Confirm Restore</span>
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
             </div>
-          )}
+            <div className="space-y-1.5">
+              <label htmlFor="restore-admin-password" className="block text-sm font-semibold">
+                System Administrator password
+              </label>
+              <input
+                id="restore-admin-password"
+                name="adminPassword"
+                type="password"
+                autoComplete="current-password"
+                required
+                disabled={restoreModal.isRestoring}
+                value={restoreModal.adminPassword}
+                onChange={(event) => setRestoreModal(prev => ({ ...prev, adminPassword: event.target.value, error: '' }))}
+                className="min-h-[44px] w-full rounded-lg border border-[var(--color-border)] bg-[var(--color-canvas)] px-3 text-sm"
+              />
+            </div>
+
+            {restoreModal.error && (
+              <p role="alert" className="break-words rounded-lg bg-[var(--status-danger-bg)] p-3 text-sm text-[var(--status-danger-text)]">
+                {restoreModal.error}
+              </p>
+            )}
+            {restoreModal.isRestoring && (
+              <p role="status" className="text-sm text-[var(--text-muted)]">Restoring the database. Keep this page open.</p>
+            )}
+
+            <DialogFooter className="border-t border-[var(--color-border)] pt-4">
+              <button
+                type="button"
+                disabled={restoreModal.isRestoring}
+                onClick={() => setRestoreModal(EMPTY_RESTORE_MODAL)}
+                className="min-h-[44px] rounded-lg border border-[var(--color-border)] bg-[var(--color-canvas)] px-4 text-sm font-semibold hover:bg-[var(--color-border)] disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={restoreModal.isRestoring || restoreModal.confirmText.trim() !== 'RESTORE' || !restoreModal.adminPassword}
+                className="flex min-h-[44px] items-center justify-center gap-2 rounded-lg bg-[var(--color-brand)] px-4 text-sm font-semibold text-white hover:bg-[var(--color-brand-hover)] disabled:opacity-50"
+              >
+                {restoreModal.isRestoring && <Loader2 size={15} aria-hidden="true" className="motion-safe:animate-spin" />}
+                {restoreModal.isRestoring ? 'Restoring?' : 'Confirm restore'}
+              </button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       {/* SAVE CHANGES CONFIRMATION MODAL */}
       {confirmModal.isOpen && (

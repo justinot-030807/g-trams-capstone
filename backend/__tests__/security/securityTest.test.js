@@ -74,6 +74,7 @@ describe('Security and Edge Case Test Suite', () => {
     const operator = await User.create({
       name: 'Operator One',
       contact: '09123456781',
+      isContactVerified: true,
       email: 'operator1@example.com',
       password: 'password123',
       role: 'operator',

@@ -1,10 +1,15 @@
 const cron = require('node-cron');
 const User = require('../models/userModel');
+const { beginRestoreSensitiveWork } = require('../services/backupService');
 
 const startCleanupJobs = () => {
     // Run every hour to clear abandoned unverified accounts that are older than 24 hours
     cron.schedule('0 * * * *', async () => {
+        let release;
         try {
+            release = await beginRestoreSensitiveWork();
+            if (!release) return;
+
             console.log('[CRON] Starting cleanup job for expired OTPs and unverified accounts...');
             const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
             
@@ -26,6 +31,8 @@ const startCleanupJobs = () => {
 
         } catch (error) {
             console.error('[CRON ERROR]', error);
+        } finally {
+            if (release) await release();
         }
     });
 };

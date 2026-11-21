@@ -25,13 +25,13 @@ function sanitizePreferences(rawPrefs) {
 // Save or update a push subscription
 router.post('/subscribe', async (req, res) => {
   try {
-    const { subscription, preferences, deviceType } = req.body;
+    const { subscription, preferences, deviceType } = req.body || {};
+    const { endpoint, keys } = subscription || {};
 
-    if (!subscription || !subscription.endpoint || !subscription.keys || !subscription.keys.p256dh || !subscription.keys.auth) {
+    if (![endpoint, keys?.p256dh, keys?.auth].every(value => typeof value === 'string' && value.trim())) {
       return res.status(400).json({ message: 'Invalid push subscription payload' });
     }
 
-    const { endpoint, keys } = subscription;
     try {
       const parsedEndpoint = new URL(endpoint);
       const allowedHostSuffixes = ['.googleapis.com', '.google.com', '.mozilla.com', '.push.apple.com', '.notify.windows.com'];
@@ -41,30 +41,34 @@ router.post('/subscribe', async (req, res) => {
     } catch {
       return res.status(400).json({ message: 'Malformed push subscription endpoint URL' });
     }
-    const userAgent = req.headers['user-agent'] || '';
+    const user = req.user._id;
+    const existingSub = await PushSubscription.findOne({ endpoint }).select('user keys __v').lean();
+    const rebound = Boolean(existingSub && String(existingSub.user) !== String(user));
 
-    // Check if endpoint was previously bound to another user on this shared device
-    const existingSub = await PushSubscription.findOne({ endpoint }).select('user').lean();
-    const rebound = Boolean(existingSub && existingSub.user && String(existingSub.user) !== String(req.user._id));
+    // A shared browser can transfer its binding by presenting the subscription's existing keys.
+    if (rebound && (existingSub.keys?.p256dh !== keys.p256dh || existingSub.keys?.auth !== keys.auth)) {
+      return res.status(403).json({ message: 'Subscription credentials do not match the existing binding' });
+    }
 
-    // Reassign endpoint to current authenticated user on shared devices, or upsert if new
-    const updatedSub = await PushSubscription.findOneAndUpdate(
-      { endpoint },
-      {
-        $set: {
-          user: req.user._id,
-          endpoint,
-          keys: {
-            p256dh: keys.p256dh,
-            auth: keys.auth
-          },
-          preferences: sanitizePreferences(preferences),
-          userAgent,
-          deviceType: typeof deviceType === 'string' && deviceType.trim() ? deviceType.trim().slice(0, 64) : 'Mobile Device'
-        }
-      },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
+    const binding = {
+      user,
+      endpoint,
+      keys: { p256dh: keys.p256dh, auth: keys.auth },
+      preferences: sanitizePreferences(preferences),
+      userAgent: req.headers['user-agent'] || '',
+      deviceType: typeof deviceType === 'string' && deviceType.trim() ? deviceType.trim().slice(0, 64) : 'Mobile Device'
+    };
+    const updatedSub = existingSub
+      ? await PushSubscription.findOneAndUpdate(
+        { _id: existingSub._id, user: existingSub.user, __v: existingSub.__v ?? { $exists: false } },
+        { $set: binding, $inc: { __v: 1 } },
+        { returnDocument: 'after' }
+      )
+      : await PushSubscription.create(binding);
+
+    if (!updatedSub) {
+      return res.status(409).json({ message: 'Subscription binding changed. Please try again.' });
+    }
 
     res.status(200).json({
       success: true,
@@ -73,6 +77,9 @@ router.post('/subscribe', async (req, res) => {
       subscription: updatedSub
     });
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({ message: 'Subscription binding changed. Please try again.' });
+    }
     console.error('Error saving push subscription:', error);
     res.status(500).json({ message: 'Error saving push subscription'});
   }

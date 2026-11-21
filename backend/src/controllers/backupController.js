@@ -5,11 +5,8 @@ const User = require('../models/userModel');
 const { logAudit } = require('../utils/auditLogger');
 
 async function verifyRestoreAdminPassword(req) {
-    if (process.env.NODE_ENV === 'test') {
-        return { authorized: true };
-    }
-    const adminPassword = String(req.body?.adminPassword || '').trim();
-    if (!adminPassword) {
+    const adminPassword = req.body?.adminPassword;
+    if (typeof adminPassword !== 'string' || adminPassword.length === 0) {
         return {
             authorized: false,
             status: 401,
@@ -140,7 +137,7 @@ exports.downloadDirectSnapshot = async (req, res) => {
 exports.restoreFromFile = async (req, res) => {
     try {
         req.setTimeout(180000); // 3 minute allowance
-        if (backupService.isRestoreInProgress()) {
+        if (await backupService.isRestoreInProgress()) {
             return res.status(409).json({
                 success: false,
                 message: 'Database restore is already in progress. Please retry shortly.'
@@ -151,7 +148,7 @@ exports.restoreFromFile = async (req, res) => {
             return res.status(authCheck.status).json({ success: false, message: authCheck.message });
         }
 
-        await backupService.ensurePersistentBackups();
+        await backupService.ensurePersistentBackups({ createBaseline: false });
         const { filename } = req.params;
         const safeName = path.basename(filename);
         const fullPath = path.join(backupService.BACKUP_DIR, safeName);
@@ -167,17 +164,20 @@ exports.restoreFromFile = async (req, res) => {
         const parsedData = backupService.parseBackupBuffer(buffer);
 
         const userIdentifier = req.user ? `${req.user.name} (${req.user.role})` : 'System Admin';
-        const result = await backupService.restoreFromBackup(parsedData, { triggeredBy: userIdentifier });
-        await logAudit(req, {
-            action: 'BACKUP_RESTORED_FROM_FILE',
-            targetType: 'General',
-            targetId: safeName,
-            details: { filename: safeName, restoredCounts: result.restoredCounts }
+        const result = await backupService.restoreFromBackup(parsedData, {
+            triggeredBy: userIdentifier,
+            onRestored: (restoredCounts) => logAudit(req, {
+                action: 'BACKUP_RESTORED_FROM_FILE',
+                targetType: 'General',
+                targetId: safeName,
+                details: { filename: safeName, restoredCounts }
+            })
         });
 
-        res.status(200).json(result);
+        if (!res.headersSent && !res.destroyed) res.status(200).json(result);
     } catch (error) {
         console.error('[BackupController] Error restoring from file:', error);
+        if (res.headersSent || res.destroyed) return;
         const isClientError = /Invalid|Corrupted|checksum|decrypt|missing|empty|Array/i.test(error.message || '');
         const statusCode = error.statusCode || (isClientError ? 400 : 500);
         res.status(statusCode).json({
@@ -193,7 +193,7 @@ exports.restoreFromFile = async (req, res) => {
 exports.restoreFromUpload = async (req, res) => {
     try {
         req.setTimeout(180000);
-        if (backupService.isRestoreInProgress()) {
+        if (await backupService.isRestoreInProgress()) {
             return res.status(409).json({
                 success: false,
                 message: 'Database restore is already in progress. Please retry shortly.'
@@ -213,17 +213,20 @@ exports.restoreFromUpload = async (req, res) => {
 
         const parsedData = backupService.parseBackupBuffer(req.file.buffer);
         const userIdentifier = req.user ? `${req.user.name} (${req.user.role})` : 'System Admin';
-        const result = await backupService.restoreFromBackup(parsedData, { triggeredBy: userIdentifier });
-        await logAudit(req, {
-            action: 'BACKUP_RESTORED_FROM_UPLOAD',
-            targetType: 'General',
-            targetId: req.file.originalname || 'upload',
-            details: { filename: req.file.originalname, restoredCounts: result.restoredCounts }
+        const result = await backupService.restoreFromBackup(parsedData, {
+            triggeredBy: userIdentifier,
+            onRestored: (restoredCounts) => logAudit(req, {
+                action: 'BACKUP_RESTORED_FROM_UPLOAD',
+                targetType: 'General',
+                targetId: req.file.originalname || 'upload',
+                details: { filename: req.file.originalname, restoredCounts }
+            })
         });
 
-        res.status(200).json(result);
+        if (!res.headersSent && !res.destroyed) res.status(200).json(result);
     } catch (error) {
         console.error('[BackupController] Error restoring from upload:', error);
+        if (res.headersSent || res.destroyed) return;
         const isClientError = /Invalid|Corrupted|checksum|decrypt|missing|empty|Array/i.test(error.message || '');
         const statusCode = error.statusCode || (isClientError ? 400 : 500);
         res.status(statusCode).json({

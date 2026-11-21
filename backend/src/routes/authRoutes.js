@@ -22,6 +22,7 @@ const {
     toggleUserStatus,
     getProfile,
     googleAuth,
+    googleStepUpChallenge,
     heartbeat,
     submitAppeal,
     verifyOperator,
@@ -65,6 +66,7 @@ router.post('/forgot-password', forgotLimiter, validate(forgotPasswordSchema), f
 router.post('/reset-password', resetLimiter, resetPassword);
 router.put('/change-password', resetLimiter, protect, changePassword);
 router.post('/request-recovery-otp', forgotLimiter, protect, requestRecoveryOtp);
+router.post('/google-step-up', googleAuthLimiter, protect, googleStepUpChallenge);
 
 // System Admin IT routes
 router.post('/verify-password', loginLimiter, protect, authorize('system_admin', 'admin'), verifyAdminPassword);

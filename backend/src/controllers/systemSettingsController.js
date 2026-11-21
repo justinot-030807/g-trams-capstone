@@ -123,6 +123,49 @@ const updateSettings = async (req, res) => {
       announcements
     } = req.body;
 
+    const sanitizedAnnouncements = [];
+    if (announcements !== undefined) {
+      if (!Array.isArray(announcements)) {
+        return res.status(400).json({ success: false, message: 'Announcements must be an array.' });
+      }
+
+      const announcementIds = new Set();
+      for (const [index, item] of announcements.entries()) {
+        if (!item || typeof item !== 'object' || Array.isArray(item) ||
+            typeof item.title !== 'string' || !item.title.trim() ||
+            typeof item.desc !== 'string' || !item.desc.trim()) {
+          return res.status(400).json({
+            success: false,
+            message: `Announcement #${index + 1} requires both a title and description.`
+          });
+        }
+        if ((item.type != null && !['alert', 'info', 'event'].includes(item.type)) ||
+            (item.date != null && typeof item.date !== 'string') ||
+            (item.isActive != null && typeof item.isActive !== 'boolean') ||
+            (item._id != null && typeof item._id !== 'string')) {
+          return res.status(400).json({ success: false, message: `Announcement #${index + 1} has invalid fields.` });
+        }
+
+        const clean = {
+          title: item.title.trim(),
+          desc: item.desc.trim(),
+          type: item.type ?? 'info',
+          date: item.date?.trim() || 'General Advisory',
+          isActive: item.isActive !== false
+        };
+        // Draft identifiers are replaced by MongoDB-assigned subdocument IDs.
+        const id = item._id?.trim().toLowerCase() || '';
+        if (id) {
+          if (announcementIds.has(id)) {
+            return res.status(400).json({ success: false, message: `Announcement #${index + 1} repeats an announcement ID.` });
+          }
+          announcementIds.add(id);
+          if (mongoose.isObjectIdOrHexString(id)) clean._id = id;
+        }
+        sanitizedAnnouncements.push(clean);
+      }
+    }
+
     let settings = await SystemSettings.findOne().sort({ updatedAt: -1, createdAt: -1 });
 
     if (!settings) {
@@ -144,33 +187,7 @@ const updateSettings = async (req, res) => {
     if (violationPolicy !== undefined && typeof violationPolicy === 'object') {
       settings.violationPolicy = violationPolicy;
     }
-    if (announcements !== undefined && Array.isArray(announcements)) {
-      const OBJECT_ID_HEX_RE = /^[a-f0-9]{24}$/i;
-      const sanitizedAnnouncements = announcements
-        .filter((item) => item && typeof item === 'object')
-        .map((item) => {
-          const clean = {
-            title: String(item.title || '').trim(),
-            desc: String(item.desc || '').trim(),
-            type: ['alert', 'info', 'event'].includes(item.type) ? item.type : 'info',
-            date: String(item.date || 'General Advisory').trim() || 'General Advisory',
-            isActive: item.isActive !== false
-          };
-          const rawId = item._id !== undefined && item._id !== null ? String(item._id).trim() : '';
-          if (OBJECT_ID_HEX_RE.test(rawId)) {
-            clean._id = rawId;
-          }
-          return clean;
-        });
-
-      const invalidIdx = sanitizedAnnouncements.findIndex((a) => !a.title || !a.desc);
-      if (invalidIdx !== -1) {
-        return res.status(400).json({
-          success: false,
-          message: `Announcement #${invalidIdx + 1} requires both a title and description.`
-        });
-      }
-
+    if (announcements !== undefined) {
       settings.announcements = sanitizedAnnouncements;
       settings.announcementsConfigured = true;
     }

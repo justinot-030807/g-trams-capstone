@@ -72,6 +72,8 @@ const OperatorSettings = () => {
     import.meta.env.VITE_GOOGLE_CLIENT_ID || DEFAULT_GOOGLE_CLIENT_ID
   );
   const [googleReauthToken, setGoogleReauthToken] = useState('');
+  const googleVerificationButtonRef = useRef(null);
+  const [savedVerificationTarget, setSavedVerificationTarget] = useState('');
   const [isGoogleReauthLoading, setIsGoogleReauthLoading] = useState(false);
   const [recoveryOtp, setRecoveryOtp] = useState('');
   const [recoveryOtpSentTo, setRecoveryOtpSentTo] = useState('');
@@ -84,6 +86,7 @@ const OperatorSettings = () => {
     setGoogleReauthToken('');
     setRecoveryOtp('');
     setRecoveryOtpSentTo('');
+    setSavedVerificationTarget('');
   };
 
   const avatarHeaderInputRef = useRef(null);
@@ -556,46 +559,45 @@ const OperatorSettings = () => {
     }
   };
 
-  // H2: Fresh Google Identity Services re-verification for Google-only accounts
-  const handleGoogleReauth = () => {
+  const handleGoogleReauth = async () => {
     if (isGoogleReauthLoading) return;
-    if (!googleClientId) {
-      showToast('Google verification is not configured on this server.', 'error', 4500);
-      return;
-    }
-    if (!window.google?.accounts?.oauth2) {
-      showToast('Google Identity Services is still loading. Please try again in a moment.', 'error', 4000);
+    const google = window.google?.accounts?.id;
+    const container = googleVerificationButtonRef.current;
+    if (!googleClientId || !google || !container) {
+      showToast('Google verification is unavailable. Please try again in a moment.', 'error');
       return;
     }
 
+    setIsGoogleReauthLoading(true);
+    setGoogleReauthToken('');
     try {
-      setIsGoogleReauthLoading(true);
-      const tokenClient = window.google.accounts.oauth2.initTokenClient({
+      const token = localStorage.getItem('token');
+      const res = await resilientApiFetch('/api/v1/auth/google-step-up', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || !data.nonce) throw new Error(data.message || 'Unable to start Google verification.');
+      if (!container.isConnected) return;
+      container.replaceChildren();
+      google.initialize({
         client_id: googleClientId,
-        scope: 'email profile openid',
-        prompt: 'consent select_account',
-        callback: (tokenResponse) => {
-          setIsGoogleReauthLoading(false);
-          if (tokenResponse?.error || !tokenResponse?.access_token) {
-            showToast('Google verification was cancelled or failed. Please try again.', 'error', 4000);
-            return;
-          }
-          setGoogleReauthToken(tokenResponse.access_token);
-          showToast('Google identity confirmed.', 'success');
-        },
-        error_callback: () => {
-          setIsGoogleReauthLoading(false);
-          showToast('Unable to open Google verification popup. Please allow popups and try again.', 'error', 4500);
+        nonce: data.nonce,
+        auto_select: false,
+        callback: ({ credential }) => {
+          if (!credential || !container.isConnected) return;
+          container.replaceChildren();
+          setGoogleReauthToken(credential);
         }
       });
-      tokenClient.requestAccessToken({ prompt: 'consent select_account' });
-    } catch {
+      google.renderButton(container, { type: 'standard', text: 'continue_with', theme: 'outline' });
+    } catch (error) {
+      showToast(error.message || 'Unable to start Google verification.', 'error');
+    } finally {
       setIsGoogleReauthLoading(false);
-      showToast('Failed to start Google verification.', 'error', 4000);
     }
   };
 
-  // Profile Save Execution (H2 + M2 + M5)
   const handleSaveProfile = async (e) => {
     if (e) e.preventDefault();
     const isEmail = (profileData.contact || '').includes('@');
@@ -613,54 +615,21 @@ const OperatorSettings = () => {
       }
     }
 
-    const normStr = (v) => String(v || '').trim();
-    const baselineRec = getEffectiveRecovery(currentUser);
-    const isContactMod = normStr(profileData.contact).toLowerCase() !== normStr(currentUser?.contact).toLowerCase();
-    const isRecEmailMod = normStr(profileData.recoveryEmail).toLowerCase() !== normStr(baselineRec.recoveryEmail).toLowerCase();
-    const isRecPhoneMod = normStr(profileData.recoveryPhone).replace(/[\s\-()]/g, '') !== normStr(baselineRec.recoveryPhone).replace(/[\s\-()]/g, '');
-    const hadExistingRec = Boolean(
-      normStr(baselineRec.recoveryEmail) ||
-      normStr(baselineRec.recoveryPhone) ||
-      normStr(currentUser?.backupContact)
-    );
-    const isClearingAllRec =
-      hadExistingRec &&
-      (isRecEmailMod || isRecPhoneMod) &&
-      !normStr(profileData.recoveryEmail) &&
-      !normStr(profileData.recoveryPhone);
-
-    const isGoogleOnly = currentUser?.hasLocalPassword === false;
-    const isSensitiveChange = isContactMod || isRecEmailMod || isRecPhoneMod || isClearingAllRec;
-    const requiresPasswordConfirm = isSensitiveChange && !isGoogleOnly;
-
-    const newTargets = [];
-    if (isRecEmailMod && normStr(profileData.recoveryEmail)) {
-      newTargets.push(normStr(profileData.recoveryEmail));
-    }
-    if (isRecPhoneMod && normStr(profileData.recoveryPhone)) {
-      newTargets.push(normStr(profileData.recoveryPhone));
-    }
-    const requiresGoogleReauthNow = isSensitiveChange && isGoogleOnly;
-    const requiresDestinationOtpNow = requiresGoogleReauthNow && !isClearingAllRec && newTargets.length > 0;
-
-    if (requiresPasswordConfirm && !profileConfirmPassword.trim()) {
+    if (requiresSensitivePasswordConfirm && !profileConfirmPassword) {
       showToast('Please enter your current password to confirm contact or recovery changes.', 'error');
       return;
     }
-
-    if (requiresGoogleReauthNow) {
-      if (newTargets.length > 1) {
-        showToast('Please verify and save one recovery contact (email or phone) at a time.', 'error', 4500);
-        return;
-      }
-      if (requiresDestinationOtpNow && !recoveryOtp.trim()) {
-        showToast('Please enter the 6-digit verification code sent to your new recovery contact.', 'error', 4000);
-        return;
-      }
-      if (!googleReauthToken) {
-        showToast('Please click "Re-verify with Google" to confirm your identity before saving.', 'error', 4000);
-        return;
-      }
+    if (changedContactTargets.length > 1) {
+      showToast('Verify and save one contact at a time.', 'error');
+      return;
+    }
+    if (candidateRecoveryTarget && (recoveryOtpSentTo !== candidateRecoveryTarget || !recoveryOtp.trim())) {
+      showToast('Request and enter the verification code for this contact.', 'error');
+      return;
+    }
+    if (requiresGoogleOnlyVerification && !googleReauthToken) {
+      showToast('Confirm your Google identity before saving the contact change.', 'error');
+      return;
     }
 
     setIsProcessing(true);
@@ -669,13 +638,13 @@ const OperatorSettings = () => {
       formData.append('name', profileData.name);
       formData.append('contact', profileData.contact);
       // M2: Only append recoveryEmail / recoveryPhone when actually modified so ordinary edits never wipe legacy backupContact
-      if (isRecEmailMod) {
-        formData.append('recoveryEmail', normStr(profileData.recoveryEmail));
+      if (isRecEmailModified) {
+        formData.append('recoveryEmail', normField(profileData.recoveryEmail));
       }
-      if (isRecPhoneMod) {
-        formData.append('recoveryPhone', normStr(profileData.recoveryPhone));
+      if (isRecPhoneModified) {
+        formData.append('recoveryPhone', normField(profileData.recoveryPhone));
       }
-      if (isClearingAllRec) {
+      if (isClearingExistingRecovery) {
         formData.append('clearRecovery', 'true');
       }
       formData.append('emergencyContact', profileData.emergencyContact || '');
@@ -683,13 +652,10 @@ const OperatorSettings = () => {
       formData.append('todaAssociation', profileData.todaAssociation);
       formData.append('language', preferences.language);
       formData.append('theme', preferences.theme);
-      if (requiresPasswordConfirm && profileConfirmPassword.trim()) {
-        formData.append('currentPassword', profileConfirmPassword.trim());
-      }
-      if (requiresGoogleReauthNow && googleReauthToken) {
-        formData.append('googleAccessToken', googleReauthToken);
-      }
-      if (requiresDestinationOtpNow && recoveryOtp.trim()) {
+      if (requiresSensitivePasswordConfirm) formData.append('currentPassword', profileConfirmPassword);
+      if (requiresGoogleOnlyVerification) formData.append('googleReauthToken', googleReauthToken);
+      if (candidateRecoveryTarget) {
+        formData.append('verificationTarget', candidateRecoveryTarget);
         formData.append('recoveryOtp', recoveryOtp.trim());
       }
 
@@ -735,12 +701,12 @@ const OperatorSettings = () => {
           type: 'success',
           title: wasRecoveryModal ? 'Account Recovery Saved' : 'Profile Updated',
           message: wasRecoveryModal
-            ? 'Your recovery contact details are now active for Forgot Password account protection.'
+            ? 'Your recovery contact details have been saved.'
             : 'Your profile details and contact information have been saved successfully.'
         });
       } else {
         const errData = await res.json().catch(() => ({}));
-        if (res.status === 401 && isGoogleOnly) {
+        if (res.status === 401 && requiresGoogleOnlyVerification) {
           setGoogleReauthToken('');
         }
         showToast(errData.message || 'Failed to save profile changes.', 'error', 4500);
@@ -1024,48 +990,69 @@ const OperatorSettings = () => {
     !normField(profileData.recoveryEmail) &&
     !normField(profileData.recoveryPhone);
 
-  // H2: True Google-only account check strictly uses hasLocalPassword === false
   const isGoogleOnlyAccount = currentUser?.hasLocalPassword === false;
-  const isSensitiveContactModified =
-    isContactModified || isRecEmailModified || isRecPhoneModified || isClearingExistingRecovery;
+  const changedContactTargets = [...new Set([
+    isContactModified ? normField(profileData.contact) : '',
+    isRecEmailModified ? normField(profileData.recoveryEmail) : '',
+    isRecPhoneModified ? normField(profileData.recoveryPhone) : ''
+  ].filter(Boolean))];
+  const savedContactsToVerify = [...new Set([
+    !currentUser?.isContactVerified ? normField(currentUser?.contact) : '',
+    !currentUser?.isEmailVerified ? normField(currentUser?.email) : '',
+    !currentUser?.isRecoveryEmailVerified ? normField(baselineRecovery.recoveryEmail) : '',
+    !currentUser?.isRecoveryPhoneVerified ? normField(baselineRecovery.recoveryPhone) : ''
+  ].filter(Boolean))];
+  const candidateRecoveryTarget = changedContactTargets.length
+    ? changedContactTargets[0]
+    : (savedContactsToVerify.includes(savedVerificationTarget) ? savedVerificationTarget : '');
+  const isSensitiveContactModified = isContactModified || isRecEmailModified ||
+    isRecPhoneModified || isClearingExistingRecovery || Boolean(candidateRecoveryTarget);
   const requiresSensitivePasswordConfirm = isSensitiveContactModified && !isGoogleOnlyAccount;
   const requiresGoogleOnlyVerification = isSensitiveContactModified && isGoogleOnlyAccount;
 
-  const newRecoveryTargets = [];
-  if (isRecEmailModified && normField(profileData.recoveryEmail)) {
-    newRecoveryTargets.push(normField(profileData.recoveryEmail));
-  }
-  if (isRecPhoneModified && normField(profileData.recoveryPhone)) {
-    newRecoveryTargets.push(normField(profileData.recoveryPhone));
-  }
-  const needsRecoveryDestinationOtp =
-    requiresGoogleOnlyVerification && !isClearingExistingRecovery && newRecoveryTargets.length > 0;
-  const candidateRecoveryTarget = newRecoveryTargets.length === 1 ? newRecoveryTargets[0] : '';
+  const renderSavedVerificationField = (idPrefix) => (
+    !isContactModified && !isRecEmailModified && !isRecPhoneModified && savedContactsToVerify.length > 0 && (
+      <div>
+        <label className="block text-xs font-semibold mb-1" htmlFor={`${idPrefix}-verify-saved-contact`}>
+          Verify a saved email or phone
+        </label>
+        <select
+          id={`${idPrefix}-verify-saved-contact`}
+          value={savedVerificationTarget}
+          onChange={(event) => setSavedVerificationTarget(event.target.value)}
+          className={inputClasses}
+        >
+          <option value="">Select a contact</option>
+          {savedContactsToVerify.map((channel) => <option key={channel} value={channel}>{channel}</option>)}
+        </select>
+      </div>
+    )
+  );
 
-  const renderGoogleOnlyVerificationSection = (idPrefix) => (
+  const renderContactVerification = (idPrefix) => (
     <div className="p-3.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#D4AF37]/50 dark:border-[#D4AF37]/40 space-y-3">
       <div className="flex items-start gap-2">
         <ShieldCheck size={15} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0 mt-0.5" />
         <div>
           <p className="text-xs font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
-            Google Account Security Verification
+            Contact verification
           </p>
           <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-0.5 leading-snug">
-            {needsRecoveryDestinationOtp
-              ? 'Verify your new recovery destination with a 6-digit code and confirm your Google identity.'
-              : 'Re-verify with your linked Google account to save contact or recovery changes.'}
+            {candidateRecoveryTarget
+              ? 'Enter the 6-digit code sent to the contact you are verifying.'
+              : 'Confirm your linked Google identity to save this change.'}
           </p>
         </div>
       </div>
 
-      {needsRecoveryDestinationOtp && (
+      {candidateRecoveryTarget && (
         <div className="space-y-2 pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
           <p className="text-[11px] font-bold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E]">
-            Step 1: Verify New Recovery Contact
+            Verify email or phone
           </p>
-          {newRecoveryTargets.length > 1 ? (
+          {changedContactTargets.length > 1 ? (
             <div className="p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/60 text-xs font-medium text-[#B45309] dark:text-amber-300">
-              Please verify and save one recovery contact (email or phone) at a time.
+              Verify and save one email or phone at a time.
             </div>
           ) : (
             <>
@@ -1121,46 +1108,22 @@ const OperatorSettings = () => {
         </div>
       )}
 
-      <div className={`space-y-2 ${needsRecoveryDestinationOtp ? 'pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27]' : ''}`}>
-        <p className="text-[11px] font-bold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E]">
-          {needsRecoveryDestinationOtp ? 'Step 2: Confirm Google Identity' : 'Confirm Google Identity'}
-        </p>
-        {googleReauthToken ? (
-          <div className="flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/60">
-            <span className="inline-flex items-center gap-1.5 text-xs font-bold text-[#15803D] dark:text-emerald-400">
-              <CheckCircle2 size={14} />
-              <span>Google identity confirmed</span>
-            </span>
-            <button
-              type="button"
-              onClick={handleGoogleReauth}
-              disabled={isGoogleReauthLoading}
-              className="text-[11px] font-bold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer"
-            >
-              Re-verify
-            </button>
-          </div>
-        ) : (
+      {requiresGoogleOnlyVerification && (
+        <div className="space-y-2 pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
           <button
             type="button"
             onClick={handleGoogleReauth}
             disabled={isGoogleReauthLoading}
-            className="w-full flex items-center justify-center gap-2.5 bg-white dark:bg-[#1C1917] hover:bg-[#EAE7E1] dark:hover:bg-[#25211E] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] py-2.5 px-4 rounded-lg text-xs font-bold shadow-sm transition-colors cursor-pointer disabled:opacity-50 min-h-[44px]"
+            className="min-h-[44px] w-full rounded-lg border border-[#E4E1DC] bg-white px-3 text-xs font-bold text-[#1F1D1B] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#9E2A2B] disabled:opacity-50 dark:border-[#2E2A27] dark:bg-[#1C1917] dark:text-[#F6F5F3] dark:focus-visible:outline-[#D4AF37]"
           >
-            {isGoogleReauthLoading ? (
-              <Loader2 size={15} className="animate-spin text-[#6B6761]" />
-            ) : (
-              <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24" aria-hidden="true">
-                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
-                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
-                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
-                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
-              </svg>
-            )}
-            <span>{isGoogleReauthLoading ? 'Verifying with Google...' : 'Re-verify with Google'}</span>
+            {isGoogleReauthLoading ? 'Preparing Google verification…' : googleReauthToken ? 'Verify again with Google' : 'Start Google verification'}
           </button>
-        )}
-      </div>
+          <div ref={googleVerificationButtonRef} />
+          {googleReauthToken && (
+            <p role="status" className="text-xs font-semibold text-[#15803D] dark:text-emerald-400">Google identity confirmed. Save within 3 minutes.</p>
+          )}
+        </div>
+      )}
     </div>
   );
 
@@ -1451,7 +1414,7 @@ const OperatorSettings = () => {
                     </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    {hasRecoveryConfigured ? (
+                    {(currentUser?.isRecoveryEmailVerified || currentUser?.isRecoveryPhoneVerified) ? (
                       <span className="text-[11px] font-bold text-[#15803D] dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-800/60 inline-flex items-center gap-1">
                         <CheckCircle2 size={11} />
                         <span>Protected</span>
@@ -1459,7 +1422,7 @@ const OperatorSettings = () => {
                     ) : (
                       <span className="text-[11px] font-bold text-[#B45309] dark:text-amber-300 bg-amber-50 dark:bg-amber-950/50 px-2.5 py-0.5 rounded-full border border-amber-200 dark:border-amber-800/60 inline-flex items-center gap-1">
                         <AlertCircle size={11} />
-                        <span>Setup needed</span>
+                        <span>{hasRecoveryConfigured ? 'Verification needed' : 'Setup needed'}</span>
                       </span>
                     )}
                     <ChevronRight size={18} className="text-[#6B6761] dark:text-[#A8A29E] group-hover:translate-x-0.5 transition-transform" />
@@ -1698,6 +1661,8 @@ const OperatorSettings = () => {
                   />
                 </div>
 
+                {renderSavedVerificationField('edit-profile')}
+
                 {requiresSensitivePasswordConfirm && (
                   <div className="p-3.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#D4AF37]/50 dark:border-[#D4AF37]/40 space-y-2">
                     <div className="flex items-start gap-2">
@@ -1737,7 +1702,7 @@ const OperatorSettings = () => {
                   </div>
                 )}
 
-                {requiresGoogleOnlyVerification && renderGoogleOnlyVerificationSection('edit-profile')}
+                {(candidateRecoveryTarget || requiresGoogleOnlyVerification) && renderContactVerification('edit-profile')}
               </div>
 
               <div>
@@ -1926,6 +1891,8 @@ const OperatorSettings = () => {
                 </div>
               </div>
 
+              {renderSavedVerificationField('recovery-modal')}
+
               {requiresSensitivePasswordConfirm && (
                 <div className="p-3.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#D4AF37]/50 dark:border-[#D4AF37]/40 space-y-2">
                   <div className="flex items-start gap-2">
@@ -1965,7 +1932,7 @@ const OperatorSettings = () => {
                 </div>
               )}
 
-              {requiresGoogleOnlyVerification && renderGoogleOnlyVerificationSection('recovery-modal')}
+              {(candidateRecoveryTarget || requiresGoogleOnlyVerification) && renderContactVerification('recovery-modal')}
 
               {/* Action Buttons */}
               <div className="pt-4 border-t border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-end gap-2.5">

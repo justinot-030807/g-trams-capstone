@@ -2,6 +2,7 @@ const fs = require('fs');
 const path = require('path');
 const zlib = require('zlib');
 const crypto = require('crypto');
+const { setTimeout: delay } = require('node:timers/promises');
 const mongoose = require('mongoose');
 const AuditLog = require('../models/auditLogModel');
 const Notification = require('../models/notificationModel');
@@ -9,23 +10,10 @@ const { ChatMessage, ChatThread } = require('../models/chatModel');
 
 const ENCRYPTED_MAGIC = Buffer.from('GTRAMS_ENC_V1\n', 'ascii');
 const RESTORE_LOCK_ID = 'db_restore_lock';
-const RESTORE_LOCK_TTL_MS = 10 * 60 * 1000; // 10 minutes TTL safety net
-
-let restoreLock = Promise.resolve();
-let activeRestoreCount = 0;
-
-function isRestoreInProgress() {
-    return activeRestoreCount > 0;
-}
-
-function withRestoreLock(fn) {
-    const previous = restoreLock;
-    let release;
-    restoreLock = new Promise((resolve) => {
-        release = resolve;
-    });
-    return previous.then(() => fn()).finally(() => release());
-}
+const RESTORE_WORK_PREFIX = 'db_restore_work:';
+const RESTORE_LEASE_MS = 10 * 60 * 1000;
+const RESTORE_DRAIN_MS = 15 * 1000;
+const MAJORITY_WRITE = { writeConcern: { w: 'majority' } };
 
 // MongoDB-backed distributed lock for coordinating restores across instances (H1)
 const systemLockSchema = new mongoose.Schema({
@@ -38,40 +26,140 @@ const systemLockSchema = new mongoose.Schema({
 
 const SystemLock = mongoose.models.SystemLock || mongoose.model('SystemLock', systemLockSchema, 'system_locks');
 
-async function acquireDistributedRestoreLock(triggeredBy = 'System Admin') {
-    const ownerId = `${process.pid}-${Date.now()}-${crypto.randomBytes(6).toString('hex')}`;
-    if (mongoose.connection.readyState !== 1) {
-        return ownerId;
-    }
+function restoreError(statusCode, message) {
+    return Object.assign(new Error(message), { statusCode });
+}
 
-    const now = new Date();
-    // Clear any expired lock document that TTL monitor hasn't reaped yet
-    await SystemLock.deleteOne({ _id: RESTORE_LOCK_ID, expiresAt: { $lte: now } }).catch(() => {});
+function requireRestoreDatabase() {
+    if (mongoose.connection.readyState !== 1) {
+        throw restoreError(503, 'Database restore coordination is unavailable. Please retry shortly.');
+    }
+}
+
+async function isRestoreInProgress() {
+    requireRestoreDatabase();
+    return Boolean(await SystemLock.exists({
+        _id: RESTORE_LOCK_ID,
+        $or: [{ expiresAt: { $gt: new Date() } }, { expiresAt: { $exists: false } }]
+    }).read('primary'));
+}
+
+async function releaseSystemLock(filter) {
+    await SystemLock.deleteOne(filter, MAJORITY_WRITE).catch((err) => {
+        console.warn('[BackupService] Failed releasing database restore coordination record:', err.message);
+    });
+}
+
+function startRestoreLeaseHeartbeat(filter) {
+    const heartbeat = setInterval(() => {
+        const now = new Date();
+        SystemLock.updateOne(
+            { ...filter, expiresAt: { $gt: now } },
+            { $set: { expiresAt: new Date(now.getTime() + RESTORE_LEASE_MS) } },
+            MAJORITY_WRITE
+        ).catch((err) => console.warn('[BackupService] Failed renewing restore coordination lease:', err.message));
+    }, 60 * 1000);
+    heartbeat.unref();
+    return () => clearInterval(heartbeat);
+}
+
+// Register before checking again so a restore either sees this work or keeps it from starting.
+async function beginRestoreSensitiveWork() {
+    if (await isRestoreInProgress()) return null;
+
+    const ownerId = crypto.randomUUID();
+    const filter = { _id: RESTORE_WORK_PREFIX + ownerId, ownerId };
+    await SystemLock.collection.insertOne({
+        ...filter,
+        acquiredAt: new Date(),
+        expiresAt: new Date(Date.now() + RESTORE_LEASE_MS)
+    }, MAJORITY_WRITE);
 
     try {
-        await SystemLock.create({
+        if (await isRestoreInProgress()) {
+            await releaseSystemLock(filter);
+            return null;
+        }
+    } catch (err) {
+        await releaseSystemLock(filter);
+        throw err;
+    }
+
+    const stopHeartbeat = startRestoreLeaseHeartbeat(filter);
+    return async function release({ keepLease = false } = {}) {
+        stopHeartbeat();
+        if (!keepLease) await releaseSystemLock(filter);
+    };
+}
+
+async function acquireDistributedRestoreLock(triggeredBy) {
+    requireRestoreDatabase();
+    const ownerId = crypto.randomUUID();
+    const now = new Date();
+    // Clear any expired lock document that TTL monitor hasn't reaped yet
+    await SystemLock.deleteOne({ _id: RESTORE_LOCK_ID, expiresAt: { $lte: now } }, MAJORITY_WRITE);
+
+    try {
+        await SystemLock.collection.insertOne({
             _id: RESTORE_LOCK_ID,
             ownerId,
             triggeredBy,
             acquiredAt: now,
-            expiresAt: new Date(now.getTime() + RESTORE_LOCK_TTL_MS)
-        });
+            expiresAt: new Date(now.getTime() + RESTORE_LEASE_MS)
+        }, MAJORITY_WRITE);
         return ownerId;
     } catch (err) {
         if (err && err.code === 11000) {
-            const lockErr = new Error('Database restore is already in progress on another instance. Please retry shortly.');
-            lockErr.statusCode = 409;
-            throw lockErr;
+            throw restoreError(409, 'Database restore is already in progress. Please retry shortly.');
         }
         throw err;
     }
 }
 
-async function releaseDistributedRestoreLock(ownerId) {
-    if (!ownerId || mongoose.connection.readyState !== 1) return;
-    await SystemLock.deleteOne({ _id: RESTORE_LOCK_ID, ownerId }).catch((err) => {
-        console.warn('[BackupService] Failed releasing distributed restore lock:', err.message);
+async function drainRestoreSensitiveWork() {
+    const deadline = Date.now() + RESTORE_DRAIN_MS;
+    while (await SystemLock.exists({
+        _id: { $regex: new RegExp(`^${RESTORE_WORK_PREFIX}`) },
+        expiresAt: { $gt: new Date() }
+    }).read('primary')) {
+        if (Date.now() >= deadline) {
+            throw restoreError(409, 'Database writes are still finishing. Please retry the restore shortly.');
+        }
+        await delay(100);
+    }
+}
+
+async function pinRestoreLock(ownerId) {
+    // Once cutover is allowed, loss of this process must leave the database in maintenance.
+    const result = await SystemLock.collection.updateOne(
+        { _id: RESTORE_LOCK_ID, ownerId, expiresAt: { $gt: new Date() } },
+        { $unset: { expiresAt: 1 }, $set: { restorePhase: 'preparing' } },
+        MAJORITY_WRITE
+    );
+    if (result.modifiedCount !== 1) {
+        throw restoreError(503, 'Database restore coordination was interrupted. Please retry shortly.');
+    }
+}
+
+function pinnedRestoreFilter(ownerId) {
+    return { _id: RESTORE_LOCK_ID, ownerId, expiresAt: { $exists: false } };
+}
+
+async function writeRestoreCollections(collections, targetEntries, mutatedEntries) {
+    const restoredCounts = {};
+    await Notification.runWithNotificationHooksSuppressed(async () => {
+        for (const [key, model] of targetEntries) {
+            const records = collections[key];
+            mutatedEntries?.push([key, model]);
+            await model.deleteMany({}, MAJORITY_WRITE);
+            const batchSize = 500;
+            for (let i = 0; i < records.length; i += batchSize) {
+                await model.insertMany(records.slice(i, i + batchSize), { ordered: true, ...MAJORITY_WRITE });
+            }
+            restoredCounts[key] = records.length;
+        }
     });
+    return restoredCounts;
 }
 
 function getBackupEncryptionKey() {
@@ -420,9 +508,11 @@ async function validateBackupPayload(backupPayload) {
         }
     }
 
+    const preparedCollections = {};
     for (const [key, model] of Object.entries(MODELS)) {
         const records = collections[key];
         if (!Array.isArray(records)) continue;
+        const prepared = [];
         const seenIds = new Set();
         for (let i = 0; i < records.length; i++) {
             const rec = records[i];
@@ -439,6 +529,60 @@ async function validateBackupPayload(backupPayload) {
             }
             const doc = new model(rec);
             await doc.validate();
+            doc.initializeTimestamps?.();
+            if (model.schema.options.versionKey) doc.set(model.schema.options.versionKey, 0);
+            prepared.push(doc.toObject({
+                depopulate: true, getters: false, virtuals: false, transform: false
+            }));
+        }
+        preparedCollections[key] = prepared;
+    }
+    return preparedCollections;
+}
+
+function copyCollation(collation) {
+    if (!collation) return {};
+    // listIndexes and listCollections include the server-generated ICU version.
+    const { version: _version, ...options } = collation;
+    return { collation: options };
+}
+
+async function stageRestoreCollections(collections, targetEntries) {
+    const db = mongoose.connection.db;
+    for (const [key, model] of targetEntries) {
+        const records = collections[key];
+        if (records.length < 2) continue;
+        await model.init();
+        const collectionName = model.collection.name;
+        const live = await db.listCollections({ name: collectionName }, { readPreference: 'primary' }).next();
+        const indexes = live
+            ? await db.collection(collectionName).indexes({ readPreference: 'primary' })
+            : [];
+        const stageName = `gtrams_restore_stage_${crypto.randomUUID().replace(/-/g, '')}`;
+        const stage = await db.createCollection(stageName, copyCollation(live?.options?.collation));
+        try {
+            for (const index of indexes) {
+                if (!index.unique || index.name === '_id_') continue;
+                const { name, sparse, partialFilterExpression } = index;
+                await stage.createIndex(index.key, {
+                    name,
+                    unique: true,
+                    ...(sparse === true && { sparse }),
+                    ...(partialFilterExpression && { partialFilterExpression }),
+                    ...copyCollation(index.collation)
+                });
+            }
+            const batchSize = 500;
+            for (let i = 0; i < records.length; i += batchSize) {
+                await stage.insertMany(records.slice(i, i + batchSize), { ordered: true });
+            }
+        } catch (err) {
+            if (err.code === 11000) {
+                throw restoreError(400, `Invalid backup payload: unique index conflict in "${key}".`);
+            }
+            throw err;
+        } finally {
+            await stage.drop();
         }
     }
 }
@@ -447,119 +591,214 @@ async function validateBackupPayload(backupPayload) {
  * Restore collections from backup data with coordinated locking, safety pre-snapshot,
  * and full in-memory rollback if any collection mutation fails (H1).
  */
-async function restoreFromBackup(backupPayload, { triggeredBy = 'System Admin' } = {}) {
-    return await withRestoreLock(async () => {
-        // Step 0: Pre-validate ALL collections, checksums, and document shapes BEFORE acquiring lock or touching live data
-        await validateBackupPayload(backupPayload);
+async function restoreFromBackup(backupPayload, { triggeredBy = 'System Admin', onRestored } = {}) {
+    const collections = await validateBackupPayload(backupPayload);
+    // Collections absent in legacy archives (including payment_ledgers) are left intact.
+    const targetEntries = Object.entries(MODELS).filter(([key]) => Object.hasOwn(collections, key));
 
-        const lockOwnerId = await acquireDistributedRestoreLock(triggeredBy);
-        activeRestoreCount += 1;
+    const lockOwnerId = await acquireDistributedRestoreLock(triggeredBy);
+    const stopHeartbeat = startRestoreLeaseHeartbeat({ _id: RESTORE_LOCK_ID, ownerId: lockOwnerId });
+    let compensationIncomplete = false;
+    try {
+        await stageRestoreCollections(collections, targetEntries);
+        await drainRestoreSensitiveWork();
+        await pinRestoreLock(lockOwnerId);
+        stopHeartbeat();
 
-        try {
-            const { collections } = backupPayload;
+        // Step 1: Create a safety pre-restore backup first (must succeed and exist on disk before any deleteMany)
+        console.log('[BackupService] Creating pre-restore safety snapshot...');
+        const safetySnapshot = await createBackupFile({
+            isAutomated: false,
+            triggeredBy,
+            notes: 'Pre-Restore Emergency Safety Snapshot'
+        });
+        if (!safetySnapshot || !safetySnapshot.success || !safetySnapshot.filePath || !fs.existsSync(safetySnapshot.filePath)) {
+            throw new Error('Pre-restore safety snapshot failed to verify on disk. Aborting restore.');
+        }
 
-            // Step 1: Create a safety pre-restore backup first (must succeed and exist on disk before any deleteMany)
-            console.log('[BackupService] Creating pre-restore safety snapshot...');
-            const safetySnapshot = await createBackupFile({
-                isAutomated: false,
-                triggeredBy,
-                notes: 'Pre-Restore Emergency Safety Snapshot'
-            });
-            if (!safetySnapshot || !safetySnapshot.success || !safetySnapshot.filePath || !fs.existsSync(safetySnapshot.filePath)) {
-                throw new Error('Pre-restore safety snapshot failed to verify on disk. Aborting restore.');
+        // Step 2: Capture full raw in-memory rollback copy of every target collection before any destructive mutation
+        const rollbackSnapshot = {};
+        for (const [key, model] of targetEntries) {
+            if (model.collection && typeof model.collection.find === 'function') {
+                rollbackSnapshot[key] = await model.collection.find({}).toArray();
+            } else {
+                rollbackSnapshot[key] = await model.find().lean();
             }
+        }
 
-            // Step 2: Capture full raw in-memory rollback copy of every target collection before any destructive mutation
-            const targetEntries = Object.entries(MODELS).filter(([key]) => Array.isArray(collections[key]));
-            const rollbackSnapshot = {};
-            for (const [key, model] of targetEntries) {
-                if (model.collection && typeof model.collection.find === 'function') {
-                    rollbackSnapshot[key] = await model.collection.find({}).toArray();
-                } else {
-                    rollbackSnapshot[key] = await model.find().lean();
+        const recoveryRecord = await SystemLock.collection.updateOne(
+            pinnedRestoreFilter(lockOwnerId),
+            {
+                $set: {
+                    restorePhase: 'cutover',
+                    recoverySnapshot: safetySnapshot.filename,
+                    recoveryChecksum: safetySnapshot.manifest.checksum,
+                    recoveryCollections: targetEntries.map(([key]) => key)
                 }
-            }
+            },
+            MAJORITY_WRITE
+        );
+        if (recoveryRecord.matchedCount !== 1) {
+            throw restoreError(503, 'Database restore ownership was lost before cutover.');
+        }
 
-            const restoredCounts = {};
-            const mutatedEntries = [];
+        let restoredCounts;
+        const mutatedEntries = [];
 
-            // Step 3: Clear and populate each collection with notification hooks suppressed ONLY for this async restore context
-            // If ANY collection delete/insert fails, automatically roll back all mutated collections to prior live state.
-            try {
-                await Notification.runWithNotificationHooksSuppressed(async () => {
-                    for (const [key, model] of targetEntries) {
-                        const records = collections[key];
-                        mutatedEntries.push([key, model]);
-                        await model.deleteMany({});
-
-                        if (records.length > 0) {
+        // Step 3: Clear and populate each collection with notification hooks suppressed ONLY for this async restore context
+        // If ANY collection delete/insert fails, automatically roll back all mutated collections to prior live state.
+        try {
+            restoredCounts = await writeRestoreCollections(collections, targetEntries, mutatedEntries);
+        } catch (cutoverErr) {
+            compensationIncomplete = true;
+            console.error('[BackupService] Restore cutover failed; rolling back mutated collections:', cutoverErr.message);
+            const rollbackErrors = [];
+            await Notification.runWithNotificationHooksSuppressed(async () => {
+                for (const [key, model] of [...mutatedEntries].reverse()) {
+                    try {
+                        await model.deleteMany({}, MAJORITY_WRITE);
+                        const priorDocs = rollbackSnapshot[key] || [];
+                        if (priorDocs.length > 0) {
                             const BATCH_SIZE = 500;
-                            for (let i = 0; i < records.length; i += BATCH_SIZE) {
-                                const batch = records.slice(i, i + BATCH_SIZE);
-                                await model.insertMany(batch, { ordered: true });
-                            }
-                        }
-                        restoredCounts[key] = records.length;
-                    }
-                });
-            } catch (cutoverErr) {
-                console.error('[BackupService] Restore cutover failed; rolling back mutated collections:', cutoverErr.message);
-                const rollbackErrors = [];
-                await Notification.runWithNotificationHooksSuppressed(async () => {
-                    for (const [key, model] of [...mutatedEntries].reverse()) {
-                        try {
-                            await model.deleteMany({});
-                            const priorDocs = rollbackSnapshot[key] || [];
-                            if (priorDocs.length > 0) {
-                                const BATCH_SIZE = 500;
-                                for (let i = 0; i < priorDocs.length; i += BATCH_SIZE) {
-                                    const batch = priorDocs.slice(i, i + BATCH_SIZE);
-                                    if (model.collection && typeof model.collection.insertMany === 'function') {
-                                        await model.collection.insertMany(batch, { ordered: true });
-                                    } else {
-                                        await model.insertMany(batch, { ordered: true });
-                                    }
+                            for (let i = 0; i < priorDocs.length; i += BATCH_SIZE) {
+                                const batch = priorDocs.slice(i, i + BATCH_SIZE);
+                                if (model.collection && typeof model.collection.insertMany === 'function') {
+                                    await model.collection.insertMany(batch, { ordered: true, ...MAJORITY_WRITE });
+                                } else {
+                                    await model.insertMany(batch, { ordered: true, ...MAJORITY_WRITE });
                                 }
                             }
-                        } catch (rbErr) {
-                            console.error(`[BackupService] CRITICAL: Rollback failed for collection "${key}":`, rbErr.message);
-                            rollbackErrors.push(`${key}: ${rbErr.message}`);
                         }
+                    } catch (rbErr) {
+                        console.error(`[BackupService] CRITICAL: Rollback failed for collection "${key}":`, rbErr.message);
+                        rollbackErrors.push(`${key}: ${rbErr.message}`);
                     }
-                });
-
-                if (rollbackErrors.length > 0) {
-                    throw new Error(`Restore failed (${cutoverErr.message}) and rollback encountered errors (${rollbackErrors.join('; ')}). Safety snapshot: ${safetySnapshot.filename}`);
                 }
-                throw new Error(`Restore failed and live data was rolled back cleanly: ${cutoverErr.message}`);
-            }
-
-            // Log the restoration event
-            await AuditLog.create({
-                action: 'DATABASE_RESTORE_COMPLETED',
-                targetType: 'General',
-                details: {
-                    triggeredBy,
-                    safetySnapshot: safetySnapshot.filename,
-                    restoredCollections: Object.keys(restoredCounts).length,
-                    restoredCounts,
-                    backupManifest: backupPayload.manifest
-                }
-            }).catch((err) => {
-                console.error('[BackupService] Failed to record restore audit log:', err.message);
             });
 
-            return {
-                success: true,
-                message: 'Database successfully restored from archive.',
-                restoredCounts,
-                manifest: backupPayload.manifest
-            };
-        } finally {
-            activeRestoreCount = Math.max(0, activeRestoreCount - 1);
-            await releaseDistributedRestoreLock(lockOwnerId);
+            if (rollbackErrors.length > 0) {
+                console.error(
+                    '[BackupService] Restore remains pinned for offline recovery:',
+                    lockOwnerId,
+                    safetySnapshot.filename
+                );
+                throw new Error(`Restore failed (${cutoverErr.message}) and rollback encountered errors (${rollbackErrors.join('; ')}). Safety snapshot: ${safetySnapshot.filename}`);
+            }
+            compensationIncomplete = false;
+            throw new Error(`Restore failed and live data was rolled back cleanly: ${cutoverErr.message}`);
         }
-    });
+
+        // Log the restoration event
+        await AuditLog.create({
+            action: 'DATABASE_RESTORE_COMPLETED',
+            targetType: 'General',
+            details: {
+                triggeredBy,
+                safetySnapshot: safetySnapshot.filename,
+                restoredCollections: Object.keys(restoredCounts).length,
+                restoredCounts,
+                backupManifest: backupPayload.manifest
+            }
+        }).catch((err) => {
+            console.error('[BackupService] Failed to record restore audit log:', err.message);
+        });
+
+        if (onRestored) await onRestored(restoredCounts);
+
+        return {
+            success: true,
+            message: 'Database successfully restored from archive.',
+            restoredCounts,
+            manifest: backupPayload.manifest
+        };
+    } finally {
+        stopHeartbeat();
+        if (!compensationIncomplete) {
+            await releaseSystemLock({ _id: RESTORE_LOCK_ID, ownerId: lockOwnerId });
+        }
+    }
+}
+
+/**
+ * Offline recovery only. Stop all backend workers before calling this function.
+ * The caller must have direct database access and the current pinned owner ID.
+ */
+async function recoverPinnedRestore({ ownerId, triggeredBy = 'Offline administrator' } = {}) {
+    requireRestoreDatabase();
+    if (typeof ownerId !== 'string' || !ownerId) {
+        throw restoreError(400, 'The pinned restore owner ID is required for recovery.');
+    }
+    const filter = pinnedRestoreFilter(ownerId);
+    const pinned = await SystemLock.collection.findOne(filter, { readPreference: 'primary' });
+    if (!pinned || !['preparing', 'cutover'].includes(pinned.restorePhase)) {
+        throw restoreError(409, 'The pinned restore owner or phase changed. Inspect the lock before retrying.');
+    }
+
+    let collections;
+    let targetEntries = [];
+    if (pinned.restorePhase === 'cutover') {
+        const { recoverySnapshot, recoveryChecksum, recoveryCollections } = pinned;
+        if (typeof recoverySnapshot !== 'string' || recoverySnapshot !== path.basename(recoverySnapshot) ||
+            !recoveryChecksum || !Array.isArray(recoveryCollections) || recoveryCollections.length === 0) {
+            throw new Error('Pinned restore recovery metadata is incomplete.');
+        }
+
+        const snapshotPath = path.join(BACKUP_DIR, recoverySnapshot);
+        let archive;
+        if (fs.existsSync(snapshotPath)) {
+            archive = fs.readFileSync(snapshotPath);
+        } else {
+            const stored = await BackupArchive.findOne({ filename: recoverySnapshot }).select('data');
+            if (!stored?.data) throw new Error('The pinned restore safety snapshot is unavailable.');
+            archive = Buffer.from(stored.data);
+        }
+
+        const backup = parseBackupBuffer(archive);
+        if (backup.manifest.checksum !== recoveryChecksum) {
+            throw new Error('The safety snapshot checksum does not match the pinned restore.');
+        }
+        const recoveryKeys = new Set(recoveryCollections);
+        targetEntries = Object.entries(MODELS).filter(([key]) => recoveryKeys.has(key));
+        if (targetEntries.length !== recoveryKeys.size ||
+            targetEntries.some(([key]) => !Array.isArray(backup.collections[key]))) {
+            throw new Error('The safety snapshot is missing a collection required for recovery.');
+        }
+        collections = Object.fromEntries(targetEntries.map(([key]) => [key, backup.collections[key]]));
+        // The complete archive was verified above. Validate the selected documents before cutover.
+        collections = await validateBackupPayload({ manifest: { system: 'G-TRAMS' }, collections });
+    }
+
+    const recoveryOwnerId = crypto.randomUUID();
+    const claim = await SystemLock.collection.updateOne(
+        filter,
+        { $set: { ownerId: recoveryOwnerId } },
+        MAJORITY_WRITE
+    );
+    if (claim.matchedCount !== 1) {
+        throw restoreError(409, 'Another administrator claimed the pinned restore. Inspect the lock before retrying.');
+    }
+
+    try {
+        await drainRestoreSensitiveWork();
+        if (collections) await stageRestoreCollections(collections, targetEntries);
+        const restoredCounts = collections ? await writeRestoreCollections(collections, targetEntries) : {};
+        for (const [key, model] of targetEntries) {
+            if (await model.countDocuments() !== restoredCounts[key]) {
+                throw new Error(`Recovery verification failed for collection "${key}".`);
+            }
+        }
+        await AuditLog.create({
+            action: 'DATABASE_RESTORE_RECOVERED',
+            targetType: 'General',
+            details: { triggeredBy, safetySnapshot: pinned.recoverySnapshot, restoredCounts }
+        });
+        const released = await SystemLock.deleteOne(pinnedRestoreFilter(recoveryOwnerId), MAJORITY_WRITE);
+        if (released.deletedCount !== 1) throw new Error('Recovery lock ownership changed before release.');
+        return { success: true, restoredCounts };
+    } catch (err) {
+        console.error('[BackupService] Offline recovery did not complete. Inspect pinned owner:', recoveryOwnerId);
+        throw err;
+    }
 }
 
 /**
@@ -583,7 +822,7 @@ async function deleteBackupFile(filename) {
 /**
  * Sync persisted MongoDB backup archives to local disk & auto-create baseline snapshot if empty
  */
-async function ensurePersistentBackups() {
+async function ensurePersistentBackups({ createBaseline = true } = {}) {
     if (process.env.NODE_ENV === 'test') return;
     try {
         ensureBackupDir();
@@ -604,8 +843,7 @@ async function ensurePersistentBackups() {
             }
         }
 
-        const currentFiles = listBackupFiles();
-        if (currentFiles.length === 0) {
+        if (createBaseline && listBackupFiles().length === 0) {
             await createBackupFile({
                 isAutomated: true,
                 triggeredBy: 'System Auto-Baseline',
@@ -622,6 +860,7 @@ module.exports = {
     RESTORE_LOCK_ID,
     SystemLock,
     isRestoreInProgress,
+    beginRestoreSensitiveWork,
     assembleBackupPayload,
     encodeBackupPayload,
     validateBackupPayload,
@@ -629,6 +868,7 @@ module.exports = {
     listBackupFiles,
     parseBackupBuffer,
     restoreFromBackup,
+    recoverPinnedRestore,
     deleteBackupFile,
     pruneOldAutomatedBackups,
     ensurePersistentBackups

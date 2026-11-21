@@ -90,6 +90,13 @@ async function executeAtomicUpdateWithMtop(filter, baseSetFields, { populateOper
     throw lastErr;
 }
 
+const CASHIER_FRANCHISE_FIELDS = [
+    '_id', 'fullName', 'plateNo', 'motorNo', 'chassisNo', 'todaName', 'applicationType', 'mtopNo',
+    'status', 'paymentStatus', 'officialReceiptNo', 'payerName', 'amountPaid', 'paymentMethod',
+    'paymentDate', 'paymentRemarks', 'cashierName', 'operator', 'createdAt', 'updatedAt'
+];
+const CASHIER_FRANCHISE_PROJECTION = CASHIER_FRANCHISE_FIELDS.join(' ');
+
 const PAYABLE_PREDICATE = {
     status: 'For Payment',
     paymentStatus: { $ne: 'Paid' },
@@ -158,28 +165,15 @@ const blockDuringMaintenance = async (req, res, next) => {
     }
 };
 
-function buildTodaSearchConditions(todaName) {
-    if (!todaName || todaName === 'NON-TODA') return [];
-    const clean = String(todaName).trim();
-    const todaRegex = new RegExp(escapeRegex(clean), 'i');
-    const conditions = [
-        { todaAssociation: todaRegex },
-        { fileName: todaRegex }
-    ];
+function resolveTodaAssociation(value) {
+    if (typeof value !== 'string') return null;
+    const name = value.trim().replace(/\s+/g, ' ').toUpperCase();
+    return TODA_DIRECTORY.find(entry => entry.id === name || entry.name.toUpperCase() === name) || null;
+}
 
-    if (Array.isArray(TODA_DIRECTORY)) {
-        const entry = TODA_DIRECTORY.find(t => 
-            t.id.toUpperCase() === clean.toUpperCase() || 
-            t.name.toUpperCase().includes(clean.toUpperCase()) || 
-            clean.toUpperCase().includes(t.id.toUpperCase())
-        );
-        if (entry) {
-            conditions.push({ todaAssociation: new RegExp(escapeRegex(entry.id), 'i') });
-            conditions.push({ todaAssociation: new RegExp(escapeRegex(entry.name), 'i') });
-            conditions.push({ fileName: new RegExp(escapeRegex(entry.id), 'i') });
-        }
-    }
-    return conditions;
+function todaAssociationPattern(entry) {
+    const labels = [entry.id, entry.name].map(label => label.split(' ').map(escapeRegex).join('\\s+'));
+    return new RegExp(`^\\s*(?:${labels.join('|')})\\s*$`, 'i');
 }
 
 const createFranchise = async (req, res) => {
@@ -1429,19 +1423,27 @@ const getFranchiseById = async (req, res) => {
         if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
             return res.status(400).json({ message: 'Invalid franchise ID format.' });
         }
+        const role = String(req.user?.role || '').toLowerCase().trim().replace(/[\s-]+/g, '_');
+        if (role === 'cashier') {
+            const paymentRecord = await Franchise.findOne({
+                _id: req.params.id,
+                $or: [PAYABLE_PREDICATE, { paymentStatus: 'Paid' }, { 'paymentHistory.0': { $exists: true } }]
+            }).select(CASHIER_FRANCHISE_PROJECTION).populate('operator', 'name').lean();
+            if (!paymentRecord) return res.status(404).json({ message: 'Payment record not found.' });
+            return res.json(paymentRecord);
+        }
+
         const franchise = await Franchise.findById(req.params.id).populate('operator', 'name address contact');
         if (!franchise) return res.status(404).json({ message: 'Franchise not found' });
 
-        // IDOR Protection: verify user is owner, bplo_staff, or cashier
-        const role = String(req.user?.role || '').toLowerCase().trim().replace(/[\s-]+/g, '_');
+        // IDOR Protection: verify that the requester owns the record or is BPLO staff
         const isBploStaff = role === 'bplo_staff';
-        const isCashier = role === 'cashier';
         const isOwner = franchise.operator && (
             (franchise.operator._id && franchise.operator._id.toString() === req.user._id.toString()) ||
             franchise.operator.toString() === req.user._id.toString()
         );
 
-        if (!isBploStaff && !isCashier && !isOwner) {
+        if (!isBploStaff && !isOwner) {
             return res.status(403).json({ message: 'ACCESS DENIED: You are not authorized to view this franchise record.' });
         }
 
@@ -1611,22 +1613,22 @@ const getFranchiseRecordCheck = async (req, res) => {
         let todaApprovedCount = 0;
         let inRoster = false;
 
-        if (franchise.todaName && franchise.todaName !== 'NON-TODA') {
-            const todaSearch = buildTodaSearchConditions(franchise.todaName);
+        const todaEntry = resolveTodaAssociation(franchise.todaName);
+        if (franchise.todaName && todaEntry?.id !== 'NON-TODA') {
             const TodaRoster = require('../models/todaModel');
-            const todaRegex = new RegExp(escapeRegex(franchise.todaName.replace(/\s*TODA$/i, '').trim()), 'i');
+            const todaRegex = todaEntry ? todaAssociationPattern(todaEntry) : null;
             
             // Query Approved masterlists and active TodaRoster records for this TODA
-            const [approvedRosters, directRosterEntries] = await Promise.all([
+            const [approvedRosters, directRosterEntries] = todaRegex ? await Promise.all([
                 TodaSubmission.find({
                     status: { $in: ['Approved', 'Verified', 'Active'] },
-                    $or: todaSearch
+                    todaAssociation: todaRegex
                 }).select('extractedMembers todaAssociation fileName createdAt'),
                 TodaRoster.find({
                     todaAssociation: todaRegex,
                     status: { $ne: 'Inactive' }
                 }).lean().catch(() => [])
-            ]);
+            ]) : [[], []];
 
             todaApprovedCount = approvedRosters.length + (directRosterEntries.length > 0 ? 1 : 0);
 
@@ -1743,19 +1745,14 @@ const getCashierQueue = async (req, res) => {
         const settings = await SystemSettings.findOne().sort({ updatedAt: -1, createdAt: -1 }).lean().catch(() => null);
         const franchiseFee = Number(settings?.franchiseFee) > 0 ? Number(settings.franchiseFee) : 500;
 
-        // 1. Pending payable applications (unified payable predicate, or explicit status filter)
-        const pendingQuery = status
-            ? { isArchived: { $ne: true }, status }
-            : { ...PAYABLE_PREDICATE };
-
-        let pendingQueue = await Franchise.find(pendingQuery)
-            .populate('operator', 'name contact address')
-            .sort({ updatedAt: -1 })
-            .lean();
-
-        if (!status) {
-            pendingQueue = pendingQueue.filter(f => f.status === 'For Payment' && f.paymentStatus !== 'Paid' && f.isArchived !== true);
-        }
+        // Cashier requests can narrow the queue without broadening payable eligibility.
+        const pendingQueue = !status || status === PAYABLE_PREDICATE.status
+            ? await Franchise.find(PAYABLE_PREDICATE)
+                .select(CASHIER_FRANCHISE_PROJECTION)
+                .populate('operator', 'name')
+                .sort({ updatedAt: -1 })
+                .lean()
+            : [];
 
         // 2. Durable PaymentLedger (sorted newest first) + merge/dedupe legacy paid franchises & paymentHistory by officialReceiptNo (M11)
         const [ledgerDocs, legacyPaidFranchises] = await Promise.all([
@@ -2093,7 +2090,10 @@ const processCashierPayment = async (req, res) => {
 
         res.status(200).json({
             message: 'Payment recorded successfully under Official Receipt No. ' + franchise.officialReceiptNo,
-            franchise,
+            franchise: Object.fromEntries(
+                CASHIER_FRANCHISE_FIELDS.filter(field => field !== 'operator' && franchise[field] !== undefined)
+                    .map(field => [field, franchise[field]])
+            ),
             ledgerEntry
         });
     } catch (error) {
@@ -2204,15 +2204,21 @@ const scanDocument = async (req, res) => {
 
 const checkTodaMemberStatus = async (req, res) => {
     try {
-        const todaName = (req.query.todaName || req.query.toda || '').trim();
+        const requestedToda = req.query.todaName || req.query.toda || '';
+        const suppliedToda = typeof requestedToda === 'string' ? requestedToda.trim() : requestedToda;
+        const todaEntry = resolveTodaAssociation(suppliedToda);
+        if (suppliedToda && !todaEntry) {
+            return res.status(400).json({ message: 'Select an official TODA association.' });
+        }
+        const todaName = todaEntry?.id || 'NON-TODA';
         const applicantName = (req.query.name || req.query.fullName || '').trim();
         const barangay = (req.query.barangay || req.query.address || '').trim();
 
-        if (!todaName || todaName === 'NON-TODA') {
+        if (todaName === 'NON-TODA') {
             return res.json({
                 todaStatus: 'non_toda',
                 isVerified: false,
-                todaName: todaName || 'NON-TODA',
+                todaName,
                 jurisdictionStatus: 'non_toda',
                 jurisdictionWarning: '',
                 authorizedTodas: [],
@@ -2225,15 +2231,14 @@ const checkTodaMemberStatus = async (req, res) => {
         const jurisdictionStatus = !barangay ? 'unspecified' : (jurisdictionCheck.isMatch ? 'match' : 'mismatch');
         const jurisdictionWarning = jurisdictionCheck.warning || '';
 
-        const todaSearch = buildTodaSearchConditions(todaName);
-        const todaRegex = new RegExp(escapeRegex(todaName.replace(/\s*TODA$/i, '').trim()), 'i');
+        const todaRegex = todaAssociationPattern(todaEntry);
         const plateNo = (req.query.plateNo || req.query.plateNumber || '').trim();
 
         const TodaRoster = require('../models/todaModel');
         const [approvedRosters, officialRosterDocs] = await Promise.all([
             TodaSubmission.find({
                 status: { $in: ['Approved', 'Verified', 'Active'] },
-                $or: [{ todaAssociation: todaRegex }, ...todaSearch]
+                todaAssociation: todaRegex
             }).select('extractedMembers todaAssociation fileName createdAt').lean(),
             TodaRoster.find({
                 todaAssociation: todaRegex,
@@ -2363,6 +2368,8 @@ module.exports = {
     processCashierPayment,
     scanDocument,
     checkTodaMemberStatus,
+    resolveTodaAssociation,
+    todaAssociationPattern,
     requestFranchiseCancellation,
     processFranchiseCancellation,
     downloadOriginalTemplate: async (req, res) => {
@@ -2384,8 +2391,8 @@ module.exports = {
                 return res.status(404).json({ error: 'Franchise record not found.' });
             }
 
-            const rawRole = String(req.user?.role || '').toLowerCase().replace(/_/g, ' ').trim();
-            const isStaff = ['bplo staff', 'admin', 'system admin', 'cashier'].includes(rawRole);
+            const role = String(req.user?.role || '').toLowerCase().trim().replace(/[\s-]+/g, '_');
+            const isStaff = role === 'bplo_staff';
             const ownerObj = franchise.operator || franchise.operatorId;
             const ownerId = ownerObj?._id ? String(ownerObj._id) : String(ownerObj || '');
             if (!isStaff && ownerId !== String(req.user?._id || req.user?.id || '')) {

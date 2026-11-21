@@ -9,6 +9,7 @@ const User = require('../models/userModel');
 const { logAudit } = require('../utils/auditLogger');
 
 const STAFF_ROLES = ['admin', 'administrator', 'Administrator', 'system_admin', 'system admin', 'bplo_staff', 'bplo staff'];
+const STAFF_SENDER_ROLE = /^\s*(?:admin|administrator|system(?:_|[\s-]+)admin|bplo(?:_|[\s-]+)staff)\s*$/i;
 
 function isStaffRoleValue(role) {
   const normalized = String(role || '').toLowerCase().trim().replace(/[\s-]+/g, '_');
@@ -33,11 +34,21 @@ function isOperatorOrPresidentRole(role) {
   return normalized === 'operator' || normalized === 'toda_president';
 }
 
-async function getActiveStaffUsers() {
-  return await User.find({
-    role: { $in: STAFF_ROLES },
-    isActive: { $ne: false }
-  }).select('_id role').lean();
+async function getStaffUsers({ activeOnly = true } = {}) {
+  const filter = { role: { $in: STAFF_ROLES } };
+  if (activeOnly) filter.isActive = { $ne: false };
+  return User.find(filter).select('_id role isActive').lean();
+}
+
+function staffInboxFilter(userId, threads) {
+  const unknownRoles = [null, /^\s*$/];
+  const inbound = [{ senderRole: { $exists: true, $nin: [...unknownRoles, STAFF_SENDER_ROLE] } }];
+  // On older messages, a persisted support owner can identify the sender's
+  // side of the thread without consulting the user's current role.
+  const legacyOwners = threads.filter(thread => thread.owner && !thread.isAnnouncement)
+    .map(thread => ({ thread: thread._id, sender: thread.owner._id || thread.owner }));
+  if (legacyOwners.length) inbound.push({ senderRole: { $in: unknownRoles }, $or: legacyOwners });
+  return { sender: { $ne: userId }, $or: inbound };
 }
 
 async function buildParticipantUserMap(threads) {
@@ -117,18 +128,15 @@ router.use(protect);
 router.get('/unread-count', async (req, res) => {
   try {
     const isUserAdmin = isStaffUser(req.user);
-    const adminUsers = await getActiveStaffUsers();
-    const adminIds = adminUsers.map(a => a._id);
-    const activeStaffIdSet = new Set(adminIds.map(id => String(id)));
 
     let threadIds = [];
-    let senderFilter;
+    let inboxFilter = { sender: { $ne: req.user._id } };
 
     if (isUserAdmin) {
       // For active staff: all support threads, and only count inbound messages from operators/non-staff
-      const threads = await ChatThread.find({ isAnnouncement: false }).select('_id').lean();
+      const threads = await ChatThread.find({ isAnnouncement: false }).select('_id owner').lean();
       threadIds = threads.map(t => t._id);
-      senderFilter = { $nin: adminIds };
+      inboxFilter = staffInboxFilter(req.user._id, threads);
     } else {
       // For operators: only their own support threads, excluding announcements
       const candidateThreads = await ChatThread.find({
@@ -143,13 +151,12 @@ router.get('/unread-count', async (req, res) => {
       threadIds = candidateThreads
         .filter(t => canNonStaffAccessSupportThread(t, req.user, participantUserMap))
         .map(t => t._id);
-      senderFilter = { $ne: req.user._id };
     }
 
     const count = threadIds.length > 0
       ? await ChatMessage.countDocuments({
           thread: { $in: threadIds },
-          sender: senderFilter,
+          ...inboxFilter,
           isRead: false
         })
       : 0;
@@ -211,9 +218,8 @@ async function buildAnnouncementAudienceCondition(user) {
 router.get('/threads', async (req, res) => {
   try {
     const isUserAdmin = isStaffUser(req.user);
-    const adminUsers = await getActiveStaffUsers();
-    const adminIds = adminUsers.map(a => a._id);
-    const activeStaffIdSet = new Set(adminIds.map(id => String(id)));
+    const staffUsers = await getStaffUsers({ activeOnly: !isUserAdmin });
+    const activeStaffIdSet = new Set(staffUsers.filter(user => user.isActive !== false).map(user => String(user._id)));
 
     let query;
     if (isUserAdmin) {
@@ -242,13 +248,13 @@ router.get('/threads', async (req, res) => {
     const announcementAudienceCond = !isUserAdmin ? await buildAnnouncementAudienceCondition(req.user) : null;
 
     const threadsWithUnread = await Promise.all(threads.map(async (thread) => {
-      const senderFilter = isUserAdmin ? { $nin: adminIds } : { $ne: req.user._id };
+      const inboxFilter = isUserAdmin ? staffInboxFilter(req.user._id, [thread]) : { sender: { $ne: req.user._id } };
       let unreadCount = 0;
 
       if (thread.isAnnouncement) {
         const countQuery = {
           thread: thread._id,
-          sender: senderFilter,
+          ...inboxFilter,
           readBy: { $ne: req.user._id }
         };
         if (!isUserAdmin && announcementAudienceCond) {
@@ -258,7 +264,7 @@ router.get('/threads', async (req, res) => {
       } else {
         unreadCount = await ChatMessage.countDocuments({
           thread: thread._id,
-          sender: senderFilter,
+          ...inboxFilter,
           isRead: false
         });
       }
@@ -298,8 +304,6 @@ router.get('/messages/:threadId', async (req, res) => {
     }
 
     const isUserAdmin = isStaffUser(req.user);
-    const adminUsers = await getActiveStaffUsers();
-    const activeStaffIdSet = new Set(adminUsers.map(a => String(a._id)));
 
     const thread = await ChatThread.findById(req.params.threadId);
     if (!thread) return res.status(404).json({ message: 'Thread not found' });
@@ -380,7 +384,7 @@ router.post('/messages', async (req, res) => {
     }
 
     const isSenderAdmin = isStaffUser(req.user);
-    const activeStaff = await getActiveStaffUsers();
+    const activeStaff = await getStaffUsers();
     const activeStaffIds = activeStaff.map(a => a._id);
     const activeStaffIdSet = new Set(activeStaffIds.map(id => String(id)));
 
@@ -557,13 +561,16 @@ router.post('/messages', async (req, res) => {
       }
 
       if (autoReply && activeStaffIds.length > 0) {
-        const adminSenderId = activeStaffIds[0];
-
         setTimeout(async () => {
           try {
+            const freshStaff = await getStaffUsers();
+            const autoReplySender = freshStaff.find(staff => staff._id.equals(activeStaffIds[0])) || freshStaff[0];
+            if (!autoReplySender) return;
+            const adminSenderId = autoReplySender._id;
             const autoMsg = await ChatMessage.create({
               thread: thread._id,
               sender: adminSenderId,
+              senderRole: autoReplySender.role,
               message: autoReply,
               readBy: [adminSenderId]
             });
@@ -574,7 +581,6 @@ router.post('/messages', async (req, res) => {
 
             const popAutoMsg = await ChatMessage.findById(autoMsg._id).populate('sender', 'name profilePic role');
 
-            const freshStaff = await getActiveStaffUsers();
             const emitIds = new Set([String(req.user._id), ...freshStaff.map(s => String(s._id))]);
             for (const pId of emitIds) {
               emitToUser(pId, 'chat_message', popAutoMsg);
@@ -605,6 +611,35 @@ router.post('/messages', async (req, res) => {
   }
 });
 
+async function markThreadNotificationsRead(thread, user, isStaff) {
+  const threadMatches = [{ threadId: thread._id }];
+  if (!isStaff && thread.createdAt) {
+    const candidates = await ChatThread.find(thread.isAnnouncement
+      ? { isAnnouncement: true }
+      : {
+          isAnnouncement: { $ne: true },
+          $or: [{ owner: user._id }, { owner: null, participants: user._id }]
+        }).select('_id').limit(2).lean();
+
+    if (candidates.length === 1 && String(candidates[0]._id) === String(thread._id)) {
+      // Old staff notifications contain only a display name and a preview. Citizen
+      // notification templates identify the thread category when there is just one candidate.
+      const legacyTemplates = thread.isAnnouncement
+        ? [{ title: /^(?:System Announcement|Advisory for .+)$/, message: /^Admin broadcasted an announcement(?: for .+)?$/ }]
+        : [
+            { title: 'GTRAMS Support', message: 'New message from GTRAMS Support' },
+            { title: 'Auto-Reply from GTRAMS', message: /^Automated Reply: / }
+          ];
+      threadMatches.push({ threadId: null, createdAt: { $gte: thread.createdAt }, $or: legacyTemplates });
+    }
+  }
+
+  await Notification.updateMany(
+    { recipient: user._id, type: 'chat', isRead: false, $or: threadMatches },
+    { $set: { isRead: true, threadId: thread._id } }
+  );
+}
+
 router.put('/messages/:threadId/read', async (req, res) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.threadId)) {
@@ -612,10 +647,6 @@ router.put('/messages/:threadId/read', async (req, res) => {
     }
 
     const isUserAdmin = isStaffUser(req.user);
-    const adminUsers = await getActiveStaffUsers();
-    const adminIds = adminUsers.map(a => a._id);
-    const activeStaffIdSet = new Set(adminIds.map(id => String(id)));
-
     const thread = await ChatThread.findById(req.params.threadId);
     if (!thread) return res.status(404).json({ message: 'Thread not found' });
 
@@ -624,61 +655,23 @@ router.put('/messages/:threadId/read', async (req, res) => {
       return res.status(404).json({ message: 'Thread not found' });
     }
 
+    const inboxFilter = isUserAdmin
+      ? staffInboxFilter(req.user._id, [thread])
+      : { sender: { $ne: req.user._id } };
+    const match = { thread: thread._id, ...inboxFilter };
+    const update = { $addToSet: { readBy: req.user._id } };
     if (thread.isAnnouncement) {
-      if (isUserAdmin) {
-        await ChatMessage.updateMany(
-          { thread: thread._id, sender: { $nin: adminIds }, readBy: { $ne: req.user._id } },
-          { $addToSet: { readBy: req.user._id } }
-        );
-        emitToUser(req.user._id.toString(), 'chat_read', { threadId: thread._id });
-      } else {
-        const audienceCond = await buildAnnouncementAudienceCondition(req.user);
-        await ChatMessage.updateMany(
-          {
-            thread: thread._id,
-            sender: { $ne: req.user._id },
-            readBy: { $ne: req.user._id },
-            $and: audienceCond
-          },
-          { $addToSet: { readBy: req.user._id } }
-        );
-
-        await Notification.updateMany(
-          { recipient: req.user._id, type: 'chat', threadId: thread._id, isRead: false },
-          { $set: { isRead: true } }
-        );
-
-        emitToUser(req.user._id.toString(), 'chat_read', { threadId: thread._id });
-      }
-    } else if (isUserAdmin) {
-      // Admin reading support thread: ONLY mark messages from operators as read
-      await ChatMessage.updateMany(
-        { thread: thread._id, sender: { $nin: adminIds }, isRead: false },
-        { $set: { isRead: true }, $addToSet: { readBy: req.user._id } }
-      );
-
-      await Notification.updateMany(
-        { recipient: req.user._id, type: 'chat', threadId: thread._id, isRead: false },
-        { $set: { isRead: true } }
-      );
-
-      emitToAdmins('chat_read', { threadId: thread._id });
-      emitToUser(req.user._id.toString(), 'chat_read', { threadId: thread._id });
+      match.readBy = { $ne: req.user._id };
+      if (!isUserAdmin) match.$and = await buildAnnouncementAudienceCondition(req.user);
     } else {
-      // Operator reading their own support thread
-      await ChatMessage.updateMany(
-        { thread: thread._id, sender: { $ne: req.user._id }, isRead: false },
-        { $set: { isRead: true }, $addToSet: { readBy: req.user._id } }
-      );
-
-      await Notification.updateMany(
-        { recipient: req.user._id, type: 'chat', threadId: thread._id, isRead: false },
-        { $set: { isRead: true } }
-      );
-
-      emitToUser(req.user._id.toString(), 'chat_read', { threadId: thread._id });
-      emitToAdmins('chat_read', { threadId: thread._id });
+      match.isRead = false;
+      update.$set = { isRead: true };
     }
+    await ChatMessage.updateMany(match, update);
+    await markThreadNotificationsRead(thread, req.user, isUserAdmin);
+
+    emitToUser(req.user._id.toString(), 'chat_read', { threadId: thread._id });
+    if (!thread.isAnnouncement) emitToAdmins('chat_read', { threadId: thread._id });
 
     res.json({ message: 'Messages marked as read' });
   } catch (error) {
@@ -826,7 +819,7 @@ router.delete('/messages/:messageId', async (req, res) => {
 
       // In support threads, non-staff may only delete messages authored by the current thread owner
       if (!isAdmin) {
-        const activeStaff = await getActiveStaffUsers();
+        const activeStaff = await getStaffUsers();
         const activeStaffIdSet = new Set(activeStaff.map(a => String(a._id)));
         const ownerId = resolveSupportThreadOwnerId(thread, activeStaffIdSet, participantUserMap);
         if (!ownerId || String(message.sender) !== String(ownerId)) {

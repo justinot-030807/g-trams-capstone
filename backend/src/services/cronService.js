@@ -4,7 +4,7 @@ const Notification = require('../models/notificationModel');
 const SystemSettings = require('../models/systemSettingsModel');
 const { emitToUser } = require('../config/socket');
 const { sendPushToUser } = require('./pushService');
-const { isRestoreInProgress } = require('./backupService');
+const { beginRestoreSensitiveWork, createBackupFile } = require('./backupService');
 const { 
     MANILA_TIMEZONE, 
     getManilaNow, 
@@ -20,8 +20,10 @@ const {
  * and atomically transitions their status to 'Expired', notifying the operator ONLY on successful transition.
  */
 async function syncFranchiseStatuses() {
+    let release;
     try {
-        if (isRestoreInProgress()) {
+        release = await beginRestoreSensitiveWork();
+        if (!release) {
             console.log('[CRON] Skipping syncFranchiseStatuses: database restore in progress.');
             return { count: 0, skipped: true };
         }
@@ -85,11 +87,6 @@ async function syncFranchiseStatuses() {
         let synchronizedCount = 0;
 
         for (const doc of expiredCandidates) {
-            if (isRestoreInProgress()) {
-                console.log('[CRON] Halting syncFranchiseStatuses mid-pass: database restore started.');
-                break;
-            }
-
             const termYears = doc.applicationType === 'Renewal' ? validityRenew : validityNew;
             const effectiveExpiry = doc.expiryDate
                 || (doc.approvalDate ? computeManilaExpiryDate(doc.approvalDate, termYears) : null)
@@ -134,7 +131,7 @@ async function syncFranchiseStatuses() {
                     });
 
                     emitToUser(String(operatorId), 'notification', notif);
-                    sendPushToUser(operatorId, {
+                    await sendPushToUser(operatorId, {
                         title: notifTitle,
                         message: notifMessage,
                         url: `/renew-franchise/${doc._id}`,
@@ -151,6 +148,8 @@ async function syncFranchiseStatuses() {
     } catch (error) {
         console.error('[CRON ERROR] Error in syncFranchiseStatuses:', error);
         return { error: error.message };
+    } finally {
+        if (release) await release();
     }
 }
 
@@ -160,8 +159,10 @@ async function syncFranchiseStatuses() {
  * Throttles alerts to avoid sending duplicate reminders within 7 days.
  */
 async function sendRenewalReminders() {
+    let release;
     try {
-        if (isRestoreInProgress()) {
+        release = await beginRestoreSensitiveWork();
+        if (!release) {
             console.log('[CRON] Skipping sendRenewalReminders: database restore in progress.');
             return { count: 0, selectedCount: 0, skipped: true };
         }
@@ -234,7 +235,7 @@ async function sendRenewalReminders() {
                 });
 
                 emitToUser(String(operatorId), 'notification', notif);
-                sendPushToUser(operatorId, {
+                await sendPushToUser(operatorId, {
                     title: notifTitle,
                     message: notifMessage,
                     url: `/renew-franchise/${franchise._id}`,
@@ -266,6 +267,8 @@ async function sendRenewalReminders() {
     } catch (error) {
         console.error('[CRON ERROR] Error in sendRenewalReminders:', error);
         return { error: error.message };
+    } finally {
+        if (release) await release();
     }
 }
 
@@ -273,8 +276,10 @@ async function sendRenewalReminders() {
  * Auto-archive franchises that have been expired for over 1 year
  */
 async function autoArchiveOldExpired() {
+    let release;
     try {
-        if (isRestoreInProgress()) {
+        release = await beginRestoreSensitiveWork();
+        if (!release) {
             console.log('[CRON] Skipping autoArchiveOldExpired: database restore in progress.');
             return { modifiedCount: 0, skipped: true };
         }
@@ -301,6 +306,8 @@ async function autoArchiveOldExpired() {
     } catch (error) {
         console.error('[CRON ERROR] Error in autoArchiveOldExpired:', error);
         return { error: error.message };
+    } finally {
+        if (release) await release();
     }
 }
 
@@ -317,10 +324,6 @@ function startFranchiseCronJobs() {
 
     // Daily Midnight Cron Job at 00:00:00 (Asia/Manila)
     const midnightTask = cron.schedule('0 0 * * *', async () => {
-        if (isRestoreInProgress()) {
-            console.log('[CRON] Skipping daily midnight maintenance tasks: database restore in progress.');
-            return;
-        }
         console.log(`[CRON] Running daily midnight maintenance tasks at ${new Date().toISOString()} (${MANILA_TIMEZONE})...`);
         await syncFranchiseStatuses();
         await sendRenewalReminders();
@@ -332,15 +335,16 @@ function startFranchiseCronJobs() {
     });
 
     // Weekly Automated Database Backup at Sunday 00:00:00 (Asia/Manila)
-    const backupService = require('./backupService');
     cron.schedule('0 0 * * 0', async () => {
-        if (isRestoreInProgress()) {
-            console.log('[CRON] Skipping weekly automated database backup: database restore in progress.');
-            return;
-        }
-        console.log(`[CRON] Running weekly automated database backup at ${new Date().toISOString()} (${MANILA_TIMEZONE})...`);
+        let release;
         try {
-            const res = await backupService.createBackupFile({
+            release = await beginRestoreSensitiveWork();
+            if (!release) {
+                console.log('[CRON] Skipping weekly automated database backup: database restore in progress.');
+                return;
+            }
+            console.log(`[CRON] Running weekly automated database backup at ${new Date().toISOString()} (${MANILA_TIMEZONE})...`);
+            const res = await createBackupFile({
                 isAutomated: true,
                 triggeredBy: 'Weekly Automated Cron',
                 notes: 'Automated weekly system maintenance snapshot'
@@ -348,6 +352,8 @@ function startFranchiseCronJobs() {
             console.log(`[CRON] Weekly automated database backup completed: ${res.filename} (${(res.sizeBytes / 1024).toFixed(1)} KB)`);
         } catch (backupErr) {
             console.error('[CRON ERROR] Failed to create automated weekly database backup:', backupErr.message);
+        } finally {
+            if (release) await release();
         }
     }, {
         scheduled: true,

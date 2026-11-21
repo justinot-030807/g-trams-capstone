@@ -61,7 +61,13 @@ const sendPushToUser = async (userId, notificationData) => {
       } catch (err) {
         // HTTP 410 (Gone) or 404 means user unsubscribed or revoked permission in browser
         if (err.statusCode === 410 || err.statusCode === 404) {
-          await PushSubscription.deleteOne({ _id: sub._id });
+          // A delayed delivery failure only invalidates the binding used for that send.
+          await PushSubscription.deleteOne({
+            _id: sub._id,
+            user: sub.user,
+            endpoint: sub.endpoint,
+            __v: sub.__v ?? { $exists: false }
+          });
         }
         return { success: false, error: err.message, statusCode: err.statusCode };
       }

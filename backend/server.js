@@ -9,7 +9,7 @@ const connectDB = require('./src/config/db');
 const mongoSanitize = require('./src/middleware/sanitize');
 const timeoutMiddleware = require('./src/middleware/timeoutMiddleware'); // ADDED TIMEOUT
 const { initSocket } = require('./src/config/socket');
-const { isRestoreInProgress } = require('./src/services/backupService');
+const { beginRestoreSensitiveWork } = require('./src/services/backupService');
 
 if (process.env.NODE_ENV !== 'test' && (!process.env.JWT_SECRET || !String(process.env.JWT_SECRET).trim())) {
     console.error('FATAL: JWT_SECRET environment variable is required.');
@@ -30,7 +30,7 @@ app.use(compression());
 app.use(timeoutMiddleware(45000));
 
 app.set('trust proxy', 1);
-connectDB();
+const databaseConnection = connectDB();
 
 // HTTP Security Headers (Helmet)
 app.use(helmet({
@@ -135,18 +135,43 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // NoSQL Injection sanitization
 app.use(mongoSanitize);
 
-// Guard mutating HTTP requests while a database restore is in progress (H1)
-app.use((req, res, next) => {
-    if (
-        isRestoreInProgress() &&
-        ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method) &&
-        !/\/backups\/restore-(file\/|upload)/i.test(req.path)
-    ) {
-        return res.status(503).json({
-            message: 'Database restore in progress. Please retry shortly.'
-        });
+const restorePaths = /^\/backups\/(?:restore-upload|restore-file\/[^/]+)\/?$/i;
+const backupSnapshotPaths = /^\/backups\/(?:list|status|direct-download|download\/[^/]+)\/?$/i;
+const writeMethods = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
+
+// Backup reads may materialize a baseline archive or read a full live snapshot.
+app.use(BASE_URI, async (req, res, next) => {
+    if (req.method === 'POST' && restorePaths.test(req.path)) {
+        req.skipRestoreActivity = true;
+        return next();
     }
-    return next();
+    const isBackupSnapshot = ['GET', 'HEAD'].includes(req.method) && backupSnapshotPaths.test(req.path);
+    if (!writeMethods.has(req.method) && !isBackupSnapshot) return next();
+
+    let release;
+    try {
+        release = await beginRestoreSensitiveWork();
+    } catch (error) {
+        console.warn('[RestoreGuard] Unable to coordinate database work:', error.message);
+        if (res.headersSent || res.destroyed) return;
+        return res.status(503).json({ message: 'Database restore coordination is unavailable. Please retry shortly.' });
+    }
+
+    if (res.headersSent || res.destroyed) {
+        if (release) await release();
+        return;
+    }
+    if (!release) {
+        return res.status(503).json({ message: 'Database restore in progress. Please retry shortly.' });
+    }
+
+    req.restoreWorkAdmitted = true;
+    res.once('finish', () => { void release({ keepLease: res.statusCode === 408 }); });
+    // A disconnected client does not cancel the handler or its pending database writes.
+    res.once('close', () => {
+        if (!res.writableFinished) void release({ keepLease: true });
+    });
+    next();
 });
 
 // Auth routes
@@ -217,10 +242,12 @@ app.use(errorHandler);
 initSocket(server);
 
 // Initialize Cron Jobs
-const { startCleanupJobs } = require('./src/jobs/cleanupJobs');
-startCleanupJobs();
-const { startFranchiseCronJobs } = require('./src/services/cronService');
-startFranchiseCronJobs();
+if (process.env.NODE_ENV !== 'test') {
+    const { startCleanupJobs } = require('./src/jobs/cleanupJobs');
+    const { startFranchiseCronJobs } = require('./src/services/cronService');
+    startCleanupJobs();
+    void databaseConnection.then(startFranchiseCronJobs);
+}
 
 // Start server only if not in test mode
 if (process.env.NODE_ENV !== 'test') {

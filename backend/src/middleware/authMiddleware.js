@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
+const { beginRestoreSensitiveWork } = require('../services/backupService');
 
 const protect = async (req, res, next) => {
     let token;
@@ -39,9 +40,22 @@ const protect = async (req, res, next) => {
 
             // Update lastActive timestamp (throttled to once per 15s to optimize DB load)
             const now = Date.now();
-            if (!req.user.lastActive || (now - new Date(req.user.lastActive).getTime() > 15000)) {
-                await User.findByIdAndUpdate(req.user._id, { lastActive: new Date() }).catch(() => {});
-                req.user.lastActive = new Date();
+            if (!req.skipRestoreActivity &&
+                (!req.user.lastActive || (now - new Date(req.user.lastActive).getTime() > 15000))) {
+                const release = req.restoreWorkAdmitted
+                    ? null
+                    : await beginRestoreSensitiveWork().catch(() => null);
+                if (req.restoreWorkAdmitted || release) {
+                    try {
+                        const lastActive = new Date(now);
+                        await User.findByIdAndUpdate(req.user._id, { lastActive });
+                        req.user.lastActive = lastActive;
+                    } catch {
+                        // Presence is best effort and must not affect session validation.
+                    } finally {
+                        if (release) await release();
+                    }
+                }
             }
 
             return next();
