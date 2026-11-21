@@ -2522,7 +2522,9 @@ const ApplyFranchise = () => {
 
   const isRenewing = formMode === 'Renewal' || modeParam === 'renewal';
   const isReapplying = formMode === 'Re-apply' || modeParam === 'reapply';
-  const activeOrPendingUnits = myFranchises.filter(f => !['Cancelled', 'Revoked'].includes(f.status));
+  const activeOrPendingUnits = myFranchises.filter(
+    f => !['Cancelled', 'Rejected', 'Revoked'].includes(f.status) && !f.isArchived
+  );
   const isCapacityFull = activeOrPendingUnits.length >= maxAllowedUnits;
   const availableSlots = Math.max(0, maxAllowedUnits - activeOrPendingUnits.length);
 

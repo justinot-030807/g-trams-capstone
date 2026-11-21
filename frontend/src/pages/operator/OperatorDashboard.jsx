@@ -7,7 +7,7 @@ import {
   CalendarDays, PlusCircle, MapPin, Hash, Printer, X, ShieldCheck, Download, Eye,
   Check, FileText, User, ShieldAlert, Receipt, XCircle, Banknote, Award,
   Sun, Moon, SunMedium, ArrowRight, Users, Sparkles, HelpCircle,
-  Bell, Settings, ChevronRight, LogOut
+  Bell, Settings, ChevronRight, ChevronDown, History, LogOut
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useLanguage } from '../../context/LanguageContext';
@@ -22,6 +22,7 @@ import LanguagePreferenceModal from '../../components/operator/LanguagePreferenc
 import FeedbackModal from '../../components/common/FeedbackModal';
 import ApplicationSummaryModal from '../../components/operator/ApplicationSummaryModal';
 import RequestCancellationModal from '../../components/operator/RequestCancellationModal';
+import OfficialCancellationLetterModal from '../../components/common/OfficialCancellationLetterModal';
 import ProfileSetupCard from '../../components/operator/ProfileSetupCard';
 import { useNotifications } from '../../context/NotificationContext';
 import { 
@@ -40,6 +41,15 @@ const CANCEL_REASONS = [
   "Duplicate or accidental submission",
   "Other reason (Please specify below)"
 ];
+
+const isVoluntarilyCancelledFranchise = (f) =>
+  f?.status === 'Cancelled' && (Boolean(f?.cancellationDetails?.reason) || f?.paymentStatus === 'Paid');
+
+const isWithdrawnFranchise = (f) =>
+  f?.status === 'Cancelled' && !isVoluntarilyCancelledFranchise(f) && Boolean(f?.isArchived && f?.archivedAt);
+
+const isRejectedFranchise = (f) =>
+  f?.status === 'Cancelled' && !isVoluntarilyCancelledFranchise(f) && !isWithdrawnFranchise(f);
 
 const OperatorDashboard = () => {
   const { t, language, changeLanguage } = useLanguage();
@@ -158,6 +168,8 @@ const OperatorDashboard = () => {
 
   // Module 8: Voluntary Franchise Cancellation modal state
   const [voluntaryCancelTarget, setVoluntaryCancelTarget] = useState(null);
+  const [showPastFranchises, setShowPastFranchises] = useState(false);
+  const [cancellationLetterUnit, setCancellationLetterUnit] = useState(null);
 
   const [feedbackModal, setFeedbackModal] = useState({
     isOpen: false,
@@ -603,7 +615,7 @@ const OperatorDashboard = () => {
   };
 
   // Visual application tracker
-  const renderApplicationTracker = (status) => {
+  const renderApplicationTracker = (status, unit) => {
     if (status === 'Active') return null;
 
     if (status === 'Cancellation Requested') {
@@ -618,7 +630,7 @@ const OperatorDashboard = () => {
       );
     }
 
-    if (status === 'Cancelled') {
+    if (status === 'Cancelled' && isRejectedFranchise(unit)) {
       return (
         <div className="mb-4 bg-[#FEE2E2]/50 dark:bg-[#7F1D1D]/20 border border-[#EF4444]/30 rounded-lg p-3.5 flex items-start gap-2.5">
           <AlertCircle className="text-[#B91C1C] dark:text-[#EF4444] shrink-0 mt-0.5" size={18} />
@@ -807,6 +819,16 @@ const OperatorDashboard = () => {
     if (hasActive) return t('greeting.subActive', 'Welcome back! Your registered tricycle franchise is active and road-authorized.');
     return t('dashboard.welcomeSub', 'Welcome back! Manage your active and pending franchises securely.');
   };
+
+  const slotOccupyingUnits = franchises.filter(
+    (f) => !['Cancelled', 'Rejected', 'Revoked'].includes(f?.status) && !f?.isArchived
+  );
+  const activeGarageUnits = franchises.filter(
+    (f) => !isVoluntarilyCancelledFranchise(f) && !isWithdrawnFranchise(f)
+  );
+  const pastCancelledUnits = franchises.filter(
+    (f) => isVoluntarilyCancelledFranchise(f) || isWithdrawnFranchise(f)
+  );
 
   const opGreeting = getOperatorGreeting();
   const OpGreetingIcon = opGreeting.icon;
@@ -1010,7 +1032,7 @@ const OperatorDashboard = () => {
               </div>
               <StatusBadge status="For Signing" />
             </div>
-          ) : franchises.some(f => f.status === 'Cancelled') ? (
+          ) : franchises.some(isRejectedFranchise) ? (
             <div className="bg-[#FEE2E2]/50 dark:bg-[#7F1D1D]/20 text-[#1F1D1B] dark:text-[#F6F5F3] rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-[#EF4444]/30 shadow-sm">
               <div className="flex items-center gap-3 min-w-0">
                 <div className="w-10 h-10 rounded-lg bg-[#EF4444]/15 text-[#B91C1C] dark:text-[#EF4444] flex items-center justify-center shrink-0">
@@ -1027,7 +1049,7 @@ const OperatorDashboard = () => {
               </div>
               <button
                 onClick={() => {
-                  const attentionUnit = franchises.find(f => f.status === 'Cancelled');
+                  const attentionUnit = franchises.find(isRejectedFranchise);
                   handleFixIssues(attentionUnit);
                 }}
                 className="w-full sm:w-auto bg-[#B91C1C] hover:bg-[#991B1B] text-white font-bold text-xs sm:text-sm px-4 py-2.5 min-h-[44px] rounded-lg shrink-0 transition-colors active:scale-95 shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
@@ -1040,17 +1062,17 @@ const OperatorDashboard = () => {
             <div className="bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-[#E4E1DC] dark:border-[#2E2A27]">
               <div className="min-w-0">
                 <h4 className="text-xs sm:text-sm font-bold truncate text-[#1F1D1B] dark:text-[#F6F5F3]">
-                  {franchises.length >= maxUnits 
+                  {slotOccupyingUnits.length >= maxUnits 
                     ? `Maximum Capacity (${maxUnits}/${maxUnits})`
                     : 'Available Franchise Slot'}
                 </h4>
                 <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5">
-                  {franchises.length >= maxUnits
+                  {slotOccupyingUnits.length >= maxUnits
                     ? `All ${maxUnits} units are registered`
                     : `You can register up to ${maxUnits} tricycle units`}
                 </p>
               </div>
-              {franchises.length < maxUnits && (
+              {slotOccupyingUnits.length < maxUnits && (
                 <button
                   onClick={() => navigate('/apply-franchise?mode=new&step=1')}
                   className="w-full sm:w-auto bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-bold text-xs sm:text-sm px-4 py-2.5 min-h-[44px] rounded-lg shrink-0 transition-colors active:scale-95 shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
@@ -1129,14 +1151,14 @@ const OperatorDashboard = () => {
                   Unit Capacity
                 </span>
                 <span className="text-xs font-bold text-[#9E2A2B] dark:text-[#D4AF37]">
-                  {franchises.length} / {maxUnits}
+                  {slotOccupyingUnits.length} / {maxUnits}
                 </span>
               </div>
 
               <span className="text-xs font-medium text-[#6B6761] dark:text-[#A8A29E]">
-                {franchises.length >= maxUnits 
+                {slotOccupyingUnits.length >= maxUnits 
                   ? 'Slots Full' 
-                  : `${maxUnits - franchises.length} Slot(s) Available`}
+                  : `${maxUnits - slotOccupyingUnits.length} Slot(s) Available`}
               </span>
             </div>
 
@@ -1146,7 +1168,7 @@ const OperatorDashboard = () => {
               style={{ gridTemplateColumns: `repeat(${maxUnits}, minmax(0, 1fr))` }}
             >
               {Array.from({ length: maxUnits }).map((_, idx) => {
-                const isFilled = idx < franchises.length;
+                const isFilled = idx < slotOccupyingUnits.length;
                 return (
                   <div key={idx} className="relative">
                     <div 
@@ -1183,7 +1205,7 @@ const OperatorDashboard = () => {
             <SkeletonElement height="24px" className="w-24" rounded="rounded-lg" delay={40} />
           ) : (
             <span className="text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] bg-[#F6F5F3] dark:bg-[#14110F] px-2.5 py-1 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
-              {franchises.length} Registered
+              {activeGarageUnits.length} Registered
             </span>
           )}
         </div>
@@ -1192,7 +1214,7 @@ const OperatorDashboard = () => {
       {/* 4. GARAGE UNITS LIST / EMPTY STATE */}
       {isLoading ? (
         <GarageGridSkeleton count={2} baseDelay={70} />
-      ) : franchises.length === 0 ? (
+      ) : activeGarageUnits.length === 0 ? (
         <div 
           id="tour-empty-garage"
           className="bg-white dark:bg-[#1C1917] rounded-lg border border-dashed border-[#E4E1DC] dark:border-[#2E2A27] p-8 sm:p-12 text-center text-[#6B6761] dark:text-[#A8A29E] flex flex-col items-center justify-center min-h-[260px] shadow-sm"
@@ -1221,7 +1243,7 @@ const OperatorDashboard = () => {
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6">
-          {franchises.map((unit, unitIndex) => (
+          {activeGarageUnits.map((unit, unitIndex) => (
             <div 
               key={unit?._id} 
               className="bg-white dark:bg-[#1C1917] rounded-lg p-5 sm:p-6 border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm hover:border-[#9E2A2B]/40 dark:hover:border-[#D4AF37]/40 transition-colors flex flex-col justify-between relative overflow-hidden group"
@@ -1297,7 +1319,7 @@ const OperatorDashboard = () => {
                 </div>
 
                 <div id={unitIndex === 0 ? "tour-tracker-section" : undefined}>
-                  {renderApplicationTracker(unit?.status)}
+                  {renderApplicationTracker(unit?.status, unit)}
                   {unit.issuedPermit && (
                     <p className="mb-3 text-xs text-[#6B6761] dark:text-[#A8A29E]">
                       Issued permit · {unit.issuedPermit.status}
@@ -1614,6 +1636,114 @@ const OperatorDashboard = () => {
         </div>
       )}
 
+      {/* Collapsed-by-default Past & Cancelled Franchises History */}
+      {!isLoading && pastCancelledUnits.length > 0 && (
+        <div className="mt-6 bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg shadow-sm overflow-hidden">
+          <button
+            type="button"
+            onClick={() => setShowPastFranchises((prev) => !prev)}
+            className="w-full px-4 sm:px-5 py-3.5 flex items-center justify-between gap-3 text-left hover:bg-[#F6F5F3]/70 dark:hover:bg-[#14110F]/60 transition-colors cursor-pointer"
+          >
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-8 h-8 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+                <History size={16} />
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs sm:text-sm font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
+                    Past &amp; Cancelled Franchises
+                  </span>
+                  <span className="px-2 py-0.5 rounded-full text-[11px] font-mono font-bold bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3]">
+                    {pastCancelledUnits.length}
+                  </span>
+                </div>
+                <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-0.5">
+                  Surrendered or withdrawn records no longer count toward your unit capacity.
+                </p>
+              </div>
+            </div>
+            <ChevronDown
+              size={18}
+              className={`text-[#6B6761] dark:text-[#A8A29E] shrink-0 transition-transform duration-200 ${
+                showPastFranchises ? 'rotate-180' : ''
+              }`}
+            />
+          </button>
+
+          {showPastFranchises && (
+            <div className="p-4 sm:p-5 pt-2 border-t border-[#E4E1DC] dark:border-[#2E2A27] space-y-3 bg-[#F6F5F3]/40 dark:bg-[#14110F]/40">
+              {pastCancelledUnits.map((unit) => {
+                const isVoluntary = isVoluntarilyCancelledFranchise(unit);
+                const eventDateRaw =
+                  unit?.cancellationDetails?.reviewedAt ||
+                  unit?.archivedAt ||
+                  unit?.updatedAt;
+                const eventDateStr = eventDateRaw
+                  ? new Date(eventDateRaw).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric'
+                    })
+                  : 'N/A';
+
+                return (
+                  <div
+                    key={unit._id}
+                    className="p-3.5 sm:p-4 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                  >
+                    <div className="min-w-0 space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-mono text-sm font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
+                          {unit.plateNo || 'NO PLATE'}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E]">
+                          {unit.todaName || 'TODA'} · {unit.zone ? formatZoneLabel(unit.zone) : 'N/A'}
+                        </span>
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900/60 text-[#B91C1C] dark:text-[#FCA5A5]">
+                          {isVoluntary ? 'Voluntarily Cancelled' : 'Withdrawn'}
+                        </span>
+                      </div>
+                      <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] break-words">
+                        <span className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
+                          Finalized {eventDateStr}:
+                        </span>{' '}
+                        {isVoluntary
+                          ? `${unit?.cancellationDetails?.reason || 'Voluntary Surrender'}${unit?.cancellationDetails?.remarks ? ` — ${unit.cancellationDetails.remarks}` : ''}`
+                          : (unit.cancelReason || 'Application withdrawn by operator.')}
+                      </p>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedUnit(unit);
+                          setIsDetailsOpen(true);
+                        }}
+                        className="px-3 py-2 min-h-[38px] rounded-lg text-xs font-bold bg-[#F6F5F3] hover:bg-[#EAE7E1] dark:bg-[#14110F] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] inline-flex items-center gap-1.5 cursor-pointer transition-colors"
+                      >
+                        <Eye size={13} />
+                        <span>View Details</span>
+                      </button>
+                      {isVoluntary && (
+                        <button
+                          type="button"
+                          onClick={() => setCancellationLetterUnit(unit)}
+                          className="px-3 py-2 min-h-[38px] rounded-lg text-xs font-bold bg-[#9E2A2B] hover:bg-[#7A1B22] text-white inline-flex items-center gap-1.5 cursor-pointer transition-colors shadow-sm"
+                        >
+                          <Printer size={13} />
+                          <span>Print OVM Letter</span>
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Details Modal */}
       {isDetailsOpen && selectedUnit && (
         <ApplicationSummaryModal
@@ -1657,6 +1787,14 @@ const OperatorDashboard = () => {
         }} 
         unit={eCopyUnit} 
         isECopy={true} 
+      />
+
+      {/* Official OVM Voluntary Cancellation Letter Modal */}
+      <OfficialCancellationLetterModal
+        isOpen={Boolean(cancellationLetterUnit)}
+        onClose={() => setCancellationLetterUnit(null)}
+        franchise={cancellationLetterUnit || {}}
+        cancellationData={cancellationLetterUnit?.cancellationDetails || {}}
       />
 
       {/* Operator Application Cancellation Modal */}

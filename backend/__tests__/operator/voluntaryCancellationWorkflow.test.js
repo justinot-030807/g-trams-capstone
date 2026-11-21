@@ -259,6 +259,8 @@ describe('Module 8: Voluntary Franchise Cancellation Workflow Test Suite', () =>
         // Verify DB state
         const updated = await Franchise.findById(franchise._id);
         expect(updated.status).toBe('Cancelled');
+        expect(updated.isArchived).toBe(true);
+        expect(updated.archivedAt).toBeTruthy();
         expect(updated.cancellationDetails.staffNotes).toBe('Verified surrender letter and MTOP plate returned to BPLO.');
 
         // Verify operator notification
@@ -306,5 +308,51 @@ describe('Module 8: Voluntary Franchise Cancellation Workflow Test Suite', () =>
         expect(updated.status).toBe('Cancellation Requested');
         expect(updated.cancellationDetails.letterText).toBe(typedLetter);
         expect(updated.cancellationDetails.letterUrl).toBe('');
+    });
+
+    it('VC-09: Finalizing voluntary cancellation auto-archives the unit, frees fleet capacity, and frees vehicle identifiers for re-application', async () => {
+        const surrendered = await createActiveFranchise(operatorUser, 'VOL-FREE1');
+        await createActiveFranchise(operatorUser, 'VOL-KEEP2');
+
+        // Step 1: Request and finalize voluntary cancellation on the first unit
+        const reqRes = await request(app)
+            .put(`/api/v1/franchises/${surrendered._id}/request-cancellation`)
+            .set('Authorization', `Bearer ${operatorToken}`)
+            .field('reason', 'Relocation / TODA Transfer')
+            .field('remarks', 'Transferring unit to another TODA.')
+            .field('letterText', 'Hon. Vice Mayor, please cancel my franchise so I can transfer TODA.');
+        expect(reqRes.status).toBe(200);
+
+        const finRes = await request(app)
+            .put(`/api/v1/franchises/${surrendered._id}/process-cancellation`)
+            .set('Authorization', `Bearer ${staffToken}`)
+            .send({ action: 'finalize', staffNotes: 'Approved and archived.' });
+        expect(finRes.status).toBe(200);
+        expect(finRes.body.franchise.isArchived).toBe(true);
+        expect(finRes.body.franchise.archivedAt).toBeTruthy();
+
+        // Step 2: Operator can immediately submit a new application reusing the surrendered unit's plate/motor/chassis
+        const reapplyRes = await request(app)
+            .post('/api/v1/franchises')
+            .set('Authorization', `Bearer ${operatorToken}`)
+            .send({
+                fullName: operatorUser.name,
+                address: 'Poblacion, Gasan, Marinduque',
+                zone: 'Central',
+                made: surrendered.made,
+                make: surrendered.make,
+                motorNo: surrendered.motorNo,
+                chassisNo: surrendered.chassisNo,
+                plateNo: surrendered.plateNo,
+                todaName: 'PINGGAN TODA',
+                cedulaDate: '2026-01-15',
+                cedulaAddress: 'Gasan, Marinduque',
+                cedulaSerialNo: 'CED-REAPPLY-VC09'
+            });
+
+        expect(reapplyRes.status).toBe(201);
+        expect(reapplyRes.body.plateNo).toBe(surrendered.plateNo);
+        expect(reapplyRes.body.status).toBe('Pending');
+        expect(reapplyRes.body.isArchived).toBe(false);
     });
 });

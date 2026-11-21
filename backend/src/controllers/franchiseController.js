@@ -969,6 +969,8 @@ const updateFranchiseStatus = async (req, res) => {
         }
 
         if (existingFranchise.status === 'Cancellation Requested' && status === 'Cancelled') {
+            updateData.isArchived = true;
+            updateData.archivedAt = new Date();
             updateData['cancellationDetails.reviewedBy'] = req.user._id;
             updateData['cancellationDetails.reviewedAt'] = new Date();
             if (req.body.staffNotes) {
@@ -1337,7 +1339,8 @@ const processFranchiseCancellation = async (req, res) => {
             franchise.cancellationDetails.reviewedBy = req.user?._id;
             franchise.cancellationDetails.reviewedAt = new Date();
             franchise.cancellationDetails.staffNotes = (staffNotes || '').trim();
-            franchise.isArchived = false;
+            franchise.isArchived = true;
+            franchise.archivedAt = new Date();
 
             await franchise.save();
 
