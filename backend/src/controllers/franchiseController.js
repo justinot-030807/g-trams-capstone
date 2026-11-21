@@ -1003,6 +1003,10 @@ const updateFranchiseStatus = async (req, res) => {
             updateData.previousExpiryDate = null;
         }
 
+        if (status === 'Expired') {
+            updateData.expiryDate = new Date(getManilaNow().getTime() - 24 * 60 * 60 * 1000);
+        }
+
         const needsMtop = ['For Signing', 'Ready for Pickup', 'Active'].includes(status) && !existingFranchise.mtopNo;
         const atomicStatusFilter = {
             _id: req.params.id,
@@ -1058,6 +1062,9 @@ const updateFranchiseStatus = async (req, res) => {
             } else if (status === 'Active') {
                 notifTitle = 'Franchise Activated!';
                 notifMessage = `Your franchise permit for ${updatedFranchise.plateNo} is now officially active and released.`;
+            } else if (status === 'Expired') {
+                notifTitle = 'Franchise Permit Expired';
+                notifMessage = `Your franchise permit for unit ${updatedFranchise.plateNo || 'Tricycle'} has expired. Please submit your renewal application to avoid penalties and continue operations.`;
             }
 
             const operatorId = updatedFranchise.operator?._id || updatedFranchise.operator;
@@ -1075,9 +1082,19 @@ const updateFranchiseStatus = async (req, res) => {
                 sendPushToUser(operatorId, {
                     title: notifTitle,
                     message: notifMessage,
-                    url: '/operator-dashboard',
+                    url: status === 'Expired' ? `/renew-franchise/${updatedFranchise._id}` : '/operator-dashboard',
                     type: String(status).toLowerCase().includes('approv') || status === 'For Signing' ? 'approval' : 'status_change'
                 }).catch(err => console.error('Push alert delivery failed:', err.message));
+
+                if (status === 'Expired') {
+                    const { dispatchExpirationSms } = require('../services/notificationService');
+                    dispatchExpirationSms({
+                        franchise: updatedFranchise,
+                        daysRemaining: 0,
+                        simulated: true,
+                        skipGatewaySend: true
+                    }).catch(err => console.warn('SMS expiry audit log failed:', err.message));
+                }
             }
         }
 

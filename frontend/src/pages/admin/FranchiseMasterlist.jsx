@@ -229,26 +229,55 @@ const FranchiseMasterlist = () => {
     });
   };
 
+  const initiateMarkExpired = (franchise) => {
+    const displayName = franchise.fullName || (franchise.operator ? franchise.operator.name : 'Unknown Operator');
+    setConfirmModal({
+      isOpen: true,
+      data: {
+        id: franchise._id,
+        name: displayName,
+        plateNo: franchise.plateNo || 'Tricycle Unit',
+        action: 'Expire'
+      }
+    });
+  };
+
   const confirmAction = async () => {
     if (!confirmModal.data) return;
     setIsProcessing(true);
     
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${confirmModal.data.id}/archive`, {
+      const isExpireAction = confirmModal.data.action === 'Expire';
+      const endpoint = isExpireAction
+        ? `${import.meta.env.VITE_API_URL}/api/v1/franchises/${confirmModal.data.id}/status`
+        : `${import.meta.env.VITE_API_URL}/api/v1/franchises/${confirmModal.data.id}/archive`;
+      const payload = isExpireAction
+        ? { status: 'Expired' }
+        : { isArchived: confirmModal.data.targetState };
+
+      const response = await fetch(endpoint, {
         method: 'PUT',
         headers: { 
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ isArchived: confirmModal.data.targetState })
+        body: JSON.stringify(payload)
       });
 
       if (response.ok) {
-        showToast(`Record successfully ${(confirmModal.data?.action || 'update').toLowerCase()}d!`);
+        const updatedRecord = await response.json().catch(() => null);
+        if (isExpireAction) {
+          showToast('Franchise marked as Expired & operator notified via SMS/In-App!');
+          if (selectedFranchise && selectedFranchise._id === confirmModal.data.id) {
+            setSelectedFranchise(updatedRecord && updatedRecord._id ? updatedRecord : { ...selectedFranchise, status: 'Expired' });
+          }
+        } else {
+          showToast(`Record successfully ${(confirmModal.data?.action || 'update').toLowerCase()}d!`);
+        }
         setConfirmModal({ isOpen: false, data: null });
         fetchFranchises(); 
       } else {
-        const errorData = await response.json();
+        const errorData = await response.json().catch(() => ({}));
         showToast(`Failed: ${errorData.message || 'Route not found.'}`, 'error');
         setConfirmModal({ isOpen: false, data: null });
       }
@@ -383,7 +412,9 @@ const FranchiseMasterlist = () => {
                   </div>
                   <div>
                     <span className="text-[#6B6761] dark:text-[#A8A29E] font-medium block text-xs uppercase">Expiration Date</span>
-                    <span className="font-semibold text-emerald-700 dark:text-emerald-400">{getExpirationDate(selectedFranchise.dateApplied)}</span>
+                    <span className={`font-semibold ${selectedFranchise.status === 'Expired' ? 'text-red-600 dark:text-red-400' : 'text-emerald-700 dark:text-emerald-400'}`}>
+                      {selectedFranchise.expiryDate ? formatDate(selectedFranchise.expiryDate) : getExpirationDate(selectedFranchise.dateApplied)}
+                    </span>
                   </div>
                   <div>
                     <span className="text-[#6B6761] dark:text-[#A8A29E] font-medium block text-xs uppercase">Application Type</span>
@@ -518,6 +549,15 @@ const FranchiseMasterlist = () => {
 
             {/* Modal Footer */}
             <div className="p-4 sm:p-5 border-t border-[#E4E1DC] dark:border-[#2E2A27] flex justify-end gap-2 bg-[#F6F5F3] dark:bg-[#14110F] rounded-b-lg">
+              {(selectedFranchise.status === 'Active' || selectedFranchise.status === 'Active - Under Warning') && (
+                <button
+                  type="button"
+                  onClick={() => initiateMarkExpired(selectedFranchise)}
+                  className="flex items-center gap-1.5 px-3.5 py-2 bg-red-50 hover:bg-red-100 dark:bg-red-950/40 dark:hover:bg-red-900/60 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800/80 font-semibold rounded-lg text-xs transition-colors cursor-pointer"
+                >
+                  <Clock size={14} /> Mark as Expired
+                </button>
+              )}
               {selectedFranchise.status === 'Active' && (
                 <button
                   type="button"
@@ -1021,6 +1061,18 @@ const FranchiseMasterlist = () => {
                               </button>
                             )}
 
+                            {/* MARK AS EXPIRED BUTTON (For Active / Active - Under Warning records) */}
+                            {(f.status === 'Active' || f.status === 'Active - Under Warning') && (
+                              <button
+                                type="button"
+                                onClick={() => initiateMarkExpired(f)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-400 hover:bg-red-100 dark:hover:bg-red-900/50 transition-all cursor-pointer"
+                                title="Mark Franchise as Expired (Triggers Renewal & SMS/In-App Alert)"
+                              >
+                                <Clock size={13} /> Expire
+                              </button>
+                            )}
+
                             {/* ARCHIVE / RESTORE LOGIC */}
                             {activeTab === 'archived' ? (
                               <button 
@@ -1121,19 +1173,29 @@ const FranchiseMasterlist = () => {
             </button>
 
             <div className={`w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-3 border ${
-              confirmModal.data.action === 'Archive' 
+              confirmModal.data.action === 'Expire'
+                ? 'bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800'
+                : confirmModal.data.action === 'Archive' 
                 ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800' 
                 : 'bg-[#F6F5F3] dark:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border-[#E4E1DC] dark:border-[#2E2A27]'
             }`}>
-              {confirmModal.data.action === 'Archive' ? <Archive size={22} /> : <ArchiveRestore size={22} />}
+              {confirmModal.data.action === 'Expire' ? <Clock size={22} /> : confirmModal.data.action === 'Archive' ? <Archive size={22} /> : <ArchiveRestore size={22} />}
             </div>
             
             <h3 className="text-base font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] mb-1">
-              {confirmModal.data?.action} Record?
+              {confirmModal.data?.action === 'Expire' ? 'Mark Franchise as Expired?' : `${confirmModal.data?.action} Record?`}
             </h3>
             
             <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mb-5 leading-relaxed">
-              Are you sure you want to {(confirmModal.data?.action || '').toLowerCase()} the franchise record of <strong className="text-[#1F1D1B] dark:text-[#F6F5F3] font-semibold">{confirmModal.data?.name}</strong>?
+              {confirmModal.data?.action === 'Expire' ? (
+                <>
+                  Mark the active franchise of <strong className="text-[#1F1D1B] dark:text-[#F6F5F3] font-semibold">{confirmModal.data?.name}</strong> ({confirmModal.data?.plateNo}) as <strong className="text-red-600 dark:text-red-400">Expired</strong>? This will immediately notify the operator via In-App &amp; SMS and unlock their Renewal form.
+                </>
+              ) : (
+                <>
+                  Are you sure you want to {(confirmModal.data?.action || '').toLowerCase()} the franchise record of <strong className="text-[#1F1D1B] dark:text-[#F6F5F3] font-semibold">{confirmModal.data?.name}</strong>?
+                </>
+              )}
             </p>
 
             <div className="flex gap-2">
