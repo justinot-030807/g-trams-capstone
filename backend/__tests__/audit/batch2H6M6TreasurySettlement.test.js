@@ -186,7 +186,12 @@ describe('Batch 2 M6 MTOP allocation and cancellation export', () => {
   });
 
   it('writes the stored canonical MTOP number into the cancellation DOCX', async () => {
-    const franchise = await franchiseFixture({ status: 'Cancelled', mtopNo: '2026-418' });
+    const franchise = await franchiseFixture({
+      status: 'Cancelled',
+      mtopNo: '2026-418',
+      cancellationOutcome: 'voluntary_surrender',
+      cancellationDetails: { reason: 'Voluntary Cessation', decision: 'finalized' }
+    });
     const result = await request(app).get(`/franchises/${franchise.id}/download-original?type=cancellation`)
       .set('Authorization', authorization(staff))
       .buffer(true)

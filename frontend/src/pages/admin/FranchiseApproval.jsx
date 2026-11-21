@@ -1772,7 +1772,7 @@ const FranchiseApproval = () => {
                               className="w-full text-left px-3.5 py-2 text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] flex items-center gap-2 cursor-pointer"
                             >
                               <Printer size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                              <span>Print Cancellation Letter</span>
+                              <span>{app.status === 'Cancellation Requested' ? 'Preview Draft Cancel Letter' : 'Print Cancellation Letter'}</span>
                             </button>
                           )}
                           {app.status === 'Cancellation Requested' && (

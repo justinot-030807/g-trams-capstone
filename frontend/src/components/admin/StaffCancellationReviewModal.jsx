@@ -238,7 +238,7 @@ const StaffCancellationReviewModal = ({
                   title="Preview or Print Official OVM Cancellation Letter (.PDF / .DOCX)"
                 >
                   <Printer size={12} />
-                  <span>Print Official OVM Letter</span>
+                  <span>Preview Draft Letter</span>
                 </button>
               </div>
             </div>
@@ -353,7 +353,7 @@ const StaffCancellationReviewModal = ({
                 className="px-3.5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs text-[#1F1D1B] dark:text-[#F6F5F3] bg-[#F6F5F3] hover:bg-[#E4E1DC] dark:bg-[#14110F] dark:hover:bg-[#2E2A27] border border-[#E4E1DC] dark:border-[#2E2A27] transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
               >
                 <Printer size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                <span>Print OVM Letter</span>
+                <span>Preview Draft Letter</span>
               </button>
               <button
                 type="button"

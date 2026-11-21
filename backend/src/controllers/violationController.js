@@ -6,6 +6,7 @@ const Notification = require('../models/notificationModel');
 const { emitToUser } = require('../config/socket');
 const { logAudit } = require('../utils/auditLogger');
 const { getIssuedPermit, hasIssuedPermitSnapshot, issuedPermitSnapshotQuery } = require('../utils/issuedPermit');
+const { findUnsettledViolationsForUnit } = require('../utils/disciplineHelper');
 const { isExpired } = require('../utils/phTime');
 
 const SANCTIONABLE_FRANCHISE_STATUSES = ['Active', 'Active - Under Warning', 'Suspended'];
@@ -297,12 +298,16 @@ const recordViolation = async (req, res) => {
             (matchedTypeConfig && matchedTypeConfig.isGrave)
         );
 
-        // Count previous active violations for this franchise
-        const priorActiveCount = await Violation.countDocuments({
-            franchise: franchise._id,
-            status: 'Active'
+        // Count previous active violations across the current franchise AND any surrendered/prior
+        // franchises belonging to the same physical unit or operator+plate chain (H3).
+        const unsettledUnitViolations = await findUnsettledViolationsForUnit({
+            plateNo: franchise.plateNo,
+            motorNo: franchise.motorNo,
+            chassisNo: franchise.chassisNo,
+            operatorId: franchise.operator?._id || franchise.operator,
+            franchiseId: franchise._id
         });
-
+        const priorActiveCount = unsettledUnitViolations.length;
         const currentTrackedCount = Number(franchise.activeViolationCount || 0);
         const baseCount = Math.max(priorActiveCount, currentTrackedCount);
         const offenseNumber = baseCount + 1;
@@ -637,6 +642,53 @@ const settleOrLiftViolation = async (req, res) => {
                 success: false,
                 message: 'Concurrent franchise standing change detected while settling violation. Please refresh and try again.'
             });
+        }
+
+        // If the violation belonged to an archived/surrendered franchise, also recalculate standing
+        // on any non-archived active replacement franchise for the same physical unit (H3).
+        if (franchise && (franchise.isArchived === true || franchise.status === 'Cancelled')) {
+            const esc = (s) => String(s || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const idFilters = [];
+            if (franchise.plateNo) idFilters.push({ plateNo: { $regex: new RegExp(`^${esc(franchise.plateNo.trim())}$`, 'i') } });
+            if (franchise.motorNo) idFilters.push({ motorNo: { $regex: new RegExp(`^${esc(franchise.motorNo.trim())}$`, 'i') } });
+            if (franchise.chassisNo) idFilters.push({ chassisNo: { $regex: new RegExp(`^${esc(franchise.chassisNo.trim())}$`, 'i') } });
+
+            if (idFilters.length > 0) {
+                const replacement = await Franchise.findOne({
+                    _id: { $ne: franchise._id },
+                    isArchived: { $ne: true },
+                    status: { $nin: ['Cancelled', 'Rejected', 'Revoked'] },
+                    $or: idFilters
+                });
+                if (replacement) {
+                    const remainingOnUnit = await findUnsettledViolationsForUnit({
+                        plateNo: replacement.plateNo,
+                        motorNo: replacement.motorNo,
+                        chassisNo: replacement.chassisNo,
+                        operatorId: replacement.operator?._id || replacement.operator,
+                        franchiseId: replacement._id
+                    });
+                    const replTarget = disciplineTarget(replacement);
+                    const replSet = { activeViolationCount: remainingOnUnit.length };
+                    const replStatus = replTarget.permit.status;
+                    if (['Active', 'Active - Under Warning', 'Suspended'].includes(replStatus)) {
+                        const { status: standing, ...sanctionFields } = settlementStanding(
+                            remainingOnUnit,
+                            replTarget.permit.expiryDate,
+                            settledAt
+                        );
+                        Object.assign(replSet, {
+                            [replTarget.statusField]: standing,
+                            suspensionEndDate: null,
+                            suspensionReason: '',
+                            ...sanctionFields
+                        });
+                    }
+                    await Franchise.updateOne({ _id: replacement._id }, { $set: replSet }).catch((e) => {
+                        console.warn('Replacement franchise standing sync failed after settlement:', e.message);
+                    });
+                }
+            }
         }
 
         await releaseDisciplineWrite();

@@ -27,6 +27,14 @@ const OfficialCancellationLetterModal = ({
   if (!isOpen) return null;
 
   const data = { ...franchise, ...cancellationData };
+  const isFinalizedGrant =
+    franchise?.status === 'Cancelled' &&
+    (franchise?.cancellationOutcome === 'voluntary_surrender' ||
+      (Boolean(cancellationData?.reason || franchise?.cancellationDetails?.reason) &&
+        !cancellationData?.rejectionReason &&
+        !franchise?.cancellationDetails?.rejectionReason &&
+        cancellationData?.decision !== 'rejected' &&
+        franchise?.cancellationDetails?.decision !== 'rejected'));
   const rawName = String(
     data.fullName ||
     data.ownerName ||
@@ -58,7 +66,7 @@ const OfficialCancellationLetterModal = ({
   const motorNo = cleanText(data.motorNo || data.motorNumber || data.engineNumber, 'N/A').toUpperCase();
   const model = formatVehicleModelYear(data, String(new Date().getFullYear())).toUpperCase();
 
-  const cancelDateRaw = data.cancelledAt || data.reviewedAt || data.requestedAt || data.cancellationRequestedAt || data.updatedAt || new Date();
+  const cancelDateRaw = data.reviewedAt || data.cancelledAt || franchise?.archivedAt || data.requestedAt || data.cancellationRequestedAt || data.updatedAt || new Date();
   const cancelDateObj = new Date(cancelDateRaw);
   const validDate = isNaN(cancelDateObj.getTime()) ? new Date() : cancelDateObj;
 
@@ -74,12 +82,14 @@ const OfficialCancellationLetterModal = ({
   const yearStr = String(validDate.getFullYear());
   const fullDateStr = validDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
-  const rawRequestedDate = data.cancellationRequestedAt || data.requestedAt;
+  const rawRequestedDate = data.requestedAt || data.cancellationRequestedAt;
   const requestDateStr = rawRequestedDate
     ? new Date(rawRequestedDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
     : fullDateStr;
 
-  const orNo = data.cancellationOrNo || data.cancellationOrNumber || data.paymentOrNumber || data.officialReceiptNo || '';
+  const orNo = isFinalizedGrant
+    ? (data.cancellationOrNo || data.cancellationOrNumber || data.paymentOrNumber || data.officialReceiptNo || '')
+    : 'DRAFT';
   const orDate = data.cancellationOrDate
     ? new Date(data.cancellationOrDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
     : fullDateStr;
@@ -110,6 +120,7 @@ const OfficialCancellationLetterModal = ({
           cancellationOrDate: orDate,
         },
         type: 'cancellation',
+        draft: !isFinalizedGrant,
       });
     } catch (err) {
       console.error('Error downloading original Cancellation Word (.docx):', err);
@@ -137,9 +148,13 @@ const OfficialCancellationLetterModal = ({
             </div>
             <div>
               <h4 className="text-xs sm:text-sm font-extrabold tracking-wide text-white uppercase flex items-center gap-2">
-                Official Franchise Cancellation Letter (1:1 LGU Template)
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-red-500/20 text-red-300 border border-red-500/30">
-                  OVM Certified
+                {isFinalizedGrant ? 'Official Franchise Cancellation Letter (1:1 LGU Template)' : 'Draft Cancellation Letter Preview (Pending OVM Approval)'}
+                <span className={`text-[10px] font-mono px-2 py-0.5 rounded-full border ${
+                  isFinalizedGrant
+                    ? 'bg-red-500/20 text-red-300 border-red-500/30'
+                    : 'bg-amber-500/20 text-amber-300 border-amber-500/30'
+                }`}>
+                  {isFinalizedGrant ? 'OVM Certified' : 'Draft — Pending Approval'}
                 </span>
               </h4>
               <p className="text-[10px] sm:text-xs text-white/60">
@@ -224,6 +239,20 @@ const OfficialCancellationLetterModal = ({
               }
             `}</style>
 
+            {/* Draft Watermark Overlay when pending finalization */}
+            {!isFinalizedGrant && (
+              <div className="pointer-events-none select-none absolute inset-0 z-20 flex items-center justify-center">
+                <div className="-rotate-30 border-4 border-red-600/35 px-6 py-3 rounded-lg text-center">
+                  <p className="text-2xl font-black tracking-widest text-red-600/35 uppercase">
+                    DRAFT — PENDING OVM APPROVAL
+                  </p>
+                  <p className="text-xs font-bold tracking-wider text-red-600/35 uppercase mt-1">
+                    Not Valid as Official Grant Until Finalized
+                  </p>
+                </div>
+              </div>
+            )}
+
             {/* Authentic Word Header Watermark (matching header1.xml image3.jpeg) */}
             <div className="absolute inset-0 flex items-center justify-center opacity-[0.14] pointer-events-none select-none z-0">
               <img
@@ -283,18 +312,31 @@ const OfficialCancellationLetterModal = ({
                 </p>
 
                 {/* [16] */}
-                <p>
-                  Having submitted all the necessary documents for{' '}
-                  <strong className="underline">cancellation</strong>, your request is hereby granted.
-                </p>
+                {isFinalizedGrant ? (
+                  <p>
+                    Having submitted all the necessary documents for{' '}
+                    <strong className="underline">cancellation</strong>, your request is hereby granted.
+                  </p>
+                ) : (
+                  <p className="text-red-700 font-bold">
+                    [DRAFT PREVIEW] Pending Office of the Vice Mayor (OVM) verification and final cancellation approval.
+                  </p>
+                )}
 
                 {/* [18] */}
-                <p className="indent-12">
-                  <strong className="underline text-[14pt]">Franchise No. {rawFranchiseNo}</strong>{' '}
-                  cancelled this <span className="underline">{dayNum}</span>
-                  <sup className="underline">{ordinalSuffix}</sup> day of{' '}
-                  <span className="underline">{monthStr}</span>, {yearStr}.
-                </p>
+                {isFinalizedGrant ? (
+                  <p className="indent-12">
+                    <strong className="underline text-[14pt]">Franchise No. {rawFranchiseNo}</strong>{' '}
+                    cancelled this <span className="underline">{dayNum}</span>
+                    <sup className="underline">{ordinalSuffix}</sup> day of{' '}
+                    <span className="underline">{monthStr}</span>, {yearStr}.
+                  </p>
+                ) : (
+                  <p className="indent-12">
+                    <strong className="underline text-[14pt]">Franchise No. {rawFranchiseNo}</strong>{' '}
+                    pending final cancellation decision (draft preview).
+                  </p>
+                )}
 
                 {/* [20]–[23]: Vehicle Specs Block (Plain Indented Lines with Tabbed Colons, No Vertical Border) */}
                 <div className="pl-12 py-1 space-y-1 text-left">
@@ -338,13 +380,15 @@ const OfficialCancellationLetterModal = ({
               {/* Paragraphs [29]–[30]: Signatory Block */}
               <div className="mt-16 flex justify-end pr-6">
                 <div className="relative text-center">
-                  <img
-                    src="/excel_assets/franchise_image2.png"
-                    alt="Signature of Municipal Vice Mayor"
-                    className="absolute -top-12 left-1/2 -translate-x-1/2 w-48 h-16 object-contain pointer-events-none"
-                  />
+                  {isFinalizedGrant && (
+                    <img
+                      src="/excel_assets/franchise_image2.png"
+                      alt="Signature of Municipal Vice Mayor"
+                      className="absolute -top-12 left-1/2 -translate-x-1/2 w-48 h-16 object-contain pointer-events-none"
+                    />
+                  )}
                   <div className="font-bold underline text-[14pt] tracking-wide">
-                    LIDANY A. LAO-BALDO
+                    {isFinalizedGrant ? 'LIDANY A. LAO-BALDO' : 'PENDING OVM SIGNATURE'}
                   </div>
                   <div className="font-bold text-[12pt]">
                     Municipal Vice Mayor

@@ -1,5 +1,11 @@
+const mongoose = require('mongoose');
 const Franchise = require('../models/franchiseModel');
 const { currentIssuedSnapshotQuery } = require('../utils/issuedPermit');
+const {
+    acquireOperatorCapacityLock,
+    countOperatorOccupiedSlots,
+    findUnsettledViolationsForUnit
+} = require('../utils/disciplineHelper');
 const { 
     getManilaNow, 
     getManilaStartOfDay, 
@@ -72,6 +78,66 @@ function validateDocumentUrls(payload = {}, existingAllowedUrls = new Set(), upl
             throw err;
         }
     }
+}
+
+const ALLOWED_DL_CODES = new Set(['A, A1', 'A1', 'A']);
+
+const CREATE_STRING_LIMITS = [
+    ['fullName', 120, 'Operator full name'],
+    ['address', 200, 'Barangay address'],
+    ['plateNo', 30, 'Plate number'],
+    ['motorNo', 40, 'Motor number'],
+    ['chassisNo', 40, 'Chassis number'],
+    ['orCrNo', 40, 'OR/CR number'],
+    ['crNo', 40, 'CR number'],
+    ['orNo', 40, 'OR number'],
+    ['fileNo', 40, 'MV file number'],
+    ['series', 60, 'Vehicle series'],
+    ['grossWeight', 20, 'Gross weight'],
+    ['registeredOwner', 100, 'Registered owner'],
+    ['driverName', 100, 'Driver name'],
+    ['driverContact', 20, 'Driver contact number'],
+    ['driverLicenseNo', 30, "Driver's license number"],
+    ['driverLicenseSerialNo', 30, 'License back serial number'],
+    ['cedulaSerialNo', 30, 'Cedula serial number'],
+    ['cedulaAddress', 150, 'Cedula address'],
+    ['cedulaFullName', 100, 'Cedula full name'],
+    ['cedulaTin', 30, 'Cedula TIN'],
+    ['brgyClearanceNo', 40, 'Barangay clearance number'],
+    ['brgyIssuer', 100, 'Barangay issuer']
+];
+
+function validateFranchiseStringLimits(payload = {}, specs = CREATE_STRING_LIMITS) {
+    for (const [key, maxLen, label] of specs) {
+        const val = payload[key];
+        if (val === undefined || val === null) continue;
+        if (typeof val !== 'string') {
+            const err = new Error(`${label} must be a valid text string.`);
+            err.statusCode = 400;
+            throw err;
+        }
+        if (val.trim().length > maxLen) {
+            const err = new Error(`${label} must not exceed ${maxLen} characters.`);
+            err.statusCode = 400;
+            throw err;
+        }
+    }
+}
+
+function validateNormalizedDlCodes(rawValue) {
+    if (rawValue === undefined || rawValue === null) return '';
+    if (typeof rawValue !== 'string') {
+        const err = new Error('Authorized DL codes must be a valid string.');
+        err.statusCode = 400;
+        throw err;
+    }
+    const clean = rawValue.trim().toUpperCase().replace(/\s*,\s*/g, ', ');
+    if (clean && !ALLOWED_DL_CODES.has(clean)) {
+        const err = new Error('Authorized DL codes must be A, A1, or A (Tricycle / Motorcycle).');
+        err.statusCode = 400;
+        throw err;
+    }
+    return clean;
 }
 
 class FranchiseService {
@@ -208,33 +274,13 @@ class FranchiseService {
     static async createFranchise(data, operatorId, { uploadedFields = new Set() } = {}) {
         // M6: Reject arbitrary external document URLs before creating any record
         validateDocumentUrls(data, new Set(), uploadedFields);
+        // M7: Enforce server-side string types, length limits, and authorized DL categories
+        validateFranchiseStringLimits(data, CREATE_STRING_LIMITS);
+        const validatedDlCodes = validateNormalizedDlCodes(data.driverDlCodes);
 
         const motorNo = String(data.motorNo || '').trim().toUpperCase();
         const chassisNo = String(data.chassisNo || '').trim().toUpperCase();
         const plateNo = String(data.plateNo || '').trim().toUpperCase();
-
-        const escapeRegex = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const identifierMatchers = [];
-        if (motorNo) identifierMatchers.push({ motorNo: { $regex: new RegExp(`^${escapeRegex(motorNo)}$`, 'i') } });
-        if (chassisNo) identifierMatchers.push({ chassisNo: { $regex: new RegExp(`^${escapeRegex(chassisNo)}$`, 'i') } });
-        if (plateNo) identifierMatchers.push({ plateNo: { $regex: new RegExp(`^${escapeRegex(plateNo)}$`, 'i') } });
-
-        if (identifierMatchers.length > 0) {
-            const issuedSnapshot = currentIssuedSnapshotQuery();
-            const existingTricycle = await Franchise.findOne({
-                $or: identifierMatchers,
-                isArchived: { $ne: true },
-                $and: [{ $or: [{ status: { $ne: 'Cancelled' } }, issuedSnapshot] }]
-            });
-
-            if (existingTricycle) {
-                throw new Error('Tricycle (Plate/Motor/Chassis) is already registered.');
-            }
-            await Franchise.updateMany(
-                { $or: identifierMatchers, $nor: [issuedSnapshot], status: 'Cancelled', isArchived: false },
-                { $set: { isArchived: true } }
-            );
-        }
 
         const SystemSettings = require('../models/systemSettingsModel');
         const sysSettings = await SystemSettings.findOne().sort({ updatedAt: -1, createdAt: -1 }).lean().catch(() => null);
@@ -245,132 +291,163 @@ class FranchiseService {
         }
 
         const maxUnits = Number(sysSettings?.maxUnitsPerOperator) || 2;
-        if (operatorId) {
-            const currentActiveOrPending = await Franchise.countDocuments({
-                operator: operatorId,
-                isArchived: { $ne: true },
-                $or: [
-                    { status: { $nin: ['Cancelled', 'Rejected', 'Revoked', 'Expired'] } },
-                    currentIssuedSnapshotQuery()
-                ]
-            });
-            if (currentActiveOrPending >= maxUnits) {
-                throw new Error(`Maximum fleet limit reached (${maxUnits} units per operator).`);
-            }
+        const releaseCapLock = await acquireOperatorCapacityLock(operatorId);
+        if (!releaseCapLock) {
+            const lockErr = new Error('Another application for your account is currently being processed. Please try again shortly.');
+            lockErr.statusCode = 409;
+            throw lockErr;
         }
 
-        // Safe date parsing (never synthesize fake cedula metadata when omitted)
-        const parsedCedulaDate = data.cedulaDate && !isNaN(new Date(data.cedulaDate).getTime()) ? new Date(data.cedulaDate) : undefined;
-        const parsedDateApplied = data.dateApplied && !isNaN(new Date(data.dateApplied).getTime()) ? new Date(data.dateApplied) : new Date();
+        let franchise;
+        try {
+            const escapeRegex = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const identifierMatchers = [];
+            if (motorNo) identifierMatchers.push({ motorNo: { $regex: new RegExp(`^${escapeRegex(motorNo)}$`, 'i') } });
+            if (chassisNo) identifierMatchers.push({ chassisNo: { $regex: new RegExp(`^${escapeRegex(chassisNo)}$`, 'i') } });
+            if (plateNo) identifierMatchers.push({ plateNo: { $regex: new RegExp(`^${escapeRegex(plateNo)}$`, 'i') } });
 
-        const franchise = await Franchise.create({
-            operator: operatorId,
-            fullName: data.fullName, 
-            address: data.address, 
-            zone: data.zone, 
-            made: data.made, 
-            make: data.make, 
-            motorNo, 
-            chassisNo, 
-            plateNo, 
-            todaName: data.todaName,
-            cedulaDate: parsedCedulaDate,
-            cedulaAddress: data.cedulaAddress ? String(data.cedulaAddress).trim() : undefined,
-            cedulaSerialNo: data.cedulaSerialNo ? String(data.cedulaSerialNo).trim() : undefined,
-            cedulaAmount: 0,
-            cedulaYear: data.cedulaYear || '',
-            cedulaPlaceIssued: data.cedulaPlaceIssued || data.cedulaAddress || '',
-            cedulaFullName: data.cedulaFullName || '',
-            cedulaCitizenship: data.cedulaCitizenship || '',
-            cedulaCivilStatus: data.cedulaCivilStatus || '',
-            cedulaProfession: data.cedulaProfession || '',
-            cedulaDob: data.cedulaDob && !isNaN(new Date(data.cedulaDob).getTime()) ? new Date(data.cedulaDob) : undefined,
-            cedulaPlaceOfBirth: data.cedulaPlaceOfBirth || '',
-            cedulaSex: data.cedulaSex || '',
-            cedulaHeight: '',
-            cedulaWeight: '',
-            cedulaTin: data.cedulaTin || '',
-            cedulaDetails: data.cedulaDetails || (data.aiScannedData?.cedula || null),
-            applicationType: data.applicationType || 'New',
-            status: 'Pending',
-            dateApplied: parsedDateApplied,
-            approvalDate: undefined,
-            expiryDate: undefined,
-            orCrUrl: data.orCrUrl, 
-            crUrl: data.crUrl || '',
-            orUrl: data.orUrl || '',
-            licenseUrl: data.licenseUrl, 
-            licenseBackUrl: data.licenseBackUrl || '',
-            todaEndorsementUrl: data.todaEndorsementUrl, 
-            brgyClearanceUrl: data.brgyClearanceUrl,
-            cedulaUrl: data.cedulaUrl || '',
+            if (identifierMatchers.length > 0) {
+                const issuedSnapshot = currentIssuedSnapshotQuery();
+                const existingTricycle = await Franchise.findOne({
+                    $or: identifierMatchers,
+                    isArchived: { $ne: true },
+                    $and: [{ $or: [{ status: { $ne: 'Cancelled' } }, issuedSnapshot] }]
+                });
 
-            // Structured document metadata fields
-            orCrNo: data.orCrNo || '',
-            orNo: data.orNo || '',
-            orCrExpiryDate: data.orCrExpiryDate && !isNaN(new Date(data.orCrExpiryDate).getTime()) ? new Date(data.orCrExpiryDate) : undefined,
-            crNo: data.crNo || '',
-            orDate: data.orDate && !isNaN(new Date(data.orDate).getTime()) ? new Date(data.orDate) : undefined,
-            crDate: data.crDate && !isNaN(new Date(data.crDate).getTime()) ? new Date(data.crDate) : undefined,
-            color: data.color || '',
-            series: data.series || '',
-            yearModel: data.yearModel || '',
-            fileNo: data.fileNo || '',
-            vehicleType: data.vehicleType || '',
-            vehicleCategory: data.vehicleCategory || '',
-            classification: data.classification || '',
-            bodyType: data.bodyType || '',
-            displacement: data.displacement || '',
-            grossWeight: data.grossWeight || '',
-            fuelType: data.fuelType || '',
-            passengerCapacity: data.passengerCapacity || '',
-            registeredOwner: data.registeredOwner || '',
-            ownerAddress: data.ownerAddress || '',
+                if (existingTricycle) {
+                    const dupErr = new Error('Tricycle (Plate/Motor/Chassis) is already registered.');
+                    dupErr.statusCode = 400;
+                    throw dupErr;
+                }
+                await Franchise.updateMany(
+                    { $or: identifierMatchers, $nor: [issuedSnapshot], status: 'Cancelled', isArchived: false },
+                    { $set: { isArchived: true } }
+                );
+            }
 
-            isOperatorDriver: data.isOperatorDriver !== undefined ? (data.isOperatorDriver === true || data.isOperatorDriver === 'true') : true,
-            numberOfUnits: Math.min(2, Math.max(1, Number(data.numberOfUnits) || 1)),
-            driverName: data.driverName || '',
-            driverContact: data.driverContact || '',
-            driverLicenseNo: data.driverLicenseNo || '',
-            driverLicenseSerialNo: data.driverLicenseSerialNo || '',
-            driverLicenseExpiryDate: data.driverLicenseExpiryDate && !isNaN(new Date(data.driverLicenseExpiryDate).getTime()) ? new Date(data.driverLicenseExpiryDate) : undefined,
-            driverDob: data.driverDob && !isNaN(new Date(data.driverDob).getTime()) ? new Date(data.driverDob) : undefined,
-            driverDlCodes: data.driverDlCodes || 'A, A1',
-            driverConditions: data.driverConditions || 'None',
-            driverAddress: data.driverAddress || '',
-            driverNationality: data.driverNationality || 'Filipino',
-            driverSex: data.driverSex || '',
-            todaCertNo: data.todaCertNo || '',
-            todaCertDate: data.todaCertDate && !isNaN(new Date(data.todaCertDate).getTime()) ? new Date(data.todaCertDate) : undefined,
-            todaSignatory: data.todaSignatory || '',
-            brgyClearanceNo: data.brgyClearanceNo || '',
-            brgyClearanceDate: data.brgyClearanceDate && !isNaN(new Date(data.brgyClearanceDate).getTime()) ? new Date(data.brgyClearanceDate) : undefined,
-            brgyIssuer: data.brgyIssuer || '',
-
-
-            aiScannedData: data.aiScannedData || null,
-            aiDiscrepancies: data.aiDiscrepancies || []
-        });
-
-        // Post-insert fleet limit guard against concurrent submissions by the same operator
-        if (operatorId) {
-            const activeDocs = await Franchise.find({
-                operator: operatorId,
-                isArchived: { $ne: true },
-                status: { $nin: ['Cancelled', 'Rejected', 'Revoked', 'Expired'] }
-            }).sort({ createdAt: 1, _id: 1 }).select('_id').lean();
-            if (activeDocs.length > maxUnits) {
-                const allowedIds = new Set(activeDocs.slice(0, maxUnits).map(d => String(d._id)));
-                if (!allowedIds.has(String(franchise._id))) {
-                    try {
-                        await Franchise.deleteOne({ _id: franchise._id });
-                    } catch (cleanupErr) {
-                        console.error(`[FranchiseService] CRITICAL: Compensating delete failed for franchise ${franchise._id} after fleet-limit race:`, cleanupErr);
-                        throw cleanupErr;
-                    }
-                    throw new Error(`Maximum fleet limit reached (${maxUnits} units per operator).`);
+            if (operatorId) {
+                const currentActiveOrPending = await countOperatorOccupiedSlots(operatorId);
+                if (currentActiveOrPending >= maxUnits) {
+                    const capErr = new Error(`Maximum fleet limit reached (${maxUnits} units per operator).`);
+                    capErr.statusCode = 400;
+                    throw capErr;
                 }
             }
+
+            // H3: Check unsettled sanctions across the unit / operator chain before issuing a replacement record
+            const unsettledViolations = await findUnsettledViolationsForUnit({
+                plateNo,
+                motorNo,
+                chassisNo,
+                operatorId
+            });
+            const blockingSanction = unsettledViolations.find(v =>
+                ['Suspension', 'Revocation'].includes(v.sanction?.type)
+            );
+            if (blockingSanction) {
+                const sanctionErr = new Error(
+                    `Cannot register replacement franchise while an unsettled ${String(blockingSanction.sanction.type).toLowerCase()} exists for this tricycle unit.`
+                );
+                sanctionErr.statusCode = 400;
+                throw sanctionErr;
+            }
+
+            // Safe date parsing (never synthesize fake cedula metadata when omitted)
+            const parsedCedulaDate = data.cedulaDate && !isNaN(new Date(data.cedulaDate).getTime()) ? new Date(data.cedulaDate) : undefined;
+            const parsedDateApplied = data.dateApplied && !isNaN(new Date(data.dateApplied).getTime()) ? new Date(data.dateApplied) : new Date();
+
+            franchise = await Franchise.create({
+                operator: operatorId,
+                fullName: data.fullName,
+                address: data.address,
+                zone: data.zone,
+                made: data.made,
+                make: data.make,
+                motorNo,
+                chassisNo,
+                plateNo,
+                todaName: data.todaName,
+                cedulaDate: parsedCedulaDate,
+                cedulaAddress: data.cedulaAddress ? String(data.cedulaAddress).trim() : undefined,
+                cedulaSerialNo: data.cedulaSerialNo ? String(data.cedulaSerialNo).trim() : undefined,
+                cedulaAmount: 0,
+                cedulaYear: data.cedulaYear || '',
+                cedulaPlaceIssued: data.cedulaPlaceIssued || data.cedulaAddress || '',
+                cedulaFullName: data.cedulaFullName || '',
+                cedulaCitizenship: data.cedulaCitizenship || '',
+                cedulaCivilStatus: data.cedulaCivilStatus || '',
+                cedulaProfession: data.cedulaProfession || '',
+                cedulaDob: data.cedulaDob && !isNaN(new Date(data.cedulaDob).getTime()) ? new Date(data.cedulaDob) : undefined,
+                cedulaPlaceOfBirth: data.cedulaPlaceOfBirth || '',
+                cedulaSex: data.cedulaSex || '',
+                cedulaHeight: '',
+                cedulaWeight: '',
+                cedulaTin: data.cedulaTin || '',
+                cedulaDetails: data.cedulaDetails || (data.aiScannedData?.cedula || null),
+                applicationType: data.applicationType || 'New',
+                status: 'Pending',
+                activeViolationCount: unsettledViolations.length,
+                currentSanction: unsettledViolations.length > 0 ? 'Warning (Active)' : '',
+                dateApplied: parsedDateApplied,
+                approvalDate: undefined,
+                expiryDate: undefined,
+                orCrUrl: data.orCrUrl,
+                crUrl: data.crUrl || '',
+                orUrl: data.orUrl || '',
+                licenseUrl: data.licenseUrl,
+                licenseBackUrl: data.licenseBackUrl || '',
+                todaEndorsementUrl: data.todaEndorsementUrl,
+                brgyClearanceUrl: data.brgyClearanceUrl,
+                cedulaUrl: data.cedulaUrl || '',
+
+                // Structured document metadata fields
+                orCrNo: data.orCrNo || '',
+                orNo: data.orNo || '',
+                orCrExpiryDate: data.orCrExpiryDate && !isNaN(new Date(data.orCrExpiryDate).getTime()) ? new Date(data.orCrExpiryDate) : undefined,
+                crNo: data.crNo || '',
+                orDate: data.orDate && !isNaN(new Date(data.orDate).getTime()) ? new Date(data.orDate) : undefined,
+                crDate: data.crDate && !isNaN(new Date(data.crDate).getTime()) ? new Date(data.crDate) : undefined,
+                color: data.color || '',
+                series: data.series || '',
+                yearModel: data.yearModel || '',
+                fileNo: data.fileNo || '',
+                vehicleType: data.vehicleType || '',
+                vehicleCategory: data.vehicleCategory || '',
+                classification: data.classification || '',
+                bodyType: data.bodyType || '',
+                displacement: data.displacement || '',
+                grossWeight: data.grossWeight || '',
+                fuelType: data.fuelType || '',
+                passengerCapacity: data.passengerCapacity || '',
+                registeredOwner: data.registeredOwner || '',
+                ownerAddress: data.ownerAddress || '',
+
+                isOperatorDriver: data.isOperatorDriver !== undefined ? (data.isOperatorDriver === true || data.isOperatorDriver === 'true') : true,
+                numberOfUnits: Math.min(2, Math.max(1, Number(data.numberOfUnits) || 1)),
+                driverName: data.driverName || '',
+                driverContact: data.driverContact || '',
+                driverLicenseNo: data.driverLicenseNo || '',
+                driverLicenseSerialNo: data.driverLicenseSerialNo || '',
+                driverLicenseExpiryDate: data.driverLicenseExpiryDate && !isNaN(new Date(data.driverLicenseExpiryDate).getTime()) ? new Date(data.driverLicenseExpiryDate) : undefined,
+                driverDob: data.driverDob && !isNaN(new Date(data.driverDob).getTime()) ? new Date(data.driverDob) : undefined,
+                driverDlCodes: validatedDlCodes,
+                driverConditions: data.driverConditions || 'None',
+                driverAddress: data.driverAddress || '',
+                driverNationality: data.driverNationality || 'Filipino',
+                driverSex: data.driverSex || '',
+                todaCertNo: data.todaCertNo || '',
+                todaCertDate: data.todaCertDate && !isNaN(new Date(data.todaCertDate).getTime()) ? new Date(data.todaCertDate) : undefined,
+                todaSignatory: data.todaSignatory || '',
+                brgyClearanceNo: data.brgyClearanceNo || '',
+                brgyClearanceDate: data.brgyClearanceDate && !isNaN(new Date(data.brgyClearanceDate).getTime()) ? new Date(data.brgyClearanceDate) : undefined,
+                brgyIssuer: data.brgyIssuer || '',
+
+
+                aiScannedData: data.aiScannedData || null,
+                aiDiscrepancies: data.aiDiscrepancies || []
+            });
+        } finally {
+            await releaseCapLock();
         }
 
         return await franchise.populate('operator', 'name address contact');
@@ -530,102 +607,278 @@ class FranchiseService {
             ? { dateApplied: -1, createdAt: -1 } 
             : { dateApplied: 1, createdAt: 1 };
 
-        // When viewing Historical Archives, include prior expired/renewed term snapshots stored in paymentHistory
+        // When viewing Historical Archives, run bounded MongoDB aggregation + $unionWith
+        // so synthetic paymentHistory term rows are projected narrowly and paginated in DB (M4).
         if (archived === 'true') {
-            const archivedDocs = await Franchise.find(queryCondition)
-                .populate('operator', 'name address contact')
-                .lean();
+            const sortDir = sort === 'newest' ? -1 : 1;
+            const userCollectionName = mongoose.model('User').collection.name;
+            const franchiseCollectionName = Franchise.collection.name;
 
-            const historyParentQuery = { 'paymentHistory.0': { $exists: true } };
+            const termMatch = {};
+            if (status && status !== 'All') {
+                const rawList = status.split(',').map(s => s.trim()).filter(Boolean);
+                const statusList = [];
+                rawList.forEach(s => {
+                    statusList.push(s);
+                    if (s === 'Pending' && !statusList.includes('Pending for Approval')) {
+                        statusList.push('Pending for Approval');
+                    }
+                });
+                termMatch.status = statusList.length === 1 ? statusList[0] : { $in: statusList };
+            }
+            if (applicationType && applicationType !== 'all') {
+                termMatch.applicationType = applicationType;
+            }
             if (todaName && todaName !== 'all') {
-                historyParentQuery.todaName = todaName;
+                termMatch.todaName = todaName;
             }
             if (barangay && barangay !== 'all') {
                 const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-                historyParentQuery.address = { $regex: escapeRegex(barangay), $options: 'i' };
+                termMatch.address = { $regex: escapeRegex(barangay), $options: 'i' };
+            }
+            if (startDate && endDate) {
+                const start = new Date(startDate);
+                start.setHours(0, 0, 0, 0);
+                const end = new Date(endDate);
+                end.setHours(23, 59, 59, 999);
+                termMatch.dateApplied = { $gte: start, $lte: end };
+            }
+            if (search && search.trim() !== '') {
+                const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const partialRegex = { $regex: escapeRegex(search.trim()), $options: 'i' };
+                termMatch.$or = [
+                    { fullName: partialRegex },
+                    { plateNo: partialRegex },
+                    { motorNo: partialRegex },
+                    { chassisNo: partialRegex },
+                    { mtopNo: partialRegex },
+                    { officialReceiptNo: partialRegex },
+                    { todaName: partialRegex },
+                    { bodyNumber: partialRegex }
+                ];
             }
 
-            const docsWithHistory = await Franchise.find(historyParentQuery)
-                .populate('operator', 'name address contact')
-                .lean();
+            const narrowBaseProjection = {
+                operator: 1,
+                fullName: 1,
+                address: 1,
+                zone: 1,
+                todaName: 1,
+                bodyNumber: 1,
+                plateNo: 1,
+                motorNo: 1,
+                chassisNo: 1,
+                make: 1,
+                made: 1,
+                yearModel: 1,
+                color: 1,
+                status: 1,
+                applicationType: 1,
+                mtopNo: 1,
+                officialReceiptNo: 1,
+                amountPaid: 1,
+                paymentDate: 1,
+                payerName: 1,
+                paymentMethod: 1,
+                paymentRemarks: 1,
+                approvalDate: 1,
+                expiryDate: 1,
+                manualExpiredAt: 1,
+                originalExpiryDate: 1,
+                dateApplied: 1,
+                createdAt: 1,
+                updatedAt: 1,
+                archivedAt: 1,
+                isArchived: 1,
+                cancelReason: 1,
+                cancellationOutcome: 1,
+                cancellationDetails: 1,
+                orUrl: 1,
+                crUrl: 1,
+                orCrUrl: 1,
+                licenseUrl: 1,
+                licenseBackUrl: 1,
+                brgyClearanceUrl: 1,
+                cedulaUrl: 1,
+                driverName: 1,
+                driverLicenseNo: 1,
+                paymentHistory: { $slice: [{ $ifNull: ['$paymentHistory', []] }, -10] },
+                isHistoricalTerm: { $literal: false },
+                sortDate: { $ifNull: ['$dateApplied', { $ifNull: ['$createdAt', new Date(0)] }] },
+                sortCreated: { $ifNull: ['$createdAt', new Date(0)] },
+                tieBreaker: { $toString: '$_id' }
+            };
 
-            const statusFilterList = status && status !== 'All'
-                ? status.split(',').map(s => s.trim()).filter(Boolean)
-                : null;
-            const searchNeedle = search && search.trim() ? search.trim().toLowerCase() : '';
-            const startTs = startDate ? new Date(startDate).setHours(0, 0, 0, 0) : null;
-            const endTs = endDate ? new Date(endDate).setHours(23, 59, 59, 999) : null;
-
-            const virtualTerms = [];
-            for (const doc of docsWithHistory) {
-                if (!Array.isArray(doc.paymentHistory)) continue;
-                doc.paymentHistory.forEach((term, idx) => {
-                    const termStatus = term.previousStatus || 'Expired';
-                    const termAppType = term.applicationType || (idx === 0 ? 'New' : 'Renewal');
-                    const termDateApplied = term.dateApplied || term.approvalDate || term.paymentDate || term.archivedAt || doc.dateApplied || doc.createdAt;
-                    const row = {
-                        ...doc,
-                        _id: `${doc._id}_term_${idx}`,
-                        parentFranchiseId: String(doc._id),
-                        isHistoricalTerm: true,
-                        isArchived: true,
-                        termIndex: idx,
-                        status: termStatus,
-                        applicationType: termAppType,
-                        mtopNo: term.mtopNo || doc.mtopNo || '',
-                        officialReceiptNo: term.officialReceiptNo || '',
-                        amountPaid: term.amountPaid || 0,
-                        paymentDate: term.paymentDate || null,
-                        payerName: term.payerName || '',
-                        paymentMethod: term.paymentMethod || '',
-                        paymentRemarks: term.paymentRemarks || '',
-                        approvalDate: term.approvalDate || null,
-                        expiryDate: term.expiryDate || null,
-                        dateApplied: termDateApplied,
-                        createdAt: term.archivedAt || term.approvalDate || doc.createdAt
-                    };
-
-                    if (statusFilterList && !statusFilterList.includes(row.status)) return;
-                    if (applicationType && applicationType !== 'all' && row.applicationType !== applicationType) return;
-                    if (startTs !== null && endTs !== null) {
-                        const rowTs = row.dateApplied ? new Date(row.dateApplied).getTime() : 0;
-                        if (rowTs < startTs || rowTs > endTs) return;
+            const termPipeline = [
+                { $match: { 'paymentHistory.0': { $exists: true } } },
+                { $unwind: { path: '$paymentHistory', includeArrayIndex: 'termIndex' } },
+                {
+                    $project: {
+                        _id: { $concat: [{ $toString: '$_id' }, '_term_', { $toString: '$termIndex' }] },
+                        parentFranchiseId: { $toString: '$_id' },
+                        isHistoricalTerm: { $literal: true },
+                        isArchived: { $literal: true },
+                        termIndex: '$termIndex',
+                        operator: '$operator',
+                        fullName: '$fullName',
+                        bodyNumber: '$bodyNumber',
+                        motorNo: '$motorNo',
+                        chassisNo: '$chassisNo',
+                        make: '$make',
+                        made: '$made',
+                        yearModel: '$yearModel',
+                        color: '$color',
+                        driverName: '$driverName',
+                        driverLicenseNo: '$driverLicenseNo',
+                        orUrl: '$orUrl',
+                        crUrl: '$crUrl',
+                        orCrUrl: '$orCrUrl',
+                        licenseUrl: '$licenseUrl',
+                        licenseBackUrl: '$licenseBackUrl',
+                        brgyClearanceUrl: '$brgyClearanceUrl',
+                        cedulaUrl: '$cedulaUrl',
+                        todaName: {
+                            $cond: [
+                                { $gt: [{ $ifNull: ['$paymentHistory.todaName', ''] }, ''] },
+                                '$paymentHistory.todaName',
+                                '$todaName'
+                            ]
+                        },
+                        address: {
+                            $cond: [
+                                { $gt: [{ $ifNull: ['$paymentHistory.address', ''] }, ''] },
+                                '$paymentHistory.address',
+                                '$address'
+                            ]
+                        },
+                        zone: {
+                            $cond: [
+                                { $gt: [{ $ifNull: ['$paymentHistory.zone', ''] }, ''] },
+                                '$paymentHistory.zone',
+                                '$zone'
+                            ]
+                        },
+                        plateNo: {
+                            $cond: [
+                                { $gt: [{ $ifNull: ['$paymentHistory.plateNo', ''] }, ''] },
+                                '$paymentHistory.plateNo',
+                                '$plateNo'
+                            ]
+                        },
+                        status: {
+                            $cond: [
+                                { $gt: [{ $ifNull: ['$paymentHistory.previousStatus', ''] }, ''] },
+                                '$paymentHistory.previousStatus',
+                                'Expired'
+                            ]
+                        },
+                        applicationType: {
+                            $cond: [
+                                { $gt: [{ $ifNull: ['$paymentHistory.applicationType', ''] }, ''] },
+                                '$paymentHistory.applicationType',
+                                { $cond: [{ $eq: ['$termIndex', 0] }, 'New', 'Renewal'] }
+                            ]
+                        },
+                        mtopNo: {
+                            $cond: [
+                                { $gt: [{ $ifNull: ['$paymentHistory.mtopNo', ''] }, ''] },
+                                '$paymentHistory.mtopNo',
+                                '$mtopNo'
+                            ]
+                        },
+                        officialReceiptNo: { $ifNull: ['$paymentHistory.officialReceiptNo', ''] },
+                        amountPaid: { $ifNull: ['$paymentHistory.amountPaid', 0] },
+                        paymentDate: '$paymentHistory.paymentDate',
+                        payerName: { $ifNull: ['$paymentHistory.payerName', ''] },
+                        paymentMethod: { $ifNull: ['$paymentHistory.paymentMethod', ''] },
+                        paymentRemarks: { $ifNull: ['$paymentHistory.paymentRemarks', ''] },
+                        approvalDate: '$paymentHistory.approvalDate',
+                        expiryDate: '$paymentHistory.expiryDate',
+                        dateApplied: {
+                            $ifNull: [
+                                '$paymentHistory.dateApplied',
+                                {
+                                    $ifNull: [
+                                        '$paymentHistory.approvalDate',
+                                        {
+                                            $ifNull: [
+                                                '$paymentHistory.paymentDate',
+                                                { $ifNull: ['$paymentHistory.archivedAt', { $ifNull: ['$dateApplied', '$createdAt'] }] }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        createdAt: {
+                            $ifNull: [
+                                '$paymentHistory.archivedAt',
+                                { $ifNull: ['$paymentHistory.approvalDate', '$createdAt'] }
+                            ]
+                        },
+                        sortDate: {
+                            $ifNull: [
+                                '$paymentHistory.dateApplied',
+                                {
+                                    $ifNull: [
+                                        '$paymentHistory.approvalDate',
+                                        {
+                                            $ifNull: [
+                                                '$paymentHistory.paymentDate',
+                                                { $ifNull: ['$paymentHistory.archivedAt', { $ifNull: ['$dateApplied', { $ifNull: ['$createdAt', new Date(0)] }] }] }
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        },
+                        sortCreated: {
+                            $ifNull: [
+                                '$paymentHistory.archivedAt',
+                                { $ifNull: ['$paymentHistory.approvalDate', { $ifNull: ['$createdAt', new Date(0)] }] }
+                            ]
+                        },
+                        tieBreaker: { $concat: [{ $toString: '$_id' }, '_term_', { $toString: '$termIndex' }] }
                     }
-                    if (searchNeedle) {
-                        const haystack = [
-                            row.fullName,
-                            row.plateNo,
-                            row.motorNo,
-                            row.chassisNo,
-                            row.mtopNo,
-                            row.officialReceiptNo,
-                            row.todaName,
-                            row.bodyNumber
-                        ].filter(Boolean).join(' ').toLowerCase();
-                        if (!haystack.includes(searchNeedle)) return;
-                    }
-
-                    virtualTerms.push(row);
-                });
-            }
-
-            const combined = [...archivedDocs, ...virtualTerms].sort((a, b) => {
-                const aTime = new Date(a.dateApplied || a.createdAt || 0).getTime();
-                const bTime = new Date(b.dateApplied || b.createdAt || 0).getTime();
-                if (aTime !== bTime) {
-                    return sort === 'newest' ? bTime - aTime : aTime - bTime;
                 }
-                const aCreated = new Date(a.createdAt || 0).getTime();
-                const bCreated = new Date(b.createdAt || 0).getTime();
-                return sort === 'newest' ? bCreated - aCreated : aCreated - bCreated;
-            });
+            ];
 
-            const totalRecords = combined.length;
+            if (Object.keys(termMatch).length > 0) {
+                termPipeline.push({ $match: termMatch });
+            }
+
+            const [aggResult] = await Franchise.aggregate([
+                { $match: queryCondition },
+                { $project: narrowBaseProjection },
+                { $unionWith: { coll: franchiseCollectionName, pipeline: termPipeline } },
+                { $sort: { sortDate: sortDir, sortCreated: sortDir, tieBreaker: 1 } },
+                {
+                    $facet: {
+                        meta: [{ $count: 'total' }],
+                        data: [
+                            { $skip: skip },
+                            { $limit: limitNum },
+                            {
+                                $lookup: {
+                                    from: userCollectionName,
+                                    localField: 'operator',
+                                    foreignField: '_id',
+                                    pipeline: [{ $project: { name: 1, address: 1, contact: 1 } }],
+                                    as: '_opArr'
+                                }
+                            },
+                            { $addFields: { operator: { $arrayElemAt: ['$_opArr', 0] } } },
+                            { $project: { _opArr: 0, sortDate: 0, sortCreated: 0, tieBreaker: 0 } }
+                        ]
+                    }
+                }
+            ]);
+
+            const totalRecords = aggResult?.meta?.[0]?.total || 0;
             const totalPages = Math.ceil(totalRecords / limitNum) || 1;
-            const paged = combined.slice(skip, skip + limitNum);
 
             return {
-                data: paged,
+                data: aggResult?.data || [],
                 pagination: {
                     totalRecords,
                     totalPages,
@@ -663,5 +916,7 @@ class FranchiseService {
 FranchiseService.DOCUMENT_URL_FIELDS = DOCUMENT_URL_FIELDS;
 FranchiseService.isTrustedDocumentUrl = isTrustedDocumentUrl;
 FranchiseService.validateDocumentUrls = validateDocumentUrls;
+FranchiseService.validateFranchiseStringLimits = validateFranchiseStringLimits;
+FranchiseService.validateNormalizedDlCodes = validateNormalizedDlCodes;
 
 module.exports = FranchiseService;

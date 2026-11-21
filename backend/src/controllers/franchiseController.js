@@ -14,6 +14,27 @@ const { sendPushToUser } = require('../services/pushService');
 const FranchiseService = require('../services/franchiseService');
 const { isNameMatch } = require('../utils/nameMatcher');
 const { validateTodaJurisdiction, TODA_DIRECTORY } = require('../utils/todaDirectory');
+const {
+    acquireOperatorCapacityLock,
+    countOperatorOccupiedSlots,
+    isFranchiseOccupyingSlot,
+    isFinalizedVoluntaryCancellation,
+    findUnsettledViolationsForUnit
+} = require('../utils/disciplineHelper');
+
+const RENEWAL_STRING_LIMITS = [
+    ['orCrNo', 40, 'OR/CR number'],
+    ['crNo', 40, 'CR number'],
+    ['orNo', 40, 'OR number'],
+    ['driverLicenseNo', 30, "Driver's license number"],
+    ['driverLicenseSerialNo', 30, 'License back serial number'],
+    ['cedulaSerialNo', 30, 'Cedula serial number'],
+    ['ctcNo', 30, 'Cedula serial number'],
+    ['cedulaAddress', 150, 'Cedula address'],
+    ['placeIssued', 150, 'Place issued'],
+    ['brgyClearanceNo', 40, 'Barangay clearance number'],
+    ['brgyIssuer', 100, 'Barangay issuer']
+];
 
 const escapeRegex = (s) => String(s || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 
@@ -169,7 +190,7 @@ const ALLOWED_STATUS_TRANSITIONS = {
     'Ready for Pickup': ['For Signing', 'Active'],
     'Active': ['Active - Under Warning', 'Suspended', 'Expired', 'Revoked'],
     'Active - Under Warning': ['Active', 'Suspended', 'Expired', 'Revoked'],
-    'Suspended': ['Active - Under Warning', 'Active', 'Expired', 'Revoked'],
+    'Suspended': ['Active - Under Warning', 'Active', 'Revoked'],
     'Cancellation Requested': ['Cancelled', 'Active', 'Active - Under Warning'],
     'Cancelled': ['Pending', 'Pending for Approval'],
     'Expired': [],
@@ -317,6 +338,11 @@ const createFranchise = async (req, res) => {
                 message: `Kulang ang impormasyon ng aplikasyon (${missingFields || error.message}). Mangyaring i-type nang manual ang mga kulang na detalye sa Hakbang 2 bago mag-submit.`
             });
         }
+        if (error.statusCode >= 400 && error.statusCode < 500) {
+            return res.status(error.statusCode).json({
+                message: error.message || 'Franchise request could not be completed.'
+            });
+        }
         if (error.statusCode === 503) {
             return res.status(503).json({
                 message: error.message || 'System is currently undergoing maintenance.'
@@ -357,6 +383,7 @@ const getAllFranchises = async (req, res) => {
 
 const getMyFranchises = async (req, res) => {
     try {
+        const now = getManilaNow();
         const franchises = await Franchise.find({ 
             operator: req.user._id, 
             $or: [
@@ -364,7 +391,29 @@ const getMyFranchises = async (req, res) => {
                 { status: 'Cancelled' }
             ]
         }).populate('operator', 'name address contact');
-        res.status(200).json(franchises);
+
+        const enriched = franchises.map((doc) => {
+            const obj = doc.toObject({ virtuals: true });
+            const hasIssued = hasIssuedPermitSnapshot(obj);
+            let outcome = obj.cancellationOutcome || '';
+            if (!outcome && obj.status === 'Cancelled') {
+                if (isFinalizedVoluntaryCancellation(obj) || (obj.paymentStatus === 'Paid' && !hasIssued)) {
+                    outcome = 'voluntary_surrender';
+                } else if (obj.isArchived && obj.archivedAt && !hasIssued) {
+                    outcome = 'operator_withdrawn';
+                } else {
+                    outcome = 'staff_rejected';
+                }
+            }
+            const issued = getIssuedPermit(obj);
+            obj.cancellationOutcome = outcome;
+            obj.occupiesFleetSlot = isFranchiseOccupyingSlot(obj, now);
+            obj.canFixIssues = obj.status === 'Cancelled' && outcome === 'staff_rejected' && !hasIssued && obj.applicationType !== 'Renewal';
+            obj.canRefileRenewal = obj.status === 'Cancelled' && hasIssued && obj.paymentStatus !== 'Paid' && !['Suspended', 'Revoked'].includes(issued.status);
+            return obj;
+        });
+
+        res.status(200).json(enriched);
     } catch (error) {
         res.status(500).json({ error: 'An internal server error occurred' });
     }
@@ -394,7 +443,8 @@ const authorizeFranchiseEdit = async (req, res, next) => {
             });
         }
 
-        if (!isBploStaff && (existingFranchise.status === 'Cancelled' || existingFranchise.status === 'Rejected') && existingFranchise.paymentStatus === 'Paid') {
+        if (!isBploStaff && (existingFranchise.status === 'Cancelled' || existingFranchise.status === 'Rejected') &&
+            (existingFranchise.paymentStatus === 'Paid' || isFinalizedVoluntaryCancellation(existingFranchise))) {
             return res.status(400).json({
                 message: 'Cannot resubmit a voluntarily cancelled franchise. Please submit a new application or contact OVM Staff (LLSA I).'
             });
@@ -408,6 +458,7 @@ const authorizeFranchiseEdit = async (req, res, next) => {
 };
 
 const updateFranchise = async (req, res) => {
+    let releaseCapLock = null;
     try {
         if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
             return res.status(400).json({ message: 'Invalid franchise ID format.' });
@@ -439,16 +490,38 @@ const updateFranchise = async (req, res) => {
             }
         }
 
+        try {
+            FranchiseService.validateFranchiseStringLimits(updateData);
+            if (updateData.driverDlCodes !== undefined) {
+                updateData.driverDlCodes = FranchiseService.validateNormalizedDlCodes(updateData.driverDlCodes);
+            }
+        } catch (valErr) {
+            return res.status(valErr.statusCode || 400).json({ message: valErr.message });
+        }
+
         const wasCancelled = existingFranchise.status === 'Cancelled' || existingFranchise.status === 'Rejected';
 
         if (!isBploStaff && wasCancelled) {
             if (existingFranchise.applicationType === 'Renewal') {
                 return res.status(400).json({ message: 'Resubmit this application through the renewal form.' });
             }
-            if (existingFranchise.paymentStatus === 'Paid') {
+            if (existingFranchise.paymentStatus === 'Paid' || isFinalizedVoluntaryCancellation(existingFranchise)) {
                 return res.status(400).json({
                     message: 'Cannot resubmit a voluntarily cancelled franchise. Please submit a new application or contact OVM Staff (LLSA I).'
                 });
+            }
+            if (existingFranchise.operator) {
+                releaseCapLock = await acquireOperatorCapacityLock(existingFranchise.operator);
+                if (!releaseCapLock) {
+                    return res.status(409).json({ message: 'Another application for your account is currently being processed. Please try again shortly.' });
+                }
+                const SystemSettings = require('../models/systemSettingsModel');
+                const sysSettings = await SystemSettings.findOne().sort({ updatedAt: -1, createdAt: -1 }).lean().catch(() => null);
+                const maxUnits = Number(sysSettings?.maxUnitsPerOperator) || 2;
+                const occupied = await countOperatorOccupiedSlots(existingFranchise.operator, { excludeFranchiseId: existingFranchise._id });
+                if (occupied >= maxUnits) {
+                    return res.status(400).json({ message: `Maximum fleet limit reached (${maxUnits} units per operator).` });
+                }
             }
             // When an operator re-submits a cancelled/rejected application to fix issues,
             // transition it back to Pending and clear previous rejection remarks.
@@ -457,6 +530,7 @@ const updateFranchise = async (req, res) => {
             updateData.resubmittedAt = new Date();
             updateData.cancelReason = '';
             updateData.rejectedField = '';
+            updateData.cancellationOutcome = '';
             updateData.isArchived = false;
             updateData.archivedAt = null;
         }
@@ -584,6 +658,8 @@ const updateFranchise = async (req, res) => {
             return res.status(409).json({ message: 'Plate/Motor/Chassis number is already registered to another unit.' });
         }
         res.status(500).json({ error: 'An internal server error occurred' });
+    } finally {
+        await releaseCapLock?.();
     }
 };
 
@@ -618,6 +694,7 @@ const deleteFranchise = async (req, res) => {
 };
 
 const renewFranchise = async (req, res) => {
+    let releaseCapLock = null;
     try {
         if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
             return res.status(400).json({ message: 'Invalid franchise ID format.' });
@@ -643,11 +720,15 @@ const renewFranchise = async (req, res) => {
         }
 
         const RENEWABLE_STATUSES = ['Active', 'Active - Under Warning', 'Expired'];
-        const canRefileRenewal = existingFranchise.status === 'Cancelled' &&
+        const finalizedSurrender = isFinalizedVoluntaryCancellation(existingFranchise);
+        const canRefileRenewal = !finalizedSurrender &&
+            existingFranchise.status === 'Cancelled' &&
             hasIssuedPermitSnapshot(existingFranchise) && existingFranchise.paymentStatus !== 'Paid';
-        if (!RENEWABLE_STATUSES.includes(existingFranchise.status) && !canRefileRenewal) {
+        if (finalizedSurrender || (!RENEWABLE_STATUSES.includes(existingFranchise.status) && !canRefileRenewal)) {
             return res.status(400).json({
-                message: `Cannot renew a franchise while its status is '${existingFranchise.status}'. Only Active, Active - Under Warning, or Expired franchises are eligible for renewal.`
+                message: finalizedSurrender
+                    ? 'Cannot renew a voluntarily cancelled franchise. Please submit a new application.'
+                    : `Cannot renew a franchise while its status is '${existingFranchise.status}'. Only Active, Active - Under Warning, or Expired franchises are eligible for renewal.`
             });
         }
 
@@ -664,13 +745,27 @@ const renewFranchise = async (req, res) => {
             brgyClearanceNo, brgyClearanceDate, brgyIssuer
         } = req.body;
 
+        try {
+            FranchiseService.validateFranchiseStringLimits(req.body || {}, RENEWAL_STRING_LIMITS);
+        } catch (valErr) {
+            return res.status(valErr.statusCode || 400).json({ message: valErr.message });
+        }
+
         const now = getManilaNow();
         const issuedPermit = getIssuedPermit(existingFranchise);
         const issuedExpiry = issuedPermit.expiryDate || (!hasIssuedPermitSnapshot(existingFranchise) && existingFranchise.approvalDate
             ? computeManilaExpiryDate(existingFranchise.approvalDate, existingFranchise.applicationType === 'Renewal'
                 ? (sysSettings?.validityRenew || 1) : (sysSettings?.validityNew || 3))
             : null);
-        if (['Suspended', 'Revoked'].includes(issuedPermit.status)) {
+        const hasActiveSevereSanction = await Violation.exists({
+            franchise: existingFranchise._id,
+            status: 'Active',
+            'sanction.type': { $in: ['Suspension', 'Revocation'] }
+        });
+        const hasActiveSuspensionPeriod = Boolean(
+            existingFranchise.suspensionEndDate && new Date(existingFranchise.suspensionEndDate) > now
+        );
+        if (['Suspended', 'Revoked'].includes(issuedPermit.status) || hasActiveSevereSanction || hasActiveSuspensionPeriod) {
             return res.status(400).json({ message: 'A suspended or revoked permit cannot be renewed.' });
         }
         if (['Active', 'Active - Under Warning'].includes(issuedPermit.status)) {
@@ -756,8 +851,11 @@ const renewFranchise = async (req, res) => {
             isRenewalPending: true,
             approvalDate: isUnexpiredLivePermit ? existingFranchise.approvalDate : null,
             expiryDate: isUnexpiredLivePermit ? issuedExpiry : null,
+            manualExpiredAt: null,
+            originalExpiryDate: null,
             cancelReason: '',
             rejectedField: '',
+            cancellationOutcome: '',
             isArchived: false,
             archivedAt: null,
             applicationType: 'Renewal',
@@ -785,32 +883,68 @@ const renewFranchise = async (req, res) => {
         if (brgyIssuer) setFields.brgyIssuer = brgyIssuer;
 
         const updateOps = { $set: setFields };
-        if (
-            existingFranchise.paymentStatus === 'Paid' ||
-            existingFranchise.officialReceiptNo ||
-            existingFranchise.mtopNo ||
-            existingFranchise.approvalDate ||
-            existingFranchise.expiryDate
-        ) {
-            updateOps.$push = {
-                paymentHistory: {
-                    officialReceiptNo: existingFranchise.officialReceiptNo || '',
-                    amountPaid: existingFranchise.amountPaid || 0,
-                    paymentDate: existingFranchise.paymentDate || null,
-                    payerName: existingFranchise.payerName || '',
-                    paymentMethod: existingFranchise.paymentMethod || '',
-                    paidByCashier: existingFranchise.paidByCashier || null,
-                    cashierName: existingFranchise.cashierName || '',
-                    paymentRemarks: existingFranchise.paymentRemarks || '',
-                    approvalDate: existingFranchise.approvalDate || null,
-                    expiryDate: existingFranchise.expiryDate || null,
-                    mtopNo: existingFranchise.mtopNo || '',
-                    applicationType: existingFranchise.applicationType || 'New',
-                    previousStatus: existingFranchise.status || 'Expired',
-                    dateApplied: existingFranchise.dateApplied || existingFranchise.createdAt || null,
-                    archivedAt: new Date()
-                }
-            };
+        const shouldArchiveTerm =
+            existingFranchise.status !== 'Cancelled' &&
+            (
+                existingFranchise.paymentStatus === 'Paid' ||
+                existingFranchise.officialReceiptNo ||
+                existingFranchise.approvalDate ||
+                existingFranchise.expiryDate
+            );
+        if (shouldArchiveTerm) {
+            const priorOr = existingFranchise.officialReceiptNo || '';
+            const priorApprovalIso = existingFranchise.approvalDate ? new Date(existingFranchise.approvalDate).toISOString() : '';
+            const priorExpiryIso = existingFranchise.expiryDate ? new Date(existingFranchise.expiryDate).toISOString() : '';
+            const termId = `${existingFranchise.mtopNo || 'TERM'}:${priorOr}:${priorApprovalIso}:${priorExpiryIso}`;
+            const existingHistory = Array.isArray(existingFranchise.paymentHistory) ? existingFranchise.paymentHistory : [];
+            const alreadyArchived = existingHistory.some((h) =>
+                (h.termId && h.termId === termId) ||
+                (priorOr && h.officialReceiptNo === priorOr) ||
+                (priorApprovalIso && h.approvalDate && new Date(h.approvalDate).toISOString() === priorApprovalIso)
+            );
+            if (!alreadyArchived) {
+                updateOps.$push = {
+                    paymentHistory: {
+                        termId,
+                        officialReceiptNo: priorOr,
+                        amountPaid: existingFranchise.amountPaid || 0,
+                        paymentDate: existingFranchise.paymentDate || null,
+                        payerName: existingFranchise.payerName || '',
+                        paymentMethod: existingFranchise.paymentMethod || '',
+                        paidByCashier: existingFranchise.paidByCashier || null,
+                        cashierName: existingFranchise.cashierName || '',
+                        paymentRemarks: existingFranchise.paymentRemarks || '',
+                        approvalDate: existingFranchise.approvalDate || null,
+                        expiryDate: existingFranchise.expiryDate || null,
+                        mtopNo: existingFranchise.mtopNo || '',
+                        applicationType: existingFranchise.applicationType || 'New',
+                        previousStatus: existingFranchise.status || 'Expired',
+                        todaName: existingFranchise.todaName || '',
+                        address: existingFranchise.address || '',
+                        zone: existingFranchise.zone || '',
+                        plateNo: existingFranchise.plateNo || '',
+                        dateApplied: existingFranchise.dateApplied || existingFranchise.createdAt || null,
+                        archivedAt: new Date()
+                    }
+                };
+            }
+        }
+
+        if (existingFranchise.operator) {
+            releaseCapLock = await acquireOperatorCapacityLock(existingFranchise.operator);
+            if (!releaseCapLock) {
+                return res.status(409).json({
+                    message: 'Another application for your account is currently being processed. Please try again shortly.'
+                });
+            }
+            const maxUnits = Number(sysSettings?.maxUnitsPerOperator) || 2;
+            const occupied = await countOperatorOccupiedSlots(existingFranchise.operator, {
+                excludeFranchiseId: existingFranchise._id,
+                now
+            });
+            if (occupied >= maxUnits) {
+                return res.status(400).json({ message: `Maximum fleet limit reached (${maxUnits} units per operator).` });
+            }
         }
 
         const atomicFilter = {
@@ -863,10 +997,13 @@ const renewFranchise = async (req, res) => {
         res.status(200).json(updatedFranchise);
     } catch (error) {
         res.status(500).json({ error: 'An internal server error occurred' });
+    } finally {
+        await releaseCapLock?.();
     }
 };
 
 const updateFranchiseStatus = async (req, res) => {
+    let releaseCapLock = null;
     try {
         if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
             return res.status(400).json({ message: 'Invalid franchise ID format.' });
@@ -912,10 +1049,10 @@ const updateFranchiseStatus = async (req, res) => {
             });
         }
 
-        // Do not reopen a paid voluntarily-cancelled franchise via status endpoint
-        if (previousStatus === 'Cancelled' && existingFranchise.paymentStatus === 'Paid') {
+        // Do not reopen a paid or finalized voluntarily-cancelled franchise via status endpoint
+        if (previousStatus === 'Cancelled' && (existingFranchise.paymentStatus === 'Paid' || isFinalizedVoluntaryCancellation(existingFranchise))) {
             return res.status(400).json({
-                message: 'Cannot transition a paid cancelled franchise back into the active review pipeline.'
+                message: 'Cannot transition a paid or finalized cancelled franchise back into the active review pipeline.'
             });
         }
         if (previousStatus === 'Cancelled' && existingFranchise.applicationType === 'Renewal') {
@@ -964,6 +1101,10 @@ const updateFranchiseStatus = async (req, res) => {
             rejectedField: targetField
         };
 
+        if (status === 'Cancelled' && previousStatus !== 'Cancellation Requested') {
+            updateData.cancellationOutcome = 'staff_rejected';
+        }
+
         if (existingFranchise.applicationType === 'Renewal') {
             if (status === 'Cancelled') updateData.isRenewalPending = false;
         }
@@ -971,10 +1112,12 @@ const updateFranchiseStatus = async (req, res) => {
         if (existingFranchise.status === 'Cancellation Requested' && status === 'Cancelled') {
             updateData.isArchived = true;
             updateData.archivedAt = new Date();
+            updateData.cancellationOutcome = 'voluntary_surrender';
+            updateData['cancellationDetails.decision'] = 'finalized';
             updateData['cancellationDetails.reviewedBy'] = req.user._id;
             updateData['cancellationDetails.reviewedAt'] = new Date();
             if (req.body.staffNotes) {
-                updateData['cancellationDetails.staffNotes'] = req.body.staffNotes;
+                updateData['cancellationDetails.staffNotes'] = String(req.body.staffNotes).trim().slice(0, 300);
             }
         }
 
@@ -982,8 +1125,22 @@ const updateFranchiseStatus = async (req, res) => {
         // The operator must see rejection remarks to fix and resubmit their application,
         // and admin must see them in the Rejected queue. Only explicit archiving moves them.
         if (existingFranchise.status === 'Cancelled' && status !== 'Cancelled') {
+            if (existingFranchise.operator) {
+                releaseCapLock = await acquireOperatorCapacityLock(existingFranchise.operator);
+                if (!releaseCapLock) {
+                    return res.status(409).json({ message: 'Another application for this account is currently being processed. Please try again shortly.' });
+                }
+                const SystemSettings = require('../models/systemSettingsModel');
+                const sysSettings = await SystemSettings.findOne().sort({ updatedAt: -1, createdAt: -1 }).lean().catch(() => null);
+                const maxUnits = Number(sysSettings?.maxUnitsPerOperator) || 2;
+                const occupied = await countOperatorOccupiedSlots(existingFranchise.operator, { excludeFranchiseId: existingFranchise._id });
+                if (occupied >= maxUnits) {
+                    return res.status(400).json({ message: `Maximum fleet limit reached (${maxUnits} units per operator).` });
+                }
+            }
             updateData.isArchived = false;
             updateData.archivedAt = null;
+            updateData.cancellationOutcome = '';
         }
 
         if (['For Payment', 'For Signing', 'Ready for Pickup', 'Active'].includes(status) && !existingFranchise.approvalDate) {
@@ -995,9 +1152,31 @@ const updateFranchiseStatus = async (req, res) => {
             if (hasIssuedPermitSnapshot(existingFranchise) && ['Suspended', 'Revoked'].includes(issuedPermit.status)) {
                 return res.status(400).json({ message: 'A suspended or revoked permit cannot be released.' });
             }
-            if (hasIssuedPermitSnapshot(existingFranchise) && (issuedPermit.status === 'Active - Under Warning' ||
-                (issuedPermit.status === 'Expired' && existingFranchise.activeViolationCount > 0))) {
+            const unsettledUnitViolations = await findUnsettledViolationsForUnit({
+                plateNo: existingFranchise.plateNo,
+                motorNo: existingFranchise.motorNo,
+                chassisNo: existingFranchise.chassisNo,
+                operatorId: existingFranchise.operator,
+                franchiseId: existingFranchise._id
+            });
+            const blockingSanction = unsettledUnitViolations.find(v =>
+                ['Suspension', 'Revocation'].includes(v.sanction?.type)
+            );
+            if (blockingSanction) {
+                return res.status(400).json({ message: 'Cannot release permit while an unsettled suspension or revocation exists for this unit.' });
+            }
+            if (
+                (hasIssuedPermitSnapshot(existingFranchise) && (issuedPermit.status === 'Active - Under Warning' ||
+                    (issuedPermit.status === 'Expired' && existingFranchise.activeViolationCount > 0))) ||
+                unsettledUnitViolations.length > 0 ||
+                Number(existingFranchise.activeViolationCount || 0) > 0
+            ) {
                 updateData.status = 'Active - Under Warning';
+                updateData.activeViolationCount = Math.max(
+                    unsettledUnitViolations.length,
+                    Number(existingFranchise.activeViolationCount || 0)
+                );
+                updateData.currentSanction = 'Warning (Active)';
             }
             const SystemSettings = require('../models/systemSettingsModel');
             const sysSettings = await SystemSettings.findOne().sort({ updatedAt: -1, createdAt: -1 }).lean().catch(() => null);
@@ -1009,13 +1188,16 @@ const updateFranchiseStatus = async (req, res) => {
             }
             const baseApproval = updateData.approvalDate || existingFranchise.approvalDate || new Date();
             updateData.expiryDate = computeManilaExpiryDate(baseApproval, validityYears);
+            updateData.manualExpiredAt = null;
+            updateData.originalExpiryDate = null;
             updateData.isRenewalPending = false;
             updateData.previousStatus = '';
             updateData.previousExpiryDate = null;
         }
 
         if (status === 'Expired') {
-            updateData.expiryDate = new Date(getManilaNow().getTime() - 24 * 60 * 60 * 1000);
+            updateData.manualExpiredAt = getManilaNow();
+            updateData.originalExpiryDate = existingFranchise.originalExpiryDate || existingFranchise.expiryDate || null;
         }
 
         const needsMtop = ['For Signing', 'Ready for Pickup', 'Active'].includes(status) && !existingFranchise.mtopNo;
@@ -1125,6 +1307,8 @@ const updateFranchiseStatus = async (req, res) => {
         res.status(200).json(updatedFranchise);
     } catch (error) {
         res.status(500).json({ error: 'An internal server error occurred' });
+    } finally {
+        await releaseCapLock?.();
     }
 };
 
@@ -1155,6 +1339,7 @@ const cancelMyFranchise = async (req, res) => {
         }, { $set: {
             status: 'Cancelled',
             cancelReason: reason,
+            cancellationOutcome: 'operator_withdrawn',
             isRenewalPending: false,
             isArchived: !preserveIssuedPermit,
             archivedAt: preserveIssuedPermit ? null : new Date()
@@ -1204,11 +1389,24 @@ const requestFranchiseCancellation = async (req, res) => {
             });
         }
 
-        const { reason, customReason, remarks, letterText } = req.body;
-        const cleanLetterText = typeof letterText === 'string' ? letterText.trim().slice(0, 3000) : '';
-        if (!reason || !reason.trim()) {
+        const { reason, customReason, remarks, letterText, letterUrl: rawBodyLetterUrl } = req.body || {};
+        if (typeof reason !== 'string' || !reason.trim()) {
             return res.status(400).json({ message: 'A valid reason for cancellation is required.' });
         }
+        if ((customReason != null && typeof customReason !== 'string') ||
+            (remarks != null && typeof remarks !== 'string') ||
+            (letterText != null && typeof letterText !== 'string') ||
+            (rawBodyLetterUrl != null && typeof rawBodyLetterUrl !== 'string')) {
+            return res.status(400).json({ message: 'Invalid cancellation request field type.' });
+        }
+
+        const cleanReason = reason.trim().slice(0, 120);
+        const cleanCustomReason = typeof customReason === 'string' ? customReason.trim().slice(0, 120) : '';
+        if (cleanReason === 'Other' && !cleanCustomReason) {
+            return res.status(400).json({ message: 'Please specify your custom reason when selecting Other.' });
+        }
+        const cleanLetterText = typeof letterText === 'string' ? letterText.trim().slice(0, 3000) : '';
+        const cleanBodyUrl = typeof rawBodyLetterUrl === 'string' ? rawBodyLetterUrl.trim() : '';
 
         const files = req.files || {};
         let letterUrl = '';
@@ -1216,28 +1414,33 @@ const requestFranchiseCancellation = async (req, res) => {
             letterUrl = files.cancellationLetter[0].path || files.cancellationLetter[0].secure_url || '';
         } else if (files.letter && files.letter[0]) {
             letterUrl = files.letter[0].path || files.letter[0].secure_url || '';
-        } else if (req.body.letterUrl) {
+        } else if (cleanBodyUrl) {
             const existingAllowedUrls = collectExistingDocumentUrls(franchise);
-            if (!FranchiseService.isTrustedDocumentUrl(req.body.letterUrl, existingAllowedUrls)) {
+            if (!FranchiseService.isTrustedDocumentUrl(cleanBodyUrl, existingAllowedUrls)) {
                 return res.status(400).json({ message: 'Invalid cancellation letter URL. Only uploaded files or trusted server asset URLs are allowed.' });
             }
-            letterUrl = req.body.letterUrl;
+            letterUrl = cleanBodyUrl;
         }
 
         if (!letterUrl && !cleanLetterText) {
             return res.status(400).json({ message: 'Please type your formal cancellation letter or upload a signed cancellation letter image/PDF.' });
         }
+        if (!letterUrl && cleanLetterText.length < 30) {
+            return res.status(400).json({ message: 'Formal typed cancellation letter must be at least 30 characters.' });
+        }
 
-        const effectiveReason = reason === 'Other' && customReason ? customReason.trim().slice(0, 120) : reason.trim().slice(0, 120);
-        const cleanRemarks = (remarks || '').trim().slice(0, 500);
+        const effectiveReason = cleanReason === 'Other' ? cleanCustomReason : cleanReason;
+        const cleanRemarks = typeof remarks === 'string' ? remarks.trim().slice(0, 500) : '';
         const fullReason = cleanRemarks ? `${effectiveReason} - ${cleanRemarks}` : effectiveReason;
 
         const cancellationDetails = {
-            reason: reason.trim().slice(0, 120),
-            customReason: (customReason || '').trim().slice(0, 120),
+            reason: cleanReason,
+            customReason: cleanCustomReason,
             remarks: cleanRemarks,
             letterUrl: letterUrl || '',
             letterText: cleanLetterText,
+            priorStatus: franchise.status,
+            decision: 'pending',
             requestedAt: new Date(),
             reviewedBy: null,
             reviewedAt: null,
@@ -1252,11 +1455,15 @@ const requestFranchiseCancellation = async (req, res) => {
             updatedAt: franchise.updatedAt ?? null,
             isArchived: { $ne: true }
         }, { $set: {
-            status: 'Cancellation Requested', cancelReason: fullReason, evidenceUrl: letterUrl, cancellationDetails
+            status: 'Cancellation Requested',
+            cancelReason: fullReason,
+            cancellationOutcome: '',
+            evidenceUrl: letterUrl,
+            cancellationDetails
         } }, { returnDocument: 'after' });
         if (!franchise) return res.status(409).json({ message: 'The franchise changed. Refresh before requesting cancellation.' });
 
-        // Notify BPLO staff members
+        // Notify OVM staff members
         try {
             const staffUsers = await User.find({ role: { $in: ['bplo_staff', 'admin', 'administrator'] } });
             for (const staff of staffUsers) {
@@ -1295,7 +1502,7 @@ const requestFranchiseCancellation = async (req, res) => {
                 plateNo: franchise.plateNo,
                 fullName: franchise.fullName,
                 reason: effectiveReason,
-                remarks: remarks || '',
+                remarks: cleanRemarks,
                 letterUrl
             }
         });
@@ -1320,44 +1527,86 @@ const processFranchiseCancellation = async (req, res) => {
         if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
             return res.status(400).json({ message: 'Invalid franchise ID format.' });
         }
-        const { action, staffNotes, rejectionReason } = req.body;
+        const { action, staffNotes, rejectionReason } = req.body || {};
+        if (typeof action !== 'string') {
+            return res.status(400).json({ message: "Invalid action. Must be 'finalize' or 'reject'." });
+        }
+        if ((staffNotes != null && typeof staffNotes !== 'string') ||
+            (rejectionReason != null && typeof rejectionReason !== 'string')) {
+            return res.status(400).json({ message: 'Invalid review notes or rejection reason format.' });
+        }
+        const cleanStaffNotes = typeof staffNotes === 'string' ? staffNotes.trim() : '';
+        const cleanRejectionReason = typeof rejectionReason === 'string' ? rejectionReason.trim() : '';
+        if (cleanStaffNotes.length > 300) {
+            return res.status(400).json({ message: 'Staff notes must not exceed 300 characters.' });
+        }
+        if (cleanRejectionReason.length > 300) {
+            return res.status(400).json({ message: 'Rejection reason must not exceed 300 characters.' });
+        }
+
         const franchise = await Franchise.findById(req.params.id).populate('operator', 'name contact');
         if (!franchise) return res.status(404).json({ message: 'Franchise not found' });
 
         if (franchise.status !== 'Cancellation Requested') {
-            return res.status(400).json({ 
-                message: `Invalid action: Current status is '${franchise.status}'. Only franchises with 'Cancellation Requested' can be processed.` 
+            if (['finalized', 'rejected'].includes(franchise.cancellationDetails?.decision)) {
+                return res.status(409).json({
+                    message: 'Conflict: This cancellation request has already been processed or modified concurrently.'
+                });
+            }
+            return res.status(400).json({
+                message: `Invalid action: Current status is '${franchise.status}'. Only franchises with 'Cancellation Requested' can be processed.`
             });
         }
 
+        const now = new Date();
+        const atomicFilter = {
+            _id: franchise._id,
+            status: 'Cancellation Requested',
+            updatedAt: franchise.updatedAt ?? null,
+            isArchived: { $ne: true }
+        };
+
         if (action === 'finalize' || action === 'approve') {
-            // Finalize cancellation without cashier payment routing
-            franchise.status = 'Cancelled';
             const reasonDesc = franchise.cancellationDetails?.reason || franchise.cancelReason || 'Voluntary Surrender';
-            franchise.cancelReason = franchise.cancelReason || `Voluntary Cancellation: ${reasonDesc}`;
-            franchise.cancellationDetails = franchise.cancellationDetails || {};
-            franchise.cancellationDetails.reviewedBy = req.user?._id;
-            franchise.cancellationDetails.reviewedAt = new Date();
-            franchise.cancellationDetails.staffNotes = (staffNotes || '').trim();
-            franchise.isArchived = true;
-            franchise.archivedAt = new Date();
+            const finalCancelReason = franchise.cancelReason || `Voluntary Cancellation: ${reasonDesc}`;
+            const updated = await Franchise.findOneAndUpdate(
+                atomicFilter,
+                {
+                    $set: {
+                        status: 'Cancelled',
+                        cancelReason: finalCancelReason,
+                        cancellationOutcome: 'voluntary_surrender',
+                        isArchived: true,
+                        archivedAt: now,
+                        'cancellationDetails.decision': 'finalized',
+                        'cancellationDetails.reviewedBy': req.user?._id,
+                        'cancellationDetails.reviewedAt': now,
+                        'cancellationDetails.staffNotes': cleanStaffNotes
+                    }
+                },
+                { returnDocument: 'after' }
+            ).populate('operator', 'name contact');
 
-            await franchise.save();
+            if (!updated) {
+                return res.status(409).json({
+                    message: 'Conflict: This cancellation request has already been processed or modified concurrently.'
+                });
+            }
 
-            // Notify operator
-            if (franchise.operator) {
-                const opId = franchise.operator._id || franchise.operator;
+            // Notify operator strictly after winning write
+            if (updated.operator) {
+                const opId = updated.operator._id || updated.operator;
                 const notif = await Notification.create({
                     recipient: opId,
                     type: 'status_change',
                     title: 'Franchise Cancelled',
-                    message: `Your voluntary franchise cancellation request for ${franchise.plateNo} has been finalized by OVM Staff (LLSA I). Your franchise is now officially cancelled.`,
-                    relatedFranchise: franchise._id
+                    message: `Your voluntary franchise cancellation request for ${updated.plateNo} has been finalized by OVM Staff (LLSA I). Your franchise is now officially cancelled.`,
+                    relatedFranchise: updated._id
                 });
                 emitToUser(String(opId), 'notification', notif);
                 sendPushToUser(opId, {
                     title: 'Franchise Cancelled',
-                    message: `Your voluntary cancellation for ${franchise.plateNo} has been finalized.`,
+                    message: `Your voluntary cancellation for ${updated.plateNo} has been finalized.`,
                     url: '/operator-dashboard',
                     type: 'status_change'
                 }).catch(() => {});
@@ -1368,46 +1617,66 @@ const processFranchiseCancellation = async (req, res) => {
                 targetType: 'Franchise',
                 targetId: req.params.id,
                 details: {
-                    plateNo: franchise.plateNo,
-                    fullName: franchise.fullName,
-                    reason: franchise.cancelReason,
-                    staffNotes: staffNotes || ''
+                    plateNo: updated.plateNo,
+                    fullName: updated.fullName,
+                    reason: updated.cancelReason,
+                    staffNotes: cleanStaffNotes
                 }
             });
 
             return res.status(200).json({
                 message: 'Franchise cancellation successfully finalized.',
-                franchise
+                franchise: updated
             });
         } else if (action === 'reject') {
-            if (!rejectionReason || !rejectionReason.trim()) {
+            if (!cleanRejectionReason) {
                 return res.status(400).json({ message: 'A rejection reason is required to reject a cancellation request.' });
             }
 
-            // Restore franchise to Active
-            franchise.status = 'Active';
-            franchise.cancellationDetails = franchise.cancellationDetails || {};
-            franchise.cancellationDetails.reviewedBy = req.user?._id;
-            franchise.cancellationDetails.reviewedAt = new Date();
-            franchise.cancellationDetails.rejectionReason = rejectionReason.trim();
-            franchise.cancellationDetails.staffNotes = (staffNotes || '').trim();
+            const restoredStatus =
+                franchise.cancellationDetails?.priorStatus === 'Active - Under Warning' ||
+                Number(franchise.activeViolationCount || 0) > 0
+                    ? 'Active - Under Warning'
+                    : 'Active';
 
-            await franchise.save();
+            const updated = await Franchise.findOneAndUpdate(
+                atomicFilter,
+                {
+                    $set: {
+                        status: restoredStatus,
+                        cancellationOutcome: '',
+                        isArchived: false,
+                        archivedAt: null,
+                        'cancellationDetails.decision': 'rejected',
+                        'cancellationDetails.reviewedBy': req.user?._id,
+                        'cancellationDetails.reviewedAt': now,
+                        'cancellationDetails.rejectionReason': cleanRejectionReason,
+                        'cancellationDetails.staffNotes': cleanStaffNotes
+                    }
+                },
+                { returnDocument: 'after' }
+            ).populate('operator', 'name contact');
 
-            // Notify operator
-            if (franchise.operator) {
-                const opId = franchise.operator._id || franchise.operator;
+            if (!updated) {
+                return res.status(409).json({
+                    message: 'Conflict: This cancellation request has already been processed or modified concurrently.'
+                });
+            }
+
+            // Notify operator strictly after winning write
+            if (updated.operator) {
+                const opId = updated.operator._id || updated.operator;
                 const notif = await Notification.create({
                     recipient: opId,
                     type: 'status_change',
                     title: 'Cancellation Request Rejected',
-                    message: `Your cancellation request for ${franchise.plateNo} was rejected by OVM: "${rejectionReason.trim()}". Your franchise remains Active.`,
-                    relatedFranchise: franchise._id
+                    message: `Your cancellation request for ${updated.plateNo} was rejected by OVM: "${cleanRejectionReason}". Your franchise remains ${restoredStatus}.`,
+                    relatedFranchise: updated._id
                 });
                 emitToUser(String(opId), 'notification', notif);
                 sendPushToUser(opId, {
                     title: 'Cancellation Request Rejected',
-                    message: `Your cancellation request for ${franchise.plateNo} was rejected. Franchise remains Active.`,
+                    message: `Your cancellation request for ${updated.plateNo} was rejected. Franchise remains ${restoredStatus}.`,
                     url: '/operator-dashboard',
                     type: 'status_change'
                 }).catch(() => {});
@@ -1418,16 +1687,17 @@ const processFranchiseCancellation = async (req, res) => {
                 targetType: 'Franchise',
                 targetId: req.params.id,
                 details: {
-                    plateNo: franchise.plateNo,
-                    fullName: franchise.fullName,
-                    rejectionReason: rejectionReason.trim(),
-                    staffNotes: staffNotes || ''
+                    plateNo: updated.plateNo,
+                    fullName: updated.fullName,
+                    rejectionReason: cleanRejectionReason,
+                    staffNotes: cleanStaffNotes,
+                    restoredStatus
                 }
             });
 
             return res.status(200).json({
-                message: 'Cancellation request rejected. Franchise restored to Active.',
-                franchise
+                message: `Cancellation request rejected. Franchise restored to ${restoredStatus}.`,
+                franchise: updated
             });
         } else {
             return res.status(400).json({ message: "Invalid action. Must be 'finalize' or 'reject'." });
@@ -1440,6 +1710,7 @@ const processFranchiseCancellation = async (req, res) => {
 
 // Toggle franchise archive status
 const toggleArchiveFranchise = async (req, res) => {
+    let releaseCapLock = null;
     try {
         if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
             return res.status(400).json({ message: 'Invalid franchise ID format.' });
@@ -1448,20 +1719,44 @@ const toggleArchiveFranchise = async (req, res) => {
         if (!franchise) return res.status(404).json({ message: 'Franchise not found' });
 
         const targetState = req.body.isArchived !== undefined ? req.body.isArchived : !franchise.isArchived;
+        if (!targetState && isFinalizedVoluntaryCancellation(franchise)) {
+            return res.status(400).json({
+                message: 'A finalized voluntary franchise cancellation cannot be restored to the active masterlist.'
+            });
+        }
         const issued = getIssuedPermit(franchise);
         if (targetState && hasIssuedPermitSnapshot(franchise) && CURRENT_TERM_STATUSES.includes(issued.status) &&
             issued.expiryDate && !isExpired(issued.expiryDate)) {
             return res.status(400).json({ message: 'The renewal record still holds a current issued permit.' });
         }
+
+        if (!targetState && franchise.operator && isFranchiseOccupyingSlot({ ...franchise.toObject(), isArchived: false })) {
+            releaseCapLock = await acquireOperatorCapacityLock(franchise.operator);
+            if (!releaseCapLock) {
+                return res.status(409).json({
+                    message: 'Another application for this account is currently being processed. Please try again shortly.'
+                });
+            }
+            const SystemSettings = require('../models/systemSettingsModel');
+            const sysSettings = await SystemSettings.findOne().sort({ updatedAt: -1, createdAt: -1 }).lean().catch(() => null);
+            const maxUnits = Number(sysSettings?.maxUnitsPerOperator) || 2;
+            const occupied = await countOperatorOccupiedSlots(franchise.operator, { excludeFranchiseId: franchise._id });
+            if (occupied >= maxUnits) {
+                return res.status(400).json({
+                    message: `Cannot restore record: maximum fleet limit reached (${maxUnits} units per operator).`
+                });
+            }
+        }
+
         const newArchiveDate = targetState ? Date.now() : null;
-        
+
         const updatedFranchise = await Franchise.findOneAndUpdate(
             { _id: franchise._id, updatedAt: franchise.updatedAt ?? null, paymentSettlement: { $exists: false } },
             {
                 isArchived: targetState,
                 archivedAt: newArchiveDate
             },
-            { new: true, runValidators: false } 
+            { returnDocument: 'after', runValidators: false }
         );
         if (!updatedFranchise) return res.status(409).json({ message: 'The franchise changed. Refresh and try again.' });
 
@@ -1475,12 +1770,20 @@ const toggleArchiveFranchise = async (req, res) => {
             }
         });
 
-        res.status(200).json({ 
-            message: `Franchise successfully ${updatedFranchise.isArchived ? 'archived' : 'restored'}.`, 
-            franchise: updatedFranchise 
+        res.status(200).json({
+            message: `Franchise successfully ${updatedFranchise.isArchived ? 'archived' : 'restored'}.`,
+            franchise: updatedFranchise
         });
     } catch (error) {
+        if (error && error.code === 11000) {
+            const conflictKey = Object.keys(error.keyPattern || {})[0] || 'identifier';
+            return res.status(409).json({
+                message: `Cannot restore record: its ${conflictKey} is already in use by an active franchise.`
+            });
+        }
         res.status(500).json({ error: 'An internal server error occurred' });
+    } finally {
+        await releaseCapLock?.();
     }
 };
 
@@ -2099,8 +2402,8 @@ const processCashierPayment = async (req, res) => {
             return res.status(400).json({ message: 'Official Receipt (OR) Number is required.' });
         }
         const cleanOrNo = officialReceiptNo.trim().toUpperCase();
-        if (cleanOrNo.length > 25) {
-            return res.status(400).json({ message: 'Official Receipt (OR) Number must not exceed 25 characters.' });
+        if (cleanOrNo.length > 20 || !/^[A-Z0-9-]+$/.test(cleanOrNo)) {
+            return res.status(400).json({ message: 'Official Receipt (OR) Number must be 1–20 alphanumeric or hyphen characters.' });
         }
 
         let existing = await Franchise.findById(req.params.id).select('+paymentSettlement');
@@ -2119,9 +2422,18 @@ const processCashierPayment = async (req, res) => {
         }
 
         const hasAmount = amountPaid !== undefined && amountPaid !== null && amountPaid !== '';
-        const submittedAmount = hasAmount ? Number(amountPaid) : undefined;
-        if (hasAmount && (!Number.isFinite(submittedAmount) || submittedAmount <= 0)) {
-            return res.status(400).json({ message: 'Valid payment amount is required.' });
+        let submittedAmount;
+        if (hasAmount) {
+            if (typeof amountPaid === 'boolean' || (typeof amountPaid !== 'number' && typeof amountPaid !== 'string')) {
+                return res.status(400).json({ message: 'Valid payment amount is required.' });
+            }
+            if (typeof amountPaid === 'string' && !/^\d+(\.\d{1,2})?$/.test(amountPaid.trim())) {
+                return res.status(400).json({ message: 'Valid payment amount is required.' });
+            }
+            submittedAmount = Number(amountPaid);
+            if (!Number.isFinite(submittedAmount) || submittedAmount <= 0 || submittedAmount > 100000) {
+                return res.status(400).json({ message: 'Valid payment amount is required.' });
+            }
         }
         const resolvedMethod = paymentMethod ? String(paymentMethod).trim() : 'Cash';
         if (!['Cash', 'GCash', 'Landbank'].includes(resolvedMethod)) {
@@ -2130,8 +2442,17 @@ const processCashierPayment = async (req, res) => {
         if (payerName != null && typeof payerName !== 'string') {
             return res.status(400).json({ message: 'Invalid payer name.' });
         }
-        const normalizedPayer = payerName?.trim().slice(0, 100).toUpperCase();
-        const cleanPaymentRemarks = typeof paymentRemarks === 'string' ? paymentRemarks.trim().slice(0, 300) : '';
+        if (typeof payerName === 'string' && payerName.trim().length > 80) {
+            return res.status(400).json({ message: 'Payer name must not exceed 80 characters.' });
+        }
+        if (paymentRemarks != null && typeof paymentRemarks !== 'string') {
+            return res.status(400).json({ message: 'Invalid payment remarks.' });
+        }
+        if (typeof paymentRemarks === 'string' && paymentRemarks.trim().length > 200) {
+            return res.status(400).json({ message: 'Payment remarks must not exceed 200 characters.' });
+        }
+        const normalizedPayer = payerName?.trim().toUpperCase();
+        const cleanPaymentRemarks = typeof paymentRemarks === 'string' ? paymentRemarks.trim() : '';
         const payable = { _id: existing._id, ...PAYABLE_PREDICATE };
         const receiptConflict = () => res.status(409).json({
             message: `Official Receipt Number '${cleanOrNo}' is already recorded on another franchise or historical payment.`
@@ -2498,7 +2819,20 @@ module.exports = {
                 res.setHeader('Content-Disposition', `attachment; filename="MTOP_APPLICATION_${safePlate}.xlsx"`);
                 return res.send(buf);
             } else if (type === 'cancellation') {
-                const buf = generateCancellationDocx(franchise);
+                const finalized = isFinalizedVoluntaryCancellation(franchise);
+                const wantsDraft = String(req.query.draft || '').toLowerCase() === 'true';
+                if (!finalized) {
+                    if (!(isStaff && franchise.status === 'Cancellation Requested' && wantsDraft)) {
+                        return res.status(400).json({
+                            error: 'Official cancellation letter can only be generated after OVM finalizes the voluntary cancellation.'
+                        });
+                    }
+                    const draftBuf = generateCancellationDocx(franchise, { isDraft: true });
+                    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+                    res.setHeader('Content-Disposition', `attachment; filename="DRAFT_CANCELLATION_${safePlate}.docx"`);
+                    return res.send(draftBuf);
+                }
+                const buf = generateCancellationDocx(franchise, { isDraft: false });
                 res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
                 res.setHeader('Content-Disposition', `attachment; filename="CANCELLATION_OF_FRANCHISE_${safePlate}.docx"`);
                 return res.send(buf);
@@ -2523,15 +2857,21 @@ module.exports = {
             const type = String(req.query.type || req.body?.type || 'application').toLowerCase();
             const data = req.body || {};
             const safePlate = String(data.plateNumber || data.mtopNumber || 'DRAFT').replace(/[^A-Za-z0-9_-]/g, '_');
+            const role = String(req.user?.role || '').toLowerCase().trim().replace(/[\s-]+/g, '_');
             if (type === 'mtop') {
                 const buf = generateMtopFranchiseXlsx(data);
                 res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
                 res.setHeader('Content-Disposition', `attachment; filename="MTOP_FRANCHISE_${safePlate}.xlsx"`);
                 return res.send(buf);
             } else if (type === 'cancellation') {
-                const buf = generateCancellationDocx(data);
+                if (role !== 'bplo_staff') {
+                    return res.status(403).json({
+                        error: 'Operators cannot generate unapproved cancellation letter previews.'
+                    });
+                }
+                const buf = generateCancellationDocx(data, { isDraft: true });
                 res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-                res.setHeader('Content-Disposition', `attachment; filename="CANCELLATION_OF_FRANCHISE_${safePlate}.docx"`);
+                res.setHeader('Content-Disposition', `attachment; filename="DRAFT_CANCELLATION_${safePlate}.docx"`);
                 return res.send(buf);
             } else {
                 const buf = generateMtopApplicationXlsx(data);

@@ -269,7 +269,7 @@ const FranchiseMasterlist = () => {
       if (response.ok) {
         const updatedRecord = await response.json().catch(() => null);
         if (isExpireAction) {
-          showToast('Franchise marked as Expired & operator notified via SMS/In-App!');
+          showToast('Franchise marked as Expired & operator notified via In-App/Push (plus simulated SMS log)!');
           if (selectedFranchise && selectedFranchise._id === confirmModal.data.id) {
             setSelectedFranchise(updatedRecord && updatedRecord._id ? updatedRecord : { ...selectedFranchise, status: 'Expired' });
           }
@@ -628,7 +628,7 @@ const FranchiseMasterlist = () => {
                   onClick={() => setCancellationLetterUnit(selectedFranchise)}
                   className="flex items-center gap-1.5 px-3.5 py-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-semibold rounded-lg text-xs transition-colors cursor-pointer"
                 >
-                  <Printer size={14} /> Cancellation Letter
+                  <Printer size={14} /> {selectedFranchise.status === 'Cancellation Requested' ? 'Draft Cancel Letter' : 'Cancellation Letter'}
                 </button>
               )}
               <button 
@@ -1065,8 +1065,8 @@ const FranchiseMasterlist = () => {
                                     <FileText size={13} className="text-[#9E2A2B] dark:text-[#D4AF37]" /> Cancel Letter
                                   </button>
                                 )}
-                                {!f.isHistoricalTerm && (
-                                  <button 
+                                {!f.isHistoricalTerm && f.cancellationOutcome !== 'voluntary_surrender' && !(f.status === 'Cancelled' && Boolean(f.cancellationDetails?.reason)) && (
+                                  <button
                                     type="button"
                                     onClick={() => initiateToggleArchive(f._id, displayName, true)}
                                     className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all border bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border-[#E4E1DC] dark:border-[#2E2A27] cursor-pointer"
@@ -1162,20 +1162,22 @@ const FranchiseMasterlist = () => {
                                 className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#E4E1DC]/70 dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] transition-all cursor-pointer"
                                 title="Print Official OVM Voluntary Cancellation Letter"
                               >
-                                <FileText size={13} className="text-[#9E2A2B] dark:text-[#D4AF37]" /> Cancel Letter
+                                <FileText size={13} className="text-[#9E2A2B] dark:text-[#D4AF37]" /> {f.status === 'Cancellation Requested' ? 'Draft Cancel Letter' : 'Cancel Letter'}
                               </button>
                             )}
 
                             {/* ARCHIVE / RESTORE LOGIC */}
                             {activeTab === 'archived' ? (
-                              <button 
-                                type="button"
-                                onClick={() => initiateToggleArchive(f._id, displayName, true)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all border bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border-[#E4E1DC] dark:border-[#2E2A27] cursor-pointer"
-                                title="Restore to Masterlist"
-                              >
-                                <ArchiveRestore size={13} /> Restore
-                              </button>
+                              !f.isHistoricalTerm && f.cancellationOutcome !== 'voluntary_surrender' && !(f.status === 'Cancelled' && Boolean(f.cancellationDetails?.reason)) && (
+                                <button
+                                  type="button"
+                                  onClick={() => initiateToggleArchive(f._id, displayName, true)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all border bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border-[#E4E1DC] dark:border-[#2E2A27] cursor-pointer"
+                                  title="Restore to Masterlist"
+                                >
+                                  <ArchiveRestore size={13} /> Restore
+                                </button>
+                              )
                             ) : (
                               // In Master Records: ONLY terminal/inactive statuses can be archived!
                               ['Expired', 'Cancelled', 'Revoked'].includes(f.status) && (
@@ -1268,8 +1270,8 @@ const FranchiseMasterlist = () => {
             <div className={`w-12 h-12 rounded-lg flex items-center justify-center mx-auto mb-3 border ${
               confirmModal.data.action === 'Expire'
                 ? 'bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 border-red-200 dark:border-red-800'
-                : confirmModal.data.action === 'Archive' 
-                ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800' 
+                : confirmModal.data.action === 'Archive'
+                ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-800'
                 : 'bg-[#F6F5F3] dark:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border-[#E4E1DC] dark:border-[#2E2A27]'
             }`}>
               {confirmModal.data.action === 'Expire' ? <Clock size={22} /> : confirmModal.data.action === 'Archive' ? <Archive size={22} /> : <ArchiveRestore size={22} />}
@@ -1282,7 +1284,7 @@ const FranchiseMasterlist = () => {
             <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mb-5 leading-relaxed">
               {confirmModal.data?.action === 'Expire' ? (
                 <>
-                  Mark the active franchise of <strong className="text-[#1F1D1B] dark:text-[#F6F5F3] font-semibold">{confirmModal.data?.name}</strong> ({confirmModal.data?.plateNo}) as <strong className="text-red-600 dark:text-red-400">Expired</strong>? This will immediately notify the operator via In-App &amp; SMS and unlock their Renewal form.
+                  Mark the active franchise of <strong className="text-[#1F1D1B] dark:text-[#F6F5F3] font-semibold">{confirmModal.data?.name}</strong> ({confirmModal.data?.plateNo}) as <strong className="text-red-600 dark:text-red-400">Expired</strong>? This will notify the operator via In-App &amp; Push alerts (plus simulated SMS log), keep original permit expiry intact, and unlock their Renewal form.
                 </>
               ) : (
                 <>

@@ -42,14 +42,27 @@ const CANCEL_REASONS = [
   "Other reason (Please specify below)"
 ];
 
-const isVoluntarilyCancelledFranchise = (f) =>
-  f?.status === 'Cancelled' && (Boolean(f?.cancellationDetails?.reason) || f?.paymentStatus === 'Paid');
+const isVoluntarilyCancelledFranchise = (f) => {
+  if (f?.cancellationOutcome) return f.cancellationOutcome === 'voluntary_surrender';
+  return f?.status === 'Cancelled' && (Boolean(f?.cancellationDetails?.reason) || (f?.paymentStatus === 'Paid' && !f?.issuedPermit));
+};
 
-const isWithdrawnFranchise = (f) =>
-  f?.status === 'Cancelled' && !isVoluntarilyCancelledFranchise(f) && Boolean(f?.isArchived && f?.archivedAt);
+const isWithdrawnFranchise = (f) => {
+  if (f?.issuedPermit) return false;
+  if (f?.cancellationOutcome) return f.cancellationOutcome === 'operator_withdrawn';
+  return f?.status === 'Cancelled' && !isVoluntarilyCancelledFranchise(f) && Boolean(f?.isArchived && f?.archivedAt);
+};
 
-const isRejectedFranchise = (f) =>
-  f?.status === 'Cancelled' && !isVoluntarilyCancelledFranchise(f) && !isWithdrawnFranchise(f);
+const isRefilableRenewalFranchise = (f) => {
+  if (typeof f?.canRefileRenewal === 'boolean') return f.canRefileRenewal;
+  return f?.status === 'Cancelled' && Boolean(f?.issuedPermit) && f?.paymentStatus !== 'Paid' &&
+    !['Suspended', 'Revoked'].includes(f?.issuedPermit?.status);
+};
+
+const isRejectedFranchise = (f) => {
+  if (typeof f?.canFixIssues === 'boolean') return f.canFixIssues;
+  return f?.status === 'Cancelled' && !isVoluntarilyCancelledFranchise(f) && !isWithdrawnFranchise(f) && !f?.issuedPermit;
+};
 
 const OperatorDashboard = () => {
   const { t, language, changeLanguage } = useLanguage();
@@ -820,8 +833,11 @@ const OperatorDashboard = () => {
     return t('dashboard.welcomeSub', 'Welcome back! Manage your active and pending franchises securely.');
   };
 
-  const slotOccupyingUnits = franchises.filter(
-    (f) => !['Cancelled', 'Rejected', 'Revoked'].includes(f?.status) && !f?.isArchived
+  const slotOccupyingUnits = franchises.filter((f) =>
+    typeof f?.occupiesFleetSlot === 'boolean'
+      ? f.occupiesFleetSlot
+      : (!['Cancelled', 'Rejected', 'Revoked', 'Expired'].includes(f?.status) && !f?.isArchived) ||
+        Boolean(f?.issuedPermit && ['Active', 'Active - Under Warning', 'Suspended'].includes(f.issuedPermit.status) && !f?.isArchived)
   );
   const activeGarageUnits = franchises.filter(
     (f) => !isVoluntarilyCancelledFranchise(f) && !isWithdrawnFranchise(f)
@@ -1062,7 +1078,7 @@ const OperatorDashboard = () => {
             <div className="bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 border border-[#E4E1DC] dark:border-[#2E2A27]">
               <div className="min-w-0">
                 <h4 className="text-xs sm:text-sm font-bold truncate text-[#1F1D1B] dark:text-[#F6F5F3]">
-                  {slotOccupyingUnits.length >= maxUnits 
+                  {slotOccupyingUnits.length >= maxUnits
                     ? `Maximum Capacity (${maxUnits}/${maxUnits})`
                     : 'Available Franchise Slot'}
                 </h4>
@@ -1156,8 +1172,8 @@ const OperatorDashboard = () => {
               </div>
 
               <span className="text-xs font-medium text-[#6B6761] dark:text-[#A8A29E]">
-                {slotOccupyingUnits.length >= maxUnits 
-                  ? 'Slots Full' 
+                {slotOccupyingUnits.length >= maxUnits
+                  ? 'Slots Full'
                   : `${maxUnits - slotOccupyingUnits.length} Slot(s) Available`}
               </span>
             </div>
@@ -1602,9 +1618,13 @@ const OperatorDashboard = () => {
                     </button>
                   </div>
                 ) : unit?.status === 'Cancelled' ? (
-                  unit?.cancellationDetails?.reason ? (
+                  isVoluntarilyCancelledFranchise(unit) ? (
                     <button onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} className="w-full bg-[#F6F5F3] hover:bg-[#EAE7E1] dark:bg-[#14110F] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border border-[#E4E1DC] dark:border-[#2E2A27] px-4 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors active:scale-95 cursor-pointer shadow-sm">
                       {t('dashboard.btnViewDetails', 'View Details')}
+                    </button>
+                  ) : isRefilableRenewalFranchise(unit) ? (
+                    <button onClick={() => navigate(`/renew-franchise/${unit._id}`)} className="w-full bg-[#9E2A2B] hover:bg-[#7A1B22] text-white px-4 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-sm">
+                      <RefreshCw size={14} /> Refile Renewal
                     </button>
                   ) : (
                     <button onClick={() => handleFixIssues(unit)} className="w-full bg-[#B91C1C] hover:bg-[#991B1B] text-white px-4 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm transition-colors flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-sm">

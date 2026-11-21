@@ -41,8 +41,10 @@ const CashierDashboard = () => {
   const [activeTab, setActiveTab] = useState('pending'); // 'pending' | 'completed'
   const prevPendingIdsRef = useRef(null);
   const audioCtxRef = useRef(null);
-  const queueAbortRef = useRef(null);
-  const queueSeqRef = useRef(0);
+  const fgAbortRef = useRef(null);
+  const fgSeqRef = useRef(0);
+  const pollAbortRef = useRef(null);
+  const pollSeqRef = useRef(0);
   const autoPrintTimerRef = useRef(null);
 
   const [standardFranchiseFee, setStandardFranchiseFee] = useState(() => {
@@ -277,12 +279,14 @@ const CashierDashboard = () => {
   }, [syncFranchiseFee]);
 
   const fetchQueue = useCallback(async ({ silent = false, scope = '' } = {}) => {
-    if (queueAbortRef.current) {
-      queueAbortRef.current.abort();
+    const abortRef = silent ? pollAbortRef : fgAbortRef;
+    const seqRef = silent ? pollSeqRef : fgSeqRef;
+    if (abortRef.current) {
+      abortRef.current.abort();
     }
     const controller = new AbortController();
-    queueAbortRef.current = controller;
-    const reqSeq = ++queueSeqRef.current;
+    abortRef.current = controller;
+    const reqSeq = ++seqRef.current;
 
     if (!silent) {
       setIsLoading(true);
@@ -294,10 +298,10 @@ const CashierDashboard = () => {
         headers: { 'Authorization': `Bearer ${token}` },
         signal: controller.signal
       });
-      if (reqSeq !== queueSeqRef.current) return;
+      if (reqSeq !== seqRef.current) return;
       if (res.ok) {
         const data = await res.json();
-        if (reqSeq !== queueSeqRef.current) return;
+        if (reqSeq !== seqRef.current) return;
         const isPayable = (f) => f && f.status === 'For Payment' && f.paymentStatus !== 'Paid' && !f.isArchived;
 
         if (Array.isArray(data)) {
@@ -354,13 +358,13 @@ const CashierDashboard = () => {
         showToast('Failed to load cashier payment queue.', 'error');
       }
     } catch (err) {
-      if (err?.name === 'AbortError' || reqSeq !== queueSeqRef.current) return;
+      if (err?.name === 'AbortError' || reqSeq !== seqRef.current) return;
       console.error('Error fetching cashier queue:', err);
       if (!silent) {
         showToast('Cannot connect to server.', 'error');
       }
     } finally {
-      if (!silent && reqSeq === queueSeqRef.current) {
+      if (!silent && reqSeq === fgSeqRef.current) {
         setIsLoading(false);
       }
     }
@@ -374,7 +378,8 @@ const CashierDashboard = () => {
     window.addEventListener('gtrams_settings_updated', fetchLiveSettingsFee);
     return () => {
       clearInterval(interval);
-      if (queueAbortRef.current) queueAbortRef.current.abort();
+      if (fgAbortRef.current) fgAbortRef.current.abort();
+      if (pollAbortRef.current) pollAbortRef.current.abort();
       window.removeEventListener('gtrams_settings_updated', fetchLiveSettingsFee);
     };
   }, [fetchQueue, fetchLiveSettingsFee]);
@@ -461,7 +466,7 @@ const CashierDashboard = () => {
         
         // Open printable Official Receipt preserving the recorded collector from server
         const recordedCollector = resolveCollectorName(data.ledgerEntry || data.franchise) || currentCashierName;
-        setReceiptData({
+        const settledReceipt = {
           ...data.franchise,
           ...(data.ledgerEntry || {}),
           officialReceiptNo: data.ledgerEntry?.officialReceiptNo || data.franchise?.officialReceiptNo || (payFormData.officialReceiptNo || '').trim().toUpperCase(),
@@ -471,7 +476,17 @@ const CashierDashboard = () => {
           paymentDate: data.ledgerEntry?.paymentDate || data.franchise?.paymentDate || new Date(),
           processedByName: data.ledgerEntry?.processedByName || data.franchise?.cashierName || recordedCollector,
           cashierName: recordedCollector
+        };
+        setReceiptData(settledReceipt);
+        setPaidList(prev => {
+          const settledOr = String(settledReceipt.officialReceiptNo || '').toUpperCase();
+          const filtered = prev.filter(item =>
+            String(item._id) !== String(settledReceipt._id) &&
+            String(item.officialReceiptNo || '').toUpperCase() !== settledOr
+          );
+          return [settledReceipt, ...filtered];
         });
+        setQueue(prev => prev.filter(item => String(item._id) !== String(selectedFranchise._id)));
         setIsReceiptOpen(true);
         if (autoPrintTimerRef.current) {
           clearTimeout(autoPrintTimerRef.current);
@@ -484,7 +499,7 @@ const CashierDashboard = () => {
           }, 300);
         }
 
-        fetchQueue({ silent: true, scope: activeTab === 'completed' ? '' : 'queue' });
+        fetchQueue({ silent: true, scope: '' });
       } else {
         showToast(data.message || 'Payment processing failed.', 'error');
       }
@@ -663,7 +678,10 @@ const CashierDashboard = () => {
               </button>
               <button
                 type="button"
-                onClick={() => setActiveTab('completed')}
+                onClick={() => {
+                  setActiveTab('completed');
+                  fetchQueue({ silent: true, scope: '' });
+                }}
                 className={`px-3.5 py-2 rounded-md text-xs sm:text-sm font-bold transition-all cursor-pointer flex items-center gap-2 min-h-[44px] ${
                   activeTab === 'completed'
                     ? 'bg-white dark:bg-[#1C1917] text-[#9E2A2B] dark:text-[#D4AF37] shadow-sm'

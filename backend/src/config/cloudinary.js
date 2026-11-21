@@ -90,7 +90,13 @@ const storage = process.env.NODE_ENV === 'test'
 
 const upload = multer({
     storage: storage,
-    limits: { fileSize: 10 * 1024 * 1024 }, // 10MB max for documents
+    limits: {
+        fileSize: 10 * 1024 * 1024, // 10MB max for documents
+        fields: 40,
+        fieldSize: 64 * 1024,
+        files: 12,
+        parts: 55
+    },
     fileFilter: (req, file, cb) => {
         const mime = String(file.mimetype || '').toLowerCase().trim();
         const ext = path.extname(String(file.originalname || '')).toLowerCase();

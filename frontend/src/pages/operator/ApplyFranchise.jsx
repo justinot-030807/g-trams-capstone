@@ -2,8 +2,8 @@ import localforage from 'localforage';
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { 
-  GASAN_BARANGAYS, TODA_LIST, CANCEL_REASONS, 
-  getZoneForBarangay, getZoneForToda, normalizeZone, normalizeBarangayName, formatZoneLabel, getTodasForBarangay 
+  GASAN_BARANGAYS, TODA_LIST, CANCEL_REASONS,
+  getZoneForBarangay, getZoneForToda, normalizeZone, normalizeBarangayName, formatZoneLabel, getTodasForBarangay
 } from '../../utils/constants';
 import MainLayout from '../../components/MainLayout';
 import { 
@@ -35,7 +35,7 @@ const normalizeTricycleDlCodes = (raw) => {
   if (tokens.includes('A') && (tokens.includes('A1') || tokens.includes('1'))) return 'A, A1';
   if (tokens.includes('A1')) return 'A1';
   if (tokens.includes('A')) return 'A';
-  return 'A, A1';
+  return '';
 };
 const DRIVING_CONDITION_OPTIONS = ['None', 'A - Wear Corrective Lenses', 'B - Drive Only with Special Equipment', '1 - Wear Eyeglasses'];
 const VEHICLE_MAKE_OPTIONS = [
@@ -175,7 +175,7 @@ const getCleanFormDefaults = (overrides = {}) => ({
   driverLicenseSerialNo: '',
   driverLicenseExpiryDate: '',
   driverDob: '',
-  driverDlCodes: 'A, A1',
+  driverDlCodes: '',
   driverConditions: 'None',
   driverAddress: '',
   driverNationality: 'Filipino',
@@ -1084,7 +1084,7 @@ const ApplyFranchise = () => {
       driverLicenseSerialNo: franchise.driverLicenseSerialNo || '',
       driverLicenseExpiryDate: franchise.driverLicenseExpiryDate ? String(franchise.driverLicenseExpiryDate).substring(0, 10) : '',
       driverDob: franchise.driverDob ? String(franchise.driverDob).substring(0, 10) : '',
-      driverDlCodes: franchise.driverDlCodes || 'A, A1',
+      driverDlCodes: franchise.driverDlCodes ? normalizeTricycleDlCodes(franchise.driverDlCodes) : '',
       driverConditions: franchise.driverConditions || 'None',
       driverAddress: franchise.driverAddress || '',
       driverNationality: franchise.driverNationality || 'Filipino',
@@ -1404,6 +1404,7 @@ const ApplyFranchise = () => {
                   serialNo: d.serialNo ? String(d.serialNo).toUpperCase() : '',
                   conditions: d.conditions || '',
                   dlCodes: d.dlCodes ? normalizeTricycleDlCodes(d.dlCodes) : '',
+                  rawDlCodes: d.dlCodes || '',
                   scannedAt: new Date().toISOString()
                 }
               }));
@@ -1435,6 +1436,7 @@ const ApplyFranchise = () => {
                   expiryDate: normExpiry || (prev.license?.expiryDate || ''),
                   dateOfBirth: normDob || (prev.license?.dateOfBirth || ''),
                   dlCodes: d.dlCodes ? normalizeTricycleDlCodes(d.dlCodes) : (prev.license?.dlCodes || ''),
+                  rawDlCodes: d.dlCodes || prev.license?.rawDlCodes || '',
                   driverName: d.driverName || (prev.license?.driverName || ''),
                   address: d.address || (prev.license?.address || ''),
                   isExpired: Boolean(isExpired),
@@ -1921,6 +1923,10 @@ const ApplyFranchise = () => {
       }
       if (!formData.driverLicenseNo?.trim()) {
         showValidationModal('driverLicenseNo', "Driver's License Number Required", "Please enter or scan the official Driver's License Number.");
+        return false;
+      }
+      if (!DL_CODE_OPTIONS.includes(formData.driverDlCodes)) {
+        showValidationModal('driverDlCodes', 'Authorized DL Code Required', 'Please select an authorized Tricycle / Motorcycle DL Code (A, A1, or A).');
         return false;
       }
       if (!formData.driverLicenseExpiryDate) {
@@ -2522,8 +2528,13 @@ const ApplyFranchise = () => {
 
   const isRenewing = formMode === 'Renewal' || modeParam === 'renewal';
   const isReapplying = formMode === 'Re-apply' || modeParam === 'reapply';
-  const activeOrPendingUnits = myFranchises.filter(
-    f => !['Cancelled', 'Rejected', 'Revoked'].includes(f.status) && !f.isArchived
+  const activeOrPendingUnits = myFranchises.filter((f) =>
+    typeof f?.occupiesFleetSlot === 'boolean'
+      ? f.occupiesFleetSlot
+      : !f.isArchived && (
+          !['Cancelled', 'Rejected', 'Revoked', 'Expired'].includes(f.status) ||
+          Boolean(f.issuedPermit && ['Active', 'Active - Under Warning', 'Suspended'].includes(f.issuedPermit.status))
+        )
   );
   const isCapacityFull = activeOrPendingUnits.length >= maxAllowedUnits;
   const availableSlots = Math.max(0, maxAllowedUnits - activeOrPendingUnits.length);
@@ -3174,10 +3185,12 @@ const ApplyFranchise = () => {
                       </label>
                       <select
                         name="driverDlCodes"
-                        value={normalizeTricycleDlCodes(formData.driverDlCodes)}
+                        value={DL_CODE_OPTIONS.includes(formData.driverDlCodes) ? formData.driverDlCodes : ''}
                         onChange={handleInputChange}
+                        required
                         className={`${getInputClasses('driverDlCodes')} cursor-pointer`}
                       >
+                        <option value="">Select Authorized DL Code</option>
                         {DL_CODE_OPTIONS.map((code) => (
                           <option key={code} value={code}>{code}</option>
                         ))}

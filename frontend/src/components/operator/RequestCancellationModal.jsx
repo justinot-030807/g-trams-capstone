@@ -54,6 +54,7 @@ const RequestCancellationModal = ({ isOpen, onClose, unit, onSuccess }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const fileInputRef = useRef(null);
+  const hasEditedLetterRef = useRef(false);
 
   useEffect(() => {
     if (isOpen && unit) {
@@ -62,12 +63,18 @@ const RequestCancellationModal = ({ isOpen, onClose, unit, onSuccess }) => {
       setCustomReason('');
       setRemarks('');
       setLetterMode('type');
+      hasEditedLetterRef.current = false;
       setLetterText(buildDefaultCancellationLetter(unit, defaultReason, '', ''));
       setFile(null);
       setFilePreview(null);
       setErrorMessage('');
     }
   }, [isOpen, unit]);
+
+  useEffect(() => {
+    if (!isOpen || !unit || hasEditedLetterRef.current) return;
+    setLetterText(buildDefaultCancellationLetter(unit, reason, customReason, remarks));
+  }, [isOpen, unit, reason, customReason, remarks]);
 
   if (!isOpen || !unit) return null;
 
@@ -217,7 +224,7 @@ const RequestCancellationModal = ({ isOpen, onClose, unit, onSuccess }) => {
             <p className="font-bold uppercase tracking-wider text-[11px] mb-0.5">Formal Surrender Notice</p>
             <p>
               Submitting this request will set your franchise to <strong>Cancellation Requested</strong>. 
-              The Office of the Vice Mayor (OVM) will review your surrender letter and finalize cancellation. 
+              The Office of the Vice Mayor (OVM) will review your surrender letter and finalize cancellation.
               <strong> No Cashier payment is required</strong> for voluntary franchise cancellation.
             </p>
           </div>
@@ -326,7 +333,10 @@ const RequestCancellationModal = ({ isOpen, onClose, unit, onSuccess }) => {
                   </span>
                   <button
                     type="button"
-                    onClick={() => setLetterText(buildDefaultCancellationLetter(unit, reason, customReason, remarks))}
+                    onClick={() => {
+                      hasEditedLetterRef.current = false;
+                      setLetterText(buildDefaultCancellationLetter(unit, reason, customReason, remarks));
+                    }}
                     className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline shrink-0 cursor-pointer"
                   >
                     <RotateCcw size={11} />
@@ -337,7 +347,10 @@ const RequestCancellationModal = ({ isOpen, onClose, unit, onSuccess }) => {
                   rows={8}
                   maxLength={2000}
                   value={letterText}
-                  onChange={(e) => setLetterText(e.target.value)}
+                  onChange={(e) => {
+                    hasEditedLetterRef.current = true;
+                    setLetterText(e.target.value);
+                  }}
                   placeholder="Type your formal franchise surrender/cancellation letter here..."
                   className="w-full text-xs leading-relaxed p-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#FAF9F7] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] font-sans"
                 />

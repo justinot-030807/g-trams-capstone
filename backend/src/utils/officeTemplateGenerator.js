@@ -397,11 +397,12 @@ function generateMtopApplicationXlsx(franchise = {}) {
 /**
  * Generates the populated original Franchise Cancellation Letter Word (.docx) buffer
  */
-function generateCancellationDocx(franchise = {}) {
+function generateCancellationDocx(franchise = {}, { isDraft = false } = {}) {
     const templatePath = path.join(TEMPLATES_DIR, 'FRANCHISE_CANCELLATION_TEMPLATE.docx');
     const zipBuf = fs.readFileSync(templatePath);
 
     const op = franchise.operator || franchise.operatorId || {};
+    const details = franchise.cancellationDetails || {};
     const fullName = (
         franchise.fullName ||
         franchise.ownerName ||
@@ -418,13 +419,15 @@ function generateCancellationDocx(franchise = {}) {
         .replace(/,?\s*Gasan.*$/i, '')
         .trim();
 
-    const cancelDate = franchise.cancelledAt || franchise.cancellationRequestedAt || franchise.updatedAt || new Date();
+    const cancelDate = details.reviewedAt || franchise.cancelledAt || franchise.archivedAt || franchise.updatedAt || new Date();
     const cancelParts = getOrdinalParts(cancelDate);
-    const reqParts = getOrdinalParts(franchise.cancellationRequestedAt || cancelDate);
+    const reqParts = getOrdinalParts(details.requestedAt || franchise.cancellationRequestedAt || cancelDate);
     const orDateParts = getOrdinalParts(franchise.cancellationOrDate || cancelDate);
 
     const rawMtop = String(franchise.mtopNo || franchise.mtopNumber || franchise.franchiseNumber || 'N/A')
         .replace(/^MTOP-GASAN-/i, '');
+
+    const rawModel = typeof franchise.model === 'string' || typeof franchise.model === 'number' ? franchise.model : '';
 
     const replacements = {
         RECIPIENT_NAME: `MR./MS. ${fullName}`,
@@ -440,20 +443,34 @@ function generateCancellationDocx(franchise = {}) {
         MAKE: (franchise.make || franchise.made || franchise.vehicleMake || 'N/A').toUpperCase(),
         CHASSIS_NO: (franchise.chassisNo || franchise.chassisNumber || 'N/A').toUpperCase(),
         MOTOR_NO: (franchise.motorNo || franchise.motorNumber || franchise.engineNumber || 'N/A').toUpperCase(),
-        MODEL: String(franchise.yearModel || franchise.model || 'N/A').toUpperCase(),
+        MODEL: String(franchise.yearModel || rawModel || franchise.made || 'N/A').toUpperCase(),
         ISSUED_DAY: cancelParts.day,
         ISSUED_ORDINAL: cancelParts.ordinal,
         ISSUED_MONTH: cancelParts.month,
         ISSUED_YEAR: cancelParts.year,
-        OR_AMOUNT: 'P50.00',
-        OR_NO: franchise.cancellationOrNumber || franchise.officialReceiptNo || franchise.orNumber || 'N/A',
+        OR_AMOUNT: isDraft ? 'DRAFT' : 'P50.00',
+        OR_NO: isDraft ? 'DRAFT' : (franchise.cancellationOrNumber || franchise.officialReceiptNo || franchise.orNumber || 'N/A'),
         OR_DATE: orDateParts.longDate,
     };
 
     return modifyZipBuffer(zipBuf, {
         'word/document.xml': (rawBuf) => {
-            const xml = rawBuf.toString('utf8');
-            return Buffer.from(replacePlaceholders(xml, replacements), 'utf8');
+            let xml = replacePlaceholders(rawBuf.toString('utf8'), replacements);
+            if (isDraft) {
+                xml = xml.replace(
+                    /your request is hereby granted/gi,
+                    '[DRAFT - PENDING OVM FINALIZATION; NOT YET GRANTED]'
+                );
+                xml = xml.replace(
+                    /(<w:t[^>]*>)LIDANY A\.\s*(<\/w:t>[\s\S]*?<w:t[^>]*>)(?:LAO-)?BALDO(<\/w:t>)/gi,
+                    '$1DRAFT - NOT FOR $2OFFICIAL RELEASE$3'
+                );
+                xml = xml.replace(
+                    /LIDANY A\. LAO-BALDO|LIDANY A\. BALDO/gi,
+                    'DRAFT - NOT FOR OFFICIAL RELEASE'
+                );
+            }
+            return Buffer.from(xml, 'utf8');
         }
     });
 }

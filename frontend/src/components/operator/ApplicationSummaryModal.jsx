@@ -157,7 +157,7 @@ const ApplicationSummaryModal = ({
                 <span>View E-Copy</span>
               </button>
             )}
-            <button 
+            <button
               type="button"
               onClick={handleClose}
               className="p-1.5 rounded-lg text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3] hover:bg-[#F6F5F3] dark:hover:bg-[#14110F] transition-colors cursor-pointer shrink-0"
