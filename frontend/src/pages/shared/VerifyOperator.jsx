@@ -6,33 +6,62 @@ import { VerifyOperatorSkeleton } from '../../components/skeleton';
 const VerifyOperator = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(true);
-  const [operator, setOperator] = useState(null);
-  const [error, setError] = useState(null);
+  const [state, setState] = useState({ resolvedId: null, loading: true, operator: null, error: null });
 
   useEffect(() => {
+    const controller = new AbortController();
+    let active = true;
+
     const fetchVerification = async () => {
       try {
         const baseUrl = (import.meta.env.VITE_API_URL || '').replace(/\/+$/, '');
-        const res = await fetch(`${baseUrl}/api/v1/auth/verify/${encodeURIComponent(id || '')}`);
+        const res = await fetch(`${baseUrl}/api/v1/auth/verify/${encodeURIComponent(id || '')}`, {
+          signal: controller.signal
+        });
+        if (!active) return;
         if (res.ok) {
           const data = await res.json();
-          setOperator({
-            ...data,
-            name: data.name || data.fullName || 'Registered Operator'
+          if (!active) return;
+          setState({
+            resolvedId: id,
+            loading: false,
+            operator: {
+              ...data,
+              name: data.name || data.fullName || 'Registered Operator'
+            },
+            error: null
           });
         } else {
           const errData = await res.json().catch(() => ({}));
-          setError(errData.message || 'Operator or franchise record not found. This QR code may be invalid, expired, or counterfeit.');
+          if (!active) return;
+          setState({
+            resolvedId: id,
+            loading: false,
+            operator: null,
+            error: errData.message || 'Operator or franchise record not found. This QR code may be invalid, expired, or counterfeit.'
+          });
         }
-      } catch {
-        setError('Unable to reach the official LGU verification server. Please check your internet connection and scan again.');
-      } finally {
-        setLoading(false);
+      } catch (err) {
+        if (!active || err?.name === 'AbortError') return;
+        setState({
+          resolvedId: id,
+          loading: false,
+          operator: null,
+          error: 'Unable to reach the official LGU verification server. Please check your internet connection and scan again.'
+        });
       }
     };
     fetchVerification();
+
+    return () => {
+      active = false;
+      controller.abort();
+    };
   }, [id]);
+
+  const loading = state.loading || state.resolvedId !== id;
+  const operator = state.resolvedId === id ? state.operator : null;
+  const error = state.resolvedId === id ? state.error : null;
 
   if (loading) {
     return <VerifyOperatorSkeleton />;
@@ -58,12 +87,6 @@ const VerifyOperator = () => {
     );
   }
 
-  const isUnitExpiredByDate = (unit) => {
-    if (!unit?.expiryDate) return false;
-    const exp = new Date(unit.expiryDate);
-    return !isNaN(exp.getTime()) && exp.getTime() < Date.now();
-  };
-
   const formatExpiryDate = (dateStr) => {
     if (!dateStr) return null;
     const d = new Date(dateStr);
@@ -78,9 +101,9 @@ const VerifyOperator = () => {
 
   const getUnitValidity = (unit) => {
     if (!unit) return { isValid: false, label: 'INACTIVE', rawStatus: '', isRenewalPending: false };
-    const expiredByDate = unit.renewalStatus && unit.validityStatus
+    const expiredByDate = unit.validityStatus
       ? unit.validityStatus === 'EXPIRED'
-      : isUnitExpiredByDate(unit);
+      : unit.status === 'Expired';
     const hasValidExpiryDate = Boolean(unit?.expiryDate) && !isNaN(new Date(unit.expiryDate).getTime());
     const ownerInactive =
       operator.isActive === false ||
@@ -91,7 +114,6 @@ const VerifyOperator = () => {
       operator.validityStatus === 'UNVERIFIED_EXPIRY' ||
       (['Active', 'Active - Under Warning'].includes(unit.status) && !hasValidExpiryDate && unit.isCurrentlyValid !== true);
 
-    const rawStatus = expiredByDate ? 'Expired' : (unit.status || '');
     const statusAllowsValid = !unit.validityStatus || unit.validityStatus === 'VALID';
     const isValid =
       !ownerInactive &&
@@ -110,14 +132,14 @@ const VerifyOperator = () => {
       label = 'UNVERIFIED_EXPIRY';
     } else if (!label) {
       if (isValid) label = 'VALID';
-      else if (rawStatus === 'Expired') label = 'EXPIRED';
-      else if (['Pending', 'Pending for Approval', 'For Payment', 'For Signing', 'Ready for Pickup', 'Cancellation Requested'].includes(rawStatus)) label = 'PENDING';
+      else if (expiredByDate) label = 'EXPIRED';
+      else if (['Pending', 'Pending for Approval', 'For Payment', 'For Signing', 'Ready for Pickup', 'Cancellation Requested'].includes(unit.status || '')) label = 'PENDING';
       else label = 'INACTIVE';
     } else if (expiredByDate && label === 'VALID') {
       label = 'EXPIRED';
     }
 
-    return { isValid, label, rawStatus, isRenewalPending: Boolean(unit.isRenewalPending) };
+    return { isValid, label, isRenewalPending: Boolean(unit.isRenewalPending) };
   };
 
   const isOwnerInactive = operator.isActive === false || operator.validityStatus === 'INACTIVE_OWNER';

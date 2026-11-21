@@ -1742,6 +1742,7 @@ const AdminSettings = () => {
                             <input
                               type="text"
                               value={item.title || ''}
+                              disabled={isSavingAnnouncements}
                               onChange={(e) => handleUpdateAnnouncement(idx, 'title', e.target.value)}
                               className={inputClasses}
                               placeholder="Announcement title"
@@ -1753,6 +1754,7 @@ const AdminSettings = () => {
                             </label>
                             <select
                               value={item.type || 'info'}
+                              disabled={isSavingAnnouncements}
                               onChange={(e) => handleUpdateAnnouncement(idx, 'type', e.target.value)}
                               className={inputClasses}
                             >
@@ -1768,6 +1770,7 @@ const AdminSettings = () => {
                             <input
                               type="text"
                               value={item.date || ''}
+                              disabled={isSavingAnnouncements}
                               onChange={(e) => handleUpdateAnnouncement(idx, 'date', e.target.value)}
                               className={inputClasses}
                               placeholder="General Advisory"
@@ -1776,8 +1779,9 @@ const AdminSettings = () => {
                           <div className="sm:col-span-1 flex items-end justify-end sm:pt-4 gap-1">
                             <button
                               type="button"
+                              disabled={isSavingAnnouncements}
                               onClick={() => handleDeleteAnnouncement(idx)}
-                              className="p-2 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 border border-transparent hover:border-red-200 dark:hover:border-red-900/50 transition-colors cursor-pointer"
+                              className="p-2 rounded-lg text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 border border-transparent hover:border-red-200 dark:hover:border-red-900/50 transition-colors cursor-pointer disabled:opacity-50"
                               title="Remove announcement"
                               aria-label="Remove announcement"
                             >

@@ -270,6 +270,9 @@ const FranchiseApproval = () => {
         hasNextPage: Boolean(pg.hasNextPage ?? (resolvedPage < totalPages)),
         hasPrevPage: Boolean(pg.hasPrevPage ?? (resolvedPage > 1))
       });
+      if (!flaggedOnly && currentPage > totalPages && totalPages >= 1) {
+        updateParams({ page: totalPages });
+      }
     } catch (error) {
       if (error?.name === 'AbortError') return;
       console.error('Error fetching applications:', error);

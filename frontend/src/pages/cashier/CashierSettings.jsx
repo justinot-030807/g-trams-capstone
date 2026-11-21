@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/MainLayout';
 import { 
@@ -66,6 +66,9 @@ const CashierSettings = () => {
   // Archive state
   const [archiveList, setArchiveList] = useState([]);
   const [isLoadingArchive, setIsLoadingArchive] = useState(true);
+  const [archiveError, setArchiveError] = useState(null);
+  const archiveAbortRef = useRef(null);
+  const archiveSeqRef = useRef(0);
   const [searchQuery, setSearchQuery] = useState('');
   const [dateFilter, setDateFilter] = useState('all'); // 'all' | 'today' | 'week'
 
@@ -130,14 +133,25 @@ const CashierSettings = () => {
 
   // Fetch durable PaymentLedger transactions for archive
   const fetchArchive = useCallback(async () => {
+    if (archiveAbortRef.current) {
+      archiveAbortRef.current.abort();
+    }
+    const controller = new AbortController();
+    archiveAbortRef.current = controller;
+    const reqSeq = ++archiveSeqRef.current;
+
     setIsLoadingArchive(true);
+    setArchiveError(null);
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/cashier-queue`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/cashier-queue?scope=ledger`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+        signal: controller.signal
       });
+      if (reqSeq !== archiveSeqRef.current) return;
       if (res.ok) {
         const data = await res.json();
+        if (reqSeq !== archiveSeqRef.current) return;
         let list = [];
         if (Array.isArray(data)) {
           list = data.filter(f => f.paymentStatus === 'Paid');
@@ -152,11 +166,21 @@ const CashierSettings = () => {
           }
         }
         setArchiveList(list);
+      } else {
+        const errData = await res.json().catch(() => ({}));
+        if (reqSeq !== archiveSeqRef.current) return;
+        setArchiveList([]);
+        setArchiveError(errData.message || `Failed to load payment archive (HTTP ${res.status}).`);
       }
     } catch (err) {
+      if (err?.name === 'AbortError' || reqSeq !== archiveSeqRef.current) return;
       console.error('Failed to fetch archive:', err);
+      setArchiveList([]);
+      setArchiveError('Unable to reach server to load payment archive.');
     } finally {
-      setIsLoadingArchive(false);
+      if (reqSeq === archiveSeqRef.current) {
+        setIsLoadingArchive(false);
+      }
     }
   }, [syncFranchiseFee]);
 
@@ -165,6 +189,7 @@ const CashierSettings = () => {
     fetchLiveSettingsFee();
     window.addEventListener('gtrams_settings_updated', fetchLiveSettingsFee);
     return () => {
+      if (archiveAbortRef.current) archiveAbortRef.current.abort();
       window.removeEventListener('gtrams_settings_updated', fetchLiveSettingsFee);
     };
   }, [fetchArchive, fetchLiveSettingsFee]);
@@ -272,15 +297,15 @@ const CashierSettings = () => {
     }, 0);
   }, [filteredArchive]);
 
-  // Open Receipt Modal for Reprinting — strictly preserve recorded collector (never overwrite with logged-in user)
+  // Open Receipt Modal for Reprinting — strictly preserve recorded collector, method, and amount (M10)
   const handleOpenReceipt = (item) => {
     const d = item.paymentDate ? new Date(item.paymentDate) : new Date(item.updatedAt || Date.now());
     const recordedCollector = resolveCollectorName(item);
     const parsedAmount = Number(item.amountPaid);
     setReceiptData({
       officialReceiptNo: item.officialReceiptNo || 'OR-PREVIEW',
-      amountPaid: Number.isFinite(parsedAmount) && parsedAmount > 0 ? parsedAmount : standardFranchiseFee,
-      paymentMethod: item.paymentMethod || 'Cash',
+      amountPaid: Number.isFinite(parsedAmount) && parsedAmount > 0 ? parsedAmount : null,
+      paymentMethod: item.paymentMethod || 'N/A',
       remarks: item.paymentRemarks || 'Settled at Municipal Treasury Window',
       dateFormatted: d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
       timeFormatted: d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }),
@@ -782,6 +807,20 @@ const CashierSettings = () => {
                   </tbody>
                 </table>
               </div>
+            ) : archiveError ? (
+              <div role="alert" className="p-8 text-center">
+                <AlertCircle size={32} className="mx-auto mb-2 text-red-600 dark:text-red-400" />
+                <h4 className="text-sm font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">Unable to load payment archive</h4>
+                <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5 mb-3">{archiveError}</p>
+                <button
+                  type="button"
+                  onClick={fetchArchive}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-[#9E2A2B] hover:bg-[#7A1B22] text-white text-xs font-semibold transition-colors cursor-pointer"
+                >
+                  <RefreshCw size={13} />
+                  <span>Retry</span>
+                </button>
+              </div>
             ) : filteredArchive.length === 0 ? (
               <div className="p-12 text-center text-[#6B6761] dark:text-[#A8A29E]">
                 <Archive size={32} className="mx-auto mb-2 opacity-50" />
@@ -962,7 +1001,11 @@ const CashierSettings = () => {
                 </div>
                 <div className="flex justify-between pt-1 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
                   <span className="text-[#6B6761] dark:text-[#A8A29E]">Payment Method:</span>
-                  <span className="font-semibold">Cash (Over-the-Counter)</span>
+                  <span className="font-semibold">
+                    {receiptData.paymentMethod === 'Cash'
+                      ? 'Cash (Over-the-Counter)'
+                      : (receiptData.paymentMethod || 'N/A')}
+                  </span>
                 </div>
               </div>
 
@@ -970,7 +1013,11 @@ const CashierSettings = () => {
               <div className="border-t border-b border-[#E4E1DC] dark:border-[#2E2A27] py-2.5 text-xs space-y-1">
                 <div className="flex justify-between font-bold">
                   <span>MTOP Franchise Regulatory Fee</span>
-                  <span className="font-mono tabular-nums">₱{parseFloat(receiptData.amountPaid || standardFranchiseFee || 500).toFixed(2)}</span>
+                  <span className="font-mono tabular-nums">
+                    {receiptData.amountPaid != null && Number.isFinite(Number(receiptData.amountPaid))
+                      ? `₱${Number(receiptData.amountPaid).toFixed(2)}`
+                      : 'N/A'}
+                  </span>
                 </div>
                 <p className="text-[10px] text-[#6B6761] dark:text-[#A8A29E]">Annual motor tricycle regulatory &amp; inspection fee</p>
               </div>
@@ -978,7 +1025,9 @@ const CashierSettings = () => {
               <div className="flex justify-between items-center text-sm font-bold pt-1">
                 <span>TOTAL AMOUNT PAID:</span>
                 <span className="text-base font-mono tabular-nums text-[#9E2A2B] dark:text-[#D4AF37]">
-                  ₱{parseFloat(receiptData.amountPaid || standardFranchiseFee || 500).toFixed(2)}
+                  {receiptData.amountPaid != null && Number.isFinite(Number(receiptData.amountPaid))
+                    ? `₱${Number(receiptData.amountPaid).toFixed(2)}`
+                    : 'N/A'}
                 </span>
               </div>
 

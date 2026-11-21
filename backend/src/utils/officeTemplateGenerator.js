@@ -197,15 +197,23 @@ function replacePlaceholders(xmlStr, replacements) {
 function getOrdinalParts(dateInput) {
     const d = dateInput ? new Date(dateInput) : new Date();
     const validDate = isNaN(d.getTime()) ? new Date() : d;
-    const day = validDate.getDate();
+    const parts = new Intl.DateTimeFormat('en-US', {
+        timeZone: 'Asia/Manila',
+        year: 'numeric',
+        month: 'numeric',
+        day: 'numeric'
+    }).formatToParts(validDate);
+    const getPart = (type) => Number(parts.find((p) => p.type === type)?.value || 0);
+    const day = getPart('day');
+    const monthNum = getPart('month');
+    const year = String(getPart('year'));
     let ordinal = 'th';
     if (day % 10 === 1 && day !== 11) ordinal = 'st';
     else if (day % 10 === 2 && day !== 12) ordinal = 'nd';
     else if (day % 10 === 3 && day !== 13) ordinal = 'rd';
-    const month = validDate.toLocaleDateString('en-US', { month: 'long' });
-    const year = String(validDate.getFullYear());
-    const shortDate = `${validDate.getMonth() + 1}/${validDate.getDate()}/${validDate.getFullYear()}`;
-    const longDate = validDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
+    const month = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Manila', month: 'long' }).format(validDate);
+    const shortDate = `${monthNum}/${day}/${year}`;
+    const longDate = `${month} ${day}, ${year}`;
     return { day: String(day), ordinal, month, year, shortDate, longDate };
 }
 
@@ -299,24 +307,40 @@ function generateMtopApplicationXlsx(franchise = {}) {
 
     if (!familyName && !givenName) {
         const full = (franchise.fullName || franchise.ownerName || franchise.operatorName || op.name || '').toUpperCase().trim();
-        const parts = full ? full.split(/\s+/) : [];
-        if (parts.length === 1) {
-            familyName = parts[0];
-        } else if (parts.length === 2) {
-            givenName = parts[0];
-            familyName = parts[1];
-        } else if (parts.length > 2) {
-            givenName = parts.slice(0, -2).join(' ');
-            middleName = parts[parts.length - 2].replace('.', '');
-            familyName = parts[parts.length - 1];
+        if (full.includes(',')) {
+            const [commaLast, commaRest = ''] = full.split(',', 2);
+            familyName = commaLast.trim();
+            const restParts = commaRest.trim().split(/\s+/).filter(Boolean);
+            if (restParts.length === 1) {
+                givenName = restParts[0];
+            } else if (restParts.length > 1) {
+                const lastToken = restParts[restParts.length - 1];
+                if (/^[A-Z]\.?$/.test(lastToken)) {
+                    middleName = lastToken.replace('.', '');
+                    givenName = restParts.slice(0, -1).join(' ');
+                } else {
+                    givenName = restParts.join(' ');
+                }
+            }
+        } else {
+            const parts = full ? full.split(/\s+/) : [];
+            if (parts.length === 1) {
+                familyName = parts[0];
+            } else if (parts.length === 2) {
+                givenName = parts[0];
+                familyName = parts[1];
+            } else if (parts.length > 2) {
+                givenName = parts.slice(0, -2).join(' ');
+                middleName = parts[parts.length - 2].replace('.', '');
+                familyName = parts[parts.length - 1];
+            }
         }
     }
 
     const fullName = (
-        franchise.fullName ||
-        franchise.ownerName ||
-        franchise.operatorName ||
-        `${givenName} ${middleName ? middleName.charAt(0) + '. ' : ''}${familyName}`
+        givenName && familyName
+            ? `${givenName} ${middleName ? middleName.charAt(0) + '. ' : ''}${familyName}`
+            : (franchise.fullName || franchise.ownerName || franchise.operatorName || op.name || '')
     ).toUpperCase().trim();
 
     let zone = (franchise.zone || franchise.todaZone || '').toUpperCase().replace(/\s*ZONE\s*/i, '').trim();
@@ -330,7 +354,7 @@ function generateMtopApplicationXlsx(franchise = {}) {
 
     const filedParts = getOrdinalParts(franchise.dateApplied || franchise.createdAt || franchise.submittedAt || new Date());
     const rawCtcDate = franchise.cedulaDate || franchise.ctcDateIssued;
-    const ctcDateStr = rawCtcDate && !isNaN(new Date(rawCtcDate).getTime()) ? getOrdinalParts(rawCtcDate).shortDate : 'N/A';
+    const ctcDateStr = rawCtcDate && !isNaN(new Date(rawCtcDate).getTime()) ? getOrdinalParts(rawCtcDate).shortDate : '';
 
     const replacements = {
         FAMILY_NAME: familyName || 'N/A',
@@ -348,7 +372,7 @@ function generateMtopApplicationXlsx(franchise = {}) {
         IS_COOPERATIVE: '',
         UNITS_APPLIED: 'One (1) unit',
         MAKE: (franchise.make || franchise.made || franchise.vehicleMake || 'N/A').toUpperCase(),
-        MODEL: String(franchise.yearModel || franchise.model || 'N/A').toUpperCase(),
+        MODEL: String(franchise.yearModel || franchise.model || franchise.made || 'N/A').toUpperCase(),
         MOTOR_NO: (franchise.motorNo || franchise.motorNumber || franchise.engineNumber || 'N/A').toUpperCase(),
         CHASSIS_NO: (franchise.chassisNo || franchise.chassisNumber || 'N/A').toUpperCase(),
         PLATE_NO: (franchise.plateNo || franchise.plateNumber || 'N/A').toUpperCase(),

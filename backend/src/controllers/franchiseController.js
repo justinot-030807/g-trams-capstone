@@ -1869,13 +1869,17 @@ const getFranchiseRecordCheck = async (req, res) => {
 
 const getCashierQueue = async (req, res) => {
     try {
-        const { q, status } = req.query;
+        const { q, status, scope } = req.query;
+        const normalizedScope = String(scope || '').trim().toLowerCase();
+        const includeQueue = normalizedScope !== 'ledger';
+        const includeLedger = normalizedScope !== 'queue';
+
         const SystemSettings = require('../models/systemSettingsModel');
         const settings = await SystemSettings.findOne().sort({ updatedAt: -1, createdAt: -1 }).lean().catch(() => null);
         const franchiseFee = Number(settings?.franchiseFee) > 0 ? Number(settings.franchiseFee) : 500;
 
         // Cashier requests can narrow the queue without broadening payable eligibility.
-        const pendingQueue = !status || status === PAYABLE_PREDICATE.status
+        const pendingQueue = includeQueue && (!status || status === PAYABLE_PREDICATE.status)
             ? await Franchise.find(PAYABLE_PREDICATE)
                 .select(CASHIER_FRANCHISE_PROJECTION)
                 .populate('operator', 'name')
@@ -1883,119 +1887,122 @@ const getCashierQueue = async (req, res) => {
                 .lean()
             : [];
 
-        // 2. Durable PaymentLedger (sorted newest first) + merge/dedupe legacy paid franchises & paymentHistory by officialReceiptNo (M11)
-        const [ledgerDocs, legacyPaidFranchises] = await Promise.all([
-            PaymentLedger.find().sort({ paymentDate: -1, createdAt: -1 }).lean(),
-            Franchise.find({
-                $or: [
-                    { paymentStatus: 'Paid' },
-                    { 'paymentHistory.0': { $exists: true } }
-                ]
-            })
-                .populate('operator', 'name contact address')
-                .lean()
-        ]);
-
         const seenOrs = new Set();
         const mergedLedger = [];
 
-        const normalizeLedgerItem = (raw) => {
-            const collectorName = raw.processedByName || raw.cashierName || 'Municipal Cashier';
-            const applicant = raw.applicantName || raw.fullName || '';
-            const toda = raw.todaAssociation || raw.todaName || '';
-            return {
-                _id: raw._id,
-                franchiseId: raw.franchiseId || raw._id,
-                ownerId: raw.ownerId || null,
-                applicantName: applicant,
-                fullName: applicant,
-                payerName: raw.payerName || applicant,
-                plateNo: raw.plateNo || '',
-                mtopNo: raw.mtopNo || '',
-                todaAssociation: toda,
-                todaName: toda,
-                applicationType: raw.applicationType || 'New',
-                officialReceiptNo: raw.officialReceiptNo || '',
-                amountPaid: Number(raw.amountPaid) || 0,
-                paymentMethod: raw.paymentMethod || 'Cash',
-                paymentDate: raw.paymentDate || raw.createdAt || null,
-                paymentRemarks: raw.paymentRemarks || '',
-                processedBy: raw.processedBy || raw.paidByCashier || null,
-                processedByName: collectorName,
-                cashierName: collectorName,
-                paymentStatus: 'Paid',
-                status: raw.franchiseStatus || raw.status || 'For Signing',
-                source: raw.source || 'ledger'
+        if (includeLedger) {
+            // 2. Durable PaymentLedger (sorted newest first) + merge/dedupe legacy paid franchises & paymentHistory by officialReceiptNo (M11)
+            const [ledgerDocs, legacyPaidFranchises] = await Promise.all([
+                PaymentLedger.find().sort({ paymentDate: -1, createdAt: -1 }).lean(),
+                Franchise.find({
+                    $or: [
+                        { paymentStatus: 'Paid' },
+                        { 'paymentHistory.0': { $exists: true } }
+                    ]
+                })
+                    .select('operator fullName payerName plateNo mtopNo todaName applicationType officialReceiptNo amountPaid paymentMethod paymentDate updatedAt createdAt paymentRemarks paidByCashier cashierName status paymentStatus paymentHistory')
+                    .populate('operator', 'name')
+                    .lean()
+            ]);
+
+            const normalizeLedgerItem = (raw) => {
+                const collectorName = raw.processedByName || raw.cashierName || 'Municipal Cashier';
+                const applicant = raw.applicantName || raw.fullName || '';
+                const toda = raw.todaAssociation || raw.todaName || '';
+                return {
+                    _id: raw._id,
+                    franchiseId: raw.franchiseId || raw._id,
+                    ownerId: raw.ownerId || null,
+                    applicantName: applicant,
+                    fullName: applicant,
+                    payerName: raw.payerName || applicant,
+                    plateNo: raw.plateNo || '',
+                    mtopNo: raw.mtopNo || '',
+                    todaAssociation: toda,
+                    todaName: toda,
+                    applicationType: raw.applicationType || 'New',
+                    officialReceiptNo: raw.officialReceiptNo || '',
+                    amountPaid: Number(raw.amountPaid) || 0,
+                    paymentMethod: raw.paymentMethod || 'Cash',
+                    paymentDate: raw.paymentDate || raw.createdAt || null,
+                    paymentRemarks: raw.paymentRemarks || '',
+                    processedBy: raw.processedBy || raw.paidByCashier || null,
+                    processedByName: collectorName,
+                    cashierName: collectorName,
+                    paymentStatus: 'Paid',
+                    status: raw.franchiseStatus || raw.status || 'For Signing',
+                    source: raw.source || 'ledger'
+                };
             };
-        };
 
-        for (const doc of ledgerDocs) {
-            const orKey = String(doc.officialReceiptNo || '').trim().toUpperCase();
-            if (orKey) seenOrs.add(orKey);
-            mergedLedger.push(normalizeLedgerItem({ ...doc, source: 'ledger' }));
-        }
+            for (const doc of ledgerDocs) {
+                const orKey = String(doc.officialReceiptNo || '').trim().toUpperCase();
+                if (orKey) seenOrs.add(orKey);
+                mergedLedger.push(normalizeLedgerItem({ ...doc, source: 'ledger' }));
+            }
 
-        for (const f of legacyPaidFranchises) {
-            if (f.paymentStatus === 'Paid') {
-                const orKey = String(f.officialReceiptNo || '').trim().toUpperCase();
-                const dedupeKey = orKey || `LEGACY_FRANCHISE_${f._id}`;
-                if (!seenOrs.has(dedupeKey)) {
-                    seenOrs.add(dedupeKey);
-                    mergedLedger.push(normalizeLedgerItem({
-                        _id: f._id,
-                        franchiseId: f._id,
-                        ownerId: f.operator?._id || f.operator || null,
-                        applicantName: f.fullName || '',
-                        payerName: f.payerName || f.fullName || '',
-                        plateNo: f.plateNo || '',
-                        mtopNo: f.mtopNo || '',
-                        todaAssociation: f.todaName || '',
-                        applicationType: f.applicationType || 'New',
-                        officialReceiptNo: f.officialReceiptNo || '',
-                        amountPaid: f.amountPaid || 0,
-                        paymentMethod: f.paymentMethod || 'Cash',
-                        paymentDate: f.paymentDate || f.updatedAt || f.createdAt || null,
-                        paymentRemarks: f.paymentRemarks || '',
-                        processedBy: f.paidByCashier || null,
-                        processedByName: f.cashierName || 'Municipal Cashier',
-                        franchiseStatus: f.status,
-                        source: 'legacy_franchise'
-                    }));
+            for (const f of legacyPaidFranchises) {
+                if (f.paymentStatus === 'Paid') {
+                    const orKey = String(f.officialReceiptNo || '').trim().toUpperCase();
+                    const dedupeKey = orKey || `LEGACY_FRANCHISE_${f._id}`;
+                    if (!seenOrs.has(dedupeKey)) {
+                        seenOrs.add(dedupeKey);
+                        mergedLedger.push(normalizeLedgerItem({
+                            _id: f._id,
+                            franchiseId: f._id,
+                            ownerId: f.operator?._id || f.operator || null,
+                            applicantName: f.fullName || '',
+                            payerName: f.payerName || f.fullName || '',
+                            plateNo: f.plateNo || '',
+                            mtopNo: f.mtopNo || '',
+                            todaAssociation: f.todaName || '',
+                            applicationType: f.applicationType || 'New',
+                            officialReceiptNo: f.officialReceiptNo || '',
+                            amountPaid: f.amountPaid || 0,
+                            paymentMethod: f.paymentMethod || 'Cash',
+                            paymentDate: f.paymentDate || f.updatedAt || f.createdAt || null,
+                            paymentRemarks: f.paymentRemarks || '',
+                            processedBy: f.paidByCashier || null,
+                            processedByName: f.cashierName || 'Municipal Cashier',
+                            franchiseStatus: f.status,
+                            source: 'legacy_franchise'
+                        }));
+                    }
+                }
+
+                if (Array.isArray(f.paymentHistory)) {
+                    for (let idx = 0; idx < f.paymentHistory.length; idx++) {
+                        const hist = f.paymentHistory[idx];
+                        if (!hist) continue;
+                        const orKey = String(hist.officialReceiptNo || '').trim().toUpperCase();
+                        if (!orKey || seenOrs.has(orKey)) continue;
+                        seenOrs.add(orKey);
+                        mergedLedger.push(normalizeLedgerItem({
+                            _id: hist._id || `${f._id}_hist_${idx}`,
+                            franchiseId: f._id,
+                            ownerId: f.operator?._id || f.operator || null,
+                            applicantName: f.fullName || '',
+                            payerName: hist.payerName || f.fullName || '',
+                            plateNo: f.plateNo || '',
+                            mtopNo: hist.mtopNo || f.mtopNo || '',
+                            todaAssociation: f.todaName || '',
+                            applicationType: f.applicationType || 'Renewal',
+                            officialReceiptNo: hist.officialReceiptNo || '',
+                            amountPaid: hist.amountPaid || 0,
+                            paymentMethod: hist.paymentMethod || 'Cash',
+                            paymentDate: hist.paymentDate || hist.archivedAt || f.updatedAt || null,
+                            paymentRemarks: hist.paymentRemarks || '',
+                            processedBy: hist.paidByCashier || null,
+                            processedByName: hist.cashierName || 'Municipal Cashier',
+                            franchiseStatus: f.status,
+                            source: 'legacy_history'
+                        }));
+                    }
                 }
             }
 
-            if (Array.isArray(f.paymentHistory)) {
-                for (let idx = 0; idx < f.paymentHistory.length; idx++) {
-                    const hist = f.paymentHistory[idx];
-                    if (!hist) continue;
-                    const orKey = String(hist.officialReceiptNo || '').trim().toUpperCase();
-                    if (!orKey || seenOrs.has(orKey)) continue;
-                    seenOrs.add(orKey);
-                    mergedLedger.push(normalizeLedgerItem({
-                        _id: hist._id || `${f._id}_hist_${idx}`,
-                        franchiseId: f._id,
-                        ownerId: f.operator?._id || f.operator || null,
-                        applicantName: f.fullName || '',
-                        payerName: hist.payerName || f.fullName || '',
-                        plateNo: f.plateNo || '',
-                        mtopNo: hist.mtopNo || f.mtopNo || '',
-                        todaAssociation: f.todaName || '',
-                        applicationType: f.applicationType || 'Renewal',
-                        officialReceiptNo: hist.officialReceiptNo || '',
-                        amountPaid: hist.amountPaid || 0,
-                        paymentMethod: hist.paymentMethod || 'Cash',
-                        paymentDate: hist.paymentDate || hist.archivedAt || f.updatedAt || null,
-                        paymentRemarks: hist.paymentRemarks || '',
-                        processedBy: hist.paidByCashier || null,
-                        processedByName: hist.cashierName || 'Municipal Cashier',
-                        franchiseStatus: f.status,
-                        source: 'legacy_history'
-                    }));
-                }
-            }
+            mergedLedger.sort((a, b) => new Date(b.paymentDate || 0) - new Date(a.paymentDate || 0));
         }
-
-        mergedLedger.sort((a, b) => new Date(b.paymentDate || 0) - new Date(a.paymentDate || 0));
 
         let filteredPending = pendingQueue;
         let filteredLedger = mergedLedger;
@@ -2020,14 +2027,30 @@ const getCashierQueue = async (req, res) => {
             filteredLedger = mergedLedger.filter(matchesSearch);
         }
 
-        res.status(200).json({
-            pendingPayment: filteredPending,
-            pendingQueue: filteredPending,
-            recentlyPaid: filteredLedger,
-            paymentLedger: filteredLedger,
-            franchiseFee,
-            all: [...filteredPending, ...filteredLedger]
-        });
+        const payload = { franchiseFee };
+        if (includeQueue) {
+            payload.pendingPayment = filteredPending;
+            payload.pendingQueue = filteredPending;
+        }
+        if (includeLedger) {
+            const pageNum = Math.max(1, parseInt(req.query.page || '1', 10) || 1);
+            const limitNum = Math.min(200, Math.max(1, parseInt(req.query.limit || '500', 10) || 500));
+            const totalLedger = filteredLedger.length;
+            const totalPages = Math.max(1, Math.ceil(totalLedger / limitNum));
+            const pagedLedger = req.query.page || req.query.limit
+                ? filteredLedger.slice((pageNum - 1) * limitNum, pageNum * limitNum)
+                : filteredLedger;
+            payload.paymentLedger = pagedLedger;
+            payload.recentlyPaid = pagedLedger;
+            payload.ledgerPagination = {
+                totalRecords: totalLedger,
+                totalPages,
+                currentPage: pageNum,
+                limit: limitNum
+            };
+        }
+
+        res.status(200).json(payload);
     } catch (error) {
         console.error('Error fetching cashier queue:', error);
         res.status(500).json({ message: 'Failed to fetch cashier queue' });

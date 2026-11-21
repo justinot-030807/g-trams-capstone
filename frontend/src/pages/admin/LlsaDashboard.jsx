@@ -11,8 +11,8 @@ import { useDashboardStats } from '../../hooks/useDashboardStats';
 import { StatsCardsSkeleton, DashboardHealthSkeleton } from '../../components/skeleton';
 import TricycleIcon from '../../components/common/TricycleIcon';
 import { formatVehicleMakeAndModel, cleanText } from '../../utils/vehicleFormatters';
-import { 
-  ArrowRight, Layers 
+import {
+  ArrowRight, Layers, AlertTriangle, RefreshCw
 } from 'lucide-react';
 
 const LlsaDashboard = () => {
@@ -22,7 +22,14 @@ const LlsaDashboard = () => {
     recentApps,
     historyLogs,
     isLoading,
+    error: statsError,
+    refetch,
   } = useDashboardStats({ pollingInterval: 60000 });
+
+  const pendingQueueApps = useMemo(
+    () => (Array.isArray(recentApps) ? recentApps.filter((a) => ['Pending', 'Pending for Approval'].includes(a.status)) : []),
+    [recentApps]
+  );
 
   const navigate = useNavigate();
   const { t } = useLanguage() || { t: (_, def) => def };
@@ -114,6 +121,9 @@ const LlsaDashboard = () => {
     if (isLoading) {
       return t('admin.loadingSummary', 'Loading franchise overview...');
     }
+    if (statsError) {
+      return t('admin.errorSummary', 'Unable to load franchise overview right now.');
+    }
     if (stats.pending > 0) {
       return `${stats.pending} ${t(
         'admin.subtextPending',
@@ -124,7 +134,7 @@ const LlsaDashboard = () => {
       'admin.subtextAllCleared',
       'All review queues cleared'
     )} (${stats.pipeline} ${t('admin.subtextPipeline', 'total units in active municipal pipeline')}).`;
-  }, [isLoading, stats.pending, stats.pipeline, t]);
+  }, [isLoading, statsError, stats.pending, stats.pipeline, t]);
 
   // Columns for Pending Approvals Queue DataTable
   const pendingColumns = useMemo(
@@ -286,6 +296,25 @@ const LlsaDashboard = () => {
           </span>
         }
       />
+
+      {statsError && !isLoading && (
+        <div role="alert" className="mb-5 p-3.5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-900/60 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2.5 text-xs text-red-800 dark:text-red-300">
+            <AlertTriangle size={16} className="text-red-600 dark:text-red-400 shrink-0" />
+            <span className="font-semibold">
+              {t('admin.statsLoadError', 'Unable to load latest franchise overview and pending queue:')} {statsError}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={refetch}
+            className="min-h-[36px] px-3 py-1.5 rounded-lg bg-red-700 hover:bg-red-800 text-white text-xs font-semibold inline-flex items-center gap-1.5 transition-colors cursor-pointer"
+          >
+            <RefreshCw size={13} />
+            <span>{t('common.retry', 'Retry')}</span>
+          </button>
+        </div>
+      )}
 
       {/* 2. STAT CARDS (4 Compact Metric Cards) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
@@ -496,7 +525,7 @@ const LlsaDashboard = () => {
 
           <DataTable
             columns={pendingColumns}
-            data={recentApps}
+            data={pendingQueueApps}
             isLoading={isLoading}
             emptyIcon={<TricycleIcon size={34} />}
             emptyTitle={t('admin.allCaughtUp', 'All caught up! No pending applications.')}

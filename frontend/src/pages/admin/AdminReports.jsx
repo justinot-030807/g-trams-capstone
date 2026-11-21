@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { GASAN_BARANGAYS, TODA_LIST } from '../../utils/constants';
 import MainLayout from '../../components/MainLayout';
 import { Printer, Filter, Download, ChevronDown, AlertCircle, RefreshCw } from 'lucide-react';
@@ -13,6 +13,8 @@ const AdminReports = () => {
   const [summary, setSummary] = useState(EMPTY_SUMMARY);
   const [isLoading, setIsLoading] = useState(false);
   const [fetchError, setFetchError] = useState(null);
+  const fetchAbortRef = useRef(null);
+  const fetchSeqRef = useRef(0);
   
   const [filters, setFilters] = useState({
     startDate: '',
@@ -22,7 +24,14 @@ const AdminReports = () => {
     barangay: ''
   });
 
-  const fetchReports = async () => {
+  const fetchReports = useCallback(async () => {
+    if (fetchAbortRef.current) {
+      fetchAbortRef.current.abort();
+    }
+    const controller = new AbortController();
+    fetchAbortRef.current = controller;
+    const requestSeq = ++fetchSeqRef.current;
+
     setIsLoading(true);
     setFetchError(null);
     try {
@@ -34,32 +43,42 @@ const AdminReports = () => {
       if (filters.barangay) queryParams.append('barangay', filters.barangay);
 
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/reports?${queryParams.toString()}`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` },
+        signal: controller.signal
       });
+      if (requestSeq !== fetchSeqRef.current) return;
 
       if (response.ok) {
         const data = await response.json();
+        if (requestSeq !== fetchSeqRef.current) return;
         setReports(data.data || []);
         setSummary(data.summary || EMPTY_SUMMARY);
       } else {
         const errData = await response.json().catch(() => ({}));
+        if (requestSeq !== fetchSeqRef.current) return;
         setReports([]);
         setSummary(EMPTY_SUMMARY);
         setFetchError(errData.message || errData.error || `Unable to load franchise reports (HTTP ${response.status}).`);
       }
     } catch (error) {
+      if (error?.name === 'AbortError' || requestSeq !== fetchSeqRef.current) return;
       console.error('Error fetching reports:', error);
       setReports([]);
       setSummary(EMPTY_SUMMARY);
       setFetchError('Unable to reach the server to load system reports. Please check your connection and retry.');
     } finally {
-      setIsLoading(false);
+      if (requestSeq === fetchSeqRef.current) {
+        setIsLoading(false);
+      }
     }
-  };
+  }, [filters]);
 
   useEffect(() => {
     fetchReports();
-  }, [filters]);
+    return () => {
+      if (fetchAbortRef.current) fetchAbortRef.current.abort();
+    };
+  }, [fetchReports]);
 
   useEffect(() => {
     const handleAfterPrint = () => {

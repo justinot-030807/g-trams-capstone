@@ -1443,7 +1443,7 @@ const OperatorDashboard = () => {
                               </span>
                             </div>
                             <p className="text-xs font-normal text-[#92400E]/90 dark:text-[#FDE68A]/90 leading-snug">
-                              Pay ₱{parseFloat(systemFranchiseFee || 500).toFixed(2)} at the Municipal Cashier window with Plate No. <b>{unit.plateNo}</b>. Your franchise will be activated once payment is confirmed.
+                              Pay ₱{parseFloat(systemFranchiseFee || 500).toFixed(2)} at the Municipal Cashier window with Plate No. <b>{unit.plateNo}</b>. Once payment is confirmed, your application moves to Mayor signing and MTOP issuance before pickup.
                             </p>
                           </div>
                         </div>

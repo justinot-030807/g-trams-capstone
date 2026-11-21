@@ -501,7 +501,28 @@ class FranchiseService {
         }
 
         if (search && search.trim() !== '') {
-            queryCondition.$text = { $search: search.trim() };
+            const cleanSearch = search.trim();
+            const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const safePattern = escapeRegex(cleanSearch);
+            const partialRegex = { $regex: safePattern, $options: 'i' };
+            const searchOr = [
+                { fullName: partialRegex },
+                { plateNo: partialRegex },
+                { motorNo: partialRegex },
+                { chassisNo: partialRegex },
+                { mtopNo: partialRegex },
+                { officialReceiptNo: partialRegex },
+                { todaName: partialRegex },
+                { bodyNumber: partialRegex }
+            ];
+            if (Array.isArray(queryCondition.$and)) {
+                queryCondition.$and.push({ $or: searchOr });
+            } else if (queryCondition.$or) {
+                queryCondition.$and = [{ $or: queryCondition.$or }, { $or: searchOr }];
+                delete queryCondition.$or;
+            } else {
+                queryCondition.$or = searchOr;
+            }
         }
 
         // Default sort: oldest first (FIFO queue for peak processing)

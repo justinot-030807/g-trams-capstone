@@ -187,8 +187,8 @@ const SmsDispatcherLog = () => {
                 </td>
               </tr>
             ) : (
-              logs.map((log) => (
-                <tr key={log._id || Math.random()} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#2E2A27]/30 transition-colors">
+              logs.map((log, idx) => (
+                <tr key={log._id || `${log.recipientPhone || 'sms'}-${log.dispatchedAt || log.createdAt || idx}`} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#2E2A27]/30 transition-colors">
                   <td className="py-2.5 px-3 whitespace-nowrap font-mono text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
                     {formatTimestamp(log.dispatchedAt || log.createdAt)}
                   </td>

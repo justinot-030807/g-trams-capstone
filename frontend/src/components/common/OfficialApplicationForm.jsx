@@ -47,8 +47,8 @@ const OfficialApplicationForm = ({
         givenName = restParts[0];
       } else if (restParts.length > 1) {
         const lastToken = restParts[restParts.length - 1];
-        const looksLikeMiddle = lastToken.endsWith('.') || restParts.length >= 2;
-        if (looksLikeMiddle) {
+        const looksLikeMiddleInitial = /^[A-Z]\.?$/.test(lastToken);
+        if (looksLikeMiddleInitial) {
           middleName = lastToken.replace(/\./g, '');
           givenName = restParts.slice(0, -1).join(' ');
         } else {
@@ -97,31 +97,46 @@ const OfficialApplicationForm = ({
   const filedDateObj = rawDateFiled ? new Date(rawDateFiled) : null;
   const isValidFiledDate = filedDateObj && !isNaN(filedDateObj.getTime());
 
+  const getManilaDateParts = (dInput) => {
+    if (!dInput) return null;
+    const d = new Date(dInput);
+    if (isNaN(d.getTime())) return null;
+    const parts = new Intl.DateTimeFormat('en-US', {
+      timeZone: 'Asia/Manila',
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric'
+    }).formatToParts(d);
+    const getPart = (type) => Number(parts.find((p) => p.type === type)?.value || 0);
+    const year = getPart('year');
+    const month = getPart('month');
+    const day = getPart('day');
+    const monthLong = new Intl.DateTimeFormat('en-US', { timeZone: 'Asia/Manila', month: 'long' }).format(d).toUpperCase();
+    return { year, month, day, monthLong, shortDate: `${month}/${day}/${year}` };
+  };
+
   const formatShortDate = (dInput) => {
     if (!dInput) return '';
-    const d = new Date(dInput);
-    if (isNaN(d.getTime())) return String(dInput);
-    return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
+    const manila = getManilaDateParts(dInput);
+    return manila ? manila.shortDate : String(dInput);
   };
 
-  const getOrdinalDay = (d) => {
-    if (!d || isNaN(d.getTime())) return '';
-    const day = d.getDate();
-    if (day % 10 === 1 && day !== 11) return `${day}st`;
-    if (day % 10 === 2 && day !== 12) return `${day}nd`;
-    if (day % 10 === 3 && day !== 13) return `${day}rd`;
-    return `${day}th`;
+  const getOrdinalDay = (dayNum) => {
+    if (!dayNum) return '';
+    if (dayNum % 10 === 1 && dayNum !== 11) return `${dayNum}st`;
+    if (dayNum % 10 === 2 && dayNum !== 12) return `${dayNum}nd`;
+    if (dayNum % 10 === 3 && dayNum !== 13) return `${dayNum}rd`;
+    return `${dayNum}th`;
   };
 
-  const dateFiledStr = isValidFiledDate ? formatShortDate(filedDateObj) : '';
-  const swornDay = isValidFiledDate ? getOrdinalDay(filedDateObj) : '';
-  const swornMonth = isValidFiledDate
-    ? filedDateObj.toLocaleDateString('en-US', { month: 'long' }).toUpperCase()
-    : '';
-  const swornYear = isValidFiledDate ? String(filedDateObj.getFullYear()) : '';
+  const filedManila = isValidFiledDate ? getManilaDateParts(filedDateObj) : null;
+  const dateFiledStr = filedManila ? filedManila.shortDate : '';
+  const swornDay = filedManila ? getOrdinalDay(filedManila.day) : '';
+  const swornMonth = filedManila ? filedManila.monthLong : '';
+  const swornYear = filedManila ? String(filedManila.year) : '';
 
   const ctcDateRaw = formData.cedulaDate || formData.cedulaIssueDate || formData.ctcDateIssued || formData.dateIssued || '';
-  const ctcDateStr = ctcDateRaw ? formatShortDate(ctcDateRaw) : (isValidFiledDate ? dateFiledStr : '');
+  const ctcDateStr = ctcDateRaw ? formatShortDate(ctcDateRaw) : '';
 
   const effectiveIsRenewal =
     isRenewal || String(formData.applicationType || '').toLowerCase() === 'renewal';
@@ -157,7 +172,7 @@ const OfficialApplicationForm = ({
           plateNumber: plateNo,
           sidecarNumber: scNo,
           ctcNumber: cedulaNo,
-          ctcDateIssued: ctcDateRaw || rawDateFiled,
+          ctcDateIssued: ctcDateRaw || '',
           createdAt: rawDateFiled,
         },
         type: 'application',
@@ -220,7 +235,7 @@ const OfficialApplicationForm = ({
       )}
 
       {/* Printable Sheet Container */}
-      <div className="w-full max-w-[820px] overflow-x-auto pb-4 custom-scrollbar flex justify-start sm:justify-center">
+      <div className="w-full max-w-[820px] overflow-x-auto pb-4 custom-scrollbar flex justify-start min-[820px]:justify-center print:max-w-none print:overflow-visible print:pb-0 print:block">
         <div
           ref={formRef}
           id="printable-application-form"
@@ -237,10 +252,24 @@ const OfficialApplicationForm = ({
               html, body {
                 margin: 0 !important;
                 padding: 0 !important;
+                height: auto !important;
+                min-height: 0 !important;
+                overflow: visible !important;
                 background: white !important;
               }
               body * {
                 visibility: hidden !important;
+              }
+              #admin-summary-modal-root,
+              #printable-application-modal-root {
+                position: static !important;
+                inset: auto !important;
+                height: auto !important;
+                min-height: 0 !important;
+                overflow: visible !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                background: white !important;
               }
               #printable-application-form,
               #printable-application-form * {
@@ -297,13 +326,13 @@ const OfficialApplicationForm = ({
               <div className="flex items-end w-full">
                 <div className="w-[148px] shrink-0">Name of Applicant:</div>
                 <div className="flex-1 grid grid-cols-3 gap-x-2">
-                  <div className="font-bold border-b border-black text-center uppercase pb-[1px] truncate">
+                  <div className="font-bold border-b border-black text-center uppercase pb-[1px] break-words leading-tight">
                     {familyName || '\u00A0'}
                   </div>
-                  <div className="font-bold border-b border-black text-center uppercase pb-[1px] truncate">
+                  <div className="font-bold border-b border-black text-center uppercase pb-[1px] break-words leading-tight">
                     {givenName || '\u00A0'}
                   </div>
-                  <div className="font-bold border-b border-black text-center uppercase pb-[1px] truncate">
+                  <div className="font-bold border-b border-black text-center uppercase pb-[1px] break-words leading-tight">
                     {middleName || '\u00A0'}
                   </div>
                 </div>
@@ -340,7 +369,7 @@ const OfficialApplicationForm = ({
               <div className="flex items-end w-full">
                 <div className="w-[82px] shrink-0">Address:</div>
                 <div className="flex-1 grid grid-cols-[1.35fr_1fr_1fr] gap-x-2">
-                  <div className="font-bold border-b border-black text-center uppercase pb-[1px] truncate">
+                  <div className="font-bold border-b border-black text-center uppercase pb-[1px] break-words leading-tight">
                     {rawAddress || '\u00A0'}
                   </div>
                   <div className="font-bold border-b border-black text-center uppercase pb-[1px]">
@@ -365,7 +394,7 @@ const OfficialApplicationForm = ({
             <div className="w-full mb-2">
               <div className="flex items-end w-full">
                 <div className="w-[155px] shrink-0">Primary Occupation:</div>
-                <div className="flex-1 font-bold border-b border-black pl-2 pb-[1px] uppercase truncate">
+                <div className="flex-1 font-bold border-b border-black pl-2 pb-[1px] uppercase break-words leading-tight">
                   {occupation || '\u00A0'}
                 </div>
               </div>

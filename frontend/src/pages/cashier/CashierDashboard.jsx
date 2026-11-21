@@ -40,6 +40,10 @@ const CashierDashboard = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeTab, setActiveTab] = useState('pending'); // 'pending' | 'completed'
   const prevPendingIdsRef = useRef(null);
+  const audioCtxRef = useRef(null);
+  const queueAbortRef = useRef(null);
+  const queueSeqRef = useRef(0);
+  const autoPrintTimerRef = useRef(null);
 
   const [standardFranchiseFee, setStandardFranchiseFee] = useState(() => {
     const val = Number(localStorage.getItem('franchise_fee'));
@@ -66,12 +70,46 @@ const CashierDashboard = () => {
     remarks: ''
   });
 
+  // Unlock/reuse a shared AudioContext on first Cashier interaction so background polls chime reliably (M9)
+  const unlockAudioContext = useCallback(() => {
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return null;
+      if (!audioCtxRef.current || audioCtxRef.current.state === 'closed') {
+        audioCtxRef.current = new AudioCtx();
+      }
+      if (audioCtxRef.current.state === 'suspended') {
+        audioCtxRef.current.resume().catch(() => {});
+      }
+      return audioCtxRef.current;
+    } catch {
+      return null;
+    }
+  }, []);
+
+  useEffect(() => {
+    const handleUnlock = () => {
+      unlockAudioContext();
+    };
+    window.addEventListener('pointerdown', handleUnlock, { passive: true });
+    window.addEventListener('keydown', handleUnlock, { passive: true });
+    return () => {
+      window.removeEventListener('pointerdown', handleUnlock);
+      window.removeEventListener('keydown', handleUnlock);
+      if (autoPrintTimerRef.current) {
+        clearTimeout(autoPrintTimerRef.current);
+      }
+      if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
+        audioCtxRef.current.close().catch(() => {});
+      }
+    };
+  }, [unlockAudioContext]);
+
   // Gentle, crisp 2-tone Web Audio API chime when a new unpaid item arrives
   const playQueueArrivalChime = useCallback(() => {
     try {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
+      const ctx = unlockAudioContext();
+      if (!ctx || ctx.state !== 'running') return;
       const now = ctx.currentTime;
 
       const scheduleTone = (freq, startOffset, duration) => {
@@ -90,18 +128,10 @@ const CashierDashboard = () => {
 
       scheduleTone(1046.5, 0, 0.16);
       scheduleTone(1318.5, 0.14, 0.24);
-
-      setTimeout(() => {
-        try {
-          ctx.close();
-        } catch {
-          // Ignore close errors
-        }
-      }, 600);
     } catch {
       // Browser autoplay restriction or unsupported AudioContext
     }
-  }, []);
+  }, [unlockAudioContext]);
 
   // Daily Treasury Remittance Modal State
   const [isRemittanceModalOpen, setIsRemittanceModalOpen] = useState(false);
@@ -246,67 +276,91 @@ const CashierDashboard = () => {
     }
   }, [syncFranchiseFee]);
 
-  const fetchQueue = useCallback(async ({ silent = false } = {}) => {
+  const fetchQueue = useCallback(async ({ silent = false, scope = '' } = {}) => {
+    if (queueAbortRef.current) {
+      queueAbortRef.current.abort();
+    }
+    const controller = new AbortController();
+    queueAbortRef.current = controller;
+    const reqSeq = ++queueSeqRef.current;
+
     if (!silent) {
       setIsLoading(true);
     }
     try {
       const token = localStorage.getItem('token');
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/cashier-queue`, {
-        headers: { 'Authorization': `Bearer ${token}` }
+      const query = scope ? `?scope=${encodeURIComponent(scope)}` : '';
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/cashier-queue${query}`, {
+        headers: { 'Authorization': `Bearer ${token}` },
+        signal: controller.signal
       });
+      if (reqSeq !== queueSeqRef.current) return;
       if (res.ok) {
         const data = await res.json();
+        if (reqSeq !== queueSeqRef.current) return;
         const isPayable = (f) => f && f.status === 'For Payment' && f.paymentStatus !== 'Paid' && !f.isArchived;
-        let payableItems = [];
-        let ledgerItems = [];
 
         if (Array.isArray(data)) {
-          payableItems = data.filter(isPayable);
-          ledgerItems = data.filter(f => f.paymentStatus === 'Paid');
+          const payableItems = data.filter(isPayable);
+          const ledgerItems = data.filter(f => f.paymentStatus === 'Paid');
+          const nextPendingIds = new Set(payableItems.map((item) => String(item._id)));
+          if (prevPendingIdsRef.current !== null) {
+            for (const pendingId of nextPendingIds) {
+              if (!prevPendingIdsRef.current.has(pendingId) && isQueueSoundEnabled()) {
+                playQueueArrivalChime();
+                break;
+              }
+            }
+          }
+          prevPendingIdsRef.current = nextPendingIds;
+          setQueue(payableItems);
+          setPaidList(ledgerItems);
           setAllRecords(data);
         } else {
           if (data?.franchiseFee != null) {
             syncFranchiseFee(data.franchiseFee);
           }
-          const pendingSource = Array.isArray(data.pendingQueue)
-            ? data.pendingQueue
-            : (Array.isArray(data.pendingPayment) ? data.pendingPayment : (Array.isArray(data.all) ? data.all : []));
-          ledgerItems = Array.isArray(data.paymentLedger)
-            ? data.paymentLedger
-            : (Array.isArray(data.recentlyPaid) ? data.recentlyPaid : []);
-          payableItems = pendingSource.filter(isPayable);
-          setAllRecords(Array.isArray(data.all) ? data.all : [...payableItems, ...ledgerItems]);
-        }
 
-        // Play arrival chime only on subsequent polls/socket refreshes when a genuinely new unpaid item enters queue
-        const nextPendingIds = new Set(payableItems.map((item) => String(item._id)));
-        if (prevPendingIdsRef.current !== null) {
-          let hasNewPending = false;
-          for (const pendingId of nextPendingIds) {
-            if (!prevPendingIdsRef.current.has(pendingId)) {
-              hasNewPending = true;
-              break;
+          if (Array.isArray(data.pendingQueue) || Array.isArray(data.pendingPayment)) {
+            const pendingSource = Array.isArray(data.pendingQueue) ? data.pendingQueue : data.pendingPayment;
+            const payableItems = pendingSource.filter(isPayable);
+            const nextPendingIds = new Set(payableItems.map((item) => String(item._id)));
+            if (prevPendingIdsRef.current !== null) {
+              let hasNewPending = false;
+              for (const pendingId of nextPendingIds) {
+                if (!prevPendingIdsRef.current.has(pendingId)) {
+                  hasNewPending = true;
+                  break;
+                }
+              }
+              if (hasNewPending && isQueueSoundEnabled()) {
+                playQueueArrivalChime();
+              }
             }
+            prevPendingIdsRef.current = nextPendingIds;
+            setQueue(payableItems);
           }
-          if (hasNewPending && isQueueSoundEnabled()) {
-            playQueueArrivalChime();
+
+          if (Array.isArray(data.paymentLedger) || Array.isArray(data.recentlyPaid)) {
+            const ledgerItems = Array.isArray(data.paymentLedger) ? data.paymentLedger : data.recentlyPaid;
+            setPaidList(ledgerItems);
+          }
+
+          if (Array.isArray(data.all)) {
+            setAllRecords(data.all);
           }
         }
-        prevPendingIdsRef.current = nextPendingIds;
-
-        setQueue(payableItems);
-        setPaidList(ledgerItems);
       } else if (!silent) {
         showToast('Failed to load cashier payment queue.', 'error');
       }
     } catch (err) {
+      if (err?.name === 'AbortError' || reqSeq !== queueSeqRef.current) return;
       console.error('Error fetching cashier queue:', err);
       if (!silent) {
         showToast('Cannot connect to server.', 'error');
       }
     } finally {
-      if (!silent) {
+      if (!silent && reqSeq === queueSeqRef.current) {
         setIsLoading(false);
       }
     }
@@ -315,11 +369,12 @@ const CashierDashboard = () => {
   useEffect(() => {
     fetchQueue();
     fetchLiveSettingsFee();
-    // Auto-refresh queue every 20 seconds without jarring skeleton flicker
-    const interval = setInterval(() => fetchQueue({ silent: true }), 20000);
+    // Auto-refresh lightweight live queue every 20 seconds without fetching full payment archive
+    const interval = setInterval(() => fetchQueue({ silent: true, scope: 'queue' }), 20000);
     window.addEventListener('gtrams_settings_updated', fetchLiveSettingsFee);
     return () => {
       clearInterval(interval);
+      if (queueAbortRef.current) queueAbortRef.current.abort();
       window.removeEventListener('gtrams_settings_updated', fetchLiveSettingsFee);
     };
   }, [fetchQueue, fetchLiveSettingsFee]);
@@ -418,11 +473,18 @@ const CashierDashboard = () => {
           cashierName: recordedCollector
         });
         setIsReceiptOpen(true);
+        if (autoPrintTimerRef.current) {
+          clearTimeout(autoPrintTimerRef.current);
+          autoPrintTimerRef.current = null;
+        }
         if (isAutoPrintEnabled()) {
-          setTimeout(() => window.print(), 300);
+          autoPrintTimerRef.current = setTimeout(() => {
+            autoPrintTimerRef.current = null;
+            window.print();
+          }, 300);
         }
 
-        fetchQueue({ silent: true });
+        fetchQueue({ silent: true, scope: activeTab === 'completed' ? '' : 'queue' });
       } else {
         showToast(data.message || 'Payment processing failed.', 'error');
       }
@@ -1154,28 +1216,17 @@ const CashierDashboard = () => {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-[#E4E1DC] font-medium text-[#1F1D1B]">
-                  {(() => {
-                    const paidTotal = hasValidAmount(receiptData.amountPaid) ? Number(receiptData.amountPaid) : null;
-                    const filingFee = paidTotal === null ? null : (paidTotal === 500 ? 300 : Number((paidTotal * 0.6).toFixed(2)));
-                    const permitFee = paidTotal === null ? null : (paidTotal === 500 ? 150 : Number((paidTotal * 0.3).toFixed(2)));
-                    const stickerFee = paidTotal === null ? null : Number((paidTotal - filingFee - permitFee).toFixed(2));
-                    return (
-                      <>
-                        <tr>
-                          <td className="py-2 px-3">Franchise Filing &amp; Inspection Fee</td>
-                          <td className="py-2 px-3 text-right font-mono tabular-nums">{filingFee !== null ? `₱${filingFee.toFixed(2)}` : 'N/A'}</td>
-                        </tr>
-                        <tr>
-                          <td className="py-2 px-3">Mayor's Permit &amp; Supervision Fee</td>
-                          <td className="py-2 px-3 text-right font-mono tabular-nums">{permitFee !== null ? `₱${permitFee.toFixed(2)}` : 'N/A'}</td>
-                        </tr>
-                        <tr>
-                          <td className="py-2 px-3">Official Regulatory Sticker &amp; Seal</td>
-                          <td className="py-2 px-3 text-right font-mono tabular-nums">{stickerFee !== null ? `₱${stickerFee.toFixed(2)}` : 'N/A'}</td>
-                        </tr>
-                      </>
-                    );
-                  })()}
+                  <tr>
+                    <td className="py-2 px-3">
+                      <span className="block font-semibold">Tricycle Franchise &amp; Regulatory Assessment (MTOP)</span>
+                      {receiptData.paymentRemarks && (
+                        <span className="block text-[10px] text-[#6B6761] mt-0.5">{receiptData.paymentRemarks}</span>
+                      )}
+                    </td>
+                    <td className="py-2 px-3 text-right font-mono tabular-nums">
+                      {formatAmountDisplay(receiptData.amountPaid)}
+                    </td>
+                  </tr>
                 </tbody>
                 <tfoot className="bg-[#F6F5F3] border-t-2 border-[#1F1D1B] font-bold">
                   <tr>
@@ -1211,7 +1262,13 @@ const CashierDashboard = () => {
             <div className="no-print flex items-center gap-2 pt-2 border-t border-[#E4E1DC]">
               <button
                 type="button"
-                onClick={() => setIsReceiptOpen(false)}
+                onClick={() => {
+                  if (autoPrintTimerRef.current) {
+                    clearTimeout(autoPrintTimerRef.current);
+                    autoPrintTimerRef.current = null;
+                  }
+                  setIsReceiptOpen(false);
+                }}
                 className="flex-1 px-4 py-2.5 bg-[#F6F5F3] hover:bg-[#E4E1DC] text-[#1F1D1B] font-bold text-xs rounded-lg transition-colors cursor-pointer border border-[#E4E1DC] min-h-[44px]"
               >
                 Close

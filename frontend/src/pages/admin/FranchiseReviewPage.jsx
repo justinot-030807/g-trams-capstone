@@ -201,14 +201,14 @@ const FranchiseReviewPage = () => {
   }, []);
 
   // Pre-payment record check (real Violation collection records, sanctions, prior franchises, TODA roster)
-  const [recordCheck, setRecordCheck] = useState({ loading: true, data: null });
+  const [recordCheck, setRecordCheck] = useState({ loading: true, franchiseId: null, data: null });
   const [recordCheckError, setRecordCheckError] = useState(null);
   const recordCheckReqIdRef = useRef(0);
 
   const fetchRecordCheck = useCallback(async (franchiseId) => {
     if (!franchiseId) return;
     const reqId = ++recordCheckReqIdRef.current;
-    setRecordCheck({ loading: true, data: null });
+    setRecordCheck({ loading: true, franchiseId, data: null });
     setRecordCheckError(null);
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${franchiseId}/record-check`, {
@@ -220,14 +220,14 @@ const FranchiseReviewPage = () => {
       }
       const data = await res.json();
       if (reqId !== recordCheckReqIdRef.current) return;
-      setRecordCheck({ loading: false, data });
+      setRecordCheck({ loading: false, franchiseId, data });
       if (data?.hasViolations || (data?.totalViolations ?? 0) > 0) {
         setIsRecordCheckOpen(true);
       }
     } catch (err) {
       if (reqId !== recordCheckReqIdRef.current) return;
       console.error('Record check fetch failed:', err);
-      setRecordCheck({ loading: false, data: null });
+      setRecordCheck({ loading: false, franchiseId, data: null });
       setRecordCheckError(err?.message || 'Could not verify sanction history — retry before approving');
     }
   }, []);
@@ -871,6 +871,10 @@ const FranchiseReviewPage = () => {
           {currentApp.status === 'Pending' || currentApp.status === 'Pending for Approval' ? (
             <button
               onClick={async () => {
+                if (recordCheck.loading || recordCheck.franchiseId !== currentApp._id) {
+                  showToast('Verifying sanction and roster history—please wait a moment.', 'warning');
+                  return;
+                }
                 if (recordCheckError) {
                   const ok = await confirm({
                     title: 'Sanction History Unverified',
@@ -906,12 +910,12 @@ const FranchiseReviewPage = () => {
                 }
                 handleUpdateStatus('For Payment', null, true);
               }}
-              disabled={isProcessing || reviewLock.isLocked}
+              disabled={isProcessing || reviewLock.isLocked || recordCheck.loading || recordCheck.franchiseId !== currentApp._id}
               className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl flex items-center gap-1.5 transition-all shadow-sm active:scale-95 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-              title="Requirements are complete. Send to the Treasury cashier for payment."
+              title={recordCheck.loading ? 'Checking violation & roster records...' : 'Requirements are complete. Send to the Treasury cashier for payment.'}
             >
-              {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
-              <span>Send to cashier</span>
+              {isProcessing || recordCheck.loading ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
+              <span>{recordCheck.loading ? 'Checking...' : 'Send to cashier'}</span>
               <ChevronRight size={14} />
             </button>
           ) : currentApp.status === 'For Payment' ? (
@@ -951,12 +955,12 @@ const FranchiseReviewPage = () => {
       {/* ========================================================================= */}
       {/* MAIN WORKBENCH: STREAMLINED REVIEW PANEL & CRISP STUDIO CANVAS            */}
       {/* ========================================================================= */}
-      <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-hidden">
+      <div className="flex-1 flex flex-col md:flex-row min-h-0 overflow-y-auto md:overflow-hidden">
         
         {/* ======================================================================= */}
         {/* LEFT REVIEW SHEET: DOCUMENT CHECKLIST & TABBED METADATA INSPECTOR       */}
         {/* ======================================================================= */}
-        <aside className="w-full md:w-[380px] lg:w-[420px] xl:w-[450px] bg-white dark:bg-[#1C1917] border-r border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col shrink-0 h-full overflow-y-auto shadow-sm z-10">
+        <aside className="w-full md:w-[380px] lg:w-[420px] xl:w-[450px] bg-white dark:bg-[#1C1917] border-b md:border-b-0 md:border-r border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col shrink-0 h-auto md:h-full md:overflow-y-auto shadow-sm z-10">
           
           <div className="p-3.5 space-y-3 flex-1 flex flex-col">
             
@@ -2428,7 +2432,7 @@ const FranchiseReviewPage = () => {
         {/* ======================================================================= */}
         {/* RIGHT DOCUMENT VIEWER CANVAS                                           */}
         {/* ======================================================================= */}
-        <main className="flex-1 flex flex-col bg-[#F6F5F3] dark:bg-[#14110F] min-w-0 h-full overflow-hidden">
+        <main className="flex-1 flex flex-col bg-[#F6F5F3] dark:bg-[#14110F] min-w-0 min-h-[65vh] md:min-h-0 md:h-full overflow-hidden shrink-0 md:shrink">
           
           {/* HORIZONTAL DOCUMENT TAB BAR + VIEWER CONTROLS */}
           <div className="h-12 bg-white dark:bg-[#1C1917] border-b border-[#E4E1DC] dark:border-[#2E2A27] px-3 flex items-center justify-between gap-3 shrink-0">
@@ -2699,6 +2703,10 @@ const FranchiseReviewPage = () => {
         franchise={currentApp}
         franchiseFee={franchiseFee}
         onApprove={() => { 
+          if (recordCheck.loading || recordCheck.franchiseId !== currentApp?._id) {
+            showToast('Verifying sanction and roster history—please wait a moment.', 'warning');
+            return;
+          }
           setIsDossierOpen(false); 
           const verifiedViolationCount = recordCheck.data?.totalViolations ?? recordCheck.data?.violations?.length ?? 0;
           const nameWarningCount = Array.isArray(recordCheck.data?.nameMatchWarnings) ? recordCheck.data.nameMatchWarnings.length : 0;

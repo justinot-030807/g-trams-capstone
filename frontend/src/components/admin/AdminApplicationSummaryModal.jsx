@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   X, FileText, CheckCircle2, XCircle, ExternalLink, Loader2,
   AlertTriangle, ChevronLeft, ChevronRight, ChevronDown, ChevronUp,
@@ -26,6 +26,8 @@ const AdminApplicationSummaryModal = ({
   const [isAiNoticeOpen, setIsAiNoticeOpen] = useState(false);
   const [isDownloadingExcel, setIsDownloadingExcel] = useState(false);
   const [fetchedFee, setFetchedFee] = useState(500);
+  const modalRootRef = useRef(null);
+  const previousFocusRef = useRef(null);
 
   useEffect(() => {
     setIsAiNoticeOpen(false);
@@ -53,11 +55,47 @@ const AdminApplicationSummaryModal = ({
 
   useEffect(() => {
     if (!isOpen) return;
+    previousFocusRef.current = document.activeElement;
+    const focusTimer = setTimeout(() => {
+      const root = modalRootRef.current;
+      if (!root) return;
+      const focusable = root.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])');
+      if (focusable.length > 0) {
+        focusable[0].focus();
+      } else {
+        root.focus();
+      }
+    }, 0);
+
     const handleKeyDown = (e) => {
-      if (e.key === 'Escape') onClose?.();
+      if (e.key === 'Escape') {
+        onClose?.();
+        return;
+      }
+      if (e.key === 'Tab' && modalRootRef.current) {
+        const focusable = Array.from(
+          modalRootRef.current.querySelectorAll('button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])')
+        );
+        if (focusable.length === 0) return;
+        const first = focusable[0];
+        const last = focusable[focusable.length - 1];
+        if (e.shiftKey && document.activeElement === first) {
+          e.preventDefault();
+          last.focus();
+        } else if (!e.shiftKey && document.activeElement === last) {
+          e.preventDefault();
+          first.focus();
+        }
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
+    return () => {
+      clearTimeout(focusTimer);
+      window.removeEventListener('keydown', handleKeyDown);
+      if (previousFocusRef.current && typeof previousFocusRef.current.focus === 'function') {
+        previousFocusRef.current.focus();
+      }
+    };
   }, [isOpen, onClose]);
 
   if (!isOpen || !franchise) return null;
@@ -127,6 +165,8 @@ const AdminApplicationSummaryModal = ({
 
   return (
     <div
+      ref={modalRootRef}
+      tabIndex={-1}
       id="admin-summary-modal-root"
       role="dialog"
       aria-modal="true"
