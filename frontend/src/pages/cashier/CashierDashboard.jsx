@@ -10,7 +10,7 @@ import { formatZoneLabel } from '../../utils/constants';
 import { StatsCardsSkeleton, TableRowsSkeleton } from '../../components/skeleton';
 import { useSocket } from '../../context/SocketContext';
 
-const isAutoPrintEnabled = () => localStorage.getItem('cashier_auto_print') !== 'false';
+const isAutoPrintEnabled = () => localStorage.getItem('cashier_auto_print') === 'true';
 
 const isQueueSoundEnabled = () => {
   const pref = localStorage.getItem('cashier_sound_enabled') ?? localStorage.getItem('cashier_sound_alert');
@@ -1046,12 +1046,13 @@ const CashierDashboard = () => {
                   <input
                     type="text"
                     required
+                    maxLength={20}
                     value={payFormData.officialReceiptNo}
-                    onChange={(e) => setPayFormData(prev => ({ ...prev, officialReceiptNo: e.target.value.toUpperCase() }))}
+                    onChange={(e) => setPayFormData(prev => ({ ...prev, officialReceiptNo: e.target.value.replace(/[^A-Za-z0-9-]/g, '').slice(0, 20).toUpperCase() }))}
                     placeholder="Enter Official O.R. Number"
                     className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3.5 py-2.5 text-sm font-mono tabular-nums font-bold text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] transition-all uppercase min-h-[44px]"
                   />
-                  <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1">Serial number from physical government receipt stub.</p>
+                  <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-1">Serial number from physical government receipt stub (max 20 chars).</p>
                 </div>
 
                 <div>
@@ -1061,6 +1062,7 @@ const CashierDashboard = () => {
                   <input
                     type="text"
                     required
+                    maxLength={80}
                     value={payFormData.payerName}
                     onChange={(e) => setPayFormData(prev => ({ ...prev, payerName: e.target.value }))}
                     placeholder="Operator or Representative Name"
@@ -1090,6 +1092,7 @@ const CashierDashboard = () => {
                   <input
                     type="number"
                     min="1"
+                    max="100000"
                     required
                     value={payFormData.amountPaid}
                     onChange={(e) => setPayFormData(prev => ({ ...prev, amountPaid: e.target.value }))}
@@ -1104,6 +1107,7 @@ const CashierDashboard = () => {
                 </label>
                 <input
                   type="text"
+                  maxLength={200}
                   value={payFormData.remarks}
                   onChange={(e) => setPayFormData(prev => ({ ...prev, remarks: e.target.value }))}
                   placeholder="Treasury window remarks..."

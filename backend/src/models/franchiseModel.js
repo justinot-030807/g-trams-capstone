@@ -129,6 +129,7 @@ const franchiseSchema = new mongoose.Schema({
         customReason: { type: String, default: '' },
         remarks: { type: String, default: '' },
         letterUrl: { type: String, default: '' },
+        letterText: { type: String, default: '' },
         requestedAt: { type: Date, default: null },
         reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
         reviewedAt: { type: Date, default: null },
@@ -185,6 +186,9 @@ const franchiseSchema = new mongoose.Schema({
         approvalDate: { type: Date },
         expiryDate: { type: Date },
         mtopNo: { type: String, default: '' },
+        applicationType: { type: String, default: 'New' },
+        previousStatus: { type: String, default: 'Expired' },
+        dateApplied: { type: Date },
         archivedAt: { type: Date, default: Date.now }
     }],
 

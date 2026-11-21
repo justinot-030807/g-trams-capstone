@@ -264,7 +264,7 @@ describe('Module 8: Voluntary Franchise Cancellation Workflow Test Suite', () =>
         // Verify operator notification
         const notif = await Notification.findOne({ recipient: operatorUser._id });
         expect(notif).toBeDefined();
-        expect(notif.message).toMatch(/finalized by BPLO Staff/i);
+        expect(notif.message).toMatch(/finalized by OVM Staff/i);
 
         // Verify audit log
         const audit = await AuditLog.findOne({ action: 'FRANCHISE_VOLUNTARILY_CANCELLED_BY_STAFF' });
@@ -285,5 +285,26 @@ describe('Module 8: Voluntary Franchise Cancellation Workflow Test Suite', () =>
 
         expect(res.status).toBe(400);
         expect(res.body.message).toMatch(/Only franchises with 'Cancellation Requested' can be processed/i);
+    });
+
+    it('VC-08: Operator should submit voluntary cancellation with typed letterText (without uploading a file)', async () => {
+        const franchise = await createActiveFranchise();
+        const typedLetter = 'Hon. Vice Mayor, I am formally requesting voluntary cancellation of my MTOP franchise for personal reasons.';
+
+        const res = await request(app)
+            .put(`/api/v1/franchises/${franchise._id}/request-cancellation`)
+            .set('Authorization', `Bearer ${operatorToken}`)
+            .field('reason', 'Voluntary Cessation / Personal Reasons')
+            .field('remarks', 'Submitted typed letter online.')
+            .field('letterText', typedLetter);
+
+        expect(res.status).toBe(200);
+        expect(res.body.franchise.status).toBe('Cancellation Requested');
+        expect(res.body.franchise.cancellationDetails.letterText).toBe(typedLetter);
+
+        const updated = await Franchise.findById(franchise._id);
+        expect(updated.status).toBe('Cancellation Requested');
+        expect(updated.cancellationDetails.letterText).toBe(typedLetter);
+        expect(updated.cancellationDetails.letterUrl).toBe('');
     });
 });

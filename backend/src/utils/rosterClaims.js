@@ -29,7 +29,7 @@ async function findRosterSlot(association, bodyNumber, session) {
     if (!key) return null;
     const rows = await TodaRoster.find({ todaAssociation: rosterAssociation(association).pattern }).session(session ?? null);
     const matches = rows.filter(row => rosterBodyKey(row.bodyNumber) === key);
-    if (matches.length > 1) throw rosterConflict('Multiple roster entries use this Body Number. Ask BPLO to reconcile the roster.');
+    if (matches.length > 1) throw rosterConflict('Multiple roster entries use this Body Number. Ask OVM Franchising Staff to reconcile the roster.');
     return matches[0] || null;
 }
 

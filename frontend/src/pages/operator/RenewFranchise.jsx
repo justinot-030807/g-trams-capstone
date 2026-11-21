@@ -646,6 +646,7 @@ const RenewFranchise = () => {
                     <input 
                       type="text" 
                       name="placeIssued" 
+                      maxLength={100}
                       value={formData.placeIssued}
                       onChange={handleChange} 
                       required 
@@ -697,6 +698,7 @@ const RenewFranchise = () => {
                     <input 
                       type="text" 
                       name="orCrNo" 
+                      maxLength={25}
                       value={formData.orCrNo}
                       onChange={handleChange} 
                       className="w-full bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-4 py-3 text-base font-medium text-[#1F1D1B] dark:text-[#EAE7E1] outline-none focus:outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] transition-all shadow-sm min-h-[48px]" 
@@ -763,6 +765,7 @@ const RenewFranchise = () => {
                     <input 
                       type="text" 
                       name="driverLicenseNo" 
+                      maxLength={20}
                       value={formData.driverLicenseNo}
                       onChange={handleChange} 
                       className="w-full bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-4 py-3 text-base font-medium text-[#1F1D1B] dark:text-[#EAE7E1] outline-none focus:outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] transition-all shadow-sm min-h-[48px]" 

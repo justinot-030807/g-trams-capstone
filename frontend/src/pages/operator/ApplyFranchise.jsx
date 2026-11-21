@@ -3,7 +3,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { 
   GASAN_BARANGAYS, TODA_LIST, CANCEL_REASONS, 
-  getZoneForBarangay, normalizeZone, normalizeBarangayName, formatZoneLabel, getTodasForBarangay 
+  getZoneForBarangay, getZoneForToda, normalizeZone, normalizeBarangayName, formatZoneLabel, getTodasForBarangay 
 } from '../../utils/constants';
 import MainLayout from '../../components/MainLayout';
 import { 
@@ -22,11 +22,21 @@ import TodaZoneGuideModal, { TODA_DIRECTORY, GASAN_ZONES } from '../../component
 import CancelApplicationModal from '../../components/operator/CancelApplicationModal';
 import DocumentPreviewModal from '../../components/operator/DocumentPreviewModal';
 import ApplicationSummaryModal from '../../components/operator/ApplicationSummaryModal';
-import OfficialApplicationFormModal from '../../components/common/OfficialApplicationFormModal';
+import OfficialApplicationForm from '../../components/common/OfficialApplicationForm';
 import SimpleDatePicker from '../../components/common/SimpleDatePicker';
 import PhilippineAddressAutocomplete from '../../components/common/PhilippineAddressAutocomplete';
 
-const DL_CODE_OPTIONS = ['A, A1', 'A1', 'A', 'A, A1, B', 'A, A1, B, B1', 'A, A1, B, B1, B2', '1, 2', '1, 2, 3'];
+const DL_CODE_OPTIONS = ['A, A1', 'A1', 'A'];
+const normalizeTricycleDlCodes = (raw) => {
+  const tokens = String(raw || '')
+    .toUpperCase()
+    .split(/[\s,;/]+/)
+    .filter(Boolean);
+  if (tokens.includes('A') && (tokens.includes('A1') || tokens.includes('1'))) return 'A, A1';
+  if (tokens.includes('A1')) return 'A1';
+  if (tokens.includes('A')) return 'A';
+  return 'A, A1';
+};
 const DRIVING_CONDITION_OPTIONS = ['None', 'A - Wear Corrective Lenses', 'B - Drive Only with Special Equipment', '1 - Wear Eyeglasses'];
 const VEHICLE_MAKE_OPTIONS = [
   'Honda TMX 125 Alpha',
@@ -103,7 +113,7 @@ const getStoredUserDefaults = () => {
   return {
     fullName,
     address,
-    zone: address ? getZoneForBarangay(address) : '',
+    zone: getZoneForBarangay(address) || getZoneForToda(todaName) || '',
     todaName,
     plateNo
   };
@@ -329,7 +339,6 @@ const ApplyFranchise = () => {
   const [fullPreview, setFullPreview] = useState(null);
   const [showTodaGuide, setShowTodaGuide] = useState(false);
   const [isSummaryModalOpen, setIsSummaryModalOpen] = useState(false);
-  const [isOfficialFormOpen, setIsOfficialFormOpen] = useState(false);
 
   // AI Scanning state per document
   const [aiScanning, setAiScanning] = useState({
@@ -1394,7 +1403,7 @@ const ApplyFranchise = () => {
                 licenseBack: {
                   serialNo: d.serialNo ? String(d.serialNo).toUpperCase() : '',
                   conditions: d.conditions || '',
-                  dlCodes: d.dlCodes || '',
+                  dlCodes: d.dlCodes ? normalizeTricycleDlCodes(d.dlCodes) : '',
                   scannedAt: new Date().toISOString()
                 }
               }));
@@ -1403,7 +1412,7 @@ const ApplyFranchise = () => {
                 ...prev,
                 driverLicenseSerialNo: d.serialNo ? String(d.serialNo).toUpperCase() : prev.driverLicenseSerialNo,
                 driverConditions: d.conditions || prev.driverConditions,
-                driverDlCodes: d.dlCodes || prev.driverDlCodes
+                driverDlCodes: d.dlCodes ? normalizeTricycleDlCodes(d.dlCodes) : prev.driverDlCodes
               }));
               setAiSuccess(prev => ({ ...prev, [reqId]: true }));
               showToast("AI Scan: Driver's License Back Serial Number detected.", 'success');
@@ -1425,7 +1434,7 @@ const ApplyFranchise = () => {
                   licenseNo: d.licenseNo ? String(d.licenseNo).toUpperCase() : (prev.license?.licenseNo || ''),
                   expiryDate: normExpiry || (prev.license?.expiryDate || ''),
                   dateOfBirth: normDob || (prev.license?.dateOfBirth || ''),
-                  dlCodes: d.dlCodes || (prev.license?.dlCodes || ''),
+                  dlCodes: d.dlCodes ? normalizeTricycleDlCodes(d.dlCodes) : (prev.license?.dlCodes || ''),
                   driverName: d.driverName || (prev.license?.driverName || ''),
                   address: d.address || (prev.license?.address || ''),
                   isExpired: Boolean(isExpired),
@@ -1439,7 +1448,7 @@ const ApplyFranchise = () => {
                 driverLicenseNo: d.licenseNo ? String(d.licenseNo).toUpperCase() : prev.driverLicenseNo,
                 driverLicenseExpiryDate: normExpiry || prev.driverLicenseExpiryDate,
                 driverDob: normDob || prev.driverDob,
-                driverDlCodes: d.dlCodes || prev.driverDlCodes,
+                driverDlCodes: d.dlCodes ? normalizeTricycleDlCodes(d.dlCodes) : prev.driverDlCodes,
                 driverConditions: d.conditions || prev.driverConditions || 'None',
                 driverAddress: d.address || prev.driverAddress || '',
                 driverNationality: d.nationality || prev.driverNationality || 'Filipino',
@@ -2662,10 +2671,10 @@ const ApplyFranchise = () => {
       )}
 
       {/* Full-Screen Immersive Form Layout */}
-      <div className="w-full max-w-full overflow-x-hidden min-h-screen bg-[#F6F5F3] dark:bg-[#14110F] flex flex-col transition-colors">
+      <div className="w-full max-w-full overflow-x-hidden min-h-screen bg-[#F6F5F3] dark:bg-[#14110F] flex flex-col transition-colors print:overflow-visible print:bg-white print:min-h-0">
         
         {/* Top Hero Banner */}
-        <div className="w-full bg-[#9E2A2B] text-white pt-4 pb-6 px-4 sm:px-6 relative overflow-hidden border-b border-[#7A1B22] shadow-sm">
+        <div className="w-full bg-[#9E2A2B] text-white pt-4 pb-6 px-4 sm:px-6 relative overflow-hidden border-b border-[#7A1B22] shadow-sm print:hidden">
           {/* Official Gasan Seal Watermark */}
           <div className="absolute -right-4 -top-6 sm:-right-6 sm:-bottom-8 sm:top-auto pointer-events-none select-none">
             <img 
@@ -2784,7 +2793,7 @@ const ApplyFranchise = () => {
         </div>
 
         {/* Form Container */}
-        <div className="w-full max-w-2xl mx-auto px-4 sm:px-6 pt-5 pb-16 flex-1 flex flex-col relative z-10">
+        <div className={`w-full ${currentStep === 5 ? 'max-w-3xl' : 'max-w-2xl'} mx-auto px-4 sm:px-6 pt-5 pb-16 flex-1 flex flex-col relative z-10 print:max-w-full print:p-0`}>
           <form onSubmit={currentStep === 5 ? handlePreSubmit : (e) => { e.preventDefault(); nextStep(); }} className="space-y-5 w-full">
             
             {/* STEP 1: OPERATOR & DRIVER INFO */}
@@ -2816,9 +2825,12 @@ const ApplyFranchise = () => {
 
                   {(() => {
                     const currentToda = formData.todaName || loggedInToda || 'NON-TODA';
-                    const assignedZone = formData.address
-                      ? `${getZoneForBarangay(formData.address)} (${formData.address})`
-                      : (formData.zone || 'Central');
+                    const resolvedZone =
+                      getZoneForBarangay(formData.address) ||
+                      getZoneForToda(currentToda) ||
+                      formatZoneLabel(formData.zone) ||
+                      'Central';
+                    const assignedZone = resolvedZone === 'N/A' ? 'Central' : resolvedZone;
 
                     return (
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
@@ -2983,6 +2995,7 @@ const ApplyFranchise = () => {
                         <input 
                           type="text" 
                           name="driverName" 
+                          maxLength={80}
                           value={formData.driverName} 
                           onChange={handleInputChange} 
                           className={getInputClasses('driverName')} 
@@ -3003,6 +3016,7 @@ const ApplyFranchise = () => {
                         <input 
                           type="tel" 
                           name="driverContact" 
+                          maxLength={11}
                           value={formData.driverContact} 
                           onChange={handleInputChange} 
                           className={getInputClasses('driverContact')} 
@@ -3101,6 +3115,7 @@ const ApplyFranchise = () => {
                       <input 
                         type="text" 
                         name="driverLicenseNo" 
+                        maxLength={20}
                         value={formData.driverLicenseNo} 
                         onChange={handleInputChange} 
                         className={getInputClasses('driverLicenseNo')} 
@@ -3122,6 +3137,7 @@ const ApplyFranchise = () => {
                       <input 
                         type="text" 
                         name="driverLicenseSerialNo" 
+                        maxLength={20}
                         value={formData.driverLicenseSerialNo || ''} 
                         onChange={handleInputChange} 
                         className={getInputClasses('driverLicenseSerialNo')} 
@@ -3152,15 +3168,15 @@ const ApplyFranchise = () => {
 
                     <div id="field-driverDlCodes">
                       <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
-                        Authorized DL Codes
+                        Authorized DL Codes (Tricycle / Motorcycle)
                       </label>
                       <select
                         name="driverDlCodes"
-                        value={formData.driverDlCodes || 'A, A1'}
+                        value={normalizeTricycleDlCodes(formData.driverDlCodes)}
                         onChange={handleInputChange}
                         className={`${getInputClasses('driverDlCodes')} cursor-pointer`}
                       >
-                        {withCurrentOption(DL_CODE_OPTIONS, formData.driverDlCodes).map((code) => (
+                        {DL_CODE_OPTIONS.map((code) => (
                           <option key={code} value={code}>{code}</option>
                         ))}
                       </select>
@@ -3590,6 +3606,7 @@ const ApplyFranchise = () => {
                               <input
                                 type="text"
                                 name="series"
+                                maxLength={40}
                                 value={formData.series}
                                 onChange={handleInputChange}
                                 className={inputClasses}
@@ -3621,6 +3638,7 @@ const ApplyFranchise = () => {
                               <input
                                 type="text"
                                 name="grossWeight"
+                                maxLength={10}
                                 value={formData.grossWeight}
                                 onChange={handleInputChange}
                                 className={inputClasses}
@@ -3651,6 +3669,7 @@ const ApplyFranchise = () => {
                               <input
                                 type="text"
                                 name="crNo"
+                                maxLength={25}
                                 value={formData.crNo}
                                 onChange={handleInputChange}
                                 className={inputClasses}
@@ -3675,6 +3694,7 @@ const ApplyFranchise = () => {
                               <input
                                 type="text"
                                 name="orCrNo"
+                                maxLength={25}
                                 value={formData.orCrNo}
                                 onChange={handleInputChange}
                                 className={inputClasses}
@@ -3699,6 +3719,7 @@ const ApplyFranchise = () => {
                               <input
                                 type="text"
                                 name="fileNo"
+                                maxLength={25}
                                 value={formData.fileNo}
                                 onChange={handleInputChange}
                                 className={inputClasses}
@@ -3714,6 +3735,7 @@ const ApplyFranchise = () => {
                               <input
                                 type="text"
                                 name="registeredOwner"
+                                maxLength={80}
                                 value={formData.registeredOwner}
                                 onChange={handleInputChange}
                                 className={inputClasses}
@@ -3820,6 +3842,7 @@ const ApplyFranchise = () => {
                       <input 
                         type="text" 
                         name="brgyIssuer" 
+                        maxLength={80}
                         value={formData.brgyIssuer} 
                         onChange={handleInputChange} 
                         className={inputClasses} 
@@ -3918,6 +3941,7 @@ const ApplyFranchise = () => {
                         <input 
                           type="text" 
                           name="cedulaSerialNo" 
+                          maxLength={20}
                           value={formData.cedulaSerialNo} 
                           onChange={handleInputChange} 
                           className={getInputClasses('cedulaSerialNo')} 
@@ -3985,6 +4009,7 @@ const ApplyFranchise = () => {
                           className={getInputClasses('cedulaAmount')} 
                           step="0.01"
                           min="0"
+                          max="100000"
                           autoComplete="off"
                         />
                       </div>
@@ -4007,6 +4032,7 @@ const ApplyFranchise = () => {
                         <input 
                           type="text" 
                           name="cedulaFullName" 
+                          maxLength={80}
                           value={formData.cedulaFullName || ''} 
                           onChange={handleInputChange} 
                           className={inputClasses} 
@@ -4093,6 +4119,7 @@ const ApplyFranchise = () => {
                         <input 
                           type="text" 
                           name="cedulaTin" 
+                          maxLength={20}
                           value={formData.cedulaTin || ''} 
                           onChange={handleInputChange} 
                           className={inputClasses} 
@@ -4154,269 +4181,76 @@ const ApplyFranchise = () => {
               <div className={`space-y-4 ${slideDirection === 'forward' ? 'animate-slide-right' : 'animate-slide-left'}`}>
                 
                 {/* Header */}
-                <div className="flex items-center gap-2.5 pb-2.5 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
-                  <div className="w-8 h-8 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
-                    <ShieldCheck size={18} />
-                  </div>
-                  <div>
-                    <h2 className="text-base sm:text-lg font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
-                      Review &amp; Confirmation
-                    </h2>
-                    <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] font-medium">
-                      Carefully review your complete application before submitting
-                    </p>
-                  </div>
-                </div>
-
-                {/* Official MTOP Application Form (Ord. 48 s. 1999) Print & Preview Banner */}
-                <div className="p-4 bg-gradient-to-r from-[#9E2A2B]/10 via-[#D4AF37]/15 to-[#9E2A2B]/10 dark:from-[#9E2A2B]/20 dark:via-[#D4AF37]/25 dark:to-[#9E2A2B]/20 rounded-xl border border-[#D4AF37]/50 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[#9E2A2B] text-white flex items-center justify-center shrink-0 shadow-sm">
-                      <FileText size={20} />
+                <div className="flex items-center justify-between gap-2.5 pb-2.5 border-b border-[#E4E1DC] dark:border-[#2E2A27] print:hidden">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/10 text-[#9E2A2B] dark:text-[#D4AF37] flex items-center justify-center shrink-0">
+                      <ShieldCheck size={18} />
                     </div>
                     <div>
-                      <h3 className="font-bold text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3] flex items-center gap-2">
-                        Official MTOP Application Form
-                        <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#9E2A2B]/15 text-[#9E2A2B] dark:text-[#D4AF37] font-bold border border-[#9E2A2B]/30">
-                          Ord. 48 s. 1999
-                        </span>
-                      </h3>
-                      <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-0.5">
-                        Naka-fill in na ang iyong mga detalye sa opisyal na form. Pwede mong tingnan o i-print/i-save bilang PDF.
+                      <h2 className="text-base sm:text-lg font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">
+                        Review &amp; Confirmation
+                      </h2>
+                      <p className="text-xs sm:text-sm text-[#6B6761] dark:text-[#A8A29E] font-medium">
+                        Verify your official MTOP application form before submitting
                       </p>
                     </div>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setIsOfficialFormOpen(true)}
-                    className="w-full sm:w-auto px-4 py-2.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white rounded-lg text-xs font-bold transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer shrink-0 active:scale-95"
-                  >
-                    <Printer size={15} />
-                    <span>Tingnan / I-print ang Form (PDF)</span>
-                  </button>
                 </div>
 
-                {/* Section 1: Operator & Driver Information */}
-                <div className="p-4 bg-white dark:bg-[#1C1917] rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm space-y-3">
-                  <div className="flex items-center justify-between pb-2 border-b border-[#E4E1DC]/80 dark:border-[#2E2A27]">
-                    <div className="flex items-center gap-2">
-                      <User size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                      <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1F1D1B] dark:text-[#EAE7E1]">
-                        1. Operator &amp; Driver Details
-                      </h3>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => { setSlideDirection('backward'); setCurrentStep(1); }}
-                      className="text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer"
-                    >
-                      Edit Step 1
-                    </button>
-                  </div>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs [&>div]:min-w-0 [&_span]:break-words">
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Operator Name</span>
-                      <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.fullName || '—'}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Barangay</span>
-                      <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.address || '—'}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">TODA &amp; Zone</span>
-                      <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.todaName || loggedInToda || 'NON-TODA'} ({formatZoneLabel(formData.zone)})</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Driver Type</span>
-                      <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.isOperatorDriver ? 'Operator-Driver' : `Designated: ${formData.driverName || '—'}`}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Driver's License No.</span>
-                      <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.driverLicenseNo || '—'}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">License Expiry Date</span>
-                      <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.driverLicenseExpiryDate || '—'}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">License Serial (Back)</span>
-                      <span className="font-mono text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.driverLicenseSerialNo || '—'}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">DL Codes &amp; Conditions</span>
-                      <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.driverDlCodes || 'A, A1'} ({formData.driverConditions || 'None'})</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Driver DOB</span>
-                      <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.driverDob || '—'}</span>
-                    </div>
+                {/* Compact Quick Edit Steps Toolbar */}
+                <div className="p-2.5 bg-white dark:bg-[#1C1917] rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm flex flex-wrap items-center justify-between gap-2 print:hidden">
+                  <span className="text-[11px] font-bold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E] px-1">
+                    Quick Edit:
+                  </span>
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    {[
+                      { step: 1, label: 'Edit Step 1: Operator' },
+                      { step: 2, label: 'Edit Step 2: Vehicle' },
+                      { step: 3, label: 'Edit Step 3: Brgy. Clearance' },
+                      { step: 4, label: 'Edit Step 4: Cedula' }
+                    ].map((item) => (
+                      <button
+                        key={item.step}
+                        type="button"
+                        onClick={() => { setSlideDirection('backward'); setCurrentStep(item.step); }}
+                        className="px-2.5 py-1.5 rounded-lg text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#EAE7E1] dark:hover:bg-[#2E2A27] border border-[#E4E1DC] dark:border-[#2E2A27] transition-colors cursor-pointer"
+                      >
+                        {item.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
 
-                {/* Section 2: Vehicle & Registration */}
-                <div className="p-4 bg-white dark:bg-[#1C1917] rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm space-y-3">
-                  <div className="flex items-center justify-between pb-2 border-b border-[#E4E1DC]/80 dark:border-[#2E2A27]">
-                    <div className="flex items-center gap-2">
-                      <TricycleIcon size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                      <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1F1D1B] dark:text-[#EAE7E1]">
-                        2. Vehicle &amp; LTO Registration
-                      </h3>
+                {/* Missing Required Vehicle Info Warning */}
+                {(!formData.plateNo || !formData.motorNo || !formData.chassisNo || !formData.make || !formData.made) && (
+                  <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-300 dark:border-red-800 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 print:hidden">
+                    <div className="flex items-center gap-2 text-xs sm:text-sm text-red-700 dark:text-red-300 font-semibold">
+                      <AlertCircle size={18} className="text-red-600 shrink-0" />
+                      <span>Kulang ang impormasyon ng sasakyan. Pakikumpleto sa Hakbang 2 bago mag-submit.</span>
                     </div>
                     <button
                       type="button"
                       onClick={() => { setSlideDirection('backward'); setCurrentStep(2); }}
-                      className="text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer"
+                      className="px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold shrink-0 cursor-pointer transition-colors shadow-sm"
                     >
-                      Edit Step 2
+                      Pumunta sa Hakbang 2
                     </button>
                   </div>
+                )}
 
-                  {(!formData.plateNo || !formData.motorNo || !formData.chassisNo || !formData.make || !formData.made) && (
-                    <div className="p-3 bg-red-50 dark:bg-red-950/40 border border-red-300 dark:border-red-800 rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
-                      <div className="flex items-center gap-2 text-xs sm:text-sm text-red-700 dark:text-red-300 font-semibold">
-                        <AlertCircle size={18} className="text-red-600 shrink-0" />
-                        <span>Kulang ang impormasyon ng sasakyan. Pakikumpleto sa Hakbang 2 bago mag-submit.</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => { setSlideDirection('backward'); setCurrentStep(2); }}
-                        className="px-3.5 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold shrink-0 cursor-pointer transition-colors shadow-sm"
-                      >
-                        Pumunta sa Hakbang 2
-                      </button>
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs [&>div]:min-w-0 [&_span]:break-words">
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Make &amp; Model Year</span>
-                      <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.make || '—'} ({formData.made || '—'})</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Plate / MV File No.</span>
-                      <span className="font-mono font-bold text-[#9E2A2B] dark:text-[#D4AF37]">{formData.plateNo || '—'}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">LTO Expiry Date</span>
-                      <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.orCrExpiryDate || '—'}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Engine / Motor No.</span>
-                      <span className="font-mono text-[#1F1D1B] dark:text-[#EAE7E1] break-all">{formData.motorNo || '—'}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Chassis Serial / VIN</span>
-                      <span className="font-mono text-[#1F1D1B] dark:text-[#EAE7E1] break-all">{formData.chassisNo || '—'}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Color &amp; Fuel Type</span>
-                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.color || '—'} &bull; {formData.fuelType || 'GASOLINE'}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Displacement / Weight</span>
-                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.displacement ? `${formData.displacement} cc` : '—'} &bull; {formData.grossWeight ? `${formData.grossWeight}` : '—'}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">CR No. &amp; OR No.</span>
-                      <span className="font-mono text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.crNo || '—'} / {formData.orCrNo || '—'}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">CR Registered Owner</span>
-                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1] truncate block">{formData.registeredOwner || formData.fullName || '—'}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Section 3: Barangay Clearance */}
-                <div className="p-4 bg-white dark:bg-[#1C1917] rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm space-y-3">
-                  <div className="flex items-center justify-between pb-2 border-b border-[#E4E1DC]/80 dark:border-[#2E2A27]">
-                    <div className="flex items-center gap-2">
-                      <FileCheck size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                      <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1F1D1B] dark:text-[#EAE7E1]">
-                        3. Barangay Clearance
-                      </h3>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => { setSlideDirection('backward'); setCurrentStep(3); }}
-                      className="text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer"
-                    >
-                      Edit Step 3
-                    </button>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs [&>div]:min-w-0 [&_span]:break-words">
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Date Issued</span>
-                      <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.brgyClearanceDate || '—'}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Issuing Official / Punong Barangay</span>
-                      <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.brgyIssuer || '—'}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Section 4: Community Tax Certificate (Cedula) */}
-                <div className="p-4 bg-white dark:bg-[#1C1917] rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm space-y-3">
-                  <div className="flex items-center justify-between pb-2 border-b border-[#E4E1DC]/80 dark:border-[#2E2A27]">
-                    <div className="flex items-center gap-2">
-                      <Receipt size={16} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
-                      <h3 className="text-xs sm:text-sm font-bold uppercase tracking-wider text-[#1F1D1B] dark:text-[#EAE7E1]">
-                        4. Community Tax Certificate (Cedula / CTC)
-                      </h3>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => { setSlideDirection('backward'); setCurrentStep(4); }}
-                      className="text-xs font-semibold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline cursor-pointer"
-                    >
-                      Edit Step 4
-                    </button>
-                  </div>
-
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 text-xs [&>div]:min-w-0 [&_span]:break-words">
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">CTC Serial Number</span>
-                      <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.cedulaSerialNo || '—'}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">CTC Date Issued</span>
-                      <span className="font-semibold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.cedulaDate || '—'}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Place Issued</span>
-                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.cedulaAddress || 'Gasan, Marinduque'}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Tax Year &bull; Total Paid</span>
-                      <span className="font-bold text-[#1F1D1B] dark:text-[#EAE7E1]">{formData.cedulaYear || '2026'} &bull; ₱{Number(formData.cedulaAmount || 55).toFixed(2)}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Taxpayer Name</span>
-                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1] truncate block">{formData.cedulaFullName || formData.fullName || '—'}</span>
-                    </div>
-                    <div>
-                      <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-semibold block uppercase">Civil Status &bull; TIN</span>
-                      <span className="text-[#1F1D1B] dark:text-[#EAE7E1] break-all">{formData.cedulaCivilStatus || '—'} &bull; {formData.cedulaTin || '—'}</span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Section 5: Verification Notices & Detected Defect Checks */}
+                {/* AI Verification & Defect Check Banner */}
                 {(() => {
                   const detected = getAiDiscrepancies(formData, aiScannedData);
 
                   return (
-                    <div className="space-y-2">
+                    <div className="print:hidden">
                       {detected.length > 0 ? (
-                        <div className="p-4 rounded-xl border border-amber-300 dark:border-amber-800 bg-amber-50/80 dark:bg-amber-950/30 space-y-2.5">
+                        <div className="p-3.5 rounded-xl border border-amber-300 dark:border-amber-800 bg-amber-50/80 dark:bg-amber-950/30 space-y-2">
                           <div className="flex items-center gap-2 text-amber-900 dark:text-amber-200 font-bold text-xs sm:text-sm">
-                            <AlertTriangle size={18} className="text-amber-600 dark:text-amber-400 shrink-0" />
+                            <AlertTriangle size={16} className="text-amber-600 dark:text-amber-400 shrink-0" />
                             <span>Verification &amp; Defect Check Notices</span>
                           </div>
-                          <ul className="space-y-1.5 pl-6 text-xs text-amber-900/90 dark:text-amber-200/90 list-disc">
+                          <ul className="space-y-1 pl-5 text-xs text-amber-900/90 dark:text-amber-200/90 list-disc">
                             {detected.map((disc, idx) => (
                               <li key={idx}>
                                 <strong>{disc.label}:</strong> {disc.reason}
@@ -4425,25 +4259,41 @@ const ApplyFranchise = () => {
                           </ul>
                         </div>
                       ) : (
-                        <div className="p-3.5 rounded-xl border border-emerald-300 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/20 flex items-center gap-2.5 text-xs text-emerald-900 dark:text-emerald-200">
-                          <CheckCircle2 size={18} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
-                          <span>No defects or discrepancies detected between scanned documents and entered data. Everything matches.</span>
+                        <div className="p-3 rounded-xl border border-emerald-300 dark:border-emerald-800 bg-emerald-50/70 dark:bg-emerald-950/20 flex items-center gap-2 text-xs text-emerald-900 dark:text-emerald-200">
+                          <CheckCircle2 size={16} className="text-emerald-600 dark:text-emerald-400 shrink-0" />
+                          <span>No defects or discrepancies detected between scanned documents and entered data.</span>
                         </div>
                       )}
                     </div>
                   );
                 })()}
 
-                {/* Section 6: LGU Treasury Fee Notice */}
-                <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl flex items-center gap-2.5 text-xs sm:text-sm text-amber-900 dark:text-amber-200">
+                {/* Live 1:1 Official MTOP Application Form Preview */}
+                <div className="p-3 sm:p-4 bg-white dark:bg-[#1C1917] rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm overflow-x-auto print:p-0 print:border-none print:shadow-none print:overflow-visible">
+                  <OfficialApplicationForm
+                    formData={{
+                      ...formData,
+                      todaName: formData.todaName || loggedInToda || 'NON-TODA',
+                      zone:
+                        getZoneForBarangay(formData.address) ||
+                        getZoneForToda(formData.todaName || loggedInToda) ||
+                        (formatZoneLabel(formData.zone) !== 'N/A' ? formatZoneLabel(formData.zone) : 'Central')
+                    }}
+                    isRenewal={isRenewing}
+                    showActions={true}
+                  />
+                </div>
+
+                {/* LGU Treasury Fee Notice */}
+                <div className="p-3.5 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-xl flex items-center gap-2.5 text-xs sm:text-sm text-amber-900 dark:text-amber-200 print:hidden">
                   <Receipt size={18} className="shrink-0 text-amber-700 dark:text-amber-400" />
                   <div className="leading-snug">
                     <strong className="font-bold">Franchise Filing Fee:</strong> The standard franchise filing fee (<strong className="font-bold underline">₱500.00</strong>) is payable directly at the Municipal Treasury Cashier once your application is endorsed and approved by the Franchising Office.
                   </div>
                 </div>
 
-                {/* Section 7: Confirmation Checkbox (Affidavit of Authenticity) */}
-                <div className="p-4 rounded-xl border-2 border-[#D4AF37]/40 bg-white dark:bg-[#1C1917] shadow-sm">
+                {/* Confirmation Checkbox (Affidavit of Authenticity) */}
+                <div className="p-4 rounded-xl border-2 border-[#D4AF37]/40 bg-white dark:bg-[#1C1917] shadow-sm print:hidden">
                   <label className="flex items-start gap-3 cursor-pointer select-none">
                     <input
                       type="checkbox"
@@ -4462,7 +4312,7 @@ const ApplyFranchise = () => {
                 </div>
 
                 {/* Step 5 Submission Actions */}
-                <div className="pt-3 border-t border-[#E4E1DC] dark:border-[#2E2A27] space-y-3">
+                <div className="pt-3 border-t border-[#E4E1DC] dark:border-[#2E2A27] space-y-3 print:hidden">
                   <div className="flex flex-col-reverse sm:flex-row justify-between items-center gap-3">
                     <button 
                       type="button" 
@@ -4571,17 +4421,6 @@ const ApplyFranchise = () => {
           message={feedbackModal.message}
           confirmText={feedbackModal.confirmText}
           onConfirm={feedbackModal.onConfirm}
-        />
-      )}
-
-      
-      {/* Official MTOP Application Form Modal */}
-      {isOfficialFormOpen && (
-        <OfficialApplicationFormModal
-          isOpen={isOfficialFormOpen}
-          onClose={() => setIsOfficialFormOpen(false)}
-          formData={formData}
-          isRenewal={formMode === 'Renewal'}
         />
       )}
 

@@ -24,8 +24,8 @@ const LguAdvisoryModal = ({ isOpen, onClose, advisory, message, applicantData })
     : 'Official Municipal Advisory';
 
   const defaultDepartment = isTagalog
-    ? 'Business Permits and Licensing Office (BPLO) • Tanggapan ng Sangguniang Bayan'
-    : 'Business Permits and Licensing Office (BPLO) • Sangguniang Bayan';
+    ? 'Office of the Vice Mayor (OVM) • Tanggapan ng Sangguniang Bayan'
+    : 'Office of the Vice Mayor (OVM) • Sangguniang Bayan';
 
   const defaultOrdinance = isTagalog
     ? 'Municipal Ordinance No. 2020-04 (Mandatory Roster Endorsement)'
@@ -36,8 +36,8 @@ const LguAdvisoryModal = ({ isOpen, onClose, advisory, message, applicantData })
     : 'No active or verified record was found in the official TODA Masterlist for the specified applicant name and Body Number.';
 
   const defaultAction = isTagalog
-    ? 'Makipag-ugnayan sa inyong TODA President upang maisama ang inyong pangalan at Body Number sa sertipikadong masterlist ng BPLO.'
-    : 'Please coordinate with your TODA President to confirm your unit is listed on the certified roster submitted to BPLO.';
+    ? 'Makipag-ugnayan sa inyong TODA President upang maisama ang inyong pangalan at Body Number sa sertipikadong masterlist ng OVM.'
+    : 'Please coordinate with your TODA President to confirm your unit is listed on the certified roster submitted to OVM.';
 
   const title = advisory?.title || defaultTitle;
   const department = advisory?.department || defaultDepartment;
@@ -182,13 +182,13 @@ const LguAdvisoryModal = ({ isOpen, onClose, advisory, message, applicantData })
               </li>
               <li>
                 {isTagalog 
-                  ? 'Makipag-ugnayan sa inyong TODA President upang maisumite ang certification sa BPLO.'
-                  : 'Coordinate with your TODA President to submit certified membership documentation to the BPLO.'}
+                  ? 'Makipag-ugnayan sa inyong TODA President upang maisumite ang certification sa OVM.'
+                  : 'Coordinate with your TODA President to submit certified membership documentation to the OVM.'}
               </li>
               <li>
                 {isTagalog
-                  ? 'Para sa karagdagang tulong, magtungo sa BPLO Licensing Office, 2nd Floor, Gasan Municipal Hall.'
-                  : 'For in-person assistance, visit the BPLO Licensing Office, 2nd Floor, Gasan Municipal Hall.'}
+                  ? 'Para sa karagdagang tulong, magtungo sa OVM Franchising Unit (LLSA I), 2nd Floor, Gasan Municipal Hall.'
+                  : 'For in-person assistance, visit the OVM Franchising Unit (LLSA I), 2nd Floor, Gasan Municipal Hall.'}
               </li>
             </ul>
           </div>

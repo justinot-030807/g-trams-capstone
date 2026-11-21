@@ -47,7 +47,7 @@ async function dispatchExpirationSms({
         const bodyNumber = franchise?.bodyNumber || '';
         const expiryDateStr = franchise?.expiryDate ? formatManilaDate(franchise.expiryDate) : 'sa loob ng 30 araw';
 
-        const message = `[G-TRAMS LGU] Paalala: Ang inyong MTOP prangkisa para sa unit ${plateNo}${bodyNumber ? ` (Body #${bodyNumber})` : ''} ay mag-e-expire sa loob ng ${daysRemaining} araw (${expiryDateStr}). Mangyaring mag-renew sa BPLO Gasan upang maiwasan ang multa at pagkahuli.`;
+        const message = `[G-TRAMS LGU] Paalala: Ang inyong MTOP prangkisa para sa unit ${plateNo}${bodyNumber ? ` (Body #${bodyNumber})` : ''} ay mag-e-expire sa loob ng ${daysRemaining} araw (${expiryDateStr}). Mangyaring mag-renew sa OVM Gasan upang maiwasan ang multa at pagkahuli.`;
 
         let status = 'SIMULATED';
         const hasLiveSmsKey = Boolean(

@@ -612,7 +612,7 @@ const OperatorDashboard = () => {
           <Clock className="text-[#B45309] dark:text-[#FBBF24] shrink-0 mt-0.5" size={18} />
           <div>
             <p className="text-xs font-bold text-[#92400E] dark:text-[#FDE68A]">Voluntary Cancellation Pending Review</p>
-            <p className="text-xs text-[#B45309] dark:text-[#FCD34D] leading-snug mt-0.5">Your formal cancellation request has been submitted to the BPLO Licensing Office. No cashier payment is required.</p>
+            <p className="text-xs text-[#B45309] dark:text-[#FCD34D] leading-snug mt-0.5">Your formal cancellation request has been submitted to the Office of the Vice Mayor (OVM). No cashier payment is required.</p>
           </div>
         </div>
       );
@@ -651,7 +651,7 @@ const OperatorDashboard = () => {
           <div>
             <p className="text-xs font-bold text-orange-900 dark:text-orange-200">Franchise Temporarily Suspended (2nd Offense)</p>
             <p className="text-xs text-orange-800 dark:text-orange-300 leading-snug mt-0.5">
-              Franchise operations are temporarily suspended due to a repeat violation. Please visit the BPLO Licensing Office and settle the administrative fine at the Treasury Cashier to lift this suspension.
+              Franchise operations are temporarily suspended due to a repeat violation. Please visit the Office of the Vice Mayor (OVM) and settle the administrative fine at the Treasury Cashier to lift this suspension.
             </p>
           </div>
         </div>
@@ -800,7 +800,7 @@ const OperatorDashboard = () => {
     const hasPending = franchises.some(f => f.status === 'Pending');
     const hasActive = franchises.some(f => f.status === 'Active');
 
-    if (hasReady) return t('greeting.subReady', 'Welcome back! Your MTOP Certificate is signed and ready for pickup at the Licensing Office (BPLO).');
+    if (hasReady) return t('greeting.subReady', 'Welcome back! Your MTOP Certificate is signed and ready for pickup at the Office of the Vice Mayor (OVM).');
     if (hasSigning) return t('greeting.subSigning', 'Welcome back! Payment has been recorded. Documents are routing for municipal signatures.');
     if (hasForPayment) return t('greeting.subForPayment', 'Welcome back! Your application is approved. Please pay the franchise fee at the Municipal Cashier / Treasury.');
     if (hasPending) return t('greeting.subPending', 'Welcome back! Your franchise application is currently under municipal review.');
@@ -975,7 +975,7 @@ const OperatorDashboard = () => {
                     {t('dashboard.readyPickupTitle', 'MTOP Signed — Ready for Pickup')}
                   </h4>
                   <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5">
-                    Your franchise has been signed by the Sangguniang Bayan! Claim your official printed MTOP certificate and stickers at the Licensing Office (BPLO).
+                    Your franchise has been signed by the Sangguniang Bayan! Claim your official printed MTOP certificate and stickers at the Office of the Vice Mayor (OVM).
                   </p>
                 </div>
               </div>
@@ -1528,7 +1528,7 @@ const OperatorDashboard = () => {
                   <div className="flex flex-col sm:flex-row w-full gap-2">
                     <div className="flex-1 bg-[#FFFBEB] dark:bg-[#451A03]/40 border border-[#FDE68A] dark:border-[#92400E] text-[#B45309] dark:text-[#FBBF24] px-3.5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-sm select-none">
                       <Clock size={15} /> 
-                      <span>Cancellation Under BPLO Review</span>
+                      <span>Cancellation Under OVM Review</span>
                     </div>
                     <button 
                       onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} 
@@ -1570,7 +1570,7 @@ const OperatorDashboard = () => {
                   <div className="flex flex-col sm:flex-row w-full gap-2">
                     <div className="flex-1 bg-[#F0FDF4] dark:bg-[#052E16]/40 border border-[#BBF7D0] dark:border-[#166534] text-[#15803D] dark:text-[#4ADE80] px-3.5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs sm:text-sm flex items-center justify-center gap-1.5 shadow-sm select-none">
                       <CheckCircle2 size={15} /> 
-                      <span>Signed • Claim at BPLO</span>
+                      <span>Signed • Claim at OVM</span>
                     </div>
                     <button 
                       onClick={() => { setSelectedUnit(unit); setIsDetailsOpen(true); }} 
@@ -1640,7 +1640,7 @@ const OperatorDashboard = () => {
               isOpen: true,
               type: 'success',
               title: 'Cancellation Request Submitted',
-              message: 'Your voluntary cancellation request and letter have been submitted to BPLO. The status is now "Cancellation Requested" awaiting review.',
+              message: 'Your voluntary cancellation request and letter have been submitted to the Office of the Vice Mayor (OVM). The status is now "Cancellation Requested" awaiting review.',
               confirmText: 'OK',
               onConfirm: () => setFeedbackModal(prev => ({ ...prev, isOpen: false }))
             });

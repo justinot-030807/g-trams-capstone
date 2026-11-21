@@ -14,6 +14,7 @@ import BatchMtopModal from '../../components/admin/BatchMtopModal';
 import TransmittalSheetModal from '../../components/admin/TransmittalSheetModal';
 import AdminApplicationSummaryModal from '../../components/admin/AdminApplicationSummaryModal';
 import StaffCancellationReviewModal from '../../components/admin/StaffCancellationReviewModal';
+import OfficialCancellationLetterModal from '../../components/common/OfficialCancellationLetterModal';
 import PageHeader from '../../components/common/PageHeader';
 import StatusBadge from '../../components/common/StatusBadge';
 import TricycleIcon from '../../components/common/TricycleIcon';
@@ -106,8 +107,10 @@ const FranchiseApproval = () => {
 
   // Module 8: Voluntary Cancellation Review Modal state
   const [cancellationReviewTarget, setCancellationReviewTarget] = useState(null);
+  const [cancellationLetterTarget, setCancellationLetterTarget] = useState(null);
 
   // 10-Second Undo Notification State
+  const undoTimerRef = useRef(null);
   const [undoState, setUndoState] = useState(null); // { timer, secondsLeft: 10, items: [{ _id, prevStatus, name }], message }
 
   // Toast notification state
@@ -316,12 +319,15 @@ const FranchiseApproval = () => {
     };
   }, []);
 
-  // Cleanup undo countdown on unmount
+  // Cleanup undo countdown on unmount only
   useEffect(() => {
     return () => {
-      if (undoState?.timer) clearInterval(undoState.timer);
+      if (undoTimerRef.current) {
+        clearInterval(undoTimerRef.current);
+        undoTimerRef.current = null;
+      }
     };
-  }, [undoState]);
+  }, []);
 
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
@@ -330,18 +336,25 @@ const FranchiseApproval = () => {
 
   // 10-Second Undo Execution
   const triggerUndoCountdown = (affectedItems, message) => {
-    if (undoState?.timer) clearInterval(undoState.timer);
+    if (undoTimerRef.current) {
+      clearInterval(undoTimerRef.current);
+      undoTimerRef.current = null;
+    }
 
     const timer = setInterval(() => {
       setUndoState(prev => {
         if (!prev || prev.secondsLeft <= 1) {
-          clearInterval(timer);
+          if (undoTimerRef.current) {
+            clearInterval(undoTimerRef.current);
+            undoTimerRef.current = null;
+          }
           return null;
         }
         return { ...prev, secondsLeft: prev.secondsLeft - 1 };
       });
     }, 1000);
 
+    undoTimerRef.current = timer;
     setUndoState({
       timer,
       secondsLeft: 10,
@@ -350,9 +363,20 @@ const FranchiseApproval = () => {
     });
   };
 
+  const dismissUndoToast = () => {
+    if (undoTimerRef.current) {
+      clearInterval(undoTimerRef.current);
+      undoTimerRef.current = null;
+    }
+    setUndoState(null);
+  };
+
   const handleRollbackUndo = async () => {
     if (!undoState) return;
-    clearInterval(undoState.timer);
+    if (undoTimerRef.current) {
+      clearInterval(undoTimerRef.current);
+      undoTimerRef.current = null;
+    }
     const toRevert = undoState.items;
     setUndoState(null);
     showToast("Reverting previous action...", "info");
@@ -835,6 +859,15 @@ const FranchiseApproval = () => {
               <Undo2 size={13} />
               <span>Undo</span>
             </button>
+            <button
+              type="button"
+              onClick={dismissUndoToast}
+              className="p-1 text-[#A8A29E] hover:text-white rounded-md transition-colors shrink-0 cursor-pointer"
+              title="Dismiss notification"
+              aria-label="Dismiss undo notification"
+            >
+              <X size={14} />
+            </button>
           </div>
         </div>
       )}
@@ -912,7 +945,7 @@ const FranchiseApproval = () => {
         isProcessing={isProcessing} 
       />
 
-      {/* Module 8: BPLO Staff Voluntary Cancellation Review Modal */}
+      {/* Module 8: OVM Staff Voluntary Cancellation Review Modal */}
       {cancellationReviewTarget && (
         <StaffCancellationReviewModal
           isOpen={Boolean(cancellationReviewTarget)}
@@ -923,6 +956,14 @@ const FranchiseApproval = () => {
           isProcessing={isProcessing}
         />
       )}
+
+      {/* Official Printable OVM Voluntary Cancellation Letter Modal */}
+      <OfficialCancellationLetterModal
+        isOpen={Boolean(cancellationLetterTarget)}
+        onClose={() => setCancellationLetterTarget(null)}
+        franchise={cancellationLetterTarget || {}}
+        cancellationData={cancellationLetterTarget?.cancellationDetails || {}}
+      />
 
       {/* Quick Approve Confirmation Modal */}
       {quickApproveTarget && (
@@ -976,7 +1017,7 @@ const FranchiseApproval = () => {
                   )}
                 </div>
                 {quickApproveTarget.officialReceiptNo && (
-                  <span className="font-mono tabular-nums text-[11px] px-2 py-0.5 rounded-md bg-white/70 dark:bg-[#14110F]">
+                  <span className="font-mono tabular-nums text-[11px] px-2 py-0.5 rounded-md bg-white/70 dark:bg-[#14110F] break-all max-w-[210px] text-right">
                     OR# {quickApproveTarget.officialReceiptNo}
                   </span>
                 )}
@@ -1664,7 +1705,17 @@ const FranchiseApproval = () => {
                         <span>Awaiting Cashier</span>
                       </span>
                     ) : isHistoryTab ? (
-                      null
+                      (app.status === 'Cancelled' && Boolean(app.cancellationDetails?.reason)) ? (
+                        <button
+                          type="button"
+                          onClick={() => setCancellationLetterTarget(app)}
+                          className="px-3 py-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white rounded-lg font-semibold text-xs transition-colors flex items-center gap-1.5 cursor-pointer shadow-sm"
+                          title="Print Official OVM Voluntary Cancellation Letter"
+                        >
+                          <Printer size={13} />
+                          <span>Cancel Letter</span>
+                        </button>
+                      ) : null
                     ) : (
                       <button
                         onClick={() => handleOpenWorkstation(app)}
@@ -1712,6 +1763,18 @@ const FranchiseApproval = () => {
                             <span>Review Details</span>
                           </button>
 
+                          {(app.status === 'Cancellation Requested' || (app.status === 'Cancelled' && Boolean(app.cancellationDetails?.reason))) && (
+                            <button
+                              onClick={() => {
+                                setActiveMenuId(null);
+                                setCancellationLetterTarget(app);
+                              }}
+                              className="w-full text-left px-3.5 py-2 text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] flex items-center gap-2 cursor-pointer"
+                            >
+                              <Printer size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                              <span>Print Cancellation Letter</span>
+                            </button>
+                          )}
                           {app.status === 'Cancellation Requested' && (
                             <button
                               onClick={() => {

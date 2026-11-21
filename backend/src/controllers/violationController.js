@@ -381,7 +381,7 @@ const recordViolation = async (req, res) => {
             remarks: remarks || '',
             evidenceUrl,
             recordedBy: req.user?._id,
-            recordedByName: req.user?.name || 'BPLO Staff',
+            recordedByName: req.user?.name || 'OVM Franchising Staff (LLSA I)',
             status: 'Active'
         });
 

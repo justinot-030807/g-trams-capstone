@@ -95,7 +95,7 @@ async function validateOperatorAgainstRoster({ fullName, todaAssociation, bodyNu
             message: 'Alinsunod sa Municipal Ordinance No. 2020-04, kailangang pumili ng accredited TODA Association ang operator.',
             advisory: {
                 title: 'OPISYAL NA ADVISORY NG PAMAHALAANG BAYAN NG GASAN',
-                department: 'Business Permits and Licensing Office (BPLO) / Tanggapan ng Sangguniang Bayan',
+                department: 'Office of the Vice Mayor (OVM) • Tanggapan ng Sangguniang Bayan',
                 ordinance: 'Municipal Ordinance No. 2020-04 (Tricycle Franchising & Regulatory Code)',
                 reason: 'Hindi pinapahintulutan ang self-registration bilang NON-TODA nang walang paunang municipal legislative authorization.',
                 details: {
@@ -103,7 +103,7 @@ async function validateOperatorAgainstRoster({ fullName, todaAssociation, bodyNu
                     todaAssociation: 'NON-TODA',
                     bodyNumber: cleanBodyNo || 'N/A'
                 },
-                action: 'Pumili ng opisyal na TODA na sumasakop sa inyong barangay o makipag-ugnayan sa BPLO.'
+                action: 'Pumili ng opisyal na TODA na sumasakop sa inyong barangay o makipag-ugnayan sa OVM.'
             }
         };
     }
@@ -180,10 +180,10 @@ async function validateOperatorAgainstRoster({ fullName, todaAssociation, bodyNu
         return {
             isValid: false,
             status: 'no_roster_on_file',
-            message: `Wala pang opisyal na aprubadong masterlist na nakalagak sa BPLO para sa ${cleanToda}.`,
+            message: `Wala pang opisyal na aprubadong masterlist na nakalagak sa OVM para sa ${cleanToda}.`,
             advisory: {
                 title: 'OPISYAL NA ADVISORY NG PAMAHALAANG BAYAN NG GASAN',
-                department: 'Business Permits and Licensing Office (BPLO) / OVM Franchising Unit',
+                department: 'Office of the Vice Mayor (OVM) • OVM Franchising Unit',
                 ordinance: 'Municipal Ordinance No. 2020-04, Serye ng 2020 (Section 4 - Mandatory Roster Certification)',
                 reason: `Kasalukuyang wala pang sertipikadong digital masterlist na naisusumite at naaprubahan para sa ${cleanToda}.`,
                 details: {
@@ -192,7 +192,7 @@ async function validateOperatorAgainstRoster({ fullName, todaAssociation, bodyNu
                     bodyNumber: cleanBodyNo,
                     status: 'PENDING TODA PRESIDENT SUBMISSION'
                 },
-                action: `Mangyaring abisuhan ang Pangulo ng ${cleanToda} na isumite ang opisyal na Masterlist ng mga miyembro sa portal para sa pagsusuri ng BPLO bago magrehistro.`
+                action: `Mangyaring abisuhan ang Pangulo ng ${cleanToda} na isumite ang opisyal na Masterlist ng mga miyembro sa portal para sa pagsusuri ng OVM bago magrehistro.`
             }
         };
     }
@@ -245,7 +245,7 @@ async function validateOperatorAgainstRoster({ fullName, todaAssociation, bodyNu
             message: `Hindi tumutugma ang inilagay na Body Number ("${cleanBodyNo}") sa opisyal na masterlist ng ${cleanToda}. Pakiwasto ang inyong Body Number o makipag-ugnayan sa inyong TODA President.`,
             advisory: {
                 title: 'OPISYAL NA ADVISORY NG PAMAHALAANG BAYAN NG GASAN',
-                department: 'Business Permits and Licensing Office (BPLO) / Tricycle Franchising Division',
+                department: 'Office of the Vice Mayor (OVM) • Tricycle Franchising Unit',
                 ordinance: 'Municipal Ordinance No. 2020-04 (Body Number Allocation & Integrity)',
                 reason: `Hindi tumutugma ang inilagay na Body Number (${cleanBodyNo}) sa opisyal na talaan ng ${cleanToda}.`,
                 details: {
@@ -266,7 +266,7 @@ async function validateOperatorAgainstRoster({ fullName, todaAssociation, bodyNu
             message: `Ang Body No. "${cleanBodyNo}" ay nakatalaga na sa ibang rehistradong operator sa opisyal na masterlist ng ${cleanToda}.`,
             advisory: {
                 title: 'OPISYAL NA ADVISORY NG PAMAHALAANG BAYAN NG GASAN',
-                department: 'Business Permits and Licensing Office (BPLO) / Office of the Municipal Mayor',
+                department: 'Office of the Vice Mayor (OVM) • Sangguniang Bayan',
                 ordinance: 'Municipal Ordinance No. 2020-04 (Anti-Duplication of Tricycle Body Numbers)',
                 reason: `Ang Body Number ${cleanBodyNo} ay may umiiral nang lehitimong operator sa ${cleanToda}.`,
                 details: {
@@ -274,7 +274,7 @@ async function validateOperatorAgainstRoster({ fullName, todaAssociation, bodyNu
                     todaAssociation: cleanToda,
                     enteredBodyNumber: cleanBodyNo
                 },
-                action: 'Ipinagbabawal ang duplicate registration ng iisang Body Number. Kung may transaksyon ng bentahan o transfer of unit, mangyaring dalhin ang opisyal na Deed of Sale at TODA Board Resolution sa BPLO.'
+                action: 'Ipinagbabawal ang duplicate registration ng iisang Body Number. Kung may transaksyon ng bentahan o transfer of unit, mangyaring dalhin ang opisyal na Deed of Sale at TODA Board Resolution sa OVM.'
             }
         };
     }
@@ -286,7 +286,7 @@ async function validateOperatorAgainstRoster({ fullName, todaAssociation, bodyNu
         message: `Ang kombinasyon ng pangalan "${cleanName}" at Body Number "${cleanBodyNo}" ay HINDI nakatala sa opisyal na masterlist ng ${cleanToda}.`,
         advisory: {
             title: 'OPISYAL NA ADVISORY NG PAMAHALAANG BAYAN NG GASAN',
-            department: 'Business Permits and Licensing Office (BPLO) / Tanggapan ng Sangguniang Bayan',
+            department: 'Office of the Vice Mayor (OVM) • Tanggapan ng Sangguniang Bayan',
             ordinance: 'Municipal Ordinance No. 2020-04 (Mandatory Roster Endorsement)',
             reason: `Walang natagpuang aprubadong rekord sa opisyal na masterlist ng ${cleanToda} para sa pangalang "${cleanName}" at Body No. "${cleanBodyNo}".`,
             details: {
@@ -295,7 +295,7 @@ async function validateOperatorAgainstRoster({ fullName, todaAssociation, bodyNu
                 bodyNumber: cleanBodyNo,
                 status: 'UNAUTHORIZED / UNLISTED OPERATOR APPLICANT'
             },
-            action: `Alinsunod sa umiiral na regulasyon ng Munisipalidad ng Gasan, tanging ang mga operator na nasa sertipikadong masterlist ng TODA ang maaaring magbukas ng account. Mangyaring makipag-ugnayan agad sa inyong TODA President upang maisama ang inyong pangalan at unit sa susunod na opisyal na pagsusumite sa BPLO.`
+            action: `Alinsunod sa umiiral na regulasyon ng Munisipalidad ng Gasan, tanging ang mga operator na nasa sertipikadong masterlist ng TODA ang maaaring magbukas ng account. Mangyaring makipag-ugnayan agad sa inyong TODA President upang maisama ang inyong pangalan at unit sa susunod na opisyal na pagsusumite sa OVM.`
         }
     };
 }

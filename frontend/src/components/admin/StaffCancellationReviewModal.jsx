@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 import { 
   X, AlertTriangle, FileText, CheckCircle2, XCircle, ZoomIn, ZoomOut, 
-  RotateCw, ExternalLink, Download, Loader2, Calendar, User, ShieldAlert,
-  HelpCircle, Eye, Info
+  RotateCw, ExternalLink, Loader2, ShieldAlert,
+  Info, Printer
 } from 'lucide-react';
-import TricycleIcon from '../common/TricycleIcon';
+import OfficialCancellationLetterModal from '../common/OfficialCancellationLetterModal';
 
 const StaffCancellationReviewModal = ({ 
   isOpen, 
@@ -20,10 +20,12 @@ const StaffCancellationReviewModal = ({
   const [showRejectPrompt, setShowRejectPrompt] = useState(false);
   const [rejectionReason, setRejectionReason] = useState('');
   const [actionError, setActionError] = useState('');
+  const [showOfficialLetter, setShowOfficialLetter] = useState(false);
 
   if (!isOpen || !unit) return null;
 
   const letterUrl = unit.cancellationDetails?.letterUrl || unit.evidenceUrl || '';
+  const letterText = unit.cancellationDetails?.letterText || '';
   const isPdf = letterUrl.toLowerCase().endsWith('.pdf');
   const cancelReason = unit.cancellationDetails?.reason || unit.cancelReason || 'Voluntary Cancellation';
   const cancelRemarks = unit.cancellationDetails?.remarks || '';
@@ -66,7 +68,8 @@ const StaffCancellationReviewModal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 overflow-y-auto">
+    <>
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-2 sm:p-4 overflow-y-auto print:hidden">
       {/* Backdrop */}
       <div 
         className="fixed inset-0 bg-black/70 backdrop-blur-sm animate-in fade-in duration-200" 
@@ -88,7 +91,7 @@ const StaffCancellationReviewModal = ({
                   Review Voluntary Franchise Cancellation
                 </h3>
                 <span className="px-2 py-0.5 rounded-md bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300 text-[10px] font-bold uppercase tracking-wider border border-amber-300 dark:border-amber-800">
-                  Awaiting BPLO Action
+                  Awaiting OVM Action
                 </span>
               </div>
               <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-medium flex items-center gap-2 mt-0.5 truncate">
@@ -228,11 +231,30 @@ const StaffCancellationReviewModal = ({
                     <span>Open Full</span>
                   </a>
                 )}
+                <button
+                  type="button"
+                  onClick={() => setShowOfficialLetter(true)}
+                  className="flex items-center gap-1 px-2.5 py-1 text-[11px] font-semibold rounded bg-[#1F1D1B] hover:bg-[#3A3531] text-white transition-colors ml-1.5 shadow-sm cursor-pointer"
+                  title="Preview or Print Official OVM Cancellation Letter (.PDF / .DOCX)"
+                >
+                  <Printer size={12} />
+                  <span>Print Official OVM Letter</span>
+                </button>
               </div>
             </div>
 
             {/* Document Viewer Frame */}
-            <div className="relative min-h-[350px] max-h-[480px] overflow-auto p-4 flex items-center justify-center bg-[#1F1D1B]/10 dark:bg-black/30">
+            <div className="relative min-h-[350px] max-h-[480px] overflow-auto p-4 flex flex-col items-center justify-center gap-4 bg-[#1F1D1B]/10 dark:bg-black/30">
+              {letterText && (
+                <div className="w-full max-w-2xl bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg p-5 shadow-sm text-left">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-[#9E2A2B] dark:text-[#D4AF37] mb-2">
+                    Operator Typed Surrender Letter
+                  </p>
+                  <pre className="whitespace-pre-wrap font-sans text-xs leading-relaxed text-[#1F1D1B] dark:text-[#F6F5F3]">
+                    {letterText}
+                  </pre>
+                </div>
+              )}
               {letterUrl ? (
                 isPdf ? (
                   <iframe
@@ -254,22 +276,23 @@ const StaffCancellationReviewModal = ({
                     />
                   </div>
                 )
-              ) : (
+              ) : !letterText ? (
                 <div className="text-center py-12 text-[#6B6761] dark:text-[#A8A29E]">
                   <FileText size={36} className="mx-auto mb-2 opacity-40" />
                   <p className="text-xs font-semibold">No cancellation letter attached.</p>
                 </div>
-              )}
+              ) : null}
             </div>
           </div>
 
           {/* Staff Verification Notes */}
           <div>
             <label className="block text-xs font-bold uppercase tracking-wider text-[#1F1D1B] dark:text-[#F6F5F3] mb-1">
-              BPLO Staff Verification Notes (Optional)
+              OVM Staff Verification Notes (Optional)
             </label>
             <input
               type="text"
+              maxLength={300}
               value={staffNotes}
               onChange={(e) => setStaffNotes(e.target.value)}
               placeholder="e.g., Verified valid surrender; surrender letter archived in municipal file..."
@@ -286,6 +309,7 @@ const StaffCancellationReviewModal = ({
               </div>
               <textarea
                 rows={2}
+                maxLength={300}
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
                 placeholder="e.g., Cancellation letter is unreadable or not signed by the registered operator..."
@@ -321,7 +345,16 @@ const StaffCancellationReviewModal = ({
               <span>Finalizing marks franchise as <strong>Cancelled</strong> with zero cashier payment.</span>
             </div>
 
-            <div className="flex items-center gap-2.5 w-full sm:w-auto justify-end">
+            <div className="flex items-center flex-wrap gap-2.5 w-full sm:w-auto justify-end">
+              <button
+                type="button"
+                disabled={isProcessing}
+                onClick={() => setShowOfficialLetter(true)}
+                className="px-3.5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs text-[#1F1D1B] dark:text-[#F6F5F3] bg-[#F6F5F3] hover:bg-[#E4E1DC] dark:bg-[#14110F] dark:hover:bg-[#2E2A27] border border-[#E4E1DC] dark:border-[#2E2A27] transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+              >
+                <Printer size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                <span>Print OVM Letter</span>
+              </button>
               <button
                 type="button"
                 disabled={isProcessing}
@@ -355,6 +388,13 @@ const StaffCancellationReviewModal = ({
         )}
       </div>
     </div>
+    <OfficialCancellationLetterModal
+      isOpen={showOfficialLetter}
+      onClose={() => setShowOfficialLetter(false)}
+      franchise={unit}
+      cancellationData={unit.cancellationDetails || {}}
+    />
+    </>
   );
 };
 

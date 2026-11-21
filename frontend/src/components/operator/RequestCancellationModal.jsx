@@ -1,7 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
-  X, AlertTriangle, UploadCloud, FileText, Image as ImageIcon, 
-  Trash2, Loader2, CheckCircle, ShieldAlert, ArrowRight, HelpCircle
+  X, AlertTriangle, UploadCloud, FileText, RotateCcw,
+  Trash2, Loader2, ShieldAlert, PenLine
 } from 'lucide-react';
 import TricycleIcon from '../common/TricycleIcon';
 
@@ -13,15 +13,61 @@ const CANCELLATION_REASONS = [
   { value: "Other", label: "Other Reasons (Iba pang Dahilan)" }
 ];
 
+const buildDefaultCancellationLetter = (unit, reason, customReason, remarks) => {
+  const operatorName = (unit?.fullName || 'Registered Operator').trim();
+  const toda = unit?.todaName || 'N/A';
+  const plateNo = unit?.plateNo || 'N/A';
+  const mtopNo = unit?.mtopNo || 'N/A';
+  const effectiveReason = reason === 'Other' && customReason?.trim() ? customReason.trim() : reason;
+  const detailsLine = remarks?.trim() ? `\nAdditional Details: ${remarks.trim()}` : '';
+
+  return [
+    'Hon. Lidany A. Lao-Baldo',
+    'Municipal Vice Mayor / Office of the Vice Mayor (OVM)',
+    'Municipality of Gasan, Province of Marinduque',
+    '',
+    'Dear Hon. Vice Mayor,',
+    '',
+    'I am respectfully requesting the voluntary cancellation of my Motorized Tricycle Operator\'s Permit (MTOP) / Tricycle Franchise with the following details:',
+    '',
+    `• Registered Operator: ${operatorName}`,
+    `• TODA Association: ${toda}`,
+    `• Franchise / MTOP No.: ${mtopNo}`,
+    `• Plate / MV File No.: ${plateNo}`,
+    `• Reason for Cancellation: ${effectiveReason}${detailsLine}`,
+    '',
+    'I affirm that this surrender and cancellation request is voluntary and will coordinate with the Office of the Vice Mayor (OVM) Franchising Unit (LLSA I) for official approval.',
+    '',
+    'Respectfully yours,',
+    operatorName
+  ].join('\n');
+};
+
 const RequestCancellationModal = ({ isOpen, onClose, unit, onSuccess }) => {
   const [reason, setReason] = useState(CANCELLATION_REASONS[0].value);
   const [customReason, setCustomReason] = useState('');
   const [remarks, setRemarks] = useState('');
+  const [letterMode, setLetterMode] = useState('type'); // 'type' | 'upload'
+  const [letterText, setLetterText] = useState('');
   const [file, setFile] = useState(null);
   const [filePreview, setFilePreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const fileInputRef = useRef(null);
+
+  useEffect(() => {
+    if (isOpen && unit) {
+      const defaultReason = CANCELLATION_REASONS[0].value;
+      setReason(defaultReason);
+      setCustomReason('');
+      setRemarks('');
+      setLetterMode('type');
+      setLetterText(buildDefaultCancellationLetter(unit, defaultReason, '', ''));
+      setFile(null);
+      setFilePreview(null);
+      setErrorMessage('');
+    }
+  }, [isOpen, unit]);
 
   if (!isOpen || !unit) return null;
 
@@ -74,8 +120,13 @@ const RequestCancellationModal = ({ isOpen, onClose, unit, onSuccess }) => {
       return;
     }
 
-    if (!file) {
+    if (letterMode === 'upload' && !file) {
       setErrorMessage('Please attach a photo or scan of your signed cancellation letter.');
+      return;
+    }
+
+    if (letterMode === 'type' && letterText.trim().length < 30) {
+      setErrorMessage('Please type a complete formal cancellation letter (at least 30 characters).');
       return;
     }
 
@@ -86,7 +137,11 @@ const RequestCancellationModal = ({ isOpen, onClose, unit, onSuccess }) => {
       formData.append('reason', reason);
       formData.append('customReason', customReason.trim());
       formData.append('remarks', remarks.trim());
-      formData.append('cancellationLetter', file);
+      if (letterMode === 'type') {
+        formData.append('letterText', letterText.trim());
+      } else if (file) {
+        formData.append('cancellationLetter', file);
+      }
 
       const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/${unit._id}/request-cancellation`, {
         method: 'PUT',
@@ -162,7 +217,7 @@ const RequestCancellationModal = ({ isOpen, onClose, unit, onSuccess }) => {
             <p className="font-bold uppercase tracking-wider text-[11px] mb-0.5">Formal Surrender Notice</p>
             <p>
               Submitting this request will set your franchise to <strong>Cancellation Requested</strong>. 
-              The BPLO Licensing Office will review your surrender letter and finalize cancellation. 
+              The Office of the Vice Mayor (OVM) will review your surrender letter and finalize cancellation. 
               <strong> No Cashier payment is required</strong> for voluntary franchise cancellation.
             </p>
           </div>
@@ -205,6 +260,7 @@ const RequestCancellationModal = ({ isOpen, onClose, unit, onSuccess }) => {
               </label>
               <input
                 type="text"
+                maxLength={120}
                 value={customReason}
                 onChange={(e) => setCustomReason(e.target.value)}
                 placeholder="Pakisulat ang partikular na dahilan ng pagkakansela..."
@@ -219,7 +275,8 @@ const RequestCancellationModal = ({ isOpen, onClose, unit, onSuccess }) => {
               Remarks / Additional Context
             </label>
             <textarea
-              rows={3}
+              rows={2}
+              maxLength={500}
               value={remarks}
               onChange={(e) => setRemarks(e.target.value)}
               placeholder="Magbigay ng karagdagang impormasyon (hal. Pangalan ng bagong may-ari kung nabenta, bagong ruta o TODA, o petsa ng paghinto)..."
@@ -227,18 +284,69 @@ const RequestCancellationModal = ({ isOpen, onClose, unit, onSuccess }) => {
             />
           </div>
 
-          {/* Formal Cancellation Letter Upload */}
+          {/* Formal Cancellation Letter (Type Online or Upload File) */}
           <div>
-            <div className="flex items-center justify-between mb-1.5">
+            <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
               <label className="block text-xs font-bold uppercase tracking-wider text-[#1F1D1B] dark:text-[#F6F5F3]">
-                Formal Cancellation Letter / Handwritten Letter <span className="text-red-500">*</span>
+                Formal Cancellation Letter <span className="text-red-500">*</span>
               </label>
-              <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-medium">
-                JPG, PNG, PDF up to 10MB
-              </span>
+              <div className="inline-flex rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] p-0.5">
+                <button
+                  type="button"
+                  onClick={() => { setLetterMode('type'); setErrorMessage(''); }}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer ${
+                    letterMode === 'type'
+                      ? 'bg-[#9E2A2B] text-white shadow-sm'
+                      : 'text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3]'
+                  }`}
+                >
+                  <PenLine size={12} />
+                  Type Letter Online
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setLetterMode('upload'); setErrorMessage(''); }}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold transition-all cursor-pointer ${
+                    letterMode === 'upload'
+                      ? 'bg-[#9E2A2B] text-white shadow-sm'
+                      : 'text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3]'
+                  }`}
+                >
+                  <UploadCloud size={12} />
+                  Upload File
+                </button>
+              </div>
             </div>
 
-            {!file ? (
+            {letterMode === 'type' ? (
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
+                    Edit your formal letter to the Office of the Vice Mayor (OVM) below. LLSA I can print this on official letterhead.
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setLetterText(buildDefaultCancellationLetter(unit, reason, customReason, remarks))}
+                    className="inline-flex items-center gap-1 text-[11px] font-semibold text-[#9E2A2B] dark:text-[#D4AF37] hover:underline shrink-0 cursor-pointer"
+                  >
+                    <RotateCcw size={11} />
+                    Sync Template
+                  </button>
+                </div>
+                <textarea
+                  rows={8}
+                  maxLength={2000}
+                  value={letterText}
+                  onChange={(e) => setLetterText(e.target.value)}
+                  placeholder="Type your formal franchise surrender/cancellation letter here..."
+                  className="w-full text-xs leading-relaxed p-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#FAF9F7] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] font-sans"
+                />
+                <div className="flex justify-between text-[10px] text-[#6B6761] dark:text-[#A8A29E]">
+                  <span>Minimum 30 characters required.</span>
+                  <span className="tabular-nums">{letterText.length}/2000</span>
+                </div>
+              </div>
+            ) : !file ? (
               <div
                 onClick={() => fileInputRef.current?.click()}
                 className="border-2 border-dashed border-[#E4E1DC] dark:border-[#2E2A27] hover:border-[#9E2A2B] dark:hover:border-[#D4AF37] rounded-lg p-5 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all bg-[#F6F5F3]/50 dark:bg-[#14110F]/50 group"
@@ -310,7 +418,7 @@ const RequestCancellationModal = ({ isOpen, onClose, unit, onSuccess }) => {
             </button>
             <button
               type="submit"
-              disabled={isSubmitting || !file}
+              disabled={isSubmitting || (letterMode === 'upload' ? !file : letterText.trim().length < 30)}
               className="flex items-center justify-center gap-2 px-5 py-2.5 min-h-[44px] rounded-lg font-bold text-xs text-white bg-[#B91C1C] hover:bg-[#991B1B] transition-all shadow-sm active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
             >
               {isSubmitting ? (

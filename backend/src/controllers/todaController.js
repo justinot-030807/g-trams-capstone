@@ -12,7 +12,7 @@ const rosterIneligible = {
     verified: false,
     status: 'not_in_roster',
     message: 'The supplied details could not be verified against the official TODA roster.',
-    advisory: { action: 'Verify the submitted details or contact your TODA President or BPLO for assistance.' }
+    advisory: { action: 'Verify the submitted details or contact your TODA President or OVM for assistance.' }
 };
 exports.rosterIneligible = rosterIneligible;
 /**
@@ -88,7 +88,7 @@ exports.addIndividualMember = async (req, res) => {
         if (!isBploStaff && !isTodaPresident) {
             return res.status(403).json({
                 success: false,
-                message: 'ACCESS DENIED: Only BPLO Staff or a verified TODA President can add roster members.'
+                message: 'ACCESS DENIED: Only OVM Staff (LLSA I) or a verified TODA President can add roster members.'
             });
         }
 

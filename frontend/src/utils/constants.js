@@ -120,27 +120,51 @@ export const GASAN_ZONES = [
   }
 ];
 
-// Helper to resolve Zone from Barangay name (handles exact match, case-insensitivity, and aliases)
+// Helper to strip common address wrappers ("Barangay ...", "Brgy. ...", ", Gasan, Marinduque")
+const stripBarangayAffixes = (raw) =>
+  String(raw || '')
+    .trim()
+    .replace(/,\s*gasan.*$/i, '')
+    .replace(/,\s*marinduque.*$/i, '')
+    .replace(/^(?:barangay|brgy\.?)\s+/i, '')
+    .trim();
+
+const SORTED_BARANGAY_ENTRIES = Object.entries(BARANGAY_TO_ZONE).sort(
+  ([a], [b]) => b.length - a.length
+);
+
+// Helper to resolve Zone from Barangay name (handles exact match, case-insensitivity, full addresses, and aliases)
 export const getZoneForBarangay = (barangayName) => {
   if (!barangayName || typeof barangayName !== 'string') return '';
   const clean = barangayName.trim();
   if (BARANGAY_TO_ZONE[clean]) return BARANGAY_TO_ZONE[clean];
 
   const lower = clean.toLowerCase();
-  for (const [b, z] of Object.entries(BARANGAY_TO_ZONE)) {
-    if (b.toLowerCase() === lower) return z;
+  const stripped = stripBarangayAffixes(clean).toLowerCase();
+
+  for (const [b, z] of SORTED_BARANGAY_ENTRIES) {
+    const bLower = b.toLowerCase();
+    if (bLower === lower || (stripped && bLower === stripped)) return z;
   }
 
   // Alias checks (from PDF and document OCR research)
-  if (lower.includes('uno') || lower === 'brgy. i' || lower === 'brgy i' || lower === 'poblacion') return 'Central';
-  if (lower.includes('dos') || lower === 'brgy. ii' || lower === 'brgy ii') return 'Central';
-  if (lower.includes('tres') || lower === 'brgy. iii' || lower === 'brgy iii') return 'Central';
+  if (lower.includes('uno') || lower === 'brgy. i' || lower === 'brgy i' || stripped === 'i' || lower.includes('poblacion i ') || lower.includes('barangay i (')) return 'Central';
+  if (lower.includes('dos') || lower === 'brgy. ii' || lower === 'brgy ii' || stripped === 'ii' || lower.includes('barangay ii')) return 'Central';
+  if (lower.includes('tres') || lower === 'brgy. iii' || lower === 'brgy iii' || stripped === 'iii' || lower.includes('barangay iii')) return 'Central';
+  if (lower.includes('poblacion')) return 'Central';
   if (lower.includes('bacong')) return 'South';
   if (lower.includes('mat') && lower.includes('gasan')) return 'South';
   if (lower.includes('ping')) return 'South';
   if (lower.includes('bahi')) return 'North';
   if (lower.includes('bangbang')) return 'North';
   if (lower.includes('tabionan')) return 'South';
+
+  for (const [b, z] of SORTED_BARANGAY_ENTRIES) {
+    const bStripped = stripBarangayAffixes(b).toLowerCase();
+    if (bStripped && (lower.includes(bStripped) || stripped.includes(bStripped))) {
+      return z;
+    }
+  }
 
   return '';
 };
@@ -150,14 +174,15 @@ export const normalizeBarangayName = (input) => {
   if (!input || typeof input !== 'string') return '';
   const str = input.trim();
   const lower = str.toLowerCase();
+  const stripped = stripBarangayAffixes(str).toLowerCase();
 
-  if (lower.includes('uno') || lower === 'brgy. i' || lower === 'brgy i' || lower === 'barangay i' || lower === 'poblacion') {
+  if (lower.includes('uno') || lower === 'brgy. i' || lower === 'brgy i' || lower === 'barangay i' || stripped === 'i' || lower === 'poblacion') {
     return 'Barangay I (Poblacion)';
   }
-  if (lower.includes('dos') || lower === 'brgy. ii' || lower === 'brgy ii' || lower === 'barangay ii') {
+  if (lower.includes('dos') || lower === 'brgy. ii' || lower === 'brgy ii' || lower === 'barangay ii' || stripped === 'ii') {
     return 'Barangay II (Poblacion)';
   }
-  if (lower.includes('tres') || lower === 'brgy. iii' || lower === 'brgy iii' || lower === 'barangay iii') {
+  if (lower.includes('tres') || lower === 'brgy. iii' || lower === 'brgy iii' || lower === 'barangay iii' || stripped === 'iii') {
     return 'Barangay III (Poblacion)';
   }
   if (lower.includes('bacong')) {
@@ -176,8 +201,15 @@ export const normalizeBarangayName = (input) => {
     return 'Bahi';
   }
 
-  const match = GASAN_BARANGAYS.find(b => b.toLowerCase() === lower);
-  return match || str;
+  const exactMatch = GASAN_BARANGAYS.find(b => b.toLowerCase() === lower || b.toLowerCase() === stripped);
+  if (exactMatch) return exactMatch;
+
+  const sortedBarangays = [...GASAN_BARANGAYS].sort((a, b) => b.length - a.length);
+  const partialMatch = sortedBarangays.find(b => {
+    const bLow = b.toLowerCase();
+    return lower.includes(bLow) || (stripped && bLow === stripped);
+  });
+  return partialMatch || str;
 };
 
 // Helper to normalize legacy or varied zone values (e.g. '1', 'Zone 1') to official zone key
@@ -368,6 +400,16 @@ export const TODA_DIRECTORY = [
     description: 'Independent operators authorized to operate within their designated residency zone.'
   }
 ];
+
+// Helper to resolve Zone from TODA association name/ID
+export const getZoneForToda = (todaName) => {
+  if (!todaName || typeof todaName !== 'string') return '';
+  const clean = todaName.trim().toLowerCase();
+  const entry = TODA_DIRECTORY.find(
+    (t) => t.id !== 'NON-TODA' && (t.id.toLowerCase() === clean || t.name.toLowerCase() === clean)
+  );
+  return entry?.zone ? formatZoneLabel(entry.zone) : '';
+};
 
 // Helper to filter TODAs by Barangay Residence (LGU Municipal Ordinance Enforcement)
 export const getTodasForBarangay = (barangayName) => {

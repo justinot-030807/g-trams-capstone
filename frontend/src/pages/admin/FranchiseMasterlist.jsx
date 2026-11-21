@@ -5,10 +5,11 @@ import {
   Clock, AlertCircle, Loader2, X, CalendarDays, Printer,
   ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Tag,
   ChevronDown, Check, CheckSquare, Square, RotateCcw, Eye,
-  User, ShieldCheck, Shield, FileCheck, Phone, MapPin, Hash, ExternalLink, ArrowUpDown
+  User, ShieldCheck, Shield, FileCheck, Phone, MapPin, Hash, ExternalLink, ArrowUpDown, History
 } from 'lucide-react';
 import { TableRowsSkeleton } from '../../components/skeleton';
 import MtopCertificateModal from '../../components/admin/MtopCertificateModal';
+import OfficialCancellationLetterModal from '../../components/common/OfficialCancellationLetterModal';
 import PageHeader from '../../components/common/PageHeader';
 import StatusBadge from '../../components/common/StatusBadge';
 import TricycleIcon from '../../components/common/TricycleIcon';
@@ -48,6 +49,7 @@ const FranchiseMasterlist = () => {
 
   // Printable MTOP Certificate State
   const [printMtopUnit, setPrintMtopUnit] = useState(null);
+  const [cancellationLetterUnit, setCancellationLetterUnit] = useState(null);
 
   // Server-Side Pagination States
   const [currentPage, setCurrentPage] = useState(1);
@@ -309,10 +311,10 @@ const FranchiseMasterlist = () => {
     <MainLayout>
       <style>{`
         @media print {
-          body:not(.printing-mtop) * { visibility: hidden; }
-          body:not(.printing-mtop) #printable-masterlist,
-          body:not(.printing-mtop) #printable-masterlist * { visibility: visible; }
-          body:not(.printing-mtop) #printable-masterlist { position: absolute; left: 0; top: 0; width: 100%; }
+          body:not(.printing-mtop):not(.printing-cancellation) * { visibility: hidden; }
+          body:not(.printing-mtop):not(.printing-cancellation) #printable-masterlist,
+          body:not(.printing-mtop):not(.printing-cancellation) #printable-masterlist * { visibility: visible; }
+          body:not(.printing-mtop):not(.printing-cancellation) #printable-masterlist { position: absolute; left: 0; top: 0; width: 100%; }
           .print-hide { display: none !important; }
         }
       `}</style>
@@ -509,9 +511,9 @@ const FranchiseMasterlist = () => {
                 </h3>
                 <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
                   {[
-                    { label: 'OR/CR Motor', url: selectedFranchise.orCrUrl },
+                    { label: 'LTO CR', url: selectedFranchise.crUrl || selectedFranchise.orCrUrl },
+                    { label: 'LTO OR', url: selectedFranchise.orUrl || selectedFranchise.orCrUrl },
                     { label: "Driver's License", url: selectedFranchise.licenseUrl },
-                    { label: 'TODA Endorsement', url: selectedFranchise.todaEndorsementUrl },
                     { label: 'Barangay Clearance', url: selectedFranchise.brgyClearanceUrl },
                     { label: 'Cedula (CTC)', url: selectedFranchise.cedulaUrl }
                   ].map((doc, i) => (
@@ -545,11 +547,64 @@ const FranchiseMasterlist = () => {
                 </div>
               )}
 
+              {/* Prior Term / Renewal History */}
+              {Array.isArray(selectedFranchise.paymentHistory) && selectedFranchise.paymentHistory.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider mb-2.5 flex items-center gap-1.5">
+                    <History size={13} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                    Prior Term &amp; Renewal History ({selectedFranchise.paymentHistory.length})
+                  </h3>
+                  <div className="space-y-2">
+                    {[...selectedFranchise.paymentHistory].reverse().map((term, idx) => {
+                      const termYear = term.approvalDate
+                        ? new Date(term.approvalDate).getFullYear()
+                        : term.expiryDate
+                        ? new Date(term.expiryDate).getFullYear()
+                        : term.paymentDate
+                        ? new Date(term.paymentDate).getFullYear()
+                        : '—';
+                      return (
+                        <div
+                          key={term._id || idx}
+                          className="p-3 bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs"
+                        >
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-center gap-1.5 mb-0.5">
+                              <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3]">
+                                FY {termYear}
+                              </span>
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E]">
+                                {term.applicationType || 'Prior Term'}
+                              </span>
+                              {term.previousStatus && (
+                                <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-800/60">
+                                  {term.previousStatus}
+                                </span>
+                              )}
+                            </div>
+                            <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] break-all">
+                              MTOP: <span className="font-mono font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{term.mtopNo || '—'}</span>
+                              {' · '}
+                              OR#: <span className="font-mono font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{term.officialReceiptNo || '—'}</span>
+                              {Number(term.amountPaid) > 0 && ` · ₱${Number(term.amountPaid).toLocaleString('en-PH', { minimumFractionDigits: 2 })}`}
+                            </p>
+                          </div>
+                          <div className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] sm:text-right shrink-0">
+                            <p>Approved: {term.approvalDate ? new Date(term.approvalDate).toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', month: 'short', day: 'numeric', year: 'numeric' }) : '—'}</p>
+                            <p>Expired: {term.expiryDate ? new Date(term.expiryDate).toLocaleDateString('en-PH', { timeZone: 'Asia/Manila', month: 'short', day: 'numeric', year: 'numeric' }) : '—'}</p>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
             </div>
 
             {/* Modal Footer */}
             <div className="p-4 sm:p-5 border-t border-[#E4E1DC] dark:border-[#2E2A27] flex justify-end gap-2 bg-[#F6F5F3] dark:bg-[#14110F] rounded-b-lg">
-              {(selectedFranchise.status === 'Active' || selectedFranchise.status === 'Active - Under Warning') && (
+              {!selectedFranchise.isHistoricalTerm && (selectedFranchise.status === 'Active' || selectedFranchise.status === 'Active - Under Warning') && (
                 <button
                   type="button"
                   onClick={() => initiateMarkExpired(selectedFranchise)}
@@ -558,13 +613,22 @@ const FranchiseMasterlist = () => {
                   <Clock size={14} /> Mark as Expired
                 </button>
               )}
-              {selectedFranchise.status === 'Active' && (
+              {!selectedFranchise.isHistoricalTerm && selectedFranchise.status === 'Active' && (
                 <button
                   type="button"
                   onClick={() => setPrintMtopUnit(selectedFranchise)}
                   className="flex items-center gap-1.5 px-3.5 py-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-semibold rounded-lg text-xs transition-colors cursor-pointer"
                 >
                   <Printer size={14} /> Print Official MTOP
+                </button>
+              )}
+              {(selectedFranchise.status === 'Cancelled' || selectedFranchise.status === 'Cancellation Requested') && Boolean(selectedFranchise.cancellationDetails?.reason) && (
+                <button
+                  type="button"
+                  onClick={() => setCancellationLetterUnit(selectedFranchise)}
+                  className="flex items-center gap-1.5 px-3.5 py-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white font-semibold rounded-lg text-xs transition-colors cursor-pointer"
+                >
+                  <Printer size={14} /> Cancellation Letter
                 </button>
               )}
               <button 
@@ -954,6 +1018,11 @@ const FranchiseMasterlist = () => {
                                 <span className="px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E] border border-[#E4E1DC] dark:border-[#2E2A27]">
                                   FY {yearGroup.year}
                                 </span>
+                                {f.isHistoricalTerm && (
+                                  <span className="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
+                                    Prior Term
+                                  </span>
+                                )}
                               </div>
                               <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5 flex items-center gap-1">
                                 <MapPin size={11} className="text-[#6B6761] dark:text-[#A8A29E] shrink-0" />
@@ -986,14 +1055,26 @@ const FranchiseMasterlist = () => {
                                 >
                                   <Eye size={13} className="text-[#9E2A2B] dark:text-[#D4AF37]" /> Details
                                 </button>
-                                <button 
-                                  type="button"
-                                  onClick={() => initiateToggleArchive(f._id, displayName, true)}
-                                  className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all border bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border-[#E4E1DC] dark:border-[#2E2A27] cursor-pointer"
-                                  title="Restore to Masterlist"
-                                >
-                                  <ArchiveRestore size={13} /> Restore
-                                </button>
+                                {(f.status === 'Cancelled' || f.status === 'Cancellation Requested') && Boolean(f.cancellationDetails?.reason) && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setCancellationLetterUnit(f)}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#E4E1DC]/70 dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] transition-all cursor-pointer"
+                                    title="Print Official OVM Voluntary Cancellation Letter"
+                                  >
+                                    <FileText size={13} className="text-[#9E2A2B] dark:text-[#D4AF37]" /> Cancel Letter
+                                  </button>
+                                )}
+                                {!f.isHistoricalTerm && (
+                                  <button 
+                                    type="button"
+                                    onClick={() => initiateToggleArchive(f._id, displayName, true)}
+                                    className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg transition-all border bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] border-[#E4E1DC] dark:border-[#2E2A27] cursor-pointer"
+                                    title="Restore to Masterlist"
+                                  >
+                                    <ArchiveRestore size={13} /> Restore
+                                  </button>
+                                )}
                               </div>
                             </td>
                           </tr>
@@ -1070,6 +1151,18 @@ const FranchiseMasterlist = () => {
                                 title="Mark Franchise as Expired (Triggers Renewal & SMS/In-App Alert)"
                               >
                                 <Clock size={13} /> Expire
+                              </button>
+                            )}
+
+                            {/* PRINTABLE OFFICIAL CANCELLATION LETTER BUTTON */}
+                            {(f.status === 'Cancelled' || f.status === 'Cancellation Requested') && Boolean(f.cancellationDetails?.reason) && (
+                              <button
+                                type="button"
+                                onClick={() => setCancellationLetterUnit(f)}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-semibold rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#E4E1DC]/70 dark:hover:bg-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] transition-all cursor-pointer"
+                                title="Print Official OVM Voluntary Cancellation Letter"
+                              >
+                                <FileText size={13} className="text-[#9E2A2B] dark:text-[#D4AF37]" /> Cancel Letter
                               </button>
                             )}
 
@@ -1224,6 +1317,14 @@ const FranchiseMasterlist = () => {
         isOpen={!!printMtopUnit} 
         onClose={() => setPrintMtopUnit(null)} 
         unit={printMtopUnit} 
+      />
+
+      {/* Official Printable Voluntary Cancellation Letter Modal */}
+      <OfficialCancellationLetterModal
+        isOpen={!!cancellationLetterUnit}
+        onClose={() => setCancellationLetterUnit(null)}
+        franchise={cancellationLetterUnit || {}}
+        cancellationData={cancellationLetterUnit?.cancellationDetails || {}}
       />
     </MainLayout>
   );

@@ -44,7 +44,7 @@ const CashierSettings = () => {
 
   // Preferences state (aligned defaults: ON unless explicitly set to 'false')
   const [autoPrintReceipt, setAutoPrintReceipt] = useState(() => {
-    return localStorage.getItem('cashier_auto_print') !== 'false';
+    return localStorage.getItem('cashier_auto_print') === 'true';
   });
   const [soundAlert, setSoundAlert] = useState(() => {
     const stored = localStorage.getItem('cashier_sound_enabled') ?? localStorage.getItem('cashier_sound_alert');

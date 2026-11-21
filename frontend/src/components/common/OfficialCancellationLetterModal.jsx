@@ -58,7 +58,7 @@ const OfficialCancellationLetterModal = ({
   const motorNo = cleanText(data.motorNo || data.motorNumber || data.engineNumber, 'N/A').toUpperCase();
   const model = formatVehicleModelYear(data, String(new Date().getFullYear())).toUpperCase();
 
-  const cancelDateRaw = data.cancelledAt || data.cancellationRequestedAt || data.updatedAt || new Date();
+  const cancelDateRaw = data.cancelledAt || data.reviewedAt || data.requestedAt || data.cancellationRequestedAt || data.updatedAt || new Date();
   const cancelDateObj = new Date(cancelDateRaw);
   const validDate = isNaN(cancelDateObj.getTime()) ? new Date() : cancelDateObj;
 
@@ -74,11 +74,12 @@ const OfficialCancellationLetterModal = ({
   const yearStr = String(validDate.getFullYear());
   const fullDateStr = validDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' });
 
-  const requestDateStr = data.cancellationRequestedAt
-    ? new Date(data.cancellationRequestedAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+  const rawRequestedDate = data.cancellationRequestedAt || data.requestedAt;
+  const requestDateStr = rawRequestedDate
+    ? new Date(rawRequestedDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
     : fullDateStr;
 
-  const orNo = data.cancellationOrNo || data.cancellationOrNumber || data.paymentOrNumber || '';
+  const orNo = data.cancellationOrNo || data.cancellationOrNumber || data.paymentOrNumber || data.officialReceiptNo || '';
   const orDate = data.cancellationOrDate
     ? new Date(data.cancellationOrDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
     : fullDateStr;
@@ -121,7 +122,7 @@ const OfficialCancellationLetterModal = ({
   return (
     <div
       id="printable-cancellation-modal-root"
-      className="fixed inset-0 z-[130] bg-black/75 overflow-y-auto flex items-start justify-center p-3 sm:p-6 print:p-0 print:bg-white print:static print:inset-auto"
+      className="fixed inset-0 z-[300] bg-black/75 overflow-y-auto flex items-start justify-center p-3 sm:p-6 print:p-0 print:bg-white print:static print:inset-auto"
       onClick={onClose}
     >
       <div

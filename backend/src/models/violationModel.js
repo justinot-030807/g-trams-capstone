@@ -89,7 +89,7 @@ const violationSchema = new mongoose.Schema({
     },
     recordedByName: { 
         type: String, 
-        default: 'BPLO Staff' 
+        default: 'OVM Franchising Staff (LLSA I)' 
     },
     status: { 
         type: String, 

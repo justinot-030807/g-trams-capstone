@@ -396,7 +396,7 @@ const authorizeFranchiseEdit = async (req, res, next) => {
 
         if (!isBploStaff && (existingFranchise.status === 'Cancelled' || existingFranchise.status === 'Rejected') && existingFranchise.paymentStatus === 'Paid') {
             return res.status(400).json({
-                message: 'Cannot resubmit a voluntarily cancelled franchise. Please submit a new application or contact BPLO Staff.'
+                message: 'Cannot resubmit a voluntarily cancelled franchise. Please submit a new application or contact OVM Staff (LLSA I).'
             });
         }
 
@@ -447,7 +447,7 @@ const updateFranchise = async (req, res) => {
             }
             if (existingFranchise.paymentStatus === 'Paid') {
                 return res.status(400).json({
-                    message: 'Cannot resubmit a voluntarily cancelled franchise. Please submit a new application or contact BPLO Staff.'
+                    message: 'Cannot resubmit a voluntarily cancelled franchise. Please submit a new application or contact OVM Staff (LLSA I).'
                 });
             }
             // When an operator re-submits a cancelled/rejected application to fix issues,
@@ -653,7 +653,7 @@ const renewFranchise = async (req, res) => {
 
         if (existingFranchise.isArchived && existingFranchise.status !== 'Cancelled') {
             return res.status(400).json({
-                message: 'Cannot renew an archived franchise record. Please contact BPLO Staff to restore the record first.'
+                message: 'Cannot renew an archived franchise record. Please contact OVM Staff (LLSA I) to restore the record first.'
             });
         }
 
@@ -785,7 +785,13 @@ const renewFranchise = async (req, res) => {
         if (brgyIssuer) setFields.brgyIssuer = brgyIssuer;
 
         const updateOps = { $set: setFields };
-        if (existingFranchise.paymentStatus === 'Paid' || existingFranchise.officialReceiptNo) {
+        if (
+            existingFranchise.paymentStatus === 'Paid' ||
+            existingFranchise.officialReceiptNo ||
+            existingFranchise.mtopNo ||
+            existingFranchise.approvalDate ||
+            existingFranchise.expiryDate
+        ) {
             updateOps.$push = {
                 paymentHistory: {
                     officialReceiptNo: existingFranchise.officialReceiptNo || '',
@@ -799,6 +805,9 @@ const renewFranchise = async (req, res) => {
                     approvalDate: existingFranchise.approvalDate || null,
                     expiryDate: existingFranchise.expiryDate || null,
                     mtopNo: existingFranchise.mtopNo || '',
+                    applicationType: existingFranchise.applicationType || 'New',
+                    previousStatus: existingFranchise.status || 'Expired',
+                    dateApplied: existingFranchise.dateApplied || existingFranchise.createdAt || null,
                     archivedAt: new Date()
                 }
             };
@@ -1046,10 +1055,10 @@ const updateFranchiseStatus = async (req, res) => {
 
             if (status === 'Cancellation Requested') {
                 notifTitle = 'Franchise Cancellation Requested';
-                notifMessage = `Your voluntary cancellation request for franchise ${updatedFranchise.plateNo} has been submitted to BPLO.`;
+                notifMessage = `Your voluntary cancellation request for franchise ${updatedFranchise.plateNo} has been submitted to the Office of the Vice Mayor (OVM).`;
             } else if (status === 'Cancelled' && previousStatus === 'Cancellation Requested') {
                 notifTitle = 'Franchise Formally Cancelled';
-                notifMessage = `Your voluntary cancellation request for franchise ${updatedFranchise.plateNo} has been approved and finalized by BPLO. The franchise is now cancelled.`;
+                notifMessage = `Your voluntary cancellation request for franchise ${updatedFranchise.plateNo} has been approved and finalized by OVM. The franchise is now cancelled.`;
             } else if (status === 'For Payment') {
                 notifTitle = 'Requirements Approved - For Payment';
                 notifMessage = `Your franchise application for ${updatedFranchise.plateNo} has passed technical review! Please proceed to the Municipal Treasury / Cashier to settle your fee.`;
@@ -1058,7 +1067,7 @@ const updateFranchiseStatus = async (req, res) => {
                 notifMessage = `Your payment for ${updatedFranchise.plateNo} has been recorded. Your application is now queued for municipal executive signatures.`;
             } else if (status === 'Ready for Pickup') {
                 notifTitle = 'Franchise Signed - Ready for Pickup!';
-                notifMessage = `Your official MTOP Certificate for ${updatedFranchise.plateNo} has been signed! Please claim your official MTOP Certificate and franchise sticker at the BPLO / Licensing Office.`;
+                notifMessage = `Your official MTOP Certificate for ${updatedFranchise.plateNo} has been signed! Please claim your official MTOP Certificate and franchise sticker at the Office of the Vice Mayor (OVM) / Sangguniang Bayan.`;
             } else if (status === 'Active') {
                 notifTitle = 'Franchise Activated!';
                 notifMessage = `Your franchise permit for ${updatedFranchise.plateNo} is now officially active and released.`;
@@ -1193,7 +1202,8 @@ const requestFranchiseCancellation = async (req, res) => {
             });
         }
 
-        const { reason, customReason, remarks } = req.body;
+        const { reason, customReason, remarks, letterText } = req.body;
+        const cleanLetterText = typeof letterText === 'string' ? letterText.trim().slice(0, 3000) : '';
         if (!reason || !reason.trim()) {
             return res.status(400).json({ message: 'A valid reason for cancellation is required.' });
         }
@@ -1212,18 +1222,20 @@ const requestFranchiseCancellation = async (req, res) => {
             letterUrl = req.body.letterUrl;
         }
 
-        if (!letterUrl) {
-            return res.status(400).json({ message: 'A signed formal cancellation letter or handwritten letter image is required.' });
+        if (!letterUrl && !cleanLetterText) {
+            return res.status(400).json({ message: 'Please type your formal cancellation letter or upload a signed cancellation letter image/PDF.' });
         }
 
-        const effectiveReason = reason === 'Other' && customReason ? customReason.trim() : reason.trim();
-        const fullReason = remarks && remarks.trim() ? `${effectiveReason} - ${remarks.trim()}` : effectiveReason;
+        const effectiveReason = reason === 'Other' && customReason ? customReason.trim().slice(0, 120) : reason.trim().slice(0, 120);
+        const cleanRemarks = (remarks || '').trim().slice(0, 500);
+        const fullReason = cleanRemarks ? `${effectiveReason} - ${cleanRemarks}` : effectiveReason;
 
         const cancellationDetails = {
-            reason: reason.trim(),
-            customReason: (customReason || '').trim(),
-            remarks: (remarks || '').trim(),
-            letterUrl: letterUrl,
+            reason: reason.trim().slice(0, 120),
+            customReason: (customReason || '').trim().slice(0, 120),
+            remarks: cleanRemarks,
+            letterUrl: letterUrl || '',
+            letterText: cleanLetterText,
             requestedAt: new Date(),
             reviewedBy: null,
             reviewedAt: null,
@@ -1265,7 +1277,7 @@ const requestFranchiseCancellation = async (req, res) => {
                 recipient: req.user._id,
                 type: 'status_change',
                 title: 'Cancellation Request Submitted',
-                message: `Your voluntary cancellation request for ${franchise.plateNo} has been received by BPLO. Awaiting staff review.`,
+                message: `Your voluntary cancellation request for ${franchise.plateNo} has been received by OVM. Awaiting staff review.`,
                 relatedFranchise: franchise._id
             });
             emitToUser(req.user._id.toString(), 'notification', opNotif);
@@ -1287,7 +1299,7 @@ const requestFranchiseCancellation = async (req, res) => {
         });
 
         res.status(200).json({
-            message: 'Voluntary cancellation request submitted successfully. It is now queued for BPLO Staff review.',
+            message: 'Voluntary cancellation request submitted successfully. It is now queued for OVM Staff (LLSA I) review.',
             franchise
         });
     } catch (error) {
@@ -1336,7 +1348,7 @@ const processFranchiseCancellation = async (req, res) => {
                     recipient: opId,
                     type: 'status_change',
                     title: 'Franchise Cancelled',
-                    message: `Your voluntary franchise cancellation request for ${franchise.plateNo} has been finalized by BPLO Staff. Your franchise is now officially cancelled.`,
+                    message: `Your voluntary franchise cancellation request for ${franchise.plateNo} has been finalized by OVM Staff (LLSA I). Your franchise is now officially cancelled.`,
                     relatedFranchise: franchise._id
                 });
                 emitToUser(String(opId), 'notification', notif);
@@ -1386,7 +1398,7 @@ const processFranchiseCancellation = async (req, res) => {
                     recipient: opId,
                     type: 'status_change',
                     title: 'Cancellation Request Rejected',
-                    message: `Your cancellation request for ${franchise.plateNo} was rejected by BPLO: "${rejectionReason.trim()}". Your franchise remains Active.`,
+                    message: `Your cancellation request for ${franchise.plateNo} was rejected by OVM: "${rejectionReason.trim()}". Your franchise remains Active.`,
                     relatedFranchise: franchise._id
                 });
                 emitToUser(String(opId), 'notification', notif);
@@ -1684,7 +1696,7 @@ const getFranchiseRecordCheck = async (req, res) => {
             status: v.status || 'Active',
             remarks: v.remarks || '',
             evidenceUrl: v.evidenceUrl || '',
-            recordedByName: v.recordedByName || 'BPLO Staff',
+            recordedByName: v.recordedByName || 'OVM Franchising Staff (LLSA I)',
             settledAt: v.settledAt || null,
             settledNotes: v.settledNotes || '',
             createdAt: v.createdAt,
@@ -2084,6 +2096,9 @@ const processCashierPayment = async (req, res) => {
             return res.status(400).json({ message: 'Official Receipt (OR) Number is required.' });
         }
         const cleanOrNo = officialReceiptNo.trim().toUpperCase();
+        if (cleanOrNo.length > 25) {
+            return res.status(400).json({ message: 'Official Receipt (OR) Number must not exceed 25 characters.' });
+        }
 
         let existing = await Franchise.findById(req.params.id).select('+paymentSettlement');
         if (!existing) {
@@ -2112,7 +2127,8 @@ const processCashierPayment = async (req, res) => {
         if (payerName != null && typeof payerName !== 'string') {
             return res.status(400).json({ message: 'Invalid payer name.' });
         }
-        const normalizedPayer = payerName?.trim().toUpperCase();
+        const normalizedPayer = payerName?.trim().slice(0, 100).toUpperCase();
+        const cleanPaymentRemarks = typeof paymentRemarks === 'string' ? paymentRemarks.trim().slice(0, 300) : '';
         const payable = { _id: existing._id, ...PAYABLE_PREDICATE };
         const receiptConflict = () => res.status(409).json({
             message: `Official Receipt Number '${cleanOrNo}' is already recorded on another franchise or historical payment.`
@@ -2168,7 +2184,7 @@ const processCashierPayment = async (req, res) => {
                     paymentDate: settlementDate,
                     paidByCashier: req.user._id,
                     cashierName: req.user.name || 'Municipal Cashier',
-                    paymentRemarks: paymentRemarks || '',
+                    paymentRemarks: cleanPaymentRemarks,
                     allocatedMtop: !existing.mtopNo
                 } };
                 const reserved = existing.mtopNo

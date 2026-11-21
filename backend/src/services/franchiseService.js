@@ -530,6 +530,113 @@ class FranchiseService {
             ? { dateApplied: -1, createdAt: -1 } 
             : { dateApplied: 1, createdAt: 1 };
 
+        // When viewing Historical Archives, include prior expired/renewed term snapshots stored in paymentHistory
+        if (archived === 'true') {
+            const archivedDocs = await Franchise.find(queryCondition)
+                .populate('operator', 'name address contact')
+                .lean();
+
+            const historyParentQuery = { 'paymentHistory.0': { $exists: true } };
+            if (todaName && todaName !== 'all') {
+                historyParentQuery.todaName = todaName;
+            }
+            if (barangay && barangay !== 'all') {
+                const escapeRegex = (str) => str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                historyParentQuery.address = { $regex: escapeRegex(barangay), $options: 'i' };
+            }
+
+            const docsWithHistory = await Franchise.find(historyParentQuery)
+                .populate('operator', 'name address contact')
+                .lean();
+
+            const statusFilterList = status && status !== 'All'
+                ? status.split(',').map(s => s.trim()).filter(Boolean)
+                : null;
+            const searchNeedle = search && search.trim() ? search.trim().toLowerCase() : '';
+            const startTs = startDate ? new Date(startDate).setHours(0, 0, 0, 0) : null;
+            const endTs = endDate ? new Date(endDate).setHours(23, 59, 59, 999) : null;
+
+            const virtualTerms = [];
+            for (const doc of docsWithHistory) {
+                if (!Array.isArray(doc.paymentHistory)) continue;
+                doc.paymentHistory.forEach((term, idx) => {
+                    const termStatus = term.previousStatus || 'Expired';
+                    const termAppType = term.applicationType || (idx === 0 ? 'New' : 'Renewal');
+                    const termDateApplied = term.dateApplied || term.approvalDate || term.paymentDate || term.archivedAt || doc.dateApplied || doc.createdAt;
+                    const row = {
+                        ...doc,
+                        _id: `${doc._id}_term_${idx}`,
+                        parentFranchiseId: String(doc._id),
+                        isHistoricalTerm: true,
+                        isArchived: true,
+                        termIndex: idx,
+                        status: termStatus,
+                        applicationType: termAppType,
+                        mtopNo: term.mtopNo || doc.mtopNo || '',
+                        officialReceiptNo: term.officialReceiptNo || '',
+                        amountPaid: term.amountPaid || 0,
+                        paymentDate: term.paymentDate || null,
+                        payerName: term.payerName || '',
+                        paymentMethod: term.paymentMethod || '',
+                        paymentRemarks: term.paymentRemarks || '',
+                        approvalDate: term.approvalDate || null,
+                        expiryDate: term.expiryDate || null,
+                        dateApplied: termDateApplied,
+                        createdAt: term.archivedAt || term.approvalDate || doc.createdAt
+                    };
+
+                    if (statusFilterList && !statusFilterList.includes(row.status)) return;
+                    if (applicationType && applicationType !== 'all' && row.applicationType !== applicationType) return;
+                    if (startTs !== null && endTs !== null) {
+                        const rowTs = row.dateApplied ? new Date(row.dateApplied).getTime() : 0;
+                        if (rowTs < startTs || rowTs > endTs) return;
+                    }
+                    if (searchNeedle) {
+                        const haystack = [
+                            row.fullName,
+                            row.plateNo,
+                            row.motorNo,
+                            row.chassisNo,
+                            row.mtopNo,
+                            row.officialReceiptNo,
+                            row.todaName,
+                            row.bodyNumber
+                        ].filter(Boolean).join(' ').toLowerCase();
+                        if (!haystack.includes(searchNeedle)) return;
+                    }
+
+                    virtualTerms.push(row);
+                });
+            }
+
+            const combined = [...archivedDocs, ...virtualTerms].sort((a, b) => {
+                const aTime = new Date(a.dateApplied || a.createdAt || 0).getTime();
+                const bTime = new Date(b.dateApplied || b.createdAt || 0).getTime();
+                if (aTime !== bTime) {
+                    return sort === 'newest' ? bTime - aTime : aTime - bTime;
+                }
+                const aCreated = new Date(a.createdAt || 0).getTime();
+                const bCreated = new Date(b.createdAt || 0).getTime();
+                return sort === 'newest' ? bCreated - aCreated : aCreated - bCreated;
+            });
+
+            const totalRecords = combined.length;
+            const totalPages = Math.ceil(totalRecords / limitNum) || 1;
+            const paged = combined.slice(skip, skip + limitNum);
+
+            return {
+                data: paged,
+                pagination: {
+                    totalRecords,
+                    totalPages,
+                    currentPage: pageNum,
+                    limit: limitNum,
+                    hasNextPage: pageNum < totalPages,
+                    hasPrevPage: pageNum > 1
+                }
+            };
+        }
+
         const totalRecords = await Franchise.countDocuments(queryCondition);
         const franchises = await Franchise.find(queryCondition)
             .populate('operator', 'name address contact')

@@ -1934,7 +1934,7 @@ exports.updateProfile = async (req, res) => {
             const existingToda = String(currentUser.todaAssociation || '').trim();
             if (cleanToda.toUpperCase() !== existingToda.toUpperCase()) {
                 return res.status(403).json({
-                    message: 'TODA President association assignments are managed by BPLO / System Administrator and cannot be changed or self-assigned from your profile.'
+                    message: 'TODA President association assignments are managed by OVM Staff / System Administrator and cannot be changed or self-assigned from your profile.'
                 });
             }
         }

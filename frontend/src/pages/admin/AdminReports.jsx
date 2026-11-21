@@ -482,7 +482,7 @@ const AdminReports = () => {
               <p className="text-xs uppercase font-bold text-[#6B6761] mb-8">Prepared By:</p>
               <div className="border-b border-[#1F1D1B] w-4/5 mx-auto mb-1"></div>
               <p className="font-bold text-[#1F1D1B] uppercase text-xs">{localStorage.getItem('name') || 'LLSA I Franchising Staff'}</p>
-              <p className="text-xs text-[#6B6761]">LLSA I — BPLO Franchising Staff</p>
+              <p className="text-xs text-[#6B6761]">LLSA I — OVM Franchising Staff</p>
             </div>
             <div>
               <p className="text-xs uppercase font-bold text-[#6B6761] mb-8">Verified & Certified Correct:</p>

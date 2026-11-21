@@ -1587,7 +1587,7 @@ const SubmitMembers = () => {
               </p>
               <p className="leading-snug">
                 You are requesting to remove <strong className="font-bold underline">{kickModal.member.name}</strong> from <strong>{todaData.todaName}</strong>. 
-                This request will be reviewed by the Municipal Administrator / BPLO before disaffiliation is finalized.
+                This request will be reviewed by the Office of the Vice Mayor (OVM) before disaffiliation is finalized.
               </p>
             </div>
 
