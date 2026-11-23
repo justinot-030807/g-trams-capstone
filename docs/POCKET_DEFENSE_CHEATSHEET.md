@@ -1,63 +1,65 @@
 # 📱 G-TRAMS Capstone Defense: Pocket Cheat Sheet (1-Page Member Guide)
+**Gasan Tricycle Records and Application Management System**  
 **Pamahalaang Bayan ng Gasan • Marinduque State University (CICS)**  
 *I-save ito sa cellphone o i-print sa 1 pirasong papel bago pumasok sa defense room!*
 
 ---
 
-## 👤 1. Jhon Kyn Axix Cabrigas (Project Lead / UI & Architecture)
-* **Pangunahing Paksa:** System Overview, Objectives, Scope & Limitations, Conclusion & Q&A.
+## 👤 1. Jhon Kyn Axix H. Cabrigas (Lead Backend Developer & Database Architect)
+* **Pangunahing Paksa:** System Architecture, Backend APIs, MongoDB Schemas, Atomic Locks, DRP Backups, at Server Logic.
 * **Keywords na Dapat Mong Masabi:**
-  - *"Human-in-the-Loop (HITL) AI System"*
-  - *"Role-Based Access Control (RBAC) Hard Wall"*
-  - *"RA 10173 Data Privacy Act Compliance with 12 Salt Rounds Bcrypt"*
-  - *"Phased Pilot Rollout starting with Poblacion TODA"*
-* **Emergency Rescue Line (Kapag na-blanko o mahirap ang tanong):**
-  > *"Magandang obserbasyon po iyan, Sir/Ma'am. Sa kasalukuyang release ng G-TRAMS, ang aming priyoridad ay ang matibay na validation ng prangkisa at audit trail. Isasama po namin ang inyong suhestiyon bilang Phase 2 enhancement sa susunod na sprint."*
+  - *"Pay-Before-Sign Finite State Machine with Atomic `YYYY-NNN` MTOP Counter"*
+  - *"Strict Role-Based Access Control (RBAC) Hard Wall: IT `system_admin` vs OVM / LLSA I vs Municipal Cashier"*
+  - *"Server-Authoritative Timezone locked to `Asia/Manila` (UTC+8)"*
+  - *"Two-Tier DRP Backup: 16 Collections, AES-256-GCM + SHA-256, Distributed `SystemLock` Restore"*
+* **Emergency Rescue Line (Kapag mahirap ang tanong):**
+  > *"Magandang obserbasyon po iyan, Sir/Ma'am. Sa kasalukuyang release ng G-TRAMS, ang aming priyoridad ay ang matibay na validation ng prangkisa, atomic concurrency, at audit trail. Isasama po namin ang inyong suhestiyon bilang Phase 2 enhancement."*
 
 ---
 
-## 👤 2. Justine Lachica (Backend, AI & Security Specialist)
-* **Pangunahing Paksa:** Gemini Vision OCR, Fast Client-Side Downsampling, API Security, at Stress Testing.
+## 👤 2. Justine S. Lachica (Frontend Developer & UI/UX Designer)
+* **Pangunahing Paksa:** 5-Step Operator Wizard, Warm Heritage ("Civic Ledger") Design System, Printable 1:1 Official LGU Forms, Accessibility, at PWA.
 * **Keywords na Dapat Mong Masabi:**
-  - *"Client-Side Canvas Downsampling from 8MB to 250KB in 80ms"*
-  - *"Server-Authoritative Timezone locked to Asia/Manila (UTC+8)"*
-  - *"Atomic Operations & Idempotency Key against Double-Spending"*
-  - *"Jest Load Benchmark: 33.78ms average latency with 201/201 Passing Tests"*
+  - *"Civic Ledger Design System (#9E2A2B Gasan Maroon & #D4AF37 Gold, WCAG AA Contrast)"*
+  - *"5-Step Wizard with Client-Side Image Compression & 1:1 Printable `OfficialApplicationForm`"*
+  - *"3-Tier AI OCR Integration (Gemini Vision Cascade + Offline `tesseract.js` + `OCR.space`) with Auto-Reset on File Swap"*
+  - *"Mobile-First Zero-Overflow Cards (`break-all`, `min-w-0`) & Senior-Friendly Text Resizing"*
 * **Emergency Rescue Line:**
-  > *"Napatunayan po namin sa aming empirical stress tests na kahit magsabay-sabay ang 10 aplikante sa iisang millisecond, 1 lang po ang tinatanggap ng aming MongoDB compound unique constraint at ang 9 ay nire-reject nang ligtas."*
+  > *"Siniguro po namin sa frontend na malinaw ang validation feedback at hindi mawawala ang draft ng operator kahit mag-refresh, habang kumpleto pa rin sa print layout ang 1:1 Official LGU forms at E-Resibo."*
 
 ---
 
-## 👤 3. Jay Vincent Jamilla (TODA Operations & Database Specialist)
-* **Pangunahing Paksa:** TODA Roster Management, Individual Member Modal, Auto-Generated Body Numbers, at Collision Prevention.
+## 👤 3. Jay Vincent G. Motol (QA & Testing Specialist)
+* **Pangunahing Paksa:** Automated Jest Testing, Adversarial Security/Input Validation, TODA Roster Gate, Data Privacy (RA 10173), at Progressive 3-Tier Discipline.
 * **Keywords na Dapat Mong Masabi:**
-  - *"MongoDB Compound Unique Index on `{ todaAssociation: 1, bodyNumber: 1 }`"*
-  - *"Automated Sequential Allocation via `/api/v1/toda/next-body-number`"*
-  - *"Dynamic Roster Clearance & Pre-Registration Roster Harang"*
-  - *"Zero Duplicate Guarantee against Double-Franchising"*
+  - *"293 / 293 Passing Automated Tests across 25 Jest Suites (`mongodb-memory-server`)"*
+  - *"RA 10173 Data Privacy Compliance: Strict Exclusion of Blood Type, Cedula Amounts, and Signatories during OCR + 12 Salt Rounds Bcrypt"*
+  - *"TODA Roster Pre-Registration Gate & Compound Unique Index `{ todaAssociation: 1, bodyNumber: 1 }`"*
+  - *"3-Tier Progressive Sanctions (`Warning -> Suspension -> Revocation`) + Cross-Unit Carryover (`disciplineHelper.js`)"*
 * **Emergency Rescue Line:**
-  > *"Sa database level po namin sinelyuhan ang Body Number allocation. Imposible pong magkaroon ng dalawang unit na may parehong body number sa iisang TODA dahil haharangin ito agad ng database engine na may Error Code 11000."*
+  > *"Napatunayan po namin sa aming automated Jest at race-condition tests na kahit sabay-sabay mag-submit o mag-review ang dalawang staff, atomic update at unique database constraints ang pumipigil sa duplicate records o conflicting status."*
 
 ---
 
-## 👤 4. Ian Simon (Revenue, Cashier & Roadside Enforcement Specialist)
-* **Pangunahing Paksa:** Municipal Cashier Settlement, COA Daily Remittance Sheet, Traffic Enforcer PWA Scanner, at Offline Caching.
+## 👤 4. Ian Simon Francis M. Rey (DevOps & Cloud Engineer)
+* **Pangunahing Paksa:** Cloud Deployment (Vercel + Render + MongoDB Atlas), Stress Testing, Municipal Cashier Treasury Controls, TextBee SMS, at Public QR Verification (`/verify/:id`).
 * **Keywords na Dapat Mong Masabi:**
-  - *"Finite State Machine: Walang Official Receipt, Walang Active QR Code"*
-  - *"COA-Compliant Daily Treasury Remittance Sheet with Dual Signatures & CSV Export"*
-  - *"Roadside Three-Point Physical Asset Triangulation (Plate, Body, TODA Color, Driver Mugshot)"*
-  - *"PWA Service Worker & Encrypted IndexedDB Offline Cache for Cellular Dead Spots"*
+  - *"Zero Admin Payment Bypass: Exclusive Over-the-Counter Cash OR Encoding & Immutable `PaymentLedger`"*
+  - *"COA-Compliant Daily Treasury Remittance Sheet with Dual Signatures & 1-Click CSV Export"*
+  - *"Automated `node-cron` 30-Day Pre-Expiry SMS Reminders (TextBee Gateway) & Weekly DRP Backups (Sunday 12:00 MN PST)"*
+  - *"Public QR Code Verification (`/verify/:id`) with Offline PWA Cache & `INACTIVE_OWNER` Guard"*
 * **Emergency Rescue Line:**
-  > *"Hindi po static screenshot ang aming QR code; mayroon po itong pulsing real-time server timestamp at visual asset comparison sa kulay ng bubong at plaka ng tricycle, kaya huli agad ang sinumang gagamit ng pinagpalit na QR sticker."*
+  > *"Real-time database query po ang ginagamit ng `/verify/:id` QR page na naka-lock sa server time ng munisipyo, kaya nakikita agad ng enforcer kung valid, expired, suspended, o cancelled ang prangkisa kahit baguhin ang oras ng cellphone."*
 
 ---
 
-## 🔑 Emergency Live Demo Accounts (Kabisaduhin o I-save)
-* **Operator:** `operator.tester@gtrams.com` / `Password123!`
-* **TODA President:** `toda.tester@gtrams.com` / `Password123!`
-* **BPLO Staff:** `bplo.tester@gtrams.com` / `Password123!`
-* **Cashier:** `cashier.tester@gtrams.com` / `Password123!`
-* **System Admin:** `admin.tester@gtrams.com` / `Password123!`
+## 🔑 Official Live Demo Accounts (`seed_tester_accounts.js`, Password: `Password123!`)
+* **IT / System Admin (`system_admin`):** `admin.tester@gtrams.com` (`/admin-dashboard`)
+* **OVM / LLSA I Staff (`bplo_staff` internal role):** `llsa.tester@gtrams.com` (`/llsa-dashboard`)
+* **Municipal Cashier (`cashier`):** `cashier.tester@gtrams.com` (`/cashier-dashboard`)
+* **TODA President (`toda_president`):** `todapres.tester@gtrams.com` (`/submit-members`)
+* **Tricycle Operator 1 (`operator`):** `operator.tester@gtrams.com` (`/operator-dashboard`)
+* **Tricycle Operator 2 (`operator`):** `ian.operator@gtrams.com` (`/operator-dashboard`)
 
 ---
 *Group 5 Capstone Defense • G-TRAMS • Marinduque State University CICS*

@@ -4,16 +4,16 @@ color 0F
 cls
 
 echo ==============================================================================
-echo        G-TRAMS: GASAN TRICYCLE REGULATORY AND MANAGEMENT SYSTEM
+echo     G-TRAMS: GASAN TRICYCLE RECORDS AND APPLICATION MANAGEMENT SYSTEM
 echo        Marinduque State University - College of Information and Computing Sciences
-echo        Group 5 Capstone Defense Launcher
+echo        Group 5 Final Capstone Defense Launcher
 echo ==============================================================================
 echo.
 echo  [1] Open Cloud Production Demo (https://g-trams-official.vercel.app)
-echo  [2] Start Local Offline Server & App (0%% Internet Fallback)
+echo  [2] Start Local Offline Server ^& App (Port 3000 API / Port 5173 Web)
 echo  [3] Open Interactive Defense Slide Deck (docs/presentation.html)
 echo  [4] Open Deliverable #7 User's Manual (PDF)
-echo  [5] Run Backend Test Suite (Verify 201 Tests)
+echo  [5] Run Backend Test Suite (Verify 293 Tests / 25 Suites)
 echo  [6] Exit
 echo.
 echo ==============================================================================
@@ -36,7 +36,7 @@ goto end
 
 :local_demo
 echo.
-echo [INFO] Sinisimulan ang Local Offline Backend (Port 5000)...
+echo [INFO] Sinisimulan ang Local Offline Backend (Port 3000)...
 start "G-TRAMS Backend Server" cmd /k "cd /d %~dp0backend && npm start"
 timeout /t 3 /nobreak >nul
 
@@ -72,6 +72,6 @@ exit
 
 :end
 echo.
-echo [TAGUMPAY] Handang-handa na ang inyong demo para sa Defense Day!
+echo [TAGUMPAY] Handang-handa na ang inyong demo para sa Final Defense Day!
 timeout /t 5 >nul
 exit

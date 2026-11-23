@@ -25,3 +25,6 @@ remotion/out/
 
 # local agent CLI hooks
 .gemini/
+
+# local Obsidian workspace cache
+brain/.obsidian/

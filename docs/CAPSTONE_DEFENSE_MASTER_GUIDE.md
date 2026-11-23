@@ -1,54 +1,51 @@
 # G-TRAMS Capstone Defense Master Guide & Functional Requirements Test Flow
 
-**Gasan Tricycle Regulatory and Application Management System (G-TRAMS)**  
-*Pamahalaang Bayan ng Gasan, Marinduque • Office of the Municipal Vice Mayor*  
-**Document Type:** Formal Capstone Defense Live Demo Script & Functional Requirements (FR) Verification Plan  
+**Gasan Tricycle Records and Application Management System (G-TRAMS)**  
+*Pamahalaang Bayan ng Gasan, Marinduque • Office of the Municipal Vice Mayor (OVM — LLSA I)*  
+**Document Type:** Formal Capstone Final Defense Live Demo Script & Functional Requirements (FR) Verification Plan  
 **Target Audience:** Capstone Defense Panelists, Subject Matter Experts (SMEs), and Technical Evaluators  
-**System Version:** Release Candidate 3.1 (Production Ready)  
+**System Baseline:** Main Branch (`86bd8f7`) — Pre-Final Revisions 100% Completed
 
 ---
 
 ## 1. Quick Master Credentials Cheat Sheet
 
-Lahat ng mga test accounts na ito ay aktibo at naka-seed sa MongoDB Atlas. Pare-pareho ang password para sa mabilis at walang kalatong na pagpapalit-palit ng account sa harap ng panel:
+Lahat ng mga test accounts na ito ay aktibo sa `backend/scripts/seed_tester_accounts.js` at may parehong password para sa mabilis na paglipat ng roles sa harap ng panel:
 
-| System Role | Account Name | Email / Login Identifier | Password | Designated Zone & Association | Function in Live Demo |
+| System Role | Account Name | Email / Login Identifier | Password | Designated Office / Association | Function in Live Demo |
 | :--- | :--- | :--- | :--- | :--- | :--- |
-| **Operator (Happy Path / Demo Main)** | **Juan Dela Cruz** | `operator.tester@gtrams.com` | `Password123!` | Barangay I Poblacion (Central Zone) • POB TODA | **Primary End-to-End Pipeline**: Pag-apply, AI OCR auto-fill, TODA check, quota limit, draft resume, at E-Copy retrieval. |
-| **TODA President** | **Pedro Santos** | `todapres.tester@gtrams.com` | `Password123!` | POB TODA (Poblacion Central Association) | **Association Gatekeeping**: Pag-upload at pag-digitize ng opisyal na masterlist roster ng samahan. |
-| **Licensing Officer / Admin** | **Tester Admin (OVM)** | `admin.tester@gtrams.com` | `Password123!` | Office of the Municipal Vice Mayor (BPLO) | **Compliance Review & Executive Release**: Pag-apruba ng TODA roster, pre-payment record check, at batch MTOP printing. |
-| **Municipal Treasury Cashier** | **Maria Clara** | `cashier.tester@gtrams.com` | `Password123!` | Gasan Municipal Treasury Office (Counter 2) | **Revenue Collection**: Pagproseso ng Cash Over-the-Counter at pag-record ng physical Official Receipt (OR) booklet serials. |
-| **Operator (On-Demand Error Testing)** | **Mario Santos** | `operator.mali@gtrams.com` | `Password123!` | Antipolo (South Zone) • Non-Accredited / Unlisted | **On-Demand Edge Cases**: Gagamitin LAMANG kapag nagtanong ang panel tungkol sa expired license, name mismatch, at pekeng dokumento. |
+| **Operator 1 (Primary Demo)** | **Juan Dela Cruz** | `operator.tester@gtrams.com` | `Password123!` | Barangay I Poblacion (Central Zone) • POB TODA | **Primary End-to-End Pipeline**: 5-step apply, AI OCR auto-fill, quota limit, renewal, voluntary cancellation, at E-Copy. |
+| **TODA President** | **Pedro Santos** | `todapres.tester@gtrams.com` | `Password123!` | POB TODA (Poblacion Central Association) | **Association Gatekeeping**: Individual body number allocation & OCR roster submission (`/submit-members`). |
+| **OVM / LLSA I Staff** *(internal role: `bplo_staff`)* | **Madhelyn Pastoral (LLSA I)** | `llsa.tester@gtrams.com` | `Password123!` | Office of the Municipal Vice Mayor (OVM) | **Compliance Review & Issuance**: TODA roster validation, pre-payment record check, MTOP printing, cancellations, violations (`/llsa-dashboard`). |
+| **Municipal Treasury Cashier** | **Maria Clara** | `cashier.tester@gtrams.com` | `Password123!` | Gasan Municipal Treasury Office | **Revenue Collection**: Cash Over-the-Counter payment & physical LGU Official Receipt (OR#) logging (`/cashier-dashboard`). |
+| **IT / System Administrator** | **System Administrator (IT)** | `admin.tester@gtrams.com` | `Password123!` | Municipal IT Office | **IT Governance ONLY**: Violation Policy & Fee Settings, Users, Audit Logs, Tickets, DRP Backups (`/admin-dashboard`). |
+| **Operator 2 (Secondary / Edge Case Testing)** | **Ian Dela Cruz** | `ian.operator@gtrams.com` | `Password123!` | Secondary Operator Account | **Edge Cases & Multi-User Checks**: Testing wrong/expired documents (`sample_docs/MALI/`) o cross-account boundaries. |
 
 ---
 
 ## 2. Directory Structure ng Sample Test Documents (`sample_docs/`)
 
-Ang mga test documents ay nakalagay sa repository sa dalawang hiwalay na folder:
-
 ### A. Folder: `sample_docs/TAMA/` (Gagamitin sa Pangunahing Smooth Demo)
 | File Name | Target Upload Field | Nilalaman at Validated System Content |
 | :--- | :--- | :--- |
-| `08_toda_roster_TAMA.png` | TODA Masterlist Roster | Opisyal na Roster Document ng POB TODA kung saan nakatala ang pangalan ni Juan Dela Cruz. |
-| `01_license_front_TAMA.png` | Driver's License (Front) | Juan Dela Cruz, Valid hanggang 2028, Restriction Codes A & A1, Excludes Blood Type. |
-| `02_license_back_TAMA.png` | Driver's License (Back) | LTO Official Barcode at Serial Number `SN-884719203948`. |
+| `08_toda_roster_TAMA.png` | TODA Masterlist Roster (`/submit-members`) | Opisyal na Roster Document ng POB TODA (`Body Number + Operator Full Name`). |
+| `01_license_front_TAMA.png` | Driver's License (Front) | Juan Dela Cruz, Valid hanggang 2028, Tricycle Codes **A & A1**, Excludes Blood Type (RA 10173). |
+| `02_license_back_TAMA.png` | Driver's License (Back) | LTO Official Barcode at Serial Number. |
 | `03_lto_cr_TAMA.png` | Certificate of Registration (CR) | Registered Owner: Juan Dela Cruz, Plate: `4528-TC`, Engine: `KF51E7890123`, Chassis: `MH1KF5178PK098231`. |
 | `04_lto_or_TAMA.png` | Official Receipt (OR) | Hiwalay na LTO OR na nagpapatunay ng bayad sa taunang rehistro ng motorsiklo. |
-| `05_brgy_clearance_TAMA.png` | Barangay Clearance | Barangay I (Poblacion), Gasan, Marinduque; nilagdaan ng Punong Barangay. |
-| `06_toda_certificate_TAMA.png` | TODA Endorsement Certificate | POB TODA Association Endorsement na may itinalagang Unit/Body Number #01. |
-| `07_cedula_TAMA.png` | Community Tax Certificate (Cedula) | Juan Dela Cruz, CTC No. `CC12012 11793510`, Amount Paid ₱55.00, Place of Issue: Gasan. |
+| `05_brgy_clearance_TAMA.png` | Barangay Clearance | Barangay I (Poblacion), Gasan, Marinduque *(tanging clearance upload sa Step 3; inalis na ang TODA Endorsement upload)*. |
+| `07_cedula_TAMA.png` | Community Tax Certificate (Cedula) | Juan Dela Cruz, CTC No. `CC12012 11793510`, Issue Year / Place of Issue: Gasan *(Strict RA 10173: hindi kinukuha ang amount paid o signatory)*. |
 
 ### B. Folder: `sample_docs/MALI/` (Standby / On-Demand Kapag Nagtanong ang Panel)
 | File Name | Target Upload Field | Injected Defect / Error to be Verified |
 | :--- | :--- | :--- |
-| `01_mali_license_EXPIRED.png` | Driver's License (Front) | **Expired DL (2022)** — May red highlight at alert na expired ang lisensya. |
-| `02_mali_license_WRONG_CODE.png` | Driver's License (Front) | **Invalid Code** — Code B lamang (4-wheels), walang Code A/A1 para sa tricycle. |
-| `03_mali_cr_NAME_MISMATCH.png` | Certificate of Registration (CR) | **Owner Discrepancy** — Nakapangalan kay Ricardo Dalisay imbes na kay Mario Santos. |
+| `01_mali_license_EXPIRED.png` | Driver's License (Front) | **Expired DL (2022)** — Red highlight at alert na expired ang lisensya. |
+| `02_mali_license_WRONG_CODE.png` | Driver's License (Front) | **Invalid Code** — Code B lamang (4-wheels), walang tricycle code A/A1. |
+| `03_mali_cr_NAME_MISMATCH.png` | Certificate of Registration (CR) | **Owner Discrepancy** — Nakapangalan sa ibang tao vs aplikanteng operator. |
 | `04_mali_cr_FAKE_CHASSIS.png` | Certificate of Registration (CR) | **Serial Mismatch** — Chassis number na hindi tugma sa form. |
-| `05_mali_brgy_WRONG_MUNICIPALITY.png` | Barangay Clearance | **Out-of-Jurisdiction** — Clearance mula sa Bayan ng Boac. |
-| `06_mali_toda_UNAUTHORIZED_ASSOCIATION.png` | TODA Certificate | **Unregistered TODA** — Samahan na hindi kabilang sa 17 opisyal na TODA ng Gasan. |
-| `07_mali_cedula_EXPIRED_YEAR.png` | Community Tax Certificate (Cedula) | **Lapse in Fiscal Year** — Sedula na taong 2020 pa. |
-| `08_mali_NOT_A_DOCUMENT_BLURRY.png` | Any Upload Slot | **Unreadable Media** — Blurry/pekeng imahe na ire-reject ng AI OCR. |
+| `05_mali_brgy_WRONG_MUNICIPALITY.png` | Barangay Clearance | **Out-of-Jurisdiction** — Clearance mula sa labas ng Bayan ng Gasan (e.g., Boac). |
+| `07_mali_cedula_EXPIRED_YEAR.png` | Community Tax Certificate (Cedula) | **Lapse in Fiscal Year** — Lumang Cedula year. |
+| `08_mali_NOT_A_DOCUMENT_BLURRY.png` | Any Upload Slot | **Unreadable Media / Selfie** — Ire-reject ng document classification guard at magre-reset ng scan state. |
 
 ---
 
@@ -56,235 +53,118 @@ Ang mga test documents ay nakalagay sa repository sa dalawang hiwalay na folder:
 
 > [!TIP]
 > **Diskarte sa Presentation:**  
-> Simulan agad sa natural at tuluy-tuloy na daloy ng sistema mula sa Asosasyon (TODA), pag-apruba ng Munisipyo, pag-apply ng Operator, pag-review ng BPLO, bayad sa Cashier, hanggang sa pag-release ng may watermark na E-Copy. Walang hinto o palipat-lipat ng error testing upang maging mabilis, malinaw, at propesyonal ang dating sa panel!
+> Gamitin ang Two-Browser Strategy (Operator sa Projector Window; TODA President, OVM/LLSA I `llsa.tester@gtrams.com`, Cashier `cashier.tester@gtrams.com`, at IT Admin `admin.tester@gtrams.com` sa Incognito tabs) para mabilis at walang logout/login delay sa harap ng panel.
 
 ---
 
 ### Yugto 1: Technical Introduction (30–45 Segundo)
 * **Tagapagsalita (Presenter):**
-  > *"Magandang araw po sa ating mga kagalang-galang na panelists, technical evaluators, at sa aming research adviser. Ipinagmamalaki po naming i-present ang live system demonstration ng **G-TRAMS (Gasan Tricycle Regulatory and Application Management System)**.*  
+  > *"Magandang araw po sa ating mga kagalang-galang na panelists, technical evaluators, at sa aming research adviser. Ipinagmamalaki po naming i-present ang live system demonstration ng **G-TRAMS (Gasan Tricycle Records and Application Management System)**.*  
   >  
-  > *Ang aming live demonstration ay nakatuon sa pagsunod sa opisyal na lifecycle ng franchising sa Munisipalidad ng Gasan alinsunod sa aming Functional Requirements:  
-  > 1. **Digitization ng TODA Masterlist** bago ang aplikasyon;  
-  > 2. **AI-Assisted Multimodal Application & Quota Enforcement** ng Operator;  
-  > 3. **Administrative Pre-Payment Review** ng BPLO;  
-  > 4. **Treasury Cashier Collection & Official Receipt Logging**; at  
-  > 5. **Executive Endorsement & Watermarked Electronic Issuance** na may real-time QR verification."*
+  > *Ang aming live demonstration ay nakatuon sa opisyal na lifecycle ng franchising sa Munisipalidad ng Gasan:*  
+  > 1. *Digitization at Pre-Registration Gate ng **TODA Masterlist**;*  
+  > 2. *5-Step AI-Assisted Operator Application & Quota Enforcement;*  
+  > 3. *Administrative Pre-Payment Review ng **Office of the Municipal Vice Mayor (OVM / LLSA I)**;*  
+  > 4. *Municipal Treasury **Cashier Collection & Physical Official Receipt Logging**; at*  
+  > 5. *Watermarked E-Copy Issuance na may **real-time QR verification** (`/verify/:id`)."*
 
 ---
 
 ### Yugto 2: TODA Masterlist Digitization (FR-2)
 * **Sino:** TODA President Pedro Santos (`todapres.tester@gtrams.com` / `Password123!`)  
 * **Pahina:** `/submit-members`  
-* **Layunin:** Ipakita kung paano nagiging searchable digital table ang papel na masterlist ng asosasyon.
 
-1. **Mag-login bilang Pedro Santos.**
-2. Pumunta sa **"Submit Members"** (`/submit-members`).
-3. I-click ang **"Browse Files on Device"** at piliin ang:
-   * File: `sample_docs/TAMA/08_toda_roster_TAMA.png`
-4. **Ipakita sa Panel:**  
-   * Awtomatikong i-i-scan ng Gemini Vision OCR ang dokumento sa background.
-   * Agad na lalabas ang **Digitized Roster Table** na naglalaman ng:
-     * Full Name: **Juan Dela Cruz**
-     * Unit / Body No: **#01**
-     * Plate Number: **4528-TC**
-5. I-click ang **"Submit TODA Roster"**.
-6. **Technical Spiel sa Panel:**  
-   > *"Alinsunod sa **FR-2**, ang mga pisikal na masterlist ng TODA ay agad nating nako-convert sa structured database. Ito po ang magsisilbing opisyal na batayan ng LGU upang maiwasan ang mga 'colorum' o hindi awtorisadong sumasakay sa ruta."*
-7. **Mag-logout.**
+1. Sa **`/submit-members`**, ipakita ang **Body Number + Operator Full Name** individual add at auto-generated Body Number (`Regenerate`), o mag-upload ng `sample_docs/TAMA/08_toda_roster_TAMA.png`.
+2. I-click ang **"Submit TODA Roster"**.
+3. **Spiel:** *"Alinsunod sa **FR-2**, nakatali sa unique `{ todaAssociation, bodyNumber }` database index ang bawat miyembro at direktang humaharang sa `/register` kung wala sa approved roster."*
 
 ---
 
-### Yugto 3: Admin Roster Validation (FR-2, FR-6)
-* **Sino:** Tester Admin (`admin.tester@gtrams.com` / `Password123!`)  
+### Yugto 3: OVM / LLSA I Roster Validation (FR-2, FR-6)
+* **Sino:** OVM / LLSA I Staff Madhelyn Pastoral (`llsa.tester@gtrams.com` / `Password123!`) *(hindi `admin.tester`!)*  
 * **Pahina:** `/validate-toda`  
-* **Layunin:** Patunayan na kailangang aprubahan ng LGU ang masterlist bago magamit ng mga miyembro.
 
-1. **Mag-login bilang Tester Admin.**
-2. Pumunta sa **"Validate TODA"** (`/validate-toda`).
-3. Buksan ang bagong isinumiteng submission ng **POB TODA**.
-4. I-click ang **"Approve"**.
-5. **Technical Spiel sa Panel:**  
-   > *"Bago maging opisyal ang listahan, sinisiyasat at inaaprubahan ito ng tanggapan ng BPLO. Kapag naaprubahan na, awtomatiko nang kikilalanin ng system ang mga miyembro nito sa online application."*
-6. **Mag-logout.**
+1. Buksan ang **`/validate-toda`** at aprubahan ang bagong isinumiteng submission ng TODA.
+2. **Spiel:** *"Hiwalay po ang IT `system_admin` sa OVM / LLSA I Licensing Staff. Si LLSA I ang nagva-validate ng TODA masterlist bago kilalanin ng registration at franchise application."*
 
 ---
 
-### Yugto 4: Operator Application Pipeline (FR-1, FR-3, FR-4)
+### Yugto 4: Operator 5-Step Application Pipeline (FR-1, FR-3, FR-4)
 * **Sino:** Operator Juan Dela Cruz (`operator.tester@gtrams.com` / `Password123!`)  
 * **Pahina:** `/apply-franchise`  
-* **Layunin:** Ipakita ang automated multimodal extraction, association verification, at fleet quota controls.
 
-1. **Mag-login bilang Juan Dela Cruz.**
-2. I-click ang **"Apply Franchise"** (`/apply-franchise`).
-3. **Step 1: Profile, TODA Check, at Quota Management:**
-   * Piliin ang Barangay: **Barangay I (Poblacion)**.
-   * Sa TODA dropdown, piliin ang **POB TODA**.
-   * **Live Verification Badge:** Makikita ang berdeng badge:  
-     > `✓ Verified in Official TODA Roster (Active Member)`
-   * **Driver Designation Structure:**  
-     * Ipakita ang **Operator-Driver** (siya ang may-ari at drayber).  
-     * I-click saglit ang **Operator Only (Hired Driver)** upang makita ng panel na may hiwalay na inputs para sa credentials ng kinuha niyang tsuper. Ibalik sa *Operator-Driver*.
-   * **Fleet Quota Limit:** Ituro sa panel:  
-     > `Unit 1 of 2 Allowed (Individual Operator Ceiling: 2 Units Max)`
-   * **Draft Autosave Feature:** Mag-type ng contact number. I-refresh ang browser (`F5`). Pagbalik, lilitaw ang **Resume Draft Modal**. Pindutin ang **"Resume Draft"** upang ipakita na hindi nawawala ang in-encode.
-   * **Spiel:** *"Dito sa Step 1, pinatutunayan ang **FR-3**: ang 2-unit quota limit alinsunod sa Section 4 ng Franchising Ordinance upang maiwasan ang monopolyo, at ang draft autosave feature para sa data persistence."*
-4. **Step 2: Hiwalay na LTO CR, OR, at Driver's License OCR (FR-4):**
-   * Sa CR slot: I-upload ang `sample_docs/TAMA/03_lto_cr_TAMA.png`.
-   * Sa OR slot: I-upload ang `sample_docs/TAMA/04_lto_or_TAMA.png`.
-   * **Panoorin ang OCR:** Awtomatikong pupunuan ang **Plate (`4528-TC`)**, **Engine (`KF51E7890123`)**, at **Chassis (`MH1KF5178PK098231`)**.
-   * Sa Driver's License: I-upload ang Front (`01_license_front_TAMA.png`) at Back (`02_license_back_TAMA.png`).
-   * **Ipakita sa Panel:** Nakuha ang **Codes A at A1** at ang **Date of Birth** para sa renewal tracking. **Hindi kinuha ang blood type**.
-   * **Spiel:** *"Alinsunod sa Data Privacy Act (RA 10173), kinuha lamang natin ang DL codes at birth date para sa renewal schedule, habang sinadyang iwan ang blood type upang maprotektahan ang medical privacy ng tsuper."*
-5. **Step 3: Clearances at Sedula:**
-   * I-upload ang `05_brgy_clearance_TAMA.png`, `06_toda_certificate_TAMA.png`, at `07_cedula_TAMA.png`.
-   * Awtomatikong kukunin ang CTC No (`CC12012 11793510`) at binayarang halaga (`₱55.00`).
-6. **Step 4: Summary at Pagsusumite:**
-   * I-click ang **"Submit Application"**.
-   * Makikita ang prompt na matagumpay na naitala ang aplikasyon na may status na **"Pending (Needs Review)"**.
-7. **Mag-logout.**
+1. **Step 1 (Profile, TODA Check, Quota):**
+   * Piliin ang Barangay (`Barangay I (Poblacion)` -> auto-maps sa `Central` Zone) at TODA.
+   * Ipakita ang **Fleet Quota (`Max 2 Units` per Municipal Ordinance)** at Draft Autosave.
+2. **Step 2 (Hiwalay na LTO CR at OR OCR):**
+   * I-upload ang `03_lto_cr_TAMA.png` at `04_lto_or_TAMA.png` -> awtomatikong pupunuan ang **Plate**, **Engine**, at **Chassis** gamit ang 3-tier OCR.
+3. **Step 3 (Driver's License Back-to-Back & Barangay Clearance):**
+   * I-upload ang `01_license_front_TAMA.png`, `02_license_back_TAMA.png`, at `05_brgy_clearance_TAMA.png`.
+   * **Ipakita sa Panel:** Nakuha ang **Tricycle Codes A/A1** at **Date of Birth**, habang **hindi kinuha ang Blood Type** alinsunod sa **RA 10173**. *(Wala nang TODA Endorsement upload requirement dito.)*
+4. **Step 4 (Cedula & Review):**
+   * I-upload ang `07_cedula_TAMA.png` -> kukunin lang ang CTC number, place/year of issue (strict RA 10173: **hindi kinukuha ang amount paid**).
+5. **Step 5 (Printable 1:1 `OfficialApplicationForm` & Submit):**
+   * Ipakita ang inline 1:1 official LGU form preview at i-click ang **`Submit Application`** -> status **`Pending`**.
 
 ---
 
-### Yugto 5: Administrative Pre-Payment Review (FR-5, FR-6)
-* **Sino:** Tester Admin (`admin.tester@gtrams.com` / `Password123!` )  
-* **Pahina:** `/franchise-approval` (Tab: "Needs Review")  
-* **Layunin:** Ipakita ang compliance record check bago i-endorse sa pagbabayad.
+### Yugto 5: OVM / LLSA I Pre-Payment Review (FR-5, FR-6)
+* **Sino:** OVM / LLSA I Staff (`llsa.tester@gtrams.com` / `Password123!`)  
+* **Pahina:** `/franchise-approval` (`Needs Review` tab) -> `/franchise-approval/review/:id`  
 
-1. **Mag-login bilang Tester Admin.**
-2. Buksan ang aplikasyon ni **Juan Dela Cruz**.
-3. **Ipakita sa Panel ang Automated Record Check Card:**
-   * `Prior Violations / Revocations:` **(✓ Clean Record) No violations or suspensions on record.**
-   * `TODA Cross-Matching:` **✓ Verified Active Member in POB TODA Roster.**
-   * `Document Verification Integrity:` Lahat ng LTO, License, at Clearance credentials ay may berdeng checkmark.
-4. Pindutin ang **"Send to Cashier (For Payment)"**.
-5. **Spiel:** *"Alinsunod sa **FR-6**, mahigpit nating sinusunod ang tamang proseso: Hindi pinapayagang magbayad sa Cashier ang aplikante kung hindi pa nasusuri ang kanyang record upang maiwasan ang paniningil sa mga may pending na violation o suspension."*
-6. **Mag-logout.**
+1. Buksan ang aplikasyon ni Juan Dela Cruz at ipakita ang **Side-by-Side Document Comparator**, **1:1 Printable Official Application Form modal**, at **Pre-Payment Record Check** (prior violations & TODA match).
+2. Pindutin ang **`Approve for Payment`** -> lilipat sa **`For Payment`** (may 10-second Undo countdown toast; zero payment shortcut sa staff UI).
 
 ---
 
 ### Yugto 6: Municipal Treasury Cashiering (FR-7)
 * **Sino:** Cashier Maria Clara (`cashier.tester@gtrams.com` / `Password123!`)  
-* **Pahina:** `/cashier`  
-* **Layunin:** Patunayan ang revenue collection controls alinsunod sa COA regulations.
+* **Pahina:** `/cashier-dashboard`  
 
-1. **Mag-login bilang Maria Clara.**
-2. Sa pila ng **"Awaiting Payment"**, makikita si Juan Dela Cruz (Halaga: **₱500.00**).
-3. Pindutin ang **"Process Payment"**.
-4. **Ipakita sa Panel:**
-   * Payment Method: Naka-lock sa `Cash (Over-the-Counter)`.
-   * **Walang Reject Button** (Ang tungkulin ng Kahera ay tumanggap ng bayad at mag-isyu ng resibo).
-   * I-encode ang physical receipt booklet number: `OR-GASAN-2026-0042` at Payer Name: `Juan Dela Cruz`.
-5. Pindutin ang **"Confirm Payment"**.
-6. **Spiel:** *"Alinsunod sa **FR-7**, ang cashier module ay sumusunod sa COA regulations ng Municipal Treasury ng Gasan. Bawat transaksyon ay mano-manong itinatali sa physical Official Receipt (OR) booklet serial number para sa auditing."*
-7. **Mag-logout.**
+1. Sa **For Payment** queue, pindutin ang **"Process Payment"** (Cash Over-the-Counter; walang Reject button ang Cashier).
+2. I-encode ang physical **Official Receipt (OR) Number** (`OR-GASAN-2026-0042`) at Payer Name (`Juan Dela Cruz`), at i-confirm.
+3. Awtomatikong mag-a-allocate ng sequential `YYYY-NNN` MTOP number, magse-save sa immutable `PaymentLedger`, at lalabas ang **Printable E-Resibo** + **COA Daily Treasury Remittance Sheet** (may CSV export).
 
 ---
 
-### Yugto 7: Executive Endorsement & Batch MTOP Printing (FR-8)
-* **Sino:** Tester Admin (`admin.tester@gtrams.com` / `Password123!`)  
-* **Pahina:** `/franchise-approval?tab=signing`  
-* **Layunin:** Pinal na pagpirma at pag-release ng prangkisa pagkatapos makabayad.
+### Yugto 7: OVM Endorsement, Issuance, Live `Expire` & Cancellations (FR-8)
+* **Sino:** OVM / LLSA I Staff (`llsa.tester@gtrams.com` / `Password123!`)  
+* **Pahina:** `/franchise-approval` & `/franchise-masterlist`  
 
-1. **Mag-login muli bilang Tester Admin.**
-2. Pumunta sa tab na **"For Signing"**. Makikita si Juan Dela Cruz na may markang: `Payment Verified (OR-GASAN-2026-0042)`.
-3. Ipakita ang **"Print MTOP"** (Single certificate) at ang **"Batch Print MTOP"** (Sabayang pag-print ng certificates).
-4. Pindutin ang **"Approve & Mark Ready for Pickup"**.
-5. **Spiel:** *"Sa ilalim ng **FR-8**, pumapasok lamang sa 'For Signing' stage ang prangkisa kapag may kumpirmadong resibo mula sa Treasury. Pagkatapos malagdaan ng Punong Bayan at ng Bise Alkalde, minamarkahan ito bilang 'Ready for Pickup'."*
-6. **Mag-logout.**
+1. I-advance mula **`For Signing`** -> **`Ready for Pickup`** -> **`Active`**.
+2. Ipakita ang **`/franchise-masterlist`**, **`Expire`** action button para sa live `Expired -> Renew Franchise` simulation, **`Cancellations` Tab**, at **`/manage-revocations`** (3-Tier Violations + Grave Offense).
 
 ---
 
-### Yugto 8: Watermarked E-Copy & Public QR Verification (FR-9)
-* **Sino:** Operator Juan Dela Cruz (`operator.tester@gtrams.com` / `Password123!`)  
-* **Pahina:** `/dashboard`  
-* **Layunin:** Ipakita ang digital copy na may security watermark at live QR scanning.
+### Yugto 8: Watermarked E-Copy & Public QR Verification (`/verify/:id`) (FR-9)
+* **Sino:** Operator (`operator.tester@gtrams.com`) / Public Commuter or Enforcer (logged-out)  
+* **Pahina:** `/operator-dashboard` & `/verify/:id`  
 
-1. **Mag-login bilang Juan Dela Cruz.**
-2. Sa **Operator Dashboard**, makikita ang updated badge: **"Ready for Pickup"**.
-3. Pindutin ang **"View E-Copy (Approved MTOP)"**.
-4. **Ipakita ang Security Features sa Panel:**
-   * Ang certificate ay may malinaw na **diagonal security watermark**:  
-     > **"APPROVED - ELECTRONIC COPY • VALID ISSUANCE"**
-   * Dynamic **QR Code** sa ibaba ng certificate.
-5. **Live QR Scanning Test (Gawin sa Harap ng Panel):**
-   * Gamit ang smartphone camera o laptop webcam, i-scan ang QR code sa screen.
-   * Awtomatikong bubukas ang public verification page na nagpapakita ng:
-     * MTOP Number
-     * Operator Name: Juan Dela Cruz
-     * Unit Specs (Plate `4528-TC`, Engine `KF51E7890123`, Chassis `MH1KF5178PK098231`)
-     * Validity: 3 Years
-     * Status: **ACTIVE & ISSUED**
-6. **Pangwakas na Spiel sa Panel:**  
-   > *"Ang E-Copy na may diagonal watermark ay nagbibigay ng agarang legal na patunay sa operator habang hinihintay ang physical stickers, habang ang integrated QR code naman ay nagbibigay-daan sa ating mga traffic enforcers sa kalsada na ma-authenticate ang prangkisa nang real-time nang hindi nangangailangan ng panibagong login o espesyal na hardware."*
+1. Sa Operator Dashboard, buksan ang E-Copy na may diagonal security watermark at QR code.
+2. I-scan ang QR code patungong **`/verify/:id`** -> lalabas agad ang live status (**`Active`**, Plate, MTOP No., Zone) nang hindi naglalabas ng pribadong phone number o home address (RA 10173 Data Minimization).
 
 ---
 
-## 4. On-Demand Defense Appendix: "Kapag Tinanong ng Panel ang Edge Cases / Maling Input"
+## 4. On-Demand Defense Appendix: Edge Cases (`sample_docs/MALI/`)
 
-> [!IMPORTANT]
-> **Huwag ipakita ito sa simula ng demo upang hindi humaba ang presentation.**  
-> Gamitin LAMANG ang cheat sheet na ito kapag tahasang nagtanong ang panelista: *"Paano kapag nagpasok ng expired na lisensya o pekeng dokumento?"*
-
-| Kung Ano ang Tanong ng Panelista | Aling Account at File ang Bubuksan | Anong Gagawin at Ano ang Ipapakita sa Screen |
+| Kung Ano ang Tanong ng Panelista | Sample File (`sample_docs/MALI/`) | Resulta sa System |
 | :--- | :--- | :--- |
-| **"Paano kapag expired na ang lisensya ng tsuper?"** | Account: `operator.mali@gtrams.com`<br>File: `sample_docs/MALI/01_mali_license_EXPIRED.png` | I-upload sa Driver's License Front slot.<br>**Resulta:** Babasahin ng OCR ang expiration date (`2022-05-10`), magkukulay pula ang field, at lalabas ang alert: `❌ Validation Alert: License Expired. Please upload a currently valid driver's license.` |
-| **"Paano kapag hindi sa aplikante nakapangalan ang sasakyan sa CR?"** | Account: `operator.mali@gtrams.com`<br>File: `sample_docs/MALI/03_mali_cr_NAME_MISMATCH.png` | I-upload sa Certificate of Registration (CR) slot.<br>**Resulta:** Lalabas ang alert: `⚠️ Discrepancy Flagged: Registered owner in CR (Ricardo Dalisay) does not match applicant (Mario Santos).` |
-| **"Paano kung malabo ang litrato o hindi naman dokumento ang in-upload?"** | File: `sample_docs/MALI/08_mali_NOT_A_DOCUMENT_BLURRY.png` | I-upload sa kahit saang slot.<br>**Resulta:** Re-upload prompt mula sa Vision AI OCR dahil hindi ma-detect ang kinakailangang document headers at seal. |
-| **"Paano kung hindi siya rehistradong miyembro sa TODA ng barangay niya?"** | Account: `operator.mali@gtrams.com` | Piliin ang Barangay Antipolo at pumili ng asosasyon kung saan wala siya sa roster.<br>**Resulta:** Lalabas ang warning: `⚠️ Notice: Official TODA Certificate Required: Your name is not currently listed in the official approved roster.` |
-| **"Paano kung clearance mula sa ibang bayan (hal. Boac) ang ipinasok?"** | File: `sample_docs/MALI/05_mali_brgy_WRONG_MUNICIPALITY.png` | I-upload sa Barangay Clearance slot.<br>**Resulta:** Sa Admin Review, lalabas ang red warning flag na ang nasabing barangay ay hindi sakop ng hurisdiksyon ng Bayan ng Gasan. |
+| **"Paano kapag expired ang lisensya?"** | `01_mali_license_EXPIRED.png` | Red alert: expired license blocked from approval cleanly. |
+| **"Paano kapag hindi tugma ang pangalan sa CR?"** | `03_mali_cr_NAME_MISMATCH.png` | Discrepancy Flagged warning sa application at sa OVM / LLSA I review comparator. |
+| **"Paano kung malabo o selfie ang in-upload?"** | `08_mali_NOT_A_DOCUMENT_BLURRY.png` | Classification guard rejects invalid image & auto-resets previous scan state on replacement. |
+| **"Paano kung taga-ibang bayan ang Barangay Clearance?"** | `05_mali_brgy_WRONG_MUNICIPALITY.png` | Out-of-jurisdiction warning flag laban sa 25 Barangays ng Gasan. |
 
 ---
 
-## 5. Gabay sa mga Posibleng Itanong ng Panel (Defense Q&A Preparedness)
+## 5. Gabay sa mga Posibleng Itanong ng Panel
 
-### Q1: "Bakit walang online payment (GCash/Maya) sa inyong Cashier module?"
-* **Teknikal at Legal na Sagot:**  
-  *"Alinsunod po sa aming isinagawang stakeholder interviews sa Municipal Treasury Office ng Gasan, ang pangongolekta ng bayad sa MTOP ay mahigpit na ginagawa via Cash Over-the-Counter lamang. Ito po ay nakatali sa kanilang pre-printed, accountable physical receipt booklets (Official Receipts) na may auditable serial numbers alinsunod sa panuntunan ng Commission on Audit (COA). Sinunod po ng G-TRAMS ang umiiral na legal at accounting protocol ng LGU kaysa magpatupad ng hindi pa awtorisadong online channel."*
-
-### Q2: "Bakit kailangang magkahiwalay ang upload ng LTO CR at LTO OR?"
-* **Teknikal at Legal na Sagot:**  
-  *"Magkaiba po ang legal na layunin ng dalawang dokumentong ito:  
-  1. Ang **Certificate of Registration (CR)** ay patunay ng permanenteng pagmamay-ari at teknikal na detalye ng motorsiklo (Chassis at Motor serials).  
-  2. Ang **Official Receipt (OR)** naman ay patunay ng taunang bayad sa rehistro sa LTO.  
-  Kapag pinagsama ito, hindi masusuri ng system kung napapanahon ang rehistro sa LTO. Sa pamamagitan ng paghihiwalay sa kanila, natitiyak ng aming AI validation na parehong rehistrado at updated ang sasakyan."*
-
-### Q3: "Paano ninyo pinipigilan ang monopolyo ng mga indibidwal sa prangkisa?"
-* **Teknikal at Legal na Sagot:**  
-  *"Alinsunod sa Section 4 ng Gasan Municipal Franchising Ordinance, ipinatupad po namin ang **Fleet Quota Limit Validation** sa backend API (`maxUnits = 2`). Kapag ang isang operator account ay mayroon nang dalawang (2) aktibong rehistradong prangkisa, awtomatikong ila-lock ng system ang application form at maglalabas ng quota restriction alert."*
-
-### Q4: "Bakit hindi kinukuha ng inyong AI OCR ang Blood Type mula sa lisensya?"
-* **Teknikal at Legal na Sagot:**  
-  *"Alinsunod sa **Data Privacy Act of 2012 (RA 10173)** at sa prinsipyo ng **Data Minimization**, kinukuha lamang ng system ang mga datos na kailangan para sa regulasyon ng prangkisa: ang Driver's License codes (A/A1) para sa awtorisasyon, at ang Date of Birth para sa iskedyul ng taunang renewal. Ang blood type ay sensitive personal health information na walang kinalaman sa prangkisa, kaya sinadya po itong alisin sa aming extraction schema."*
+1. **Bakit walang GCash/Maya sa Cashier?** — Mahigpit na Cash Over-the-Counter gamit ang physical accountable OR booklets alinsunod sa Municipal Treasury at COA rules.
+2. **Bakit hiwalay ang IT `system_admin` at `llsa.tester` (OVM/LLSA I)?** — Alinsunod sa Role Separation & Least Privilege governance: walang approval powers ang IT Admin at walang system backup/settings access ang licensing staff.
+3. **Bakit hindi kinukuha ang Blood Type at Cedula Payment Amount?** — Data Minimization sa **Data Privacy Act of 2012 (RA 10173)**.
+4. **Paano kung lumipat ng TODA ang Operator?** — May Voluntary Cancellation workflow (Module 8) na nag-a-archive ng lumang prangkisa at nagpapalaya ng unit slot, habang ipinapasa ng `disciplineHelper.js` ang anumang active warning/sanction.
 
 ---
 
-## 6. Gabay sa Deployment: Vercel vs. Localhost (Pang-defense na Estratehiya)
-
-> [!IMPORTANT]
-> **Rekomendasyon para sa Defense: "Hybrid Failover Strategy"**
-
-1. **Bentahe ng Naka-deploy sa Vercel (`https://g-trams-official.vercel.app`):**
-   * Malaking puntos sa evaluation kung may live public URL dahil pinatutunayan nito na cloud-ready at accessible sa munisipyo ang system.
-   * Maaaring subukan ng panelists na buksan ang QR verification sa kanilang sariling mga cellphone.
-
-2. **Ang Banta sa Live Cloud:**
-   * **Backend Sleep:** Kung ang backend API ay nasa libreng hosting (tulad ng Render o Railway), nag-i-sleep ito kapag walang request sa loob ng 15 minuto (tumatagal ng 30–50 segundo bago muling mag-respond).
-   * **Unstable Wi-Fi sa Defense Room:** Ang Wi-Fi sa mga unibersidad ay madalas bumagal o mawalan ng signal habang nagde-defense.
-
-3. **Ang Propesyonal na Hakbang (Hybrid Failover):**
-   * **Bago Pumasok sa Room:** Buksan ang command prompt sa laptop at patakbuhin ang local backend at local frontend:
-     ```bash
-     # Terminal 1 (Backend):
-     cd c:\Users\Hp\GTRAMS\backend
-     node server.js
-
-     # Terminal 2 (Frontend):
-     cd c:\Users\Hp\GTRAMS\frontend
-     cmd.exe /c "npm run dev"
-     ```
-   * **Buksan sa Browser:** Mag-open ng dalawang tab:
-     * Tab 1: Ang live Vercel URL.
-     * Tab 2: Ang `http://localhost:5173`.
-   * **Diskarte:** Simulan ang demo sa Vercel. Kung mabilis ang cloud, magpatuloy roon. Kung makaranas ng loading delay sa Wi-Fi, sabihin agad nang may kumpiyansa sa panel:  
-     > *"Upang mas masubok po natin nang mabilis ang high-throughput AI OCR nang walang latency mula sa campus Wi-Fi, ililipat po natin ang visual display sa aming isolated local staging server sa port 5173."*
+## 6. Hybrid Failover Strategy (Vercel + Localhost `3000/5173`)
+* Simulan ang demo sa cloud (`https://g-trams-official.vercel.app`).
+* Kung bumagal ang Wi-Fi sa campus, patakbuhin ang **`start_local_demo.bat`** o `cd backend && npm start` (**Port `3000`** matching `frontend/.env.local`) + `cd frontend && npm run dev` (**Port `5173`**).
