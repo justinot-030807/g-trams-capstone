@@ -49,7 +49,7 @@ const authorization = (user) => `Bearer ${jwt.sign({
 }, process.env.JWT_SECRET)}`;
 
 beforeAll(async () => {
-  mongo = await MongoMemoryServer.create();
+  mongo = await MongoMemoryServer.create({ instance: { launchTimeout: 60000 } });
   await mongoose.connect(mongo.getUri());
   await PushSubscription.init();
   [president, staff, admin, operator] = await Promise.all([
@@ -58,7 +58,7 @@ beforeAll(async () => {
     makeUser('system_admin'),
     makeUser('operator')
   ]);
-}, 60000);
+}, 90000);
 
 afterAll(async () => {
   await mongoose.disconnect();

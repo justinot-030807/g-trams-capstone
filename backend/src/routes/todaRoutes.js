@@ -446,8 +446,11 @@ async function resolveRemovalTarget(todaEntry, selector, session) {
 router.post('/removal-requests', protect, authorize('bplo_staff', 'toda president', 'toda_president'), async (req, res) => {
     try {
         const { memberId, reason, details, todaName: bodyTodaName, targetRosterId: bodyTargetRosterId } = req.body;
-        if (!memberId || !reason || !details) {
+        if (!memberId || !reason || typeof details !== 'string' || !details.trim()) {
             return res.status(400).json({ message: 'Member ID, reason, and detailed explanation are required.' });
+        }
+        if (!TodaRemovalRequest.schema.path('reason').enumValues.includes(reason)) {
+            return res.status(400).json({ message: 'Select a valid TODA member removal reason.' });
         }
 
         const userRole = String(req.user?.role || '').toLowerCase().trim().replace(/[\s-]+/g, '_');

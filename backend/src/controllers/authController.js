@@ -693,6 +693,9 @@ exports.register = async (req, res) => {
         if (!normalizedContact) {
             return res.status(400).json({ message: 'Contact email or phone number is required.' });
         }
+        if (!isValidEmailFormat(rawContact) && !isValidPhMobileFormat(rawContact)) {
+            return res.status(400).json({ message: 'Please enter a valid email address or Philippine mobile number.' });
+        }
 
         if (normalizedBackupContact && normalizedBackupContact.toLowerCase() === normalizedContact.toLowerCase()) {
             return res.status(400).json({ message: 'Backup contact must be different from primary contact.' });

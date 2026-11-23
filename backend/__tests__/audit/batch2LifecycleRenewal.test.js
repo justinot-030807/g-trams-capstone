@@ -7,6 +7,7 @@ const User = require('../../src/models/userModel');
 const Franchise = require('../../src/models/franchiseModel');
 const Violation = require('../../src/models/violationModel');
 const SystemSettings = require('../../src/models/systemSettingsModel');
+const { getManilaDateString } = require('../../src/utils/phTime');
 
 const DAY = 86400000;
 let mongo;
@@ -53,6 +54,18 @@ const renew = (record, fields = {}) => request(app).put('/api/v1/franchises/' + 
 const verify = record => request(app).get('/api/v1/auth/verify/' + record.id);
 
 describe('Batch 2 H7, H9 and M7', () => {
+    it('rejects an expired, future, or invalid Cedula before starting renewal', async () => {
+        const record = await create({ status: 'Expired', paymentStatus: 'Paid', expiryDate: new Date(Date.now() - DAY) });
+        const today = getManilaDateString();
+        const priorYear = Number(today.slice(0, 4)) - 1;
+
+        await renew(record, { cedulaDate: `${priorYear}-12-31` }).expect(400);
+        await renew(record, { dateIssued: getManilaDateString(new Date(Date.now() + DAY)) }).expect(400);
+        await renew(record, { cedulaDate: `${today.slice(0, 4)}-02-31` }).expect(400);
+        expect(await Franchise.findById(record.id)).toMatchObject({ status: 'Expired', paymentStatus: 'Paid' });
+        expect((await renew(record, { cedulaDate: today }).expect(200)).body.status).toBe('Pending');
+    });
+
     it('requires signing to reach Ready for Pickup before release', async () => {
         const record = await create({ status: 'For Signing', paymentStatus: 'Paid' });
         await decide(record, 'Active').expect(400);

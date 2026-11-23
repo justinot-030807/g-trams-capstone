@@ -14,9 +14,10 @@ import {
 import { useLanguage } from '../../context/LanguageContext';
 import TricycleIcon from '../../components/common/TricycleIcon';
 import { formatZoneLabel } from '../../utils/constants';
+import { getManilaServerDateString } from '../../utils/serverTime';
 import { SkeletonElement } from '../../components/skeleton';
 
-const getManilaDateStr = (date = new Date()) =>
+const getManilaDateStr = (date) =>
   new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Manila' }).format(date);
 
 const RenewFranchise = () => {
@@ -59,7 +60,7 @@ const RenewFranchise = () => {
   // Form state
   const [formData, setFormData] = useState({
     ctcNo: '',
-    dateIssued: getManilaDateStr(),
+    dateIssued: getManilaServerDateString(),
     placeIssued: 'Gasan, Marinduque',
     orCrNo: '',
     orCrExpiryDate: '',
@@ -236,7 +237,7 @@ const RenewFranchise = () => {
       return;
     }
 
-    const today = getManilaDateStr();
+    const today = getManilaServerDateString();
 
     // Cedula Current Fiscal Year Check
     if (formData.dateIssued) {

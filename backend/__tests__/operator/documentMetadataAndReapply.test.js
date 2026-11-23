@@ -78,6 +78,42 @@ afterEach(async () => {
 });
 
 describe('Document Metadata Persistence & Re-application Workflow Test Suite', () => {
+    it('accepts the full application wizard as multipart fields and document uploads', async () => {
+        const fields = {
+            applicationType: 'New', fullName: operatorUser.name, address: operatorUser.address,
+            zone: 'Central', made: '2024', make: 'Honda TMX 125', motorNo: 'MTR-WIZARD-01',
+            chassisNo: 'CHS-WIZARD-01', plateNo: 'QA123ABC', todaName: 'BATODA',
+            dateApplied: '2026-01-15', cedulaDate: '2026-01-10', cedulaAddress: 'Gasan',
+            cedulaSerialNo: 'CTC-WIZARD-01', cedulaAmount: '55.00', cedulaYear: '2026',
+            cedulaPlaceIssued: 'Gasan', cedulaFullName: operatorUser.name, cedulaCitizenship: 'Filipino',
+            cedulaCivilStatus: 'Single', cedulaProfession: '', cedulaDob: '', cedulaPlaceOfBirth: '',
+            cedulaSex: '', cedulaHeight: '', cedulaWeight: '', cedulaTin: '', orCrNo: 'OR-001',
+            orNo: 'OR-001', orCrExpiryDate: '2027-01-15', crNo: 'CR-001', orDate: '2026-01-10',
+            crDate: '2026-01-10', color: 'Red', series: 'TMX', yearModel: '2024', fileNo: 'FILE-001',
+            vehicleType: 'Tricycle', vehicleCategory: 'L4', classification: 'For Hire / PUV',
+            bodyType: 'MOTORCYCLE WITH SIDECAR', displacement: '125', grossWeight: '250',
+            fuelType: 'GASOLINE', passengerCapacity: '4', registeredOwner: operatorUser.name,
+            ownerAddress: operatorUser.address, numberOfUnits: '1', isOperatorDriver: 'true',
+            driverName: operatorUser.name, driverContact: operatorUser.contact, driverLicenseNo: 'DL-001',
+            driverLicenseSerialNo: '', driverLicenseExpiryDate: '2028-06-30', driverDob: '',
+            driverDlCodes: 'A, A1', driverConditions: 'None', driverAddress: operatorUser.address,
+            driverNationality: 'Filipino', driverSex: '', todaCertNo: '', todaCertDate: '', todaSignatory: '',
+            brgyClearanceNo: 'BC-001', brgyClearanceDate: '2026-01-10', brgyIssuer: '', orCrUrl: '',
+            crUrl: '', orUrl: '', licenseUrl: '', licenseBackUrl: '', todaEndorsementUrl: '',
+            brgyClearanceUrl: '', cedulaUrl: '', aiScannedData: '{}', aiDiscrepancies: '[]'
+        };
+        const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGMAAQAABQABDQottAAAAABJRU5ErkJggg==', 'base64');
+        const submission = request(app).post('/api/v1/franchises').set('Authorization', `Bearer ${operatorToken}`);
+        for (const [key, value] of Object.entries(fields)) submission.field(key, value);
+        for (const field of ['crDocument', 'orDocument', 'license', 'brgyClearance', 'cedulaDoc']) {
+            submission.attach(field, png, `${field}.png`);
+        }
+
+        const result = await submission.expect(201);
+        expect(result.body).toMatchObject({ status: 'Pending', plateNo: fields.plateNo, driverDlCodes: 'A, A1' });
+        expect(result.body.cedulaUrl).toContain('cedulaDoc.png');
+        expect(result.body.crUrl).toContain('crDocument.png');
+    });
 
     // TC-01: createFranchise should successfully persist structured document metadata
     it('TC-01: createFranchise should successfully persist structured document metadata', async () => {

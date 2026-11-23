@@ -209,7 +209,7 @@ describe('Operator Workflow & Field Operations Test Suite', () => {
                 applicationType: 'New'
             });
 
-        expect([400, 409]).toContain(res.status);
+        expect(res.status).toBe(409);
         expect(res.body.message).toMatch(/already registered/i);
     });
 

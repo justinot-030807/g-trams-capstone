@@ -648,7 +648,7 @@ describe('Module 5: Apply and Renew Franchise Applications', () => {
                 cedulaSerialNo: '111111'
             });
 
-        expect(res.status).toBe(400);
+        expect(res.status).toBe(409);
         expect(res.body.message).toContain('already registered');
     });
 

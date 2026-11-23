@@ -305,7 +305,7 @@ const StaffCancellationReviewModal = ({
             <div className="p-4 bg-rose-50 dark:bg-rose-950/40 border border-rose-200 dark:border-rose-900 rounded-lg animate-in fade-in duration-150 space-y-2">
               <div className="flex items-center gap-2 text-rose-800 dark:text-rose-300 font-bold text-xs">
                 <AlertTriangle size={15} />
-                <span>Specify Rejection Reason (Franchise will be restored to Active):</span>
+                <span>Specify a rejection reason. The franchise will return to its previous status.</span>
               </div>
               <textarea
                 rows={2}

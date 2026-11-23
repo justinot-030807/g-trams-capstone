@@ -316,7 +316,7 @@ class FranchiseService {
 
                 if (existingTricycle) {
                     const dupErr = new Error('Tricycle (Plate/Motor/Chassis) is already registered.');
-                    dupErr.statusCode = 400;
+                    dupErr.statusCode = 409;
                     throw dupErr;
                 }
                 await Franchise.updateMany(

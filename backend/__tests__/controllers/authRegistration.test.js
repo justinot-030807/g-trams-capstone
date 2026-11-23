@@ -317,6 +317,15 @@ describe('Registration & Auth Verification Flow', () => {
         expect(dbUser.todaAssociation).toBe('BATODA');
     });
 
+    it('rejects a 12-digit local registration number before creating an account or issuing an OTP', async () => {
+        const contact = '091234567830';
+        await request(app).post('/api/v1/auth/register').send({
+            name: 'Registration Phone Fixture', address: 'Bahi', contact, password: 'Password123!'
+        }).expect(400, { message: 'Please enter a valid email address or Philippine mobile number.' });
+
+        expect(await User.exists({ contact })).toBeNull();
+    });
+
     it('13. should normalize phone numbers with dashes or +63 and allow verify-otp across formats', async () => {
         const payload = {
             name: 'Phone Formatted User',

@@ -777,6 +777,19 @@ const renewFranchise = async (req, res) => {
             }
         }
 
+        const renewalCedulaDate = cedulaDate || dateIssued || existingFranchise.cedulaDate;
+        if (renewalCedulaDate) {
+            const cedulaCheck = validateDocumentExpiryDate(renewalCedulaDate, now);
+            if (cedulaCheck.invalid) {
+                return res.status(400).json({ message: 'Invalid Cedula issue date.' });
+            }
+            const issuedOn = getManilaDateString(cedulaCheck.date);
+            const today = getManilaDateString(now);
+            if (issuedOn.slice(0, 4) !== today.slice(0, 4) || issuedOn > today) {
+                return res.status(400).json({ message: 'A Cedula issued this year and no later than today is required for renewal.' });
+            }
+        }
+
         // M7: Reject invalid or already-expired document expiry dates (in Asia/Manila time)
         const rawOrCrExpiry = String(orCrExpiryDate ?? orCrExpiry ?? '').trim() || existingFranchise.orCrExpiryDate;
         let parsedOrCrExpiry = null;
@@ -841,7 +854,7 @@ const renewFranchise = async (req, res) => {
 
         const setFields = {
             dateApplied: new Date(),
-            cedulaDate: cedulaDate || dateIssued || existingFranchise.cedulaDate,
+            cedulaDate: renewalCedulaDate,
             cedulaAddress: cedulaAddress || placeIssued || existingFranchise.cedulaAddress || '',
             cedulaSerialNo: cedulaSerialNo || ctcNo || existingFranchise.cedulaSerialNo,
             cedulaAmount: cedulaAmount !== undefined ? Number(cedulaAmount) : (existingFranchise.cedulaAmount || 0),

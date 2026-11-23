@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useEffectEvent } from 'react';
 import { Loader2, ShieldCheck, X } from 'lucide-react';
 import { unwrapGoogleProfile, resilientApiFetch, DEFAULT_GOOGLE_CLIENT_ID } from '../utils/googleAuthUtils';
+import { loadGoogleIdentityScript } from '../utils/googleIdentityScript';
 
 const formatAuthErrorMessage = (err, fallbackMsg) => {
   const raw = typeof err === 'string' ? err : (err?.message || '');
@@ -29,7 +30,7 @@ const GoogleAuthButton = ({ onSuccess, onNewUser, onError, text = 'CONTINUE WITH
   }, [envClientId]);
 
   // Handle One Tap credential response (ID Token JWT)
-  const handleOneTapCredentialResponse = async (response) => {
+  const handleOneTapCredentialResponse = useEffectEvent(async (response) => {
     if (!response?.credential) return;
     setIsLoading(true);
 
@@ -83,48 +84,33 @@ const GoogleAuthButton = ({ onSuccess, onNewUser, onError, text = 'CONTINUE WITH
     } finally {
       setIsLoading(false);
     }
-  };
+  });
 
-  // Initialize Google One Tap if client ID exists
-  const initializeGoogleOneTap = () => {
-    if (!clientId || !window.google?.accounts?.id) return;
+  useEffect(() => {
+    if (!clientId) return;
+    let cancelled = false;
+    let identity;
 
-    try {
-      window.google.accounts.id.initialize({
+    loadGoogleIdentityScript().then((loadedIdentity) => {
+      if (cancelled) return;
+      identity = loadedIdentity;
+      identity.initialize({
         client_id: clientId,
-        callback: handleOneTapCredentialResponse,
+        callback: (response) => {
+          if (!cancelled) void handleOneTapCredentialResponse(response);
+        },
         auto_select: false,
         cancel_on_tap_outside: true,
       });
+      identity.prompt();
+    }).catch((error) => {
+      if (!cancelled) console.warn('Google One Tap init note:', error);
+    });
 
-      // Triggers Google One Tap bottom sheet (similar to Figma)
-      window.google.accounts.id.prompt();
-    } catch (err) {
-      console.warn('Google One Tap init note:', err);
-    }
-  };
-
-  // 1. Load official Google Identity Services script
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-
-    const loadGsiScript = () => {
-      if (!window.google?.accounts) {
-        const script = document.createElement('script');
-        script.src = 'https://accounts.google.com/gsi/client';
-        script.async = true;
-        script.defer = true;
-        script.onload = () => {
-          initializeGoogleOneTap();
-        };
-        document.body.appendChild(script);
-      } else {
-        initializeGoogleOneTap();
-      }
+    return () => {
+      cancelled = true;
+      identity?.cancel();
     };
-
-    loadGsiScript();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientId]);
 
   // 4. Handle button click -> Open official Google Account Chooser popup

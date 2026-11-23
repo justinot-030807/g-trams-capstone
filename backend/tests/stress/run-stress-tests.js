@@ -47,9 +47,11 @@ async function main() {
 
     try {
         if (!externalTarget) {
+            process.env.JWT_SECRET = 'gtrams_stress_jwt_secret_key';
             console.log('📦 Starting In-Memory Test Server & Isolated MongoDB...');
-            mongoServer = await MongoMemoryServer.create();
+            mongoServer = await MongoMemoryServer.create({ instance: { launchTimeout: 60000 } });
             const uri = mongoServer.getUri();
+            process.env.MONGO_URI = uri;
 
             if (mongoose.connection.readyState !== 0) {
                 await mongoose.disconnect();
@@ -59,7 +61,7 @@ async function main() {
             // Import Models and Server App
             const User = require('../../src/models/userModel');
             const Franchise = require('../../src/models/franchiseModel');
-            const { app, server } = require('../../server');
+            const { server } = require('../../server');
 
             // Build unique indexes before testing concurrency
             await User.init();
@@ -70,7 +72,7 @@ async function main() {
                 name: 'Stress Test Admin',
                 email: 'admin.stress@gtrams.gov.ph',
                 password: 'Password123!',
-                role: 'admin',
+                role: 'system_admin',
                 contact: '09123456789',
                 address: 'Poblacion, Gasan, Marinduque'
             });
@@ -96,14 +98,14 @@ async function main() {
                 address: 'Municipal Hall, Gasan, Marinduque'
             });
 
-            // Seed BPLO Staff User
+            // Seed OVM / LLSA I Staff User
             const bplo = await User.create({
-                name: 'Stress Test BPLO Staff',
-                email: 'bplo.stress@gtrams.gov.ph',
+                name: 'Stress Test OVM Staff',
+                email: 'llsa.stress@gtrams.gov.ph',
                 password: 'Password123!',
                 role: 'bplo_staff',
                 contact: '09123450000',
-                address: 'BPLO, Municipal Hall, Gasan, Marinduque'
+                address: 'OVM, Municipal Hall, Gasan, Marinduque'
             });
 
             // Seed Target Franchise for Concurrent Payment Testing
@@ -127,17 +129,30 @@ async function main() {
             paymentFranchiseId = paymentFranchise._id;
 
             // Generate JWT Tokens
-            const secret = process.env.JWT_SECRET || 'gtrams_stress_jwt_secret_key';
-            adminToken = jwt.sign({ id: admin._id, role: admin.role }, secret, { expiresIn: '2h' });
-            operatorToken = jwt.sign({ id: operator._id, role: operator.role }, secret, { expiresIn: '2h' });
-            cashierToken = jwt.sign({ id: cashier._id, role: cashier.role }, secret, { expiresIn: '2h' });
-            bploToken = jwt.sign({ id: bplo._id, role: bplo.role }, secret, { expiresIn: '2h' });
+            const signStressSession = (user) => jwt.sign({
+                id: user._id,
+                role: user.role,
+                tokenVersion: user.tokenVersion || 0,
+                tokenType: 'access'
+            }, process.env.JWT_SECRET, { expiresIn: '2h' });
+            adminToken = signStressSession(admin);
+            operatorToken = signStressSession(operator);
+            cashierToken = signStressSession(cashier);
+            bploToken = signStressSession(bplo);
 
             // Seed Sample Franchise Records for Masterlist Query Load
+            const sampleOwner = await User.create({
+                name: 'Masterlist Load Operator',
+                email: 'masterlist.stress@example.test',
+                password: 'Password123!',
+                role: 'operator',
+                contact: '09119990000',
+                address: 'Gasan, Marinduque'
+            });
             const sampleFranchises = [];
             for (let i = 1; i <= 50; i++) {
                 sampleFranchises.push({
-                    operator: operator._id,
+                    operator: sampleOwner._id,
                     fullName: `Sample Operator ${i}`,
                     address: `Barangay ${i}, Gasan`,
                     zone: `Zone ${(i % 3) + 1}`,
@@ -157,13 +172,12 @@ async function main() {
             await Franchise.insertMany(sampleFranchises);
 
             // Start ephemeral server on random free port
-            const port = 5055;
-            await new Promise((resolve) => {
-                serverInstance = server.listen(port, () => {
-                    baseUrl = `http://localhost:${port}`;
+            await new Promise((resolve, reject) => {
+                serverInstance = server.listen(0, '127.0.0.1', () => {
+                    baseUrl = `http://127.0.0.1:${server.address().port}`;
                     console.log(`🚀 GTRAMS Test Server running at ${baseUrl}`);
                     resolve();
-                });
+                }).once('error', reject);
             });
         } else {
             console.log(`🎯 Testing against live external server: ${baseUrl}`);

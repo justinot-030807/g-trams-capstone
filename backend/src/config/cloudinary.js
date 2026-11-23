@@ -88,7 +88,7 @@ const storage = process.env.NODE_ENV === 'test'
         }
     });
 
-const upload = multer({
+const uploadOptions = {
     storage: storage,
     limits: {
         fileSize: 10 * 1024 * 1024, // 10MB max for documents
@@ -107,6 +107,14 @@ const upload = multer({
             cb(new Error('Only JPG, PNG, WebP, and PDF files with matching extensions are allowed.'), false);
         }
     }
+};
+
+const upload = multer(uploadOptions);
+
+// The full application includes vehicle, driver, and document metadata in one multipart submission.
+upload.franchiseApplication = multer({
+    ...uploadOptions,
+    limits: { ...uploadOptions.limits, fields: 80, parts: 93 }
 });
 
 upload.validateMagicBytes = validateMagicBytes;

@@ -36,7 +36,7 @@ const measureConcurrent = async (label, promises) => {
 };
 
 beforeAll(async () => {
-  mongoServer = await MongoMemoryServer.create();
+  mongoServer = await MongoMemoryServer.create({ instance: { launchTimeout: 60000 } });
   const uri = mongoServer.getUri();
   
   if (mongoose.connection.readyState !== 0) {
@@ -80,7 +80,7 @@ beforeAll(async () => {
     todaAssociation: 'BATODA'
   });
   operatorToken = jwt.sign({ id: operatorUser._id, role: operatorUser.role, tokenVersion: operatorUser.tokenVersion || 0 }, process.env.JWT_SECRET, { expiresIn: '1d' });
-});
+}, 90000);
 
 afterAll(async () => {
   if (mongoose.connection.readyState !== 0) {

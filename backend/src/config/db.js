@@ -7,10 +7,6 @@ const mongoose = require('mongoose');
 
 let indexesReady = false;
 
-mongoose.connection.on('disconnected', () => {
-    indexesReady = false;
-});
-
 const connectDB = async () => {
     if (process.env.NODE_ENV === 'test') {
         return;
@@ -30,8 +26,8 @@ const connectDB = async () => {
         const TodaRoster = require('../models/todaModel');
         await Promise.all([
             Franchise.syncIndexes(),
-            User.init(),
-            TodaRoster.init()
+            User.syncIndexes(),
+            TodaRoster.syncIndexes()
         ])
             .then(() => {
                 indexesReady = true;
@@ -48,6 +44,7 @@ const connectDB = async () => {
 };
 
 connectDB.isReady = () => mongoose.connection.readyState === 1;
-connectDB.areIndexesReady = () => (process.env.NODE_ENV === 'test' ? mongoose.connection.readyState === 1 : indexesReady);
+// A transient driver reconnect does not discard the indexes checked at startup.
+connectDB.areIndexesReady = () => connectDB.isReady() && (process.env.NODE_ENV === 'test' || indexesReady);
 
 module.exports = connectDB;

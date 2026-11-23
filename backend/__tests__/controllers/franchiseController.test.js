@@ -101,7 +101,7 @@ describe('Franchise API Tests', () => {
                 cedulaSerialNo: '654321'
             });
             
-        expect(res.statusCode).toEqual(400);
+        expect(res.statusCode).toEqual(409);
         expect(res.body.message).toContain('Tricycle (Plate/Motor/Chassis) is already registered');
     });
 });

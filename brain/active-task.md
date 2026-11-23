@@ -2,20 +2,21 @@
 
 - **Current Goal:** Final Capstone Defense QA (`main` @ `86bd8f7`) and formal LGU Gasan OVM (LLSA I) & Municipal Treasury turnover readiness.
 - **Status:**
+  - Final Defense QA found a local wizard submission blocker. The scoped multipart fix passed in the browser and a regression test. Final local checks passed with 301 Jest tests and six stress scenarios. **Live demo NO-GO** while Render health returns 503 with unready indexes. See [[audits/final-defense-full-qa]].
   - **Pre-Final Defense is DONE.** All post-Pre-Final panel findings, UAT Round 2 fixes (`8bfc794`, `96304fa`), and Post-UAT Codex audit remediations (`86bd8f7`: `H1–H3, M1–M8, L1–L4`) are committed cleanly on `main`.
   - Automated baseline on `86bd8f7`: **25/25 backend Jest suites (293/293 tests)**, ESLint (`0 errors`), and Vite production build (`0 errors`) passing.
   - On `main`, licensing operations belong strictly to **OVM / LLSA I** (`llsa.tester@gtrams.com`, `/llsa-dashboard`; internal DB enum `'bplo_staff'`). Separate BPLO Mayor's Permitting Division + 2027 Red Card exists only on backup branch `feature/uat-bplo-ovm-split`.
   - TODA mutations use replica-set transactions or guarded compensation on standalone MongoDB; an abrupt standalone process exit can leave a lock and partial writes requiring reconciliation.
 - **Immediate Next Steps:**
-  - Run Final Defense browser & adversarial E2E QA in T3 Code using `docs/FINAL_DEFENSE_QA_PLAN_AND_SOL_PROMPT.md` against an isolated local backend (`PORT=3000`, `mongodb-memory-server` — never destructive against production Atlas).
-  - Run `npm test --prefix backend` and `npm run build --prefix frontend` after any code edits to confirm baseline health.
-  - Confirm live Vercel (`https://g-trams-official.vercel.app`) & Render (`https://g-trams-web2.onrender.com/api/v1/health`) health and complete final oral defense rehearsal.
+  - Resolve live Render index readiness and verify health HTTP 200 with both readiness flags true.
+  - Use the [Final Defense parity matrix](../docs/FINAL_DEFENSE_QA_REPORT.md) to finish open browser and provider checks on isolated fixtures.
 
 ## Recent AI Handoff
 
 <!-- Keep only the latest 10 entries to save tokens -->
 | Date | Agent / Model | Action | Outcome |
 |---|---|---|---|
+| 2026-11-23 | Codex (gpt-6.2-sol) | Ran isolated browser and API QA, fixed wizard submission and application regressions, and recorded the 45-case and eight-panel evidence | Mobile application returned 201 after fix. Live Render health returned 503 and remains a defense blocker. |
 | 2026-11-23 | Antigravity (model unspecified) | Cleaned obsolete docs (`.agents/teamwork/`, pre-final trackers) & deleted merged branch `ui-ux-audit-fixes`; aligned `AGENTS.md`, `PROJECT_CONTEXT.md`, `brain/`, launchers, and defense guides to Final Defense `main` (`OVM / LLSA I`, `PORT=3000`, `293` tests) | Completed; repo context clean for T3 Code Final Defense QA without stale Pre-Final/BPLO confusion |
 | 2026-11-22 | Antigravity (model unspecified) | Remediated all Post-UAT Codex audit findings H1–H3, M1–M8, L1–L4 & trailing whitespace (`franchiseModel.js`, `disciplineHelper.js`, `officeTemplateGenerator.js`, `franchiseService.js`, `violationController.js`, `franchiseController.js`, frontend modals/dashboards, `postUatAuditRemediation.test.js`) | Full Jest passed (25/25 suites, 293/293 tests), `vite build` passed (18.58s), ESLint passed (0 errors, 122 warnings), `git diff --check` clean |
 | 2026-11-21 | Antigravity (model unspecified) | Auto-archive finalized voluntary cancellations & free operator garage/capacity (`franchiseController.js`, `OperatorDashboard.jsx`, `ApplyFranchise.jsx`, `voluntaryCancellationWorkflow.test.js`) | `voluntaryCancellationWorkflow.test.js` 9/9 passed, `operatorWorkflow` + `documentMetadataAndReapply` 14/14 passed, `vite build` passed, ESLint passed (0 errors, 120 warnings) |

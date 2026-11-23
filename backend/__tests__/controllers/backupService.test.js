@@ -21,7 +21,7 @@ beforeAll(async () => {
     process.env.JWT_SECRET = 'test_backup_secret_key_12345';
     process.env.BACKUP_DIR = TEST_BACKUP_DIR;
 
-    mongoServer = await MongoMemoryServer.create();
+    mongoServer = await MongoMemoryServer.create({ instance: { launchTimeout: 60000 } });
     await mongoose.connect(mongoServer.getUri());
 
     const User = require('../../src/models/userModel');
@@ -73,7 +73,7 @@ beforeAll(async () => {
         cedulaDate: new Date(),
         status: 'Active'
     });
-});
+}, 90000);
 
 afterAll(async () => {
     // Clean up only newly created test backup files without touching any pre-existing non-test backups

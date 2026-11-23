@@ -1,26 +1,24 @@
 /**
  * G-TRAMS Server-Authoritative Time Engine (Asia/Manila, UTC+8)
  * 
- * Neutralizes client-side laptop/browser clock tampering by computing
- * and applying clock skew offset against server-authoritative timestamps.
+ * Advances a server-authoritative timestamp with the browser's monotonic clock.
  */
 
 const MANILA_TIMEZONE = 'Asia/Manila';
 
-// Clock skew in milliseconds: Client Date.now() - Server epoch
-let clientClockSkewMs = 0;
-let isClockSynchronized = false;
+let serverEpochAtSync = null;
+let monotonicTimeAtSync = 0;
 
 /**
- * Synchronize skew using an authoritative ISO timestamp from the server
+ * Synchronize using an authoritative ISO timestamp from the server.
  */
 export const syncWithServerTime = (serverTimeIso) => {
   if (!serverTimeIso) return;
   const serverEpoch = new Date(serverTimeIso).getTime();
   if (isNaN(serverEpoch)) return;
 
-  clientClockSkewMs = Date.now() - serverEpoch;
-  isClockSynchronized = true;
+  serverEpochAtSync = serverEpoch;
+  monotonicTimeAtSync = performance.now();
 };
 
 /**
@@ -66,13 +64,14 @@ export const initServerTimeSync = async (apiUrl = import.meta.env.VITE_API_URL) 
  * unaffected by client laptop clock manipulation.
  */
 export const getServerNow = () => {
-  return new Date(Date.now() - clientClockSkewMs);
+  if (serverEpochAtSync === null) return new Date();
+  return new Date(serverEpochAtSync + performance.now() - monotonicTimeAtSync);
 };
 
 /**
  * Returns whether clock skew compensation is active
  */
-export const isTimeSynchronized = () => isClockSynchronized;
+export const isTimeSynchronized = () => serverEpochAtSync !== null;
 
 /**
  * Returns current date string in Asia/Manila (YYYY-MM-DD)

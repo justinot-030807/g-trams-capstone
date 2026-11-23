@@ -93,7 +93,7 @@ router.route('/')
         protect, 
         authorize('operator', 'toda president'),
         blockDuringMaintenance,
-        upload.fields(FRANCHISE_DOCUMENT_UPLOAD_FIELDS), 
+        upload.franchiseApplication.fields(FRANCHISE_DOCUMENT_UPLOAD_FIELDS),
         createFranchise
     )
     // Get franchise masterlist (BPLO Staff only)
@@ -136,7 +136,7 @@ router.route('/:id')
         protect, 
         authorize('operator', 'toda president', 'toda_president', 'bplo_staff'),
         authorizeFranchiseEdit,
-        upload.fields(FRANCHISE_DOCUMENT_UPLOAD_FIELDS), 
+        upload.franchiseApplication.fields(FRANCHISE_DOCUMENT_UPLOAD_FIELDS),
         updateFranchise
     )
     .delete(protect, authorize('bplo_staff'), deleteFranchise);

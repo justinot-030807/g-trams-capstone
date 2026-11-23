@@ -19,6 +19,7 @@
 - [[tasks/defense-compliance-pillars]] · [[tasks/textbee-ocr-resilience]] · [[tasks/warm-heritage-ui-dossier]] · [[tasks/uat-and-lgu-turnover]]
 
 ## Audits (`brain/audits/`)
+- [[audits/final-defense-full-qa]]
 - [[audits/post-batch2-96304fa]]
 - [[audits/batch2-h5-m2-toda]]
 - [[audits/batch2-h6-m6-treasury-settlement]]

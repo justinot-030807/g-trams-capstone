@@ -48,11 +48,11 @@ const makeSubmission = (status, extractedMembers) => TodaSubmission.create({
     extractedCount: extractedMembers.length
 });
 
-const requestRemoval = (member, targetRosterId) => request(app).post('/toda/removal-requests')
+const requestRemoval = (member, targetRosterId, overrides = {}) => request(app).post('/toda/removal-requests')
     .set('Authorization', authorization(president))
     .send({
         memberId: member.id, targetRosterId,
-        reason: 'No longer operating / Inactive', details: 'Confirmed by the association.'
+        reason: 'No longer operating / Inactive', details: 'Confirmed by the association.', ...overrides
     });
 
 beforeAll(async () => {
@@ -83,6 +83,17 @@ afterAll(async () => {
 });
 
 describe('Batch 2 H5 and M2 TODA invariants on standalone MongoDB', () => {
+    it('rejects unsupported removal reasons and blank details before filing a request', async () => {
+        const row = await makeRoster(operator.name, '007', { registeredUser: operator._id });
+
+        await requestRemoval(operator, row.id, { reason: 'Other' }).expect(400, {
+            message: 'Select a valid TODA member removal reason.'
+        });
+        await requestRemoval(operator, row.id, { details: '   ' }).expect(400);
+        expect(await TodaRemovalRequest.countDocuments()).toBe(0);
+        await requestRemoval(operator, row.id).expect(201);
+    });
+
     it('publishes active rows only after approval and compensates a failed roster sync', async () => {
         const submission = await makeSubmission('Pending', [
             { operatorName: 'First Application', bodyNumber: 'BAT-001' },

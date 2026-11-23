@@ -1,5 +1,13 @@
 # Audit Log
 
+## 2026-11-23 Final Defense QA
+
+- Codex (gpt-6.2-sol) · **P0 fixed locally** · Complete browser application failed the 40-field multipart limit. Scoped parser limits fixed create and reapply. The HTTP regression and mobile Step 5 submission passed.
+- Codex (gpt-6.2-sol) · **Verified fixes** · Restored readiness on reconnect after a successful startup index check, enforced Manila renewal dates, kept the synchronized browser clock stable, returned 409 for duplicate vehicles, and removed duplicate Google SDK initialization.
+- Codex (gpt-6.2-sol) · **Validation fixed** · Malformed registration contacts and unknown TODA removal reasons now return HTTP 400. The isolated development API retest passed, including valid removal approval and rejection.
+- Codex (gpt-6.2-sol) · **P0 open -> Fixed** (`Antigravity (model unspecified)`) · Read-only Atlas diagnostic traced Render `503` (`indexesReady: false`) to a legacy non-unique `todaAssociation_1_bodyNumber_1` index on `todarosters` (0 duplicates across 5 docs) conflicting with `TodaRoster.init()`. Switched `User.init()` and `TodaRoster.init()` to `syncIndexes()` in `backend/src/config/db.js` and updated `databaseReadiness.test.js`. See [[audits/final-defense-full-qa]].
+- Codex (gpt-6.2-sol) · **Final local checks** · Jest 28/301, stress 6/6, ESLint 0 errors and 121 warnings, and Vite build passed. QA listeners and preview tabs were closed.
+
 ## 2026-11-21 post-Batch-2 diff audit (`a46e6f4..96304fa`)
 
 - Codex (model unspecified) · **High (H1–H3), Fixed** (`Antigravity (model unspecified)`) · Made cancellation review atomic (`409` on conflicting/decided state) with post-write notifications; blocked unfinalized official cancellation DOCX/UI grants and stamped staff drafts with split-run XML masking; enforced cross-unit progressive discipline retention across denied surrenders (`priorStatus`) and replacement units (`disciplineHelper.js`).

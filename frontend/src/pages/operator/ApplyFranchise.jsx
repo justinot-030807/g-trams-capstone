@@ -25,6 +25,7 @@ import ApplicationSummaryModal from '../../components/operator/ApplicationSummar
 import OfficialApplicationForm from '../../components/common/OfficialApplicationForm';
 import SimpleDatePicker from '../../components/common/SimpleDatePicker';
 import PhilippineAddressAutocomplete from '../../components/common/PhilippineAddressAutocomplete';
+import { getManilaServerDateString } from '../../utils/serverTime';
 
 const DL_CODE_OPTIONS = ['A, A1', 'A1', 'A'];
 const normalizeTricycleDlCodes = (raw) => {
@@ -1426,7 +1427,7 @@ const ApplyFranchise = () => {
             if (hasData) {
               const normExpiry = d.expiryDate ? normalizeDateStr(d.expiryDate) : '';
               const normDob = d.dateOfBirth ? normalizeDateStr(d.dateOfBirth) : '';
-              const today = new Date().toISOString().split('T')[0];
+              const today = getManilaServerDateString();
               const isExpired = normExpiry && normExpiry < today;
 
               setAiScannedData(prev => ({
@@ -1488,7 +1489,7 @@ const ApplyFranchise = () => {
               const normExpiry = d.expiryDate ? normalizeDateStr(d.expiryDate) : '';
               const normOrDate = d.orDate ? normalizeDateStr(d.orDate) : '';
               const normCrDate = d.crDate ? normalizeDateStr(d.crDate) : '';
-              const today = new Date().toISOString().split('T')[0];
+              const today = getManilaServerDateString();
               const isExpired = normExpiry && normExpiry < today;
 
               const finalPlate = d.plateNo ? String(d.plateNo).toUpperCase() : '';
@@ -1894,7 +1895,7 @@ const ApplyFranchise = () => {
 
   // Validation before proceeding to next step
   const validateCurrentStep = () => {
-    const today = new Date().toISOString().split('T')[0];
+    const today = getManilaServerDateString();
 
     if (currentStep === 1) {
       if (!formData.fullName?.trim()) {
@@ -2008,7 +2009,7 @@ const ApplyFranchise = () => {
     }
 
     if (currentStep === 4) {
-      const currentYear = new Date().getFullYear();
+      const currentYear = Number(today.slice(0, 4));
       if (!formData.cedulaSerialNo?.trim()) {
         showValidationModal('cedulaSerialNo', 'Cedula Serial Number Required', 'Please enter or scan the Community Tax Certificate (Cedula) Serial Number.');
         return false;
@@ -2017,7 +2018,7 @@ const ApplyFranchise = () => {
         showValidationModal('cedulaDate', 'Cedula Date Issued Required', 'Please enter or verify the Cedula Date Issued.');
         return false;
       }
-      const cedulaYear = new Date(formData.cedulaDate).getFullYear();
+      const cedulaYear = Number(formData.cedulaDate.slice(0, 4));
       if (cedulaYear < currentYear) {
         showValidationModal('cedulaDate', 'Cedula Expired', `Cedula for year ${cedulaYear} is expired. A valid Cedula for ${currentYear} is required.`);
         return false;
@@ -2074,7 +2075,7 @@ const ApplyFranchise = () => {
   // AI OCR Discrepancy Analysis (Detects if applicant edited scanned data or expired dates)
   const getAiDiscrepancies = (currForm = formData, currAi = aiScannedData) => {
     const discrepancies = [];
-    const today = new Date().toISOString().split('T')[0];
+    const today = getManilaServerDateString();
     const form = currForm || {};
     const ai = currAi || {};
 
@@ -2301,7 +2302,7 @@ const ApplyFranchise = () => {
     }
 
     // Cedula validation
-    const currentYear = new Date().getFullYear();
+    const currentYear = Number(getManilaServerDateString().slice(0, 4));
     if (!formData.cedulaSerialNo?.trim()) {
       showValidationModal('cedulaSerialNo', 'Cedula Serial Number Required', 'Please enter the Community Tax Certificate (Cedula) Serial Number.');
       return;
@@ -2310,7 +2311,7 @@ const ApplyFranchise = () => {
       showValidationModal('cedulaDate', 'Cedula Date Issued Required', 'Please enter the Cedula Date Issued.');
       return;
     }
-    const cedulaYear = new Date(formData.cedulaDate).getFullYear();
+    const cedulaYear = Number(formData.cedulaDate.slice(0, 4));
     if (cedulaYear < currentYear) {
       showValidationModal('cedulaDate', 'Cedula Expired', `Cedula for year ${cedulaYear} is expired. A valid Cedula for ${currentYear} is required.`);
       return;
@@ -2344,10 +2345,10 @@ const ApplyFranchise = () => {
     if (e?.preventDefault) e.preventDefault();
     if (isSubmitting) return;
 
-    const today = new Date().toISOString().split('T')[0];
+    const today = getManilaServerDateString();
 
     // Cedula validation
-    const currentYear = new Date().getFullYear();
+    const currentYear = Number(today.slice(0, 4));
     if (!formData.cedulaSerialNo?.trim()) {
       showValidationModal('cedulaSerialNo', 'Cedula Serial Number Required', 'Please enter the Community Tax Certificate (Cedula) Serial Number.');
       return;
@@ -2356,7 +2357,7 @@ const ApplyFranchise = () => {
       showValidationModal('cedulaDate', 'Cedula Date Issued Required', 'Please enter the Cedula Date Issued.');
       return;
     }
-    const cedulaYear = new Date(formData.cedulaDate).getFullYear();
+    const cedulaYear = Number(formData.cedulaDate.slice(0, 4));
     if (cedulaYear < currentYear) {
       showValidationModal('cedulaDate', 'Cedula Expired', `Cedula for year ${cedulaYear} is expired. A valid Cedula for ${currentYear} is required.`);
       return;
