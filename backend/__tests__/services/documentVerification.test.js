@@ -16,11 +16,13 @@ jest.mock('axios', () => ({
 
 const User = require('../../src/models/userModel');
 const Franchise = require('../../src/models/franchiseModel');
-const { 
-    normalizeString, 
-    compareField, 
-    verifyFranchiseDocuments 
-} = require('../../src/services/documentVerificationService');
+const documentVerificationService = require('../../src/services/documentVerificationService');
+const {
+    normalizeString,
+    compareField,
+    hasMeaningfulExtractedFields,
+    verifyFranchiseDocuments
+} = documentVerificationService;
 
 let mongoServer;
 let adminUser, adminToken;
@@ -168,6 +170,109 @@ describe('Document Verification Service Unit & API Tests', () => {
             expect(res.body.isUnique).toBe(true);
             expect(res.body.unique).toBe(true);
             expect(res.body.exists).toBe(false);
+        });
+
+        it('should detect whether extracted OCR payloads contain meaningful auto-fillable fields', () => {
+            expect(hasMeaningfulExtractedFields('license', { isValidDocument: true, licenseNo: null, driverName: '' })).toBe(false);
+            expect(hasMeaningfulExtractedFields('orCr', { isValidDocument: true, plateNo: 'UNCLEAR', motorNo: 'N/A' })).toBe(false);
+            expect(hasMeaningfulExtractedFields('license', { isValidDocument: true, licenseNo: 'D02-14-098231' })).toBe(true);
+            expect(hasMeaningfulExtractedFields('cedula', { isValidDocument: true, serialNo: 'CC12026-0928174' })).toBe(true);
+        });
+
+        it('should return rejected=true with invalid_document when OCR rejects wrong/non-official image', async () => {
+            const spy = jest.spyOn(documentVerificationService, 'extractWithGemini').mockResolvedValueOnce({
+                isValidDocument: false,
+                isExpectedDocumentType: false,
+                rejectReason: 'invalid_document',
+                detectedDocumentType: 'Non-document Selfie',
+                message: 'Hindi ito valid na opisyal na LTO Driver\'s License.'
+            });
+            try {
+                const res = await request(app)
+                    .post('/api/v1/franchises/scan-document')
+                    .set('Authorization', `Bearer ${operatorToken}`)
+                    .send({ docType: 'license', base64: 'data:image/jpeg;base64,/9j/4AAQSkZJRg==' });
+
+                expect(res.status).toBe(200);
+                expect(res.body.success).toBe(false);
+                expect(res.body.rejected).toBe(true);
+                expect(res.body.rejectReason).toBe('invalid_document');
+                expect(res.body.message).toMatch(/valid/i);
+            } finally {
+                spy.mockRestore();
+            }
+        });
+
+        it('should return rejected=true with blurry_or_unreadable when OCR extracts zero fields', async () => {
+            const spy = jest.spyOn(documentVerificationService, 'extractWithGemini').mockResolvedValueOnce({
+                isValidDocument: true,
+                isExpectedDocumentType: true,
+                detectedDocumentType: 'LTO Certificate of Registration',
+                plateNo: null,
+                motorNo: null,
+                chassisNo: null,
+                crNo: null,
+                orNo: null,
+                ownerName: null,
+                make: null
+            });
+            try {
+                const res = await request(app)
+                    .post('/api/v1/franchises/scan-document')
+                    .set('Authorization', `Bearer ${operatorToken}`)
+                    .send({ docType: 'orCr', base64: 'data:image/jpeg;base64,/9j/4AAQSkZJRg==' });
+
+                expect(res.status).toBe(200);
+                expect(res.body.success).toBe(false);
+                expect(res.body.rejected).toBe(true);
+                expect(res.body.rejectReason).toBe('blurry_or_unreadable');
+                expect(res.body.message).toMatch(/Malabo|hindi mabasa/i);
+            } finally {
+                spy.mockRestore();
+            }
+        });
+
+        it('should return success=true and rejected=false when OCR extracts real fields', async () => {
+            const spy = jest.spyOn(documentVerificationService, 'extractWithGemini').mockResolvedValueOnce({
+                isValidDocument: true,
+                isExpectedDocumentType: true,
+                detectedDocumentType: "Driver's License (Front)",
+                licenseNo: 'D02-14-098231',
+                driverName: 'DELA CRUZ, JUAN M.',
+                dlCodes: 'A, A1',
+                expiryDate: '2028-08-15'
+            });
+            try {
+                const res = await request(app)
+                    .post('/api/v1/franchises/scan-document')
+                    .set('Authorization', `Bearer ${operatorToken}`)
+                    .send({ docType: 'license', base64: 'data:image/jpeg;base64,/9j/4AAQSkZJRg==' });
+
+                expect(res.status).toBe(200);
+                expect(res.body.success).toBe(true);
+                expect(res.body.rejected).toBe(false);
+                expect(res.body.data.licenseNo).toBe('D02-14-098231');
+            } finally {
+                spy.mockRestore();
+            }
+        });
+
+        it('should return rejected=false and needsManual=true on genuine OCR service outage', async () => {
+            const spy = jest.spyOn(documentVerificationService, 'extractWithGemini').mockResolvedValueOnce(null);
+            try {
+                const res = await request(app)
+                    .post('/api/v1/franchises/scan-document')
+                    .set('Authorization', `Bearer ${operatorToken}`)
+                    .send({ docType: 'cedula', base64: 'data:image/jpeg;base64,/9j/4AAQSkZJRg==' });
+
+                expect(res.status).toBe(200);
+                expect(res.body.success).toBe(false);
+                expect(res.body.rejected).toBe(false);
+                expect(res.body.needsManual).toBe(true);
+                expect(res.body.serviceUnavailable).toBe(true);
+            } finally {
+                spy.mockRestore();
+            }
         });
     });
 });

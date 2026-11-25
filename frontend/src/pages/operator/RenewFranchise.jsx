@@ -76,6 +76,9 @@ const RenewFranchise = () => {
   const [cedulaPreviewUrl, setCedulaPreviewUrl] = useState('');
   const [isScanningCedula, setIsScanningCedula] = useState(false);
   const [cedulaScanSuccess, setCedulaScanSuccess] = useState(false);
+  const [isScanningOrcr, setIsScanningOrcr] = useState(false);
+  const [orcrScanSuccess, setOrcrScanSuccess] = useState(false);
+  const [docErrors, setDocErrors] = useState({ cedulaDoc: null, orcrFile: null, license: null });
   const [fullPreview, setFullPreview] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
@@ -145,14 +148,61 @@ const RenewFranchise = () => {
     setFormData(prev => ({ ...prev, [name]: sanitized }));
   };
 
-  const triggerCedulaScan = async (file) => {
+  const rejectInvalidRenewScan = (fieldId, message, rejectReason = 'invalid_document') => {
+    const finalMsg =
+      message ||
+      (rejectReason === 'blurry_or_unreadable'
+        ? 'Malabo o hindi mabasa ang in-upload na dokumento kaya walang na-autofill. Pakiulit at mag-upload ng mas malinaw na larawan.'
+        : 'Mali ang in-upload na dokumento. Pakiulit at mag-upload ng tamang opisyal na dokumento.');
+
+    const title =
+      rejectReason === 'blurry_or_unreadable'
+        ? 'Malabo ang Dokumento — Pakiulit'
+        : 'Mali ang Dokumento — Pakiulit';
+
+    if (fieldId === 'cedulaDoc') {
+      if (cedulaPreviewUrl && cedulaPreviewUrl.startsWith('blob:')) URL.revokeObjectURL(cedulaPreviewUrl);
+      setCedulaFile(null);
+      setCedulaPreviewUrl('');
+      setCedulaScanSuccess(false);
+      setFormData(prev => ({ ...prev, ctcNo: '' }));
+    } else if (fieldId === 'orcrFile') {
+      if (previewUrl && previewUrl.startsWith('blob:')) URL.revokeObjectURL(previewUrl);
+      setOrcrFile(null);
+      setPreviewUrl('');
+      setOrcrScanSuccess(false);
+      setFormData(prev => ({ ...prev, orCrNo: '', orCrExpiryDate: '' }));
+    } else if (fieldId === 'license') {
+      setLicenseFile(null);
+    }
+
+    setDocErrors(prev => ({ ...prev, [fieldId]: finalMsg }));
+    showToast(finalMsg, 'error');
+    setFeedbackModal({
+      isOpen: true,
+      type: 'error',
+      title,
+      message: finalMsg,
+      confirmText: 'Pakiulit',
+      onConfirm: () => setFeedbackModal(prev => ({ ...prev, isOpen: false }))
+    });
+  };
+
+  const triggerDocScan = async (fieldId, docType, file) => {
     if (!file) return;
-    setIsScanningCedula(true);
-    setCedulaScanSuccess(false);
+    setDocErrors(prev => ({ ...prev, [fieldId]: null }));
+    if (fieldId === 'cedulaDoc') {
+      setIsScanningCedula(true);
+      setCedulaScanSuccess(false);
+    } else if (fieldId === 'orcrFile') {
+      setIsScanningOrcr(true);
+      setOrcrScanSuccess(false);
+    }
+
     try {
       const scanFormData = new FormData();
       scanFormData.append('file', file);
-      scanFormData.append('docType', 'cedula');
+      scanFormData.append('docType', docType);
 
       const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/franchises/scan-document`, {
         method: 'POST',
@@ -164,23 +214,64 @@ const RenewFranchise = () => {
         const json = await res.json();
         if (json.success && json.data) {
           const d = json.data;
-          const fullSerial = (d.serialNo || d.ctcNo || '').trim().toUpperCase();
-          const dateStr = d.dateIssued ? (d.dateIssued.includes('T') ? d.dateIssued.split('T')[0] : d.dateIssued) : '';
-          const placeStr = d.placeIssued || d.address || '';
-          setFormData(prev => ({
-            ...prev,
-            ctcNo: fullSerial || prev.ctcNo,
-            dateIssued: dateStr || prev.dateIssued,
-            placeIssued: placeStr || prev.placeIssued
-          }));
-          setCedulaScanSuccess(true);
-          showToast('AI Scan: Cedula details detected and auto-filled!', 'success');
+          if (docType === 'cedula') {
+            const fullSerial = (d.serialNo || d.ctcNo || '').trim().toUpperCase();
+            const dateStr = d.dateIssued ? (d.dateIssued.includes('T') ? d.dateIssued.split('T')[0] : d.dateIssued) : '';
+            const placeStr = d.placeIssued || d.placeOfIssue || d.address || '';
+            if (fullSerial || dateStr || placeStr) {
+              setFormData(prev => ({
+                ...prev,
+                ctcNo: fullSerial || prev.ctcNo,
+                dateIssued: dateStr || prev.dateIssued,
+                placeIssued: placeStr || prev.placeIssued
+              }));
+              setCedulaScanSuccess(true);
+              showToast('AI Scan: Cedula details detected and auto-filled!', 'success');
+            } else {
+              rejectInvalidRenewScan(fieldId, 'Malabo o hindi mabasa ang Cedula kaya walang na-autofill. Pakiulit at mag-upload ng mas malinaw na larawan.', 'blurry_or_unreadable');
+            }
+          } else if (docType === 'orCr') {
+            const finalOr = (d.orNo || d.orCrNo || d.crNo || '').trim().toUpperCase();
+            const expStr = d.expiryDate ? (d.expiryDate.includes('T') ? d.expiryDate.split('T')[0] : d.expiryDate) : '';
+            if (finalOr || expStr || d.plateNo || d.motorNo || d.chassisNo) {
+              setFormData(prev => ({
+                ...prev,
+                orCrNo: finalOr || prev.orCrNo,
+                orCrExpiryDate: expStr || prev.orCrExpiryDate
+              }));
+              setOrcrScanSuccess(true);
+              showToast('AI Scan: LTO OR/CR details detected and auto-filled!', 'success');
+            } else {
+              rejectInvalidRenewScan(fieldId, 'Malabo o hindi mabasa ang LTO OR/CR kaya walang na-autofill. Pakiulit at mag-upload ng mas malinaw na larawan.', 'blurry_or_unreadable');
+            }
+          } else if (docType === 'license') {
+            const licNo = (d.licenseNo || '').trim().toUpperCase();
+            const expStr = d.expiryDate ? (d.expiryDate.includes('T') ? d.expiryDate.split('T')[0] : d.expiryDate) : '';
+            if (licNo || expStr || d.driverName) {
+              setFormData(prev => ({
+                ...prev,
+                driverLicenseNo: licNo || prev.driverLicenseNo,
+                driverLicenseExpiryDate: expStr || prev.driverLicenseExpiryDate
+              }));
+              showToast("AI Scan: Driver's License details detected and auto-filled!", 'success');
+            } else {
+              rejectInvalidRenewScan(fieldId, "Malabo o hindi mabasa ang Driver's License kaya walang na-autofill. Pakiulit at mag-upload ng mas malinaw na larawan.", 'blurry_or_unreadable');
+            }
+          }
+        } else if (json.rejected) {
+          rejectInvalidRenewScan(fieldId, json.message, json.rejectReason || 'invalid_document');
+        } else {
+          showToast(json.message || 'Naka-attach na ang dokumento. Paki-type nang manual ang mga detalye sa ibaba.', 'warning');
         }
+      } else {
+        showToast('Naka-attach na ang dokumento. Pansamantalang hindi ito na-scan — paki-type nang manual ang detalye.', 'warning');
       }
     } catch (err) {
-      console.warn('Cedula AI Scan network notice:', err);
+      console.warn('Renewal AI Scan network notice:', err);
+      showToast('Naka-attach na ang dokumento. Pansamantalang hindi ito na-scan — paki-type nang manual ang detalye.', 'warning');
     } finally {
-      setIsScanningCedula(false);
+      if (fieldId === 'cedulaDoc') setIsScanningCedula(false);
+      else if (fieldId === 'orcrFile') setIsScanningOrcr(false);
     }
   };
 
@@ -190,20 +281,23 @@ const RenewFranchise = () => {
         showToast('File is too large. Maximum size is 10MB.', 'error');
         return;
       }
+      setDocErrors(prev => ({ ...prev, [fieldId]: null }));
       if (fieldId === 'cedulaDoc') {
         setCedulaFile(file);
         if (cedulaPreviewUrl && cedulaPreviewUrl.startsWith('blob:')) URL.revokeObjectURL(cedulaPreviewUrl);
         setCedulaPreviewUrl(URL.createObjectURL(file));
-        triggerCedulaScan(file);
+        triggerDocScan('cedulaDoc', 'cedula', file);
       } else {
         setOrcrFile(file);
         if (previewUrl && previewUrl.startsWith('blob:')) URL.revokeObjectURL(previewUrl);
         setPreviewUrl(URL.createObjectURL(file));
+        triggerDocScan('orcrFile', 'orCr', file);
       }
     }
   };
 
   const handleFileRemove = (fieldId) => {
+    setDocErrors(prev => ({ ...prev, [fieldId]: null }));
     if (fieldId === 'cedulaDoc') {
       if (cedulaPreviewUrl && cedulaPreviewUrl.startsWith('blob:')) URL.revokeObjectURL(cedulaPreviewUrl);
       setCedulaFile(null);
@@ -213,6 +307,7 @@ const RenewFranchise = () => {
       if (previewUrl && previewUrl.startsWith('blob:')) URL.revokeObjectURL(previewUrl);
       setOrcrFile(null);
       setPreviewUrl('');
+      setOrcrScanSuccess(false);
     }
   };
 
@@ -667,9 +762,10 @@ const RenewFranchise = () => {
                     onFileSelect={handleFileSelect}
                     onFileRemove={() => handleFileRemove('cedulaDoc')}
                     onPreviewZoom={setFullPreview}
-                    onRescan={() => cedulaFile && triggerCedulaScan(cedulaFile)}
+                    onRescan={() => cedulaFile && triggerDocScan('cedulaDoc', 'cedula', cedulaFile)}
                     isScanning={isScanningCedula}
                     scanSuccess={cedulaScanSuccess}
+                    error={docErrors.cedulaDoc}
                     required={false}
                   />
                 </div>
@@ -737,6 +833,10 @@ const RenewFranchise = () => {
                     onFileSelect={handleFileSelect}
                     onFileRemove={() => handleFileRemove('orcrFile')}
                     onPreviewZoom={setFullPreview}
+                    onRescan={() => orcrFile && triggerDocScan('orcrFile', 'orCr', orcrFile)}
+                    isScanning={isScanningOrcr}
+                    scanSuccess={orcrScanSuccess}
+                    error={docErrors.orcrFile}
                     required={false}
                   />
                 </div>
@@ -802,9 +902,22 @@ const RenewFranchise = () => {
                     id="renewal-license"
                     type="file"
                     accept="image/jpeg,image/png,image/webp,application/pdf"
-                    onChange={(event) => setLicenseFile(event.target.files?.[0] || null)}
+                    onChange={(event) => {
+                      const picked = event.target.files?.[0] || null;
+                      setLicenseFile(picked);
+                      if (picked) {
+                        triggerDocScan('license', 'license', picked);
+                      }
+                      event.target.value = '';
+                    }}
                     className="min-h-[44px] w-full max-w-xl rounded-lg border border-[#E4E1DC] px-3 py-2 text-sm dark:border-[#2E2A27]"
                   />
+                  {docErrors.license && (
+                    <p role="alert" className="mt-2 max-w-xl text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1.5">
+                      <AlertCircle size={14} className="shrink-0" />
+                      <span>{docErrors.license}</span>
+                    </p>
+                  )}
                 </div>
               </div>
 

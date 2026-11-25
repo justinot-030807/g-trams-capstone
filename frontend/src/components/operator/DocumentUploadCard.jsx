@@ -49,6 +49,9 @@ const DocumentUploadCard = ({
         onFileSelect(id, selected);
       } finally {
         setIsCompressing(false);
+        if (e.target) {
+          e.target.value = '';
+        }
       }
     }
   };
@@ -271,10 +274,13 @@ const DocumentUploadCard = ({
         )}
 
         {displayError && (
-          <p className="mt-2 text-xs font-semibold text-red-600 dark:text-red-400 flex items-center gap-1.5 animate-fadeIn">
-            <AlertCircle size={14} className="shrink-0" />
-            <span>{displayError}</span>
-          </p>
+          <div
+            role="alert"
+            className="mt-2.5 p-2.5 rounded-lg bg-red-50 dark:bg-red-950/40 border border-red-300 dark:border-red-800/70 text-xs font-semibold text-red-700 dark:text-red-300 flex items-start gap-2 animate-fadeIn"
+          >
+            <AlertCircle size={15} className="shrink-0 mt-0.5 text-red-600 dark:text-red-400" />
+            <span className="leading-snug">{displayError}</span>
+          </div>
         )}
 
       </div>

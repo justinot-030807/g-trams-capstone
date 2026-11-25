@@ -1420,7 +1420,12 @@ const ApplyFranchise = () => {
               showToast("AI Scan: Driver's License Back Serial Number detected.", 'success');
               scrollToField('driverLicenseSerialNo');
             } else {
-              showToast("Document attached. Back serial number was unclear — please enter manually if visible.", 'info');
+              rejectInvalidScan(
+                reqId,
+                docType,
+                "Malabo o hindi mabasa ang Serial Number sa likod ng lisensya kaya walang na-autofill. Pakiulit at mag-upload ng mas malinaw na larawan.",
+                'blurry_or_unreadable'
+              );
             }
           } else if (docType === 'license') {
             const hasData = d.licenseNo || d.driverName || d.expiryDate || d.dateOfBirth || d.dlCodes || d.address;
@@ -1481,7 +1486,12 @@ const ApplyFranchise = () => {
               }
               scrollToField('driverLicenseNo');
             } else {
-              showToast("Document attached. Text was unclear for auto-fill — please type details manually.", 'info');
+              rejectInvalidScan(
+                reqId,
+                docType,
+                "Malabo o hindi mabasa ang mga detalye ng Driver's License kaya walang na-autofill. Pakiulit at mag-upload ng mas malinaw at tamang larawan.",
+                'blurry_or_unreadable'
+              );
             }
           } else if (docType === 'orCr') {
             const hasData = d.plateNo || d.motorNo || d.engineNo || d.chassisNo || d.make || d.year || d.yearModel || d.orCrNo || d.crNo || d.orNo || d.ownerName;
@@ -1584,7 +1594,12 @@ const ApplyFranchise = () => {
               }
               scrollToField('plateNo');
             } else {
-              showToast("Document attached. Vehicle serials were unclear — please enter Plate, Motor, and Chassis manually.", 'info');
+              rejectInvalidScan(
+                reqId,
+                docType,
+                'Malabo o hindi mabasa ang Plate, Engine, o Chassis details sa LTO CR/OR kaya walang na-autofill. Pakiulit at mag-upload ng mas malinaw na larawan.',
+                'blurry_or_unreadable'
+              );
             }
           } else if (docType === 'todaEndorsement') {
             const hasData = d.certNo || d.signatory || d.todaName || d.dateIssued;
@@ -1609,7 +1624,12 @@ const ApplyFranchise = () => {
               showToast("AI Scan: TODA Certificate details detected.", 'success');
               scrollToField('todaCertNo');
             } else {
-              showToast("Document attached. Please verify TODA Certificate No manually.", 'info');
+              rejectInvalidScan(
+                reqId,
+                docType,
+                'Malabo o hindi mabasa ang TODA Certificate kaya walang na-autofill. Pakiulit at mag-upload ng mas malinaw na larawan.',
+                'blurry_or_unreadable'
+              );
             }
           } else if (docType === 'brgyClearance') {
             const hasData = d.barangay || d.clearanceNo || d.issuer || d.dateIssued;
@@ -1640,7 +1660,12 @@ const ApplyFranchise = () => {
               showToast("AI Scan: Barangay Clearance details detected.", 'success');
               scrollToField('brgyClearanceDate');
             } else {
-              showToast("Document attached. Please verify Barangay Clearance details manually.", 'info');
+              rejectInvalidScan(
+                reqId,
+                docType,
+                'Malabo o hindi mabasa ang Barangay Clearance kaya walang na-autofill. Pakiulit at mag-upload ng mas malinaw na larawan.',
+                'blurry_or_unreadable'
+              );
             }
           } else if (docType === 'cedula') {
             const hasData = d.serialNo || d.ctcNo || d.dateIssued || d.placeIssued || d.placeOfIssue || d.fullName || d.taxpayerName || d.address;
@@ -1707,23 +1732,35 @@ const ApplyFranchise = () => {
               showToast("AI Scan: Complete Cedula (CTC) details detected.", 'success');
               scrollToField('cedulaSerialNo');
             } else {
-              showToast("Document attached. Please enter Cedula Serial Number manually.", 'info');
+              rejectInvalidScan(
+                reqId,
+                docType,
+                'Malabo o hindi mabasa ang Cedula (CTC) kaya walang na-autofill. Pakiulit at mag-upload ng mas malinaw na larawan.',
+                'blurry_or_unreadable'
+              );
             }
           }
+        } else if (json.rejected) {
+          rejectInvalidScan(
+            reqId,
+            docType,
+            json.message || 'Mali o malabo ang in-upload na dokumento. Pakiulit at mag-upload ng tamang at mas malinaw na larawan.',
+            json.rejectReason || 'invalid_document'
+          );
         } else {
-          // Document remains attached! User is explicitly prompted to enter details manually
-          const manualMsg = json.message || 'Naka-attach na ang dokumento. Hindi ito awtomatikong na-scan — paki-type nang manual ang mga detalye sa mga kahon sa ibaba.';
+          // Genuine OCR service unavailability / unscannable PDF fallback: document remains attached
+          const manualMsg = json.message || 'Naka-attach na ang dokumento. Pansamantalang hindi ito awtomatikong na-scan — paki-type nang manual ang mga detalye sa ibaba.';
           setManualScanAlerts(prev => ({ ...prev, [reqId]: manualMsg, [docType]: manualMsg }));
           showToast(manualMsg, 'warning');
         }
       } else {
-        const manualMsg = 'Naka-attach na ang dokumento. Hindi ito awtomatikong na-scan — paki-type nang manual ang mga detalye sa mga kahon sa ibaba.';
+        const manualMsg = 'Naka-attach na ang dokumento. Pansamantalang hindi ito awtomatikong na-scan — paki-type nang manual ang mga detalye sa ibaba.';
         setManualScanAlerts(prev => ({ ...prev, [reqId]: manualMsg, [docType]: manualMsg }));
         showToast(manualMsg, 'warning');
       }
     } catch (err) {
       console.warn('AI Scan network notice:', err);
-      const manualMsg = 'Naka-attach na ang dokumento. Hindi ito awtomatikong na-scan — paki-type nang manual ang mga detalye sa mga kahon sa ibaba.';
+      const manualMsg = 'Naka-attach na ang dokumento. Pansamantalang hindi ito awtomatikong na-scan — paki-type nang manual ang mga detalye sa ibaba.';
       setManualScanAlerts(prev => ({ ...prev, [reqId]: manualMsg, [docType]: manualMsg }));
       showToast(manualMsg, 'warning');
     } finally {
@@ -1731,17 +1768,179 @@ const ApplyFranchise = () => {
     }
   };
 
-  // Immediate AI Scanner State Reset for individual document slots (preserves user-typed & previously scanned fields)
+  // Clears only the uploaded URL and auto-filled fields belonging to a rejected document slot
+  const clearScannedFieldsForSlot = (reqId, docType) => {
+    const lower = (reqId || '').toLowerCase();
+    const resolvedDocType = docType || (
+      lower.includes('licenseback') ? 'licenseBack'
+      : lower.includes('license') ? 'license'
+      : (lower.includes('orcr') || lower.includes('crdocument') || lower.includes('crfile') || lower.includes('ordocument') || lower.includes('orfile')) ? 'orCr'
+      : lower.includes('brgy') ? 'brgyClearance'
+      : lower.includes('cedula') ? 'cedula'
+      : lower.includes('toda') ? 'todaEndorsement'
+      : ''
+    );
+
+    if (resolvedDocType) {
+      setAiScannedData(prev => {
+        const copy = { ...prev };
+        delete copy[resolvedDocType];
+        return copy;
+      });
+    }
+
+    setFormData(prev => {
+      const copy = { ...prev };
+      if (lower === 'licenseback') {
+        copy.licenseBackUrl = '';
+        copy.driverLicenseSerialNo = '';
+      } else if (lower === 'license') {
+        copy.licenseUrl = '';
+        copy.driverLicenseNo = '';
+        copy.driverLicenseExpiryDate = '';
+        copy.driverDob = '';
+        copy.driverDlCodes = '';
+        copy.driverConditions = '';
+        copy.driverAddress = '';
+        copy.driverSex = '';
+      } else if (lower === 'crdocument' || lower === 'crfile') {
+        copy.crUrl = '';
+        copy.plateNo = '';
+        copy.motorNo = '';
+        copy.chassisNo = '';
+        copy.make = '';
+        copy.made = '';
+        copy.series = '';
+        copy.yearModel = '';
+        copy.crNo = '';
+        copy.crDate = '';
+        copy.fileNo = '';
+        copy.color = '';
+        copy.registeredOwner = '';
+        copy.ownerAddress = '';
+      } else if (lower === 'ordocument' || lower === 'orfile') {
+        copy.orUrl = '';
+        copy.orCrNo = '';
+        copy.orNo = '';
+        copy.orDate = '';
+        copy.orCrExpiryDate = '';
+      } else if (lower === 'orcrdocument') {
+        copy.orCrUrl = '';
+        copy.crUrl = '';
+        copy.orUrl = '';
+        copy.plateNo = '';
+        copy.motorNo = '';
+        copy.chassisNo = '';
+        copy.make = '';
+        copy.made = '';
+        copy.series = '';
+        copy.yearModel = '';
+        copy.orCrNo = '';
+        copy.orNo = '';
+        copy.crNo = '';
+        copy.crDate = '';
+        copy.orDate = '';
+        copy.orCrExpiryDate = '';
+        copy.fileNo = '';
+        copy.color = '';
+        copy.registeredOwner = '';
+        copy.ownerAddress = '';
+      } else if (lower.includes('brgy')) {
+        copy.brgyClearanceUrl = '';
+        copy.brgyClearanceNo = '';
+        copy.brgyClearanceDate = '';
+        copy.brgyIssuer = '';
+      } else if (lower.includes('cedula')) {
+        copy.cedulaUrl = '';
+        copy.cedulaSerialNo = '';
+        copy.cedulaDate = '';
+        copy.cedulaAddress = '';
+        copy.cedulaPlaceIssued = '';
+        copy.cedulaFullName = '';
+        copy.cedulaTin = '';
+        copy.cedulaDetails = null;
+      } else if (lower.includes('toda')) {
+        copy.todaEndorsementUrl = '';
+        copy.todaCertNo = '';
+        copy.todaSignatory = '';
+        copy.todaCertDate = '';
+      }
+      return copy;
+    });
+  };
+
+  // Rejects invalid/blurry document: clears preview + file + slot scan data and shows clear retry notice
+  const rejectInvalidScan = (reqId, docType, message, rejectReason = 'invalid_document') => {
+    const finalMsg =
+      message ||
+      (rejectReason === 'blurry_or_unreadable'
+        ? 'Malabo o hindi mabasa ang dokumento mo kaya walang na-autofill. Pakiulit at mag-upload ng mas malinaw na larawan.'
+        : 'Mali ang in-upload na dokumento. Pakiulit at mag-upload ng tamang opisyal na dokumento.');
+
+    const modalTitle =
+      rejectReason === 'blurry_or_unreadable'
+        ? 'Malabo ang Dokumento — Pakiulit'
+        : 'Mali ang Dokumento — Pakiulit';
+
+    const aliasKeys = [reqId];
+    const lower = (reqId || '').toLowerCase();
+    if (lower === 'crdocument') aliasKeys.push('crFile');
+    if (lower === 'ordocument') aliasKeys.push('orFile');
+    if (lower === 'ceduladoc') aliasKeys.push('cedula');
+
+    setAiSuccess(prev => ({ ...prev, [reqId]: false }));
+    setManualScanAlerts(prev => ({ ...prev, [reqId]: null, ...(docType ? { [docType]: null } : {}) }));
+
+    setUploadedDocs(prev => {
+      const copy = { ...prev };
+      aliasKeys.forEach(k => delete copy[k]);
+      return copy;
+    });
+
+    setFilePreviews(prev => {
+      const copy = { ...prev };
+      aliasKeys.forEach(k => {
+        if (copy[k] && typeof copy[k] === 'string' && copy[k].startsWith('blob:')) {
+          URL.revokeObjectURL(copy[k]);
+        }
+        delete copy[k];
+      });
+      return copy;
+    });
+
+    clearScannedFieldsForSlot(reqId, docType);
+
+    setFormErrors(prev => ({ ...prev, [reqId]: finalMsg }));
+    showValidationModal(reqId, modalTitle, finalMsg);
+    showToast(finalMsg, 'error');
+  };
+
+  // Immediate AI Scanner State Reset for individual document slots
   const resetScanState = (reqId, clearUrlOnly = false) => {
     if (!reqId) return;
     const lower = reqId.toLowerCase();
+    const slotDocType =
+      lower.includes('licenseback') ? 'licenseBack'
+      : lower.includes('license') ? 'license'
+      : (lower.includes('orcr') || lower.includes('crdocument') || lower.includes('crfile') || lower.includes('ordocument') || lower.includes('orfile')) ? 'orCr'
+      : lower.includes('brgy') ? 'brgyClearance'
+      : lower.includes('cedula') ? 'cedula'
+      : lower.includes('toda') ? 'todaEndorsement'
+      : '';
 
-    // 1. Reset scan status flags for this specific document slot
+    // 1. Reset scan status flags and stale scanned metadata for this document slot
     setAiSuccess(prev => ({ ...prev, [reqId]: false }));
     setAiScanning(prev => ({ ...prev, [reqId]: false }));
-    setManualScanAlerts(prev => ({ ...prev, [reqId]: null }));
+    setManualScanAlerts(prev => ({ ...prev, [reqId]: null, ...(slotDocType ? { [slotDocType]: null } : {}) }));
+    if (slotDocType) {
+      setAiScannedData(prev => {
+        const copy = { ...prev };
+        delete copy[slotDocType];
+        return copy;
+      });
+    }
 
-    // 2. If explicitly removing a file, only clear its attached URL (never wipe user-typed or previously scanned fields!)
+    // 2. If explicitly removing a file, clear its attached URL
     if (clearUrlOnly) {
       setFormData(prev => {
         const copy = { ...prev };

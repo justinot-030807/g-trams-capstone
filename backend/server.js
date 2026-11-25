@@ -251,6 +251,9 @@ if (process.env.NODE_ENV !== 'test') {
 
 // Start server only if not in test mode
 if (process.env.NODE_ENV !== 'test') {
+    process.on('unhandledRejection', (reason) => {
+        console.error('[ProcessGuard] Unhandled promise rejection caught:', reason && reason.message ? reason.message : reason);
+    });
     server.listen(PORT, () => {
         console.log(`server running on port ${PORT}`);
     });

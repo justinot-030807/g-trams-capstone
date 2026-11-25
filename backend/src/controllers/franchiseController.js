@@ -2686,42 +2686,73 @@ const scanDocument = async (req, res) => {
 
         console.log(`[scanDocument] Received scan request for "${docType}" (bytes: ${base64Data.length}, mime: ${mimeType})`);
 
-        const { extractWithGemini } = require('../services/documentVerificationService');
+        const { extractWithGemini, hasMeaningfulExtractedFields } = require('../services/documentVerificationService');
 
         let extracted = null;
-        if (process.env.GEMINI_API_KEY) {
-            try {
-                extracted = await extractWithGemini(base64Data, mimeType, docType);
-            } catch (err) {
-                console.warn('[scanDocument] Gemini extraction error:', err.message);
-            }
-        } else {
-            console.warn('[scanDocument] GEMINI_API_KEY is not defined in environment variables. Running fallback OCR engine...');
-            try {
-                extracted = await extractWithGemini(base64Data, mimeType, docType);
-            } catch (err) {
-                console.warn('[scanDocument] Fallback OCR extraction error:', err.message);
-            }
+        try {
+            extracted = await extractWithGemini(base64Data, mimeType, docType);
+        } catch (err) {
+            console.warn('[scanDocument] Document extraction error:', err.message);
         }
 
-        console.log(`[scanDocument] Extraction completed for ${docType} (valid: ${Boolean(extracted && extracted.isValidDocument !== false)})`);
+        const isExplicitlyRejected = Boolean(
+            extracted &&
+            !extracted.noKey &&
+            (extracted.isValidDocument === false || extracted.isExpectedDocumentType === false)
+        );
+        const hasRealFields = Boolean(extracted && hasMeaningfulExtractedFields(docType, extracted));
 
-        // If extraction returned valid extracted fields (and not explicitly marked as invalid)
-        if (extracted && extracted.isValidDocument !== false && extracted.isExpectedDocumentType !== false) {
+        console.log(`[scanDocument] Extraction completed for ${docType} (valid: ${!isExplicitlyRejected && hasRealFields}, rejected: ${isExplicitlyRejected})`);
+
+        // 1. Valid document with actual auto-fillable fields
+        if (extracted && !isExplicitlyRejected && hasRealFields) {
             return res.status(200).json({
                 success: true,
+                rejected: false,
                 fileUrl,
                 docType,
                 data: extracted
             });
         }
 
-        // Graceful non-blocking fallback: Document remains attached, operator enters details manually
+        // 2. Explicitly invalid / wrong document type / unreadable image
+        if (isExplicitlyRejected) {
+            const rejectReason = extracted.rejectReason || 'invalid_document';
+            const rejectMessage = extracted.message || (
+                rejectReason === 'blurry_or_unreadable'
+                    ? 'Malabo o hindi mabasa ang in-upload na dokumento. Pakiulit at mag-upload ng mas malinaw na larawan.'
+                    : 'Mali ang in-upload na dokumento. Pakiulit at mag-upload ng tamang opisyal na dokumento.'
+            );
+            return res.status(200).json({
+                success: false,
+                rejected: true,
+                rejectReason,
+                detectedDocumentType: extracted.detectedDocumentType || 'Invalid Document',
+                docType,
+                message: rejectMessage
+            });
+        }
+
+        // 3. Classified as valid document type, but zero real fields could be extracted (too blurry / unclear)
+        if (extracted && !extracted.noKey && !hasRealFields) {
+            return res.status(200).json({
+                success: false,
+                rejected: true,
+                rejectReason: 'blurry_or_unreadable',
+                detectedDocumentType: extracted.detectedDocumentType || 'Blurry / Unreadable Document',
+                docType,
+                message: 'Malabo o hindi mabasa ang mga detalye sa dokumento kaya hindi ito na-autofill. Pakiulit at mag-upload ng mas malinaw na larawan.'
+            });
+        }
+
+        // 4. Genuine service outage / unscannable PDF without Gemini key: non-blocking manual fallback
         const manualNotice = (extracted && extracted.message)
-            || 'Hindi awtomatikong na-scan ang dokumento. Kailangan mong i-manual o i-type ang mga detalye (Plate No, Engine No, Chassis No) sa mga kahon sa ibaba.';
+            || 'Hindi pansamantalang ma-scan ang dokumento. Maaari mong i-type nang manual ang mga detalye sa ibaba o subukan ulit mamaya.';
 
         return res.status(200).json({
             success: false,
+            rejected: false,
+            serviceUnavailable: true,
             fileUrl,
             docType,
             needsManual: true,
@@ -2731,6 +2762,9 @@ const scanDocument = async (req, res) => {
         console.error('Error in scanDocument:', error);
         return res.status(200).json({
             success: false,
+            rejected: false,
+            serviceUnavailable: true,
+            needsManual: true,
             message: 'AI document scanning service is temporarily unavailable. You can enter details manually.'
         });
     }

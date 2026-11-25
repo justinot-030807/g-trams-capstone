@@ -1,28 +1,69 @@
 const path = require('path');
+const { execFile } = require('child_process');
 const dotenv = require('dotenv');
 const axios = require('axios');
 
+let _envLoadedOnce = false;
 function reloadGeminiEnv() {
+    if (_envLoadedOnce || process.env.NODE_ENV === 'production' || process.env.NODE_ENV === 'test') {
+        return;
+    }
+    _envLoadedOnce = true;
     try {
-        dotenv.config({ path: path.join(__dirname, '../../.env'), override: true });
+        dotenv.config({ path: path.join(__dirname, '../../.env') });
     } catch (_) {}
 }
 
 function getGeminiModelCascade() {
     reloadGeminiEnv();
-    const preferredModel = (process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite').trim();
-    const fallbackModel = (process.env.GEMINI_FALLBACK_MODEL || 'gemini-4-hydrogen').trim();
+    const preferredModel = (process.env.GEMINI_MODEL || 'gemini-3.1-flash-lite').trim();
+    const fallbackModel = (process.env.GEMINI_FALLBACK_MODEL || 'gemini-3.5-flash-lite').trim();
+    // Active non-deprecated models verified on v1beta; gemini-3.1-flash-lite prioritized for stability/latency
+    const DEAD_MODELS = new Set([
+        'gemini-1.5-flash',
+        'gemini-2.0-flash',
+        'gemini-2.0-flash-lite',
+        'gemini-2.5-flash',
+        'gemini-2.5-flash-lite'
+    ]);
     return [
+        'gemini-3.1-flash-lite',
         preferredModel,
         'gemini-3.5-flash-lite',
         fallbackModel,
-        'gemini-4-hydrogen',
         'gemini-3.8-flash',
-        'gemini-3.1-flash-lite',
-        'gemini-2.5-flash',
-        'gemini-2.5-flash-lite',
-        'gemini-2.0-flash'
-    ].filter((val, idx, self) => Boolean(val) && self.indexOf(val) === idx);
+        'gemini-4-hydrogen'
+    ].filter((val, idx, self) => Boolean(val) && !DEAD_MODELS.has(val) && self.indexOf(val) === idx);
+}
+
+function isCleanExtractedValue(val) {
+    if (val === null || val === undefined) return false;
+    const str = String(val).trim();
+    if (!str) return false;
+    const upper = str.toUpperCase().replace(/[^A-Z0-9]/g, '');
+    if (!upper || upper === 'NULL' || upper === 'NA' || upper === 'NONE' || upper === 'NOTFOUND' || upper === 'UNCLEAR' || upper === 'UNKNOWN') {
+        return false;
+    }
+    return true;
+}
+
+function hasMeaningfulExtractedFields(docType, data) {
+    if (!data || typeof data !== 'object') return false;
+    const keyMap = {
+        license: ['licenseNo', 'driverName', 'expiryDate', 'dateOfBirth', 'dlCodes'],
+        licenseBack: ['serialNo', 'conditions', 'dlCodes'],
+        orCr: ['plateNo', 'motorNo', 'engineNo', 'chassisNo', 'crNo', 'orNo', 'fileNo', 'ownerName', 'make'],
+        crFile: ['plateNo', 'motorNo', 'engineNo', 'chassisNo', 'crNo', 'fileNo', 'ownerName', 'make'],
+        orFile: ['orNo', 'orCrNo', 'orDate', 'expiryDate', 'plateNo', 'ownerName'],
+        crDocument: ['plateNo', 'motorNo', 'engineNo', 'chassisNo', 'crNo', 'fileNo', 'ownerName', 'make'],
+        orDocument: ['orNo', 'orCrNo', 'orDate', 'expiryDate', 'plateNo', 'ownerName'],
+        brgyClearance: ['clearanceNo', 'residentName', 'barangay', 'dateIssued', 'issuer'],
+        cedula: ['serialNo', 'ctcNo', 'dateIssued', 'fullName', 'taxpayerName', 'placeIssued', 'placeOfIssue'],
+        cedulaDoc: ['serialNo', 'ctcNo', 'dateIssued', 'fullName', 'taxpayerName', 'placeIssued', 'placeOfIssue'],
+        todaEndorsement: ['certNo', 'memberName', 'todaName', 'dateIssued']
+    };
+    const keys = keyMap[docType] || Object.keys(data).filter(k => !['isValidDocument', 'isExpectedDocumentType', 'detectedDocumentType', 'message', 'rejectReason', 'noKey', 'needsManual'].includes(k));
+    return keys.some((k) => isCleanExtractedValue(data[k]));
 }
 const { GoogleGenAI } = require('@google/genai');
 const { isNameMatch } = require('../utils/nameMatcher');
@@ -412,19 +453,37 @@ function getSampleFallbackData(docType) {
 }
 
 /**
- * Extracts structured JSON from document image using Gemini Vision (multimodal)
+ * Runs tesseract.js inside a crash-isolated child process so any WebAssembly /
+ * wasm-feature-detect error or container OOM never crashes the Express server.
  */
-let _tesseractWorkerPromise = null;
-async function getTesseractWorker() {
-    if (!_tesseractWorkerPromise) {
-        const os = require('os');
-        const Tesseract = require('tesseract.js');
-        _tesseractWorkerPromise = Tesseract.createWorker('eng', 1, { cachePath: os.tmpdir() }).catch(err => {
-            _tesseractWorkerPromise = null;
-            throw err;
-        });
-    }
-    return _tesseractWorkerPromise;
+function runIsolatedTesseract(cleanBase64) {
+    return new Promise((resolve) => {
+        const workerScript = path.join(__dirname, 'tesseractCliWorker.js');
+        const child = execFile(
+            process.execPath,
+            [workerScript],
+            { timeout: 18000, maxBuffer: 2 * 1024 * 1024 },
+            (err, stdout, stderr) => {
+                if (err) {
+                    const detail = (stderr || err.message || 'unknown error').toString().trim().slice(0, 240);
+                    console.warn('[DocVerify] Isolated Tesseract OCR warning:', detail);
+                    return resolve({ ok: false, text: '' });
+                }
+                try {
+                    const parsed = JSON.parse(String(stdout || '{}'));
+                    return resolve({ ok: Boolean(parsed.ok), text: String(parsed.text || '').trim() });
+                } catch (_) {
+                    return resolve({ ok: false, text: '' });
+                }
+            }
+        );
+        try {
+            child.stdin.write(cleanBase64);
+            child.stdin.end();
+        } catch (_) {
+            resolve({ ok: false, text: '' });
+        }
+    });
 }
 
 function isValidRasterImageBuffer(buf, mimeType = '') {
@@ -444,52 +503,72 @@ function isValidRasterImageBuffer(buf, mimeType = '') {
     return false;
 }
 
-async function runOcrSpaceRawText(base64Data, mimeType) {
-    if (!base64Data || process.env.NODE_ENV === 'test') return null;
-
-    // 1. Primary Local OCR: Tesseract.js (Zero API key, zero rate limits, works offline/on Render 24/7)
-    try {
-        const cleanBase64 = base64Data.replace(/^data:[^;]+;base64,/, '');
-        const imgBuffer = Buffer.from(cleanBase64, 'base64');
-        if (isValidRasterImageBuffer(imgBuffer, mimeType)) {
-            const worker = await getTesseractWorker();
-            const { data } = await worker.recognize(imgBuffer);
-            if (data && data.text && data.text.trim().length >= 10) {
-                return data.text.replace(/\r/g, '').trim();
-            }
-        }
-    } catch (tessErr) {
-        console.warn('[DocVerify] Local Tesseract OCR warning:', tessErr.message);
+async function runFallbackOcrText(base64Data, mimeType) {
+    if (!base64Data || process.env.NODE_ENV === 'test') {
+        return { text: '', engineRan: false };
     }
 
-    // 2. Secondary Cloud OCR: OCR.space Engine 2
+    const cleanBase64 = base64Data.replace(/^data:[^;]+;base64,/, '');
+    const imgBuffer = Buffer.from(cleanBase64, 'base64');
+    const isRaster = isValidRasterImageBuffer(imgBuffer, mimeType);
+    let engineRan = false;
+    let bestText = '';
+
+    // 1. Primary Fallback (Render-safe, zero WASM/OOM): OCR.space Engine 2
     try {
         const cleanMime = mimeType && mimeType.includes('/') ? mimeType : 'image/jpeg';
         const form = new URLSearchParams();
         form.append('apikey', process.env.OCR_SPACE_API_KEY || 'helloworld');
-        form.append('base64Image', `data:${cleanMime};base64,${base64Data}`);
+        form.append('base64Image', `data:${cleanMime};base64,${cleanBase64}`);
         form.append('OCREngine', '2');
         form.append('scale', 'true');
 
         const controller = new AbortController();
-        const timer = setTimeout(() => controller.abort(), 20000);
+        const timer = setTimeout(() => controller.abort(), 14000);
         const res = await fetch('https://api.ocr.space/parse/image', {
             method: 'POST',
             body: form,
             signal: controller.signal
         });
         clearTimeout(timer);
-        if (!res.ok) return null;
-        const json = await res.json();
-        const rawText = json?.ParsedResults?.[0]?.ParsedText || '';
-        return rawText
-            .replace(/\[Note:\s*the\s*'helloworld'\s*demo\s*key[^\]]*\]/gi, '')
-            .replace(/\r/g, '')
-            .trim();
+        if (res.ok) {
+            const json = await res.json();
+            if (!json?.IsErroredOnProcessing) {
+                engineRan = true;
+                const rawText = String(json?.ParsedResults?.[0]?.ParsedText || '')
+                    .replace(/\[Note:\s*the\s*'helloworld'\s*demo\s*key[^\]]*\]/gi, '')
+                    .replace(/\r/g, '')
+                    .trim();
+                if (rawText.length >= 10) {
+                    return { text: rawText, engineRan: true };
+                }
+                bestText = rawText;
+            }
+        }
     } catch (err) {
         console.warn('[DocVerify] OCR.space fallback request failed:', err.message);
-        return null;
     }
+
+    // 2. Secondary Offline Fallback: Crash-isolated child-process Tesseract.js
+    if (isRaster) {
+        const tessResult = await runIsolatedTesseract(cleanBase64);
+        if (tessResult.ok) {
+            engineRan = true;
+            if (tessResult.text.length >= 10) {
+                return { text: tessResult.text, engineRan: true };
+            }
+            if (tessResult.text.length > bestText.length) {
+                bestText = tessResult.text;
+            }
+        }
+    }
+
+    return { text: bestText, engineRan };
+}
+
+async function runOcrSpaceRawText(base64Data, mimeType) {
+    const { text } = await runFallbackOcrText(base64Data, mimeType);
+    return text && text.length >= 10 ? text : null;
 }
 
 function extractValueAfterLabel(lines, labelRegex) {
@@ -513,8 +592,17 @@ function extractValueAfterLabel(lines, labelRegex) {
 }
 
 async function extractWithOcrSpaceFallback(base64Data, mimeType, docType) {
-    const rawText = await runOcrSpaceRawText(base64Data, mimeType);
+    const { text: rawText, engineRan } = await runFallbackOcrText(base64Data, mimeType);
     if (!rawText || rawText.length < 10) {
+        if (engineRan) {
+            return {
+                isValidDocument: false,
+                isExpectedDocumentType: false,
+                rejectReason: 'blurry_or_unreadable',
+                detectedDocumentType: 'Blurry / Unreadable / Non-Document Image',
+                message: 'Mali o malabo ang in-upload na dokumento kaya walang mabasa o ma-autofill. Pakiulit at mag-upload ng mas malinaw at tamang dokumento.'
+            };
+        }
         return null;
     }
 
@@ -1148,55 +1236,44 @@ ONLY if genuine, extract and return:
 Return raw JSON only, no markdown codeblocks, no explanations.`;
         }
 
-        // High-speed multi-model auto-failover cascade:
-        const preferredModel = (process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite').trim();
-        const fallbackModel = (process.env.GEMINI_FALLBACK_MODEL || 'gemini-4-hydrogen').trim();
-        const modelsToTry = [
-            preferredModel,
-            'gemini-3.5-flash-lite',
-            fallbackModel,
-            'gemini-4-hydrogen',
-            'gemini-3.8-flash',
-            'gemini-3.1-flash-lite',
-            'gemini-2.0-flash',
-            'gemini-2.0-flash-lite',
-            'gemini-2.5-flash',
-            'gemini-2.5-flash-lite',
-            'gemini-1.5-flash'
-        
-        ].filter((val, idx, self) => Boolean(val) && self.indexOf(val) === idx);
-
+        // High-speed multi-model auto-failover cascade (live non-deprecated models + transient 503 retry):
+        const modelsToTry = getGeminiModelCascade();
         let responseText = null;
+        const retryableModels = [];
+
+        const invokeModelOnce = async (modelName) => {
+            console.log(`[DocVerify] Invoking model ${modelName} for ${docType}...`);
+            const reqConfig = {
+                responseMimeType: 'application/json'
+            };
+            if (modelName.includes('2.5') || modelName.includes('thinking')) {
+                reqConfig.thinkingConfig = { thinkingBudget: 0 };
+            }
+
+            const interaction = await ai.models.generateContent({
+                model: modelName,
+                contents: [
+                    {
+                        role: 'user',
+                        parts: [
+                            {
+                                inlineData: {
+                                    mimeType: mimeType || 'image/jpeg',
+                                    data: base64Data
+                                }
+                            },
+                            { text: prompt }
+                        ]
+                    }
+                ],
+                config: reqConfig
+            });
+            return interaction.text || (interaction.candidates?.[0]?.content?.parts?.[0]?.text) || null;
+        };
 
         for (const modelName of modelsToTry) {
             try {
-                console.log(`[DocVerify] Invoking model ${modelName} for ${docType}...`);
-                const reqConfig = {
-                    responseMimeType: 'application/json'
-                };
-                if (modelName.includes('2.5') || modelName.includes('thinking')) {
-                    reqConfig.thinkingConfig = { thinkingBudget: 0 };
-                }
-
-                const interaction = await ai.models.generateContent({
-                    model: modelName,
-                    contents: [
-                        {
-                            role: 'user',
-                            parts: [
-                                {
-                                    inlineData: {
-                                        mimeType: mimeType || 'image/jpeg',
-                                        data: base64Data
-                                    }
-                                },
-                                { text: prompt }
-                            ]
-                        }
-                    ],
-                    config: reqConfig
-                });
-                responseText = interaction.text || (interaction.candidates?.[0]?.content?.parts?.[0]?.text);
+                responseText = await invokeModelOnce(modelName);
                 if (responseText) {
                     console.log(`[DocVerify] Model ${modelName} succeeded with structured JSON for ${docType}`);
                     break;
@@ -1204,7 +1281,26 @@ Return raw JSON only, no markdown codeblocks, no explanations.`;
             } catch (callErr) {
                 const errMsg = callErr.message || '';
                 console.warn(`[DocVerify] Model ${modelName} failed (${errMsg}). Cascading to next model...`);
+                if (/503|UNAVAILABLE|429|RESOURCE_EXHAUSTED|high demand/i.test(errMsg)) {
+                    retryableModels.push(modelName);
+                }
                 continue;
+            }
+        }
+
+        // Single brief retry pass if live models had a momentary 503/demand spike
+        if (!responseText && retryableModels.length > 0) {
+            await new Promise((r) => setTimeout(r, 650));
+            for (const modelName of retryableModels.slice(0, 2)) {
+                try {
+                    responseText = await invokeModelOnce(modelName);
+                    if (responseText) {
+                        console.log(`[DocVerify] Retry of model ${modelName} succeeded for ${docType}`);
+                        break;
+                    }
+                } catch (retryErr) {
+                    console.warn(`[DocVerify] Retry of model ${modelName} failed (${retryErr.message || retryErr}).`);
+                }
             }
         }
 
@@ -1212,7 +1308,7 @@ Return raw JSON only, no markdown codeblocks, no explanations.`;
             console.warn(`[DocVerify] No text returned by Gemini models for ${docType}. Cascading to OCR.space fallback...`);
             const ocrFallback = await extractWithOcrSpaceFallback(base64Data, mimeType, docType);
             if (ocrFallback) {
-                console.log(`[DocVerify] OCR.space fallback succeeded for ${docType}`);
+                console.log(`[DocVerify] Fallback OCR completed for ${docType} (valid: ${Boolean(ocrFallback.isValidDocument !== false)})`);
                 return ocrFallback;
             }
             return null;
@@ -1230,12 +1326,27 @@ Return raw JSON only, no markdown codeblocks, no explanations.`;
         const parsed = JSON.parse(cleaned);
         console.log(`[DocVerify] Parsed extraction data for ${docType} (valid: ${Boolean(parsed?.isValidDocument)})`);
         if (parsed && (parsed.isValidDocument === false || parsed.isExpectedDocumentType === false)) {
+            const rawReasonText = `${parsed.detectedDocumentType || ''} ${parsed.message || ''}`;
+            const rejectReason = /blur|illegible|unreadable|unclear|malabo|dark/i.test(rawReasonText)
+                ? 'blurry_or_unreadable'
+                : 'invalid_document';
             console.warn(`[DocVerify] Image rejected by Document Classification Guard for ${docType}:`, parsed.message || parsed.detectedDocumentType);
             return {
                 isValidDocument: false,
                 isExpectedDocumentType: false,
+                rejectReason,
                 detectedDocumentType: parsed.detectedDocumentType || 'Invalid Image / Non-document',
-                message: parsed.message || 'Hindi ito valid na opisyal na LTO document. Mangyaring mag-upload ng lehitimong kopya.'
+                message: parsed.message || 'Mali o hindi valid ang in-upload na dokumento. Pakiulit at mag-upload ng lehitimo at malinaw na kopya.'
+            };
+        }
+        if (parsed && !hasMeaningfulExtractedFields(docType, parsed)) {
+            console.warn(`[DocVerify] Zero meaningful fields extracted for ${docType}; rejecting as blurry/unreadable.`);
+            return {
+                isValidDocument: false,
+                isExpectedDocumentType: false,
+                rejectReason: 'blurry_or_unreadable',
+                detectedDocumentType: parsed.detectedDocumentType || 'Blurry / Unreadable Document',
+                message: 'Malabo o hindi mabasa ang mga detalye sa dokumento kaya hindi ito na-autofill. Pakiulit at mag-upload ng mas malinaw na larawan.'
             };
         }
         return parsed;
@@ -1706,24 +1817,9 @@ Return ONLY a valid JSON object matching this schema:
 }
 Return raw JSON only, no markdown, no surrounding text.`;
 
-        const preferredModel = (process.env.GEMINI_MODEL || 'gemini-3.5-flash-lite').trim();
-        const fallbackModel = (process.env.GEMINI_FALLBACK_MODEL || 'gemini-4-hydrogen').trim();
-        const modelsToTry = [
-            preferredModel,
-            'gemini-3.5-flash-lite',
-            fallbackModel,
-            'gemini-4-hydrogen',
-            'gemini-3.8-flash',
-            'gemini-3.1-flash-lite',
-            'gemini-2.0-flash',
-            'gemini-2.0-flash-lite',
-            'gemini-2.5-flash',
-            'gemini-2.5-flash-lite',
-            'gemini-1.5-flash'
-        
-        ].filter((val, idx, self) => Boolean(val) && self.indexOf(val) === idx);
-
+        const modelsToTry = getGeminiModelCascade();
         let responseText = null;
+        const retryableRosterModels = [];
         for (const modelName of modelsToTry) {
             try {
                 console.log(`[TodaRosterOCR] Invoking model ${modelName} (mimeType: ${mimeType}, base64 length: ${img.base64Data.length})...`);
@@ -1754,6 +1850,31 @@ Return raw JSON only, no markdown, no surrounding text.`;
                 }
             } catch (mErr) {
                 console.warn(`[TodaRosterOCR] Model ${modelName} failed:`, mErr.message);
+                if (/503|UNAVAILABLE|429|RESOURCE_EXHAUSTED|high demand/i.test(mErr.message || '')) {
+                    retryableRosterModels.push(modelName);
+                }
+            }
+        }
+
+        if (!responseText && retryableRosterModels.length > 0) {
+            await new Promise((r) => setTimeout(r, 650));
+            for (const modelName of retryableRosterModels.slice(0, 2)) {
+                try {
+                    const interaction = await ai.models.generateContent({
+                        model: modelName,
+                        contents: [
+                            { inlineData: { mimeType: mimeType, data: img.base64Data } },
+                            { text: prompt }
+                        ],
+                        config: { responseMimeType: 'application/json' }
+                    });
+                    if (interaction && interaction.text) {
+                        responseText = interaction.text.trim();
+                        break;
+                    }
+                } catch (retryErr) {
+                    console.warn(`[TodaRosterOCR] Retry of ${modelName} failed:`, retryErr.message);
+                }
             }
         }
 
@@ -1807,6 +1928,7 @@ Return raw JSON only, no markdown, no surrounding text.`;
 module.exports = {
     normalizeString,
     compareField,
+    hasMeaningfulExtractedFields,
     getSampleFallbackData,
     extractWithGemini,
     verifyFranchiseDocuments,
