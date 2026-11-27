@@ -11,6 +11,7 @@ import {
 import { useTheme } from '../../context/ThemeContext';
 import { useLanguage } from '../../context/LanguageContext';
 import { formatZoneLabel } from '../../utils/constants';
+import { sanitizeMobileInput, sanitizeDualContactInput, isValidPhMobile } from '../../utils/contactValidation';
 import { TableRowsSkeleton } from '../../components/skeleton';
 
 const resolveCollectorName = (receipt) => {
@@ -40,6 +41,7 @@ const CashierSettings = () => {
     contact: '',
     station: 'Window 1 - Cashier Terminal'
   });
+  const [isEmailBackedContact, setIsEmailBackedContact] = useState(false);
   const [isSavingProfile, setIsSavingProfile] = useState(false);
 
   // Preferences state (aligned defaults: ON unless explicitly set to 'false')
@@ -95,11 +97,13 @@ const CashierSettings = () => {
         });
         if (res.ok) {
           const data = await res.json();
+          const loadedContact = data.contact || '';
+          setIsEmailBackedContact(String(loadedContact).includes('@'));
           setProfileData(prev => ({
             ...prev,
             name: data.name || prev.name,
             email: data.email || '',
-            contact: data.contact || ''
+            contact: loadedContact
           }));
           if (data.name) {
             localStorage.setItem('name', data.name);
@@ -202,6 +206,19 @@ const CashierSettings = () => {
     if (!profileData.name.trim()) {
       showToast('Name cannot be empty.', 'error');
       return;
+    }
+
+    const trimmedContact = String(profileData.contact || '').trim();
+    if (trimmedContact) {
+      if (trimmedContact.includes('@')) {
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedContact)) {
+          showToast('Please enter a valid email address.', 'error');
+          return;
+        }
+      } else if (!isValidPhMobile(trimmedContact)) {
+        showToast('Please enter a valid 11-digit Philippine mobile number (e.g. 09123456789).', 'error');
+        return;
+      }
     }
 
     setIsSavingProfile(true);
@@ -486,9 +503,18 @@ const CashierSettings = () => {
                     Contact Phone Number
                   </label>
                   <input
-                    type="tel"
+                    type={isEmailBackedContact && String(profileData.contact || '').includes('@') ? 'text' : 'tel'}
+                    inputMode={isEmailBackedContact && String(profileData.contact || '').includes('@') ? 'email' : 'numeric'}
+                    maxLength={isEmailBackedContact && String(profileData.contact || '').includes('@') ? 60 : 11}
                     value={profileData.contact}
-                    onChange={(e) => setProfileData(prev => ({ ...prev, contact: e.target.value }))}
+                    onChange={(e) =>
+                      setProfileData(prev => ({
+                        ...prev,
+                        contact: isEmailBackedContact
+                          ? sanitizeDualContactInput(e.target.value)
+                          : sanitizeMobileInput(e.target.value)
+                      }))
+                    }
                     className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3.5 py-2.5 text-sm font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] focus:outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] dark:focus:ring-[#D4AF37] min-h-[44px]"
                     placeholder="e.g. 09123456789"
                   />

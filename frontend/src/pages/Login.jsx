@@ -7,6 +7,7 @@ import AuthNavbar from '../components/common/AuthNavbar';
 import AuthFooter from '../components/common/AuthFooter';
 import InteractiveLogo from '../components/common/InteractiveLogo';
 import { unwrapGoogleProfile, isValidContact, resilientApiFetch } from '../utils/googleAuthUtils';
+import { sanitizeDualContactInput } from '../utils/contactValidation';
 
 const Login = () => {
   const navigate = useNavigate();
@@ -50,7 +51,9 @@ const Login = () => {
   }, []);
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    const nextValue = name === 'contact' ? sanitizeDualContactInput(value) : value;
+    setFormData(prev => ({ ...prev, [name]: nextValue }));
     if (error) setError('');
   };
 
@@ -261,6 +264,7 @@ const Login = () => {
                     <input
                       type="text"
                       name="contact"
+                      maxLength={60}
                       value={formData.contact}
                       onChange={handleChange}
                       autoComplete="username"

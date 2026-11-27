@@ -3,14 +3,41 @@ const Notification = require('../models/notificationModel');
 const User = require('../models/userModel');
 const { emitToUser } = require('../config/socket');
 
+const isValidEmailFormat = (val) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(val || '').trim());
+
+const normalizeAndValidatePhMobile = (val) => {
+    const clean = String(val || '').trim().replace(/[\s\-()]/g, '');
+    if (!/^(09\d{9}|\+639\d{9}|639\d{9})$/.test(clean)) return null;
+    if (clean.startsWith('+639')) return '0' + clean.slice(3);
+    if (clean.startsWith('639') && clean.length === 12) return '0' + clean.slice(2);
+    return clean;
+};
+
 const createTicket = async (req, res, next) => {
     try {
         const { subject, contactNumber, message } = req.body;
-        
+        const rawContact = String(contactNumber || '').trim();
+        let validatedContact = rawContact;
+
+        if (rawContact) {
+            if (rawContact.includes('@')) {
+                if (!isValidEmailFormat(rawContact)) {
+                    return res.status(400).json({ message: 'Please provide a valid email address or 11-digit Philippine mobile number.' });
+                }
+                validatedContact = rawContact.toLowerCase();
+            } else {
+                const normalizedPhone = normalizeAndValidatePhMobile(rawContact);
+                if (!normalizedPhone) {
+                    return res.status(400).json({ message: 'Contact number must be a valid 11-digit Philippine mobile number (e.g. 09123456789).' });
+                }
+                validatedContact = normalizedPhone;
+            }
+        }
+
         const ticket = await Ticket.create({
             operator: req.user._id,
             subject,
-            contactNumber,
+            contactNumber: validatedContact,
             message
         });
 

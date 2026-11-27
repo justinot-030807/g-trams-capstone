@@ -52,7 +52,6 @@ const VEHICLE_MAKE_OPTIONS = [
   'Piaggio Ape'
 ];
 const VEHICLE_YEAR_OPTIONS = Array.from({ length: 32 }, (_, i) => String(new Date().getFullYear() - i));
-const VEHICLE_COLOR_OPTIONS = ['RED', 'BLACK', 'BLUE', 'WHITE', 'YELLOW', 'GREEN', 'SILVER', 'ORANGE', 'RED / BLACK', 'BLUE / WHITE', 'BLACK / SILVER'];
 const FUEL_TYPE_OPTIONS = ['GASOLINE', 'GAS', 'DIESEL', 'ELECTRIC', 'LPG'];
 const DISPLACEMENT_OPTIONS = ['100', '110', '125', '150', '155', '175', '200'];
 const BODY_TYPE_OPTIONS = ['MOTORCYCLE WITH SIDECAR', 'MOTORCYCLE WITHOUT SIDECAR', 'TRICYCLE', 'THREE WHEELED VEHICLE'];
@@ -70,6 +69,7 @@ const withCurrentOption = (options, currentVal) => {
 };
 import { useLanguage } from '../../context/LanguageContext';
 import { isNameMatch } from '../../utils/nameMatcher';
+import { sanitizeMobileInput, isValidPhMobile } from '../../utils/contactValidation';
 
 import { compressImage } from '../../utils/imageCompressor';
 
@@ -1271,7 +1271,9 @@ const ApplyFranchise = () => {
     if (name === 'made') {
       sanitized = value.replace(/\D/g, '').slice(0, 4);
     } else if (['contactNumber', 'driverContact'].includes(name)) {
-      sanitized = value.replace(/\D/g, '').slice(0, 11);
+      sanitized = sanitizeMobileInput(value);
+    } else if (name === 'color') {
+      sanitized = value.replace(/[^a-zA-Z\s/\-&,]/g, '').slice(0, 40);
     } else if (['fullName', 'driverName'].includes(name)) {
       sanitized = value.replace(/[^a-zA-Z\s.\-\u00F1\u00D1]/g, '');
     } else if (['motorNo', 'chassisNo', 'plateNo', 'orCrNo', 'driverLicenseNo', 'todaCertNo', 'brgyClearanceNo', 'cedulaSerialNo', 'driverLicenseSerialNo'].includes(name)) {
@@ -1510,7 +1512,7 @@ const ApplyFranchise = () => {
               const finalYear = d.yearModel || d.year ? String(d.yearModel || d.year) : '';
               const finalCrNo = d.crNo ? String(d.crNo).toUpperCase() : '';
               const finalOrNo = (d.orNo || d.orCrNo) ? String(d.orNo || d.orCrNo).toUpperCase() : '';
-              const finalColor = d.color ? String(d.color).toUpperCase() : '';
+              const finalColor = d.color ? String(d.color).toUpperCase().replace(/[^A-Z\s/\-&,]/g, '').slice(0, 40) : '';
               const finalOwner = d.ownerName ? String(d.ownerName).toUpperCase() : '';
               const finalOwnerAddress = d.ownerAddress || '';
 
@@ -2114,6 +2116,10 @@ const ApplyFranchise = () => {
           showValidationModal('driverContact', "Driver's Contact Number Required", 'Please enter an active contact number for the designated driver.');
           return false;
         }
+        if (!isValidPhMobile(formData.driverContact)) {
+          showValidationModal('driverContact', "Invalid Driver Contact Number", 'Please enter a valid 11-digit Philippine mobile number starting with 09 (e.g. 09123456789).');
+          return false;
+        }
       }
       
       const hasLicense = uploadedDocs.license || filePreviews.license || formData.licenseUrl;
@@ -2417,7 +2423,7 @@ const ApplyFranchise = () => {
     // 7. CR Registered Owner vs Applicant Name
     const scannedOwner = ai?.orCr?.ownerName || ai?.cr?.ownerName || '';
     if (scannedOwner && form.fullName) {
-      if (!isNameMatch(scannedOwner, form.fullName)) {
+      if (!isNameMatch(form.fullName, scannedOwner) && !isNameMatch(scannedOwner, form.fullName)) {
         discrepancies.push({
           field: 'registeredOwner',
           docType: 'cr',
@@ -3228,11 +3234,13 @@ const ApplyFranchise = () => {
                         </label>
                         <input 
                           type="tel" 
+                          inputMode="numeric"
                           name="driverContact" 
                           maxLength={11}
                           value={formData.driverContact} 
                           onChange={handleInputChange} 
                           className={getInputClasses('driverContact')} 
+                          placeholder="09XXXXXXXXX"
                           required 
                           autoComplete="off"
                         />
@@ -3736,17 +3744,16 @@ const ApplyFranchise = () => {
                       <label className="block text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#EAE7E1] mb-1.5">
                         Tricycle Color
                       </label>
-                      <select
+                      <input
+                        type="text"
                         name="color"
+                        maxLength={40}
                         value={formData.color || ''}
                         onChange={handleInputChange}
-                        className={`${inputClasses} cursor-pointer`}
-                      >
-                        <option value="">-- Select Color --</option>
-                        {withCurrentOption(VEHICLE_COLOR_OPTIONS, formData.color).map((col) => (
-                          <option key={col} value={col}>{col}</option>
-                        ))}
-                      </select>
+                        placeholder="e.g. Black, Red/Black, Blue"
+                        autoComplete="off"
+                        className={inputClasses}
+                      />
                     </div>
 
                     {/* 8. Fuel Type */}

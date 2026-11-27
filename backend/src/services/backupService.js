@@ -7,6 +7,7 @@ const mongoose = require('mongoose');
 const AuditLog = require('../models/auditLogModel');
 const Notification = require('../models/notificationModel');
 const { ChatMessage, ChatThread } = require('../models/chatModel');
+const { normalizeLegacyFiscalYear } = require('../controllers/systemSettingsController');
 
 const ENCRYPTED_MAGIC = Buffer.from('GTRAMS_ENC_V1\n', 'ascii');
 const RESTORE_LOCK_ID = 'db_restore_lock';
@@ -530,7 +531,10 @@ async function validateBackupPayload(backupPayload) {
                 }
                 seenIds.add(idKey);
             }
-            const doc = new model(rec);
+            const recordToValidate = key === 'system_settings' && rec.fiscalYear !== undefined
+                ? { ...rec, fiscalYear: normalizeLegacyFiscalYear(rec.fiscalYear) }
+                : rec;
+            const doc = new model(recordToValidate);
             await doc.validate();
             doc.initializeTimestamps?.();
             if (model.schema.options.versionKey) doc.set(model.schema.options.versionKey, 0);

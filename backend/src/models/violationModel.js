@@ -1,5 +1,49 @@
 const mongoose = require('mongoose');
 
+const policySnapshotSchema = new mongoose.Schema({
+    policyVersion: {
+        type: Number,
+        immutable: true
+    },
+    policyUpdatedAt: {
+        type: Date,
+        immutable: true
+    },
+    violationCode: {
+        type: String,
+        immutable: true
+    },
+    violationName: {
+        type: String,
+        immutable: true
+    },
+    severity: {
+        type: String,
+        immutable: true
+    },
+    isGrave: {
+        type: Boolean,
+        immutable: true
+    },
+    fineAtCitation: {
+        type: Number,
+        immutable: true
+    },
+    suspensionDaysAtCitation: {
+        type: Number,
+        immutable: true
+    },
+    appliedTier: {
+        type: String,
+        immutable: true
+    },
+    lockedAt: {
+        type: Date,
+        default: Date.now,
+        immutable: true
+    }
+}, { _id: false });
+
 const violationSchema = new mongoose.Schema({
     operator: { 
         type: mongoose.Schema.Types.ObjectId, 
@@ -38,35 +82,42 @@ const violationSchema = new mongoose.Schema({
     severity: { 
         type: String, 
         enum: ['Low', 'Medium', 'High', 'Grave'], 
-        default: 'Medium' 
+        default: 'Medium',
+        immutable: true
     },
     isGrave: { 
         type: Boolean, 
-        default: false 
+        default: false,
+        immutable: true
     },
     offenseNumber: { 
         type: Number, 
         required: true, 
-        default: 1 
+        default: 1,
+        immutable: true
     },
     sanction: {
         type: { 
             type: String, 
             enum: ['Warning', 'Suspension', 'Revocation'], 
-            required: true 
+            required: true,
+            immutable: true
         },
         resultingStatus: { 
             type: String, 
             enum: ['Active - Under Warning', 'Suspended', 'Revoked'], 
-            required: true 
+            required: true,
+            immutable: true
         },
         fineAmount: { 
             type: Number, 
-            default: 0 
+            default: 0,
+            immutable: true
         },
         suspensionDays: { 
             type: Number, 
-            default: 0 
+            default: 0,
+            immutable: true
         },
         suspensionStartDate: { 
             type: Date 
@@ -74,6 +125,11 @@ const violationSchema = new mongoose.Schema({
         suspensionEndDate: { 
             type: Date 
         }
+    },
+    policySnapshot: {
+        type: policySnapshotSchema,
+        default: undefined,
+        immutable: true
     },
     remarks: { 
         type: String, 

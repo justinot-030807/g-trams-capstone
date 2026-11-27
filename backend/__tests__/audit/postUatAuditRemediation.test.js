@@ -317,8 +317,8 @@ describe('Post-UAT Codex Audit Remediation Suite (H1-H3, M1-M7, L1, L4)', () => 
             .set('Authorization', auth(staff))
             .send({
                 franchiseId: replRes.body._id,
-                violationType: 'No Franchise Sticker Displayed',
-                severity: 'Medium'
+                violationCode: 'OUT_OF_LINE',
+                violationType: 'Out of line operation'
             })
             .expect(201);
         expect(v2.body.violation.offenseNumber).toBe(2);

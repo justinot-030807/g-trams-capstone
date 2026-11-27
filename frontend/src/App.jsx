@@ -78,10 +78,26 @@ const ProfileRedirect = () => {
   return <Navigate to="/operator/settings" replace />;
 };
 
+const normalizeFiscalYear = (val) => {
+  const match = String(val ?? '').trim().match(/^(\d{4})/);
+  if (match) {
+    const yr = Number(match[1]);
+    if (yr >= 2020 && yr <= 2100) return match[1];
+  }
+  return new Date().getFullYear().toString();
+};
+
 function App() {
   useEffect(() => {
-    // Purge any legacy un-scoped cached franchises on unauthenticated load
+    // Purge any legacy un-scoped cached franchises on unauthenticated load & normalize legacy cached fiscal_year
     try {
+      const cachedFiscalYear = localStorage.getItem('fiscal_year');
+      if (cachedFiscalYear) {
+        const cleanFiscalYear = normalizeFiscalYear(cachedFiscalYear);
+        if (cleanFiscalYear !== cachedFiscalYear) {
+          localStorage.setItem('fiscal_year', cleanFiscalYear);
+        }
+      }
       localStorage.removeItem('gtrams_cached_franchises');
       if (!localStorage.getItem('token')) {
         Object.keys(localStorage).forEach((key) => {
@@ -103,7 +119,7 @@ function App() {
           if (json.data) {
             const d = json.data;
             localStorage.setItem('maintenance_mode', d.maintenanceMode ? 'true' : 'false');
-            if (d.fiscalYear) localStorage.setItem('fiscal_year', d.fiscalYear);
+            if (d.fiscalYear) localStorage.setItem('fiscal_year', normalizeFiscalYear(d.fiscalYear));
             if (d.franchiseFee) localStorage.setItem('franchise_fee', d.franchiseFee);
             if (d.validityNew) localStorage.setItem('validity_new', d.validityNew);
             if (d.validityRenew) localStorage.setItem('validity_renew', d.validityRenew);

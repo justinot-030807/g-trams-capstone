@@ -16,6 +16,15 @@ import {
 } from '../utils/notificationUtils';
 import { unsubscribeFromPush } from '../utils/pushNotification';
 
+const normalizeFiscalYear = (val) => {
+  const match = String(val ?? '').trim().match(/^(\d{4})/);
+  if (match) {
+    const yr = Number(match[1]);
+    if (yr >= 2020 && yr <= 2100) return match[1];
+  }
+  return new Date().getFullYear().toString();
+};
+
 const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
   const { t, language, changeLanguage } = useLanguage();
   const { theme, toggleTheme, isDark } = useTheme();
@@ -116,6 +125,15 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
 
     fetchFreshUser();
 
+    // Self-heal legacy fiscal_year in localStorage immediately on mount
+    try {
+      const cachedFy = localStorage.getItem('fiscal_year');
+      if (cachedFy) {
+        const cleanFy = normalizeFiscalYear(cachedFy);
+        if (cleanFy !== cachedFy) localStorage.setItem('fiscal_year', cleanFy);
+      }
+    } catch {}
+
     // Live system settings sync (maintenance mode, fiscal year, fees)
     const fetchSystemSettings = async () => {
       try {
@@ -127,7 +145,7 @@ const TopNavbar = ({ isSidebarOpen, onToggleSidebar }) => {
             const isMaint = d.maintenanceMode === true;
             setIsMaintenanceActive(isMaint);
             localStorage.setItem('maintenance_mode', isMaint ? 'true' : 'false');
-            if (d.fiscalYear) localStorage.setItem('fiscal_year', d.fiscalYear);
+            if (d.fiscalYear) localStorage.setItem('fiscal_year', normalizeFiscalYear(d.fiscalYear));
             if (d.franchiseFee) localStorage.setItem('franchise_fee', d.franchiseFee);
             if (d.validityNew) localStorage.setItem('validity_new', d.validityNew);
             if (d.validityRenew) localStorage.setItem('validity_renew', d.validityRenew);

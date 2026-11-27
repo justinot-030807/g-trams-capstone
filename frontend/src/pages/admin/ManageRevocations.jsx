@@ -1,15 +1,40 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import MainLayout from '../../components/MainLayout';
-import { 
-  ShieldAlert, Search, AlertTriangle, UploadCloud, X, Loader2, 
-  CheckCircle, CheckCircle2, AlertCircle, FileText, Eye, ChevronLeft, 
-  ChevronRight, Clock, ShieldCheck, Scale, History, User, Check, RefreshCw, Printer
+import {
+  ShieldAlert, Search, AlertTriangle, UploadCloud, X, Loader2,
+  CheckCircle, CheckCircle2, AlertCircle, FileText, Eye, ChevronLeft,
+  ChevronRight, ShieldCheck, History, Check, Lock, RotateCcw, Wallet
 } from 'lucide-react';
 import { TableRowsSkeleton } from '../../components/skeleton';
 import PageHeader from '../../components/common/PageHeader';
 import StatusBadge from '../../components/common/StatusBadge';
-import OfficialCancellationLetterModal from '../../components/common/OfficialCancellationLetterModal';
 import { cleanText, formatVehicleMakeAndModel } from '../../utils/vehicleFormatters';
+
+const DEFAULT_FALLBACK_POLICY = {
+  policyVersion: 1,
+  policyUpdatedAt: null,
+  types: [
+    { code: 'OVERCHARGING', name: 'Overcharging of fare', severity: 'Medium', isGrave: false, defaultFine: 500, suspensionDays: 15, isActive: true },
+    { code: 'REFUSAL_CONVEY', name: 'Refusal to convey passengers', severity: 'Medium', isGrave: false, defaultFine: 500, suspensionDays: 15, isActive: true },
+    { code: 'DISCOURTEOUS', name: 'Arrogant/Discourteous behavior', severity: 'Low', isGrave: false, defaultFine: 300, suspensionDays: 7, isActive: true },
+    { code: 'NO_FRANCHISE', name: 'Operating without valid franchise / Colorum', severity: 'Grave', isGrave: true, defaultFine: 2000, suspensionDays: 30, isActive: true },
+    { code: 'OUT_OF_LINE', name: 'Out of line operation', severity: 'Medium', isGrave: false, defaultFine: 500, suspensionDays: 15, isActive: true },
+    { code: 'RECKLESS_DRIVING', name: 'Reckless or dangerous driving', severity: 'High', isGrave: false, defaultFine: 1000, suspensionDays: 30, isActive: true },
+    { code: 'OTHER', name: 'Other municipal ordinance violation', severity: 'Low', isGrave: false, defaultFine: 300, suspensionDays: 7, isActive: true }
+  ],
+  tiers: {
+    firstOffense: { sanction: 'Warning', resultingStatus: 'Active - Under Warning' },
+    secondOffense: { sanction: 'Suspension', resultingStatus: 'Suspended', defaultFine: 500, defaultSuspensionDays: 15 },
+    thirdOffense: { sanction: 'Revocation', resultingStatus: 'Revoked' },
+    graveViolation: { sanction: 'Revocation', resultingStatus: 'Revoked' }
+  }
+};
+
+const formatOrdinal = (n) => {
+  const num = Number(n) || 1;
+  const suffix = num === 1 ? 'st' : num === 2 ? 'nd' : num === 3 ? 'rd' : 'th';
+  return `${num}${suffix} Offense`;
+};
 
 const ManageRevocations = () => {
   const [franchises, setFranchises] = useState([]);
@@ -21,44 +46,34 @@ const ManageRevocations = () => {
   const [statusFilter, setStatusFilter] = useState('All');
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
-  const [selectedCancellation, setSelectedCancellation] = useState(null);
 
-  // System Violation Policy
-  const [violationPolicy, setViolationPolicy] = useState({
-    types: [
-      { code: 'OVERCHARGING', name: 'Overcharging of fare', severity: 'Medium', isGrave: false, defaultFine: 500, suspensionDays: 15 },
-      { code: 'REFUSAL_CONVEY', name: 'Refusal to convey passengers', severity: 'Medium', isGrave: false, defaultFine: 500, suspensionDays: 15 },
-      { code: 'DISCOURTEOUS', name: 'Arrogant/Discourteous behavior', severity: 'Low', isGrave: false, defaultFine: 300, suspensionDays: 7 },
-      { code: 'NO_FRANCHISE', name: 'Operating without valid franchise / Colorum', severity: 'Grave', isGrave: true, defaultFine: 2000, suspensionDays: 30 },
-      { code: 'OUT_OF_LINE', name: 'Out of line operation', severity: 'Medium', isGrave: false, defaultFine: 500, suspensionDays: 15 },
-      { code: 'RECKLESS_DRIVING', name: 'Reckless or dangerous driving', severity: 'High', isGrave: false, defaultFine: 1000, suspensionDays: 30 },
-      { code: 'OTHER', name: 'Other municipal ordinance violation', severity: 'Low', isGrave: false, defaultFine: 300, suspensionDays: 7 }
-    ],
-    tiers: {
-      firstOffense: { sanction: 'Warning', resultingStatus: 'Active - Under Warning' },
-      secondOffense: { sanction: 'Suspension', resultingStatus: 'Suspended', defaultFine: 500, defaultSuspensionDays: 15 },
-      thirdOffense: { sanction: 'Revocation', resultingStatus: 'Revoked' },
-      graveViolation: { sanction: 'Revocation', resultingStatus: 'Revoked' }
-    }
-  });
+  // Live System Violation Policy (read-only for LLSA I)
+  const [violationPolicy, setViolationPolicy] = useState(DEFAULT_FALLBACK_POLICY);
 
-  // Modal states for Recording Violation
+  // Modal states for Recording Violation (LLSA I simplified inputs only)
   const [selectedFranchise, setSelectedFranchise] = useState(null);
   const [operatorHistory, setOperatorHistory] = useState(null);
   const [isHistoryLoading, setIsHistoryLoading] = useState(false);
-  const [selectedViolation, setSelectedViolation] = useState('');
-  const [selectedSeverity, setSelectedSeverity] = useState('Medium');
-  const [isGraveViolation, setIsGraveViolation] = useState(false);
-  const [fineAmount, setFineAmount] = useState(500);
-  const [suspensionDays, setSuspensionDays] = useState(15);
+  const [historyError, setHistoryError] = useState('');
+  const [selectedViolationCode, setSelectedViolationCode] = useState('');
   const [driverName, setDriverName] = useState('');
   const [remarks, setRemarks] = useState('');
   const [evidenceFile, setEvidenceFile] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Settlement Modal State
+  // Unit Violation History Modal (for inspecting locked rates, balances & actions)
+  const [historyModal, setHistoryModal] = useState({
+    isOpen: false,
+    franchise: null,
+    data: null,
+    isLoading: false,
+    error: ''
+  });
+
+  // Resolution Modal State ('settle' = fine payment, 'lift' = dismiss citation in error)
   const [settleModal, setSettleModal] = useState({
     isOpen: false,
+    action: 'settle',
     violation: null,
     notes: '',
     isSubmitting: false
@@ -72,7 +87,36 @@ const ManageRevocations = () => {
 
   const showToast = (message, type = 'success') => {
     setToast({ show: true, message, type });
-    setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 4000);
+    setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 4500);
+  };
+
+  // Active violation types filtered strictly from live SystemSettings policy
+  const activePolicyTypes = useMemo(() => {
+    const raw = Array.isArray(violationPolicy?.types) ? violationPolicy.types : [];
+    return raw.filter((t) => t && t.isActive !== false);
+  }, [violationPolicy]);
+
+  const selectedPolicyType = useMemo(() => {
+    if (!activePolicyTypes.length) return null;
+    return activePolicyTypes.find((t) => t.code === selectedViolationCode) || activePolicyTypes[0];
+  }, [activePolicyTypes, selectedViolationCode]);
+
+  // Helper to compare a historical citation's locked fine against current live SystemSettings fine
+  const getLivePolicyFineForViolation = (violation) => {
+    const allTypes = Array.isArray(violationPolicy?.types) ? violationPolicy.types : [];
+    const targetCode = String(violation?.policySnapshot?.violationCode || violation?.violationCode || '').trim().toUpperCase();
+    const targetName = String(violation?.policySnapshot?.violationName || violation?.violationType || '').trim().toLowerCase();
+
+    let matched = null;
+    if (targetCode) {
+      matched = allTypes.find((t) => String(t?.code || '').trim().toUpperCase() === targetCode);
+    }
+    if (!matched && targetName) {
+      matched = allTypes.find((t) => String(t?.name || '').trim().toLowerCase() === targetName);
+    }
+    if (!matched || matched.defaultFine === undefined || matched.defaultFine === null) return null;
+    const parsed = Number(matched.defaultFine);
+    return Number.isFinite(parsed) ? parsed : null;
   };
 
   // Fetch Settings / Policy
@@ -100,7 +144,6 @@ const ManageRevocations = () => {
       if (res.ok) {
         const raw = await res.json();
         const allFranchises = Array.isArray(raw) ? raw : (raw?.data || []);
-        // Only show relevant franchises (Active, Warning, Suspended, Revoked)
         const relevant = allFranchises
           .map(f => f.issuedPermit ? { ...f, status: f.issuedPermit.status } : f)
           .filter(f => ['Active', 'Active - Under Warning', 'Suspended', 'Revoked'].includes(f.status));
@@ -137,124 +180,187 @@ const ManageRevocations = () => {
     fetchViolations();
   }, []);
 
-  // When a franchise is selected to record violation, fetch live history & previous offenses count
+  // Load live unit history & sync fresh policy from backend
+  const loadFranchiseHistory = async (franchiseId) => {
+    const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/violations/history/${franchiseId}`, {
+      headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
+    });
+    const data = await res.json();
+    if (!res.ok || !data.success) {
+      throw new Error(data.message || 'Failed to load operator violation history.');
+    }
+    if (data.policy) {
+      setViolationPolicy(data.policy);
+    }
+    return data;
+  };
+
+  // When a franchise is selected to record violation, fetch live history & fresh policy
   const handleSelectFranchiseForViolation = async (franchise) => {
     setSelectedFranchise(franchise);
+    setOperatorHistory(null);
+    setHistoryError('');
     setIsHistoryLoading(true);
     setDriverName(franchise.driverName || franchise.fullName || '');
     setRemarks('');
     setEvidenceFile(null);
 
-    // Default to first active violation in policy
-    const defaultType = violationPolicy.types?.[0] || {
-      name: 'Overcharging of fare',
-      severity: 'Medium',
-      isGrave: false,
-      defaultFine: 500,
-      suspensionDays: 15
-    };
-    setSelectedViolation(defaultType.name);
-    setSelectedSeverity(defaultType.severity);
-    setIsGraveViolation(defaultType.isGrave || false);
-    setFineAmount(defaultType.defaultFine || 500);
-    setSuspensionDays(defaultType.suspensionDays || 15);
+    const initialActive = activePolicyTypes[0];
+    setSelectedViolationCode(initialActive?.code || '');
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/violations/history/${franchise._id}`, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('token')}` }
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setOperatorHistory(data);
+      const data = await loadFranchiseHistory(franchise._id);
+      setOperatorHistory(data);
+      const freshActive = (data.policy?.types || []).filter((t) => t && t.isActive !== false);
+      if (freshActive.length > 0) {
+        setSelectedViolationCode((prev) =>
+          freshActive.some((t) => t.code === prev) ? prev : freshActive[0].code
+        );
+      } else {
+        setSelectedViolationCode('');
       }
     } catch (err) {
       console.error('Failed to fetch operator violation history:', err);
+      setHistoryError(err.message || 'Unable to synchronize operator offense history and policy.');
     } finally {
       setIsHistoryLoading(false);
     }
   };
 
-  // Handle violation type change in modal
-  const handleViolationTypeChange = (typeName) => {
-    setSelectedViolation(typeName);
-    const matched = violationPolicy.types?.find(t => t.name === typeName);
-    if (matched) {
-      setSelectedSeverity(matched.severity);
-      setIsGraveViolation(Boolean(matched.isGrave));
-      if (matched.defaultFine) setFineAmount(matched.defaultFine);
-      if (matched.suspensionDays) setSuspensionDays(matched.suspensionDays);
+  // Open dedicated Violation History Modal for a franchise
+  const handleOpenHistoryModal = async (franchise) => {
+    setHistoryModal({
+      isOpen: true,
+      franchise,
+      data: null,
+      isLoading: true,
+      error: ''
+    });
+
+    try {
+      const data = await loadFranchiseHistory(franchise._id);
+      setHistoryModal({
+        isOpen: true,
+        franchise,
+        data,
+        isLoading: false,
+        error: ''
+      });
+    } catch (err) {
+      setHistoryModal({
+        isOpen: true,
+        franchise,
+        data: null,
+        isLoading: false,
+        error: err.message || 'Failed to load violation history.'
+      });
     }
   };
 
-  // Compute calculated sanction preview for the modal
-  const getCalculatedSanctionPreview = () => {
-    const priorCount = operatorHistory?.activeViolationsCount || 0;
-    const nextOffense = priorCount + 1;
+  // Compute read-only System Policy sanction preview strictly from cumulativeOffenseCount + live policy
+  const getReadOnlyPolicyPreview = () => {
+    const typeConfig = selectedPolicyType;
+    const tiers = violationPolicy?.tiers || DEFAULT_FALLBACK_POLICY.tiers;
+    const policyVersion = violationPolicy?.policyVersion || 1;
+    const cumulativeStrikes = operatorHistory?.cumulativeOffenseCount ?? 0;
+    const nextOffense = cumulativeStrikes + 1;
 
-    if (isGraveViolation || selectedSeverity === 'Grave') {
+    const isGrave = Boolean(typeConfig?.isGrave || typeConfig?.severity === 'Grave');
+    const severity = isGrave ? 'Grave' : (typeConfig?.severity || 'Medium');
+    const rawFine = typeConfig?.defaultFine ?? tiers?.secondOffense?.defaultFine ?? 500;
+    const lockedFine = Number.isFinite(Number(rawFine)) ? Math.max(0, Number(rawFine)) : 0;
+
+    if (isGrave) {
       return {
+        policyVersion,
+        severity,
+        isGrave: true,
+        nextOffense,
         offenseLabel: 'Grave Violation Clause',
         sanctionType: 'Revocation',
         resultingStatus: 'Revoked',
-        color: 'border-rose-400 bg-rose-50/70 dark:bg-rose-950/30 text-rose-900 dark:text-rose-200',
-        badge: 'bg-rose-600 text-white',
-        title: '⚠️ Immediate Permanent Revocation',
-        description: 'Critical municipal ordinance violation. Bypasses 1st and 2nd offense tiers directly to permanent revocation of MTOP permit.'
+        lockedFine,
+        suspensionDays: 0,
+        color: 'border-rose-300 dark:border-rose-900/60 bg-rose-50/70 dark:bg-rose-950/30 text-rose-900 dark:text-rose-200',
+        badge: 'bg-rose-700 text-white',
+        title: 'Immediate Permanent Revocation (Grave Violation)',
+        description: `Bypasses 1st and 2nd offense tiers directly to permanent revocation. Administrative fine of ₱${lockedFine.toLocaleString()} will be locked under Policy v${policyVersion}.`
       };
     }
 
     if (nextOffense === 1) {
       return {
+        policyVersion,
+        severity,
+        isGrave: false,
+        nextOffense,
         offenseLabel: '1st Offense',
         sanctionType: 'Warning',
         resultingStatus: 'Active - Under Warning',
-        color: 'border-amber-300 bg-amber-50/70 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200',
-        badge: 'bg-amber-600 text-white',
-        title: 'Official Warning (Active - Under Warning)',
-        description: 'Formal written warning entered into the municipal record. The tricycle remains authorized to operate while notice is in effect.'
+        lockedFine,
+        suspensionDays: 0,
+        color: 'border-amber-300 dark:border-amber-900/60 bg-amber-50/70 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200',
+        badge: 'bg-amber-700 text-white',
+        title: `Official Warning + Fine ₱${lockedFine.toLocaleString()}`,
+        description: 'Formal warning entered into the municipal record. Unit remains authorized to operate while notice and fine balance are in effect.'
       };
     }
 
     if (nextOffense === 2) {
+      const rawSusp = typeConfig?.suspensionDays ?? tiers?.secondOffense?.defaultSuspensionDays ?? 15;
+      const suspDays = Number.isFinite(Number(rawSusp)) ? Math.max(0, Number(rawSusp)) : 15;
       return {
+        policyVersion,
+        severity,
+        isGrave: false,
+        nextOffense,
         offenseLabel: '2nd Offense',
         sanctionType: 'Suspension',
         resultingStatus: 'Suspended',
-        color: 'border-orange-400 bg-orange-50/70 dark:bg-orange-950/30 text-orange-900 dark:text-orange-200',
-        badge: 'bg-orange-600 text-white',
-        title: `Temporary Suspension (${suspensionDays} Days) + Fine ₱${fineAmount}`,
-        description: `Operations temporarily suspended. Operator must settle administrative fine of ₱${fineAmount} at the Treasury Cashier before reinstatement.`
+        lockedFine,
+        suspensionDays: suspDays,
+        color: 'border-orange-300 dark:border-orange-900/60 bg-orange-50/70 dark:bg-orange-950/30 text-orange-900 dark:text-orange-200',
+        badge: 'bg-orange-700 text-white',
+        title: `Temporary Suspension (${suspDays} Days) + Fine ₱${lockedFine.toLocaleString()}`,
+        description: `Operations temporarily suspended for ${suspDays} days. Operator must settle the locked administrative fine of ₱${lockedFine.toLocaleString()} before reinstatement.`
       };
     }
 
     return {
-      offenseLabel: `${nextOffense}${nextOffense === 3 ? 'rd' : 'th'} Offense`,
+      policyVersion,
+      severity,
+      isGrave: false,
+      nextOffense,
+      offenseLabel: formatOrdinal(nextOffense),
       sanctionType: 'Revocation',
       resultingStatus: 'Revoked',
-      color: 'border-red-400 bg-red-50/70 dark:bg-red-950/30 text-red-900 dark:text-red-200',
+      lockedFine,
+      suspensionDays: 0,
+      color: 'border-red-300 dark:border-red-900/60 bg-red-50/70 dark:bg-red-950/30 text-red-900 dark:text-red-200',
       badge: 'bg-red-700 text-white',
-      title: 'Final Escalation: Permanent Franchise Revocation',
-      description: '3rd Offense reached. Franchise and MTOP license are permanently revoked; assigned body number is forfeited and returned to municipal pool.'
+      title: `Final Escalation: Permanent Revocation + Fine ₱${lockedFine.toLocaleString()}`,
+      description: '3rd Offense threshold reached. Franchise and MTOP permit are permanently revoked and cannot be reinstated by fine payment.'
     };
   };
 
-  // Submit violation form
+  // Submit violation form (sends ONLY violationCode, violationType, driverName, remarks, evidence)
   const handleRecordViolationSubmit = async (e) => {
     e.preventDefault();
+    if (isHistoryLoading || historyError) return;
+    if (!selectedPolicyType) {
+      return showToast('No active violation type is available in System Settings.', 'error');
+    }
     if (!evidenceFile) {
-      return showToast("Please upload documentary evidence (citation ticket or photo proof).", "error");
+      return showToast('Please upload documentary evidence (citation ticket or photo proof).', 'error');
     }
 
     setIsSubmitting(true);
     const formData = new FormData();
     formData.append('franchiseId', selectedFranchise._id);
-    formData.append('violationType', selectedViolation);
-    formData.append('severity', selectedSeverity);
-    formData.append('isGrave', isGraveViolation);
+    formData.append('violationCode', selectedPolicyType.code);
+    formData.append('violationType', selectedPolicyType.name);
     formData.append('driverName', driverName);
     formData.append('remarks', remarks);
-    formData.append('customFine', fineAmount);
-    formData.append('customSuspensionDays', suspensionDays);
     formData.append('evidence', evidenceFile);
 
     try {
@@ -267,22 +373,34 @@ const ManageRevocations = () => {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        showToast(data.message, "success");
+        showToast(data.message, 'success');
         setSelectedFranchise(null);
+        setOperatorHistory(null);
         setEvidenceFile(null);
         fetchFranchises();
         fetchViolations();
       } else {
-        showToast(data.message || "Failed to record violation.", "error");
+        showToast(data.message || 'Failed to record violation.', 'error');
       }
     } catch {
-      showToast("Network Error occurred while recording violation.", "error");
+      showToast('Network error occurred while recording violation.', 'error');
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Submit Settle / Lift Violation
+  // Open Settle Fine or Dismiss in Error modal
+  const openResolutionModal = (violation, action = 'settle') => {
+    setSettleModal({
+      isOpen: true,
+      action,
+      violation,
+      notes: '',
+      isSubmitting: false
+    });
+  };
+
+  // Submit Settle Fine ('settle') or Dismiss in Error ('lift')
   const handleSettleViolationSubmit = async (e) => {
     e.preventDefault();
     if (!settleModal.violation) return;
@@ -295,21 +413,30 @@ const ManageRevocations = () => {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ settledNotes: settleModal.notes })
+        body: JSON.stringify({
+          action: settleModal.action,
+          settledNotes: settleModal.notes
+        })
       });
 
       const data = await res.json();
       if (res.ok && data.success) {
-        showToast("Violation successfully settled. Franchise standing updated.", "success");
-        setSettleModal({ isOpen: false, violation: null, notes: '', isSubmitting: false });
+        showToast(
+          data.message || (settleModal.action === 'lift' ? 'Citation dismissed in error.' : 'Violation fine settled.'),
+          'success'
+        );
+        setSettleModal({ isOpen: false, action: 'settle', violation: null, notes: '', isSubmitting: false });
         fetchFranchises();
         fetchViolations();
+        if (historyModal.isOpen && historyModal.franchise?._id) {
+          handleOpenHistoryModal(historyModal.franchise);
+        }
       } else {
-        showToast(data.message || "Failed to settle violation.", "error");
+        showToast(data.message || 'Failed to update violation citation.', 'error');
         setSettleModal(prev => ({ ...prev, isSubmitting: false }));
       }
     } catch {
-      showToast("Network error settling violation.", "error");
+      showToast('Network error resolving violation citation.', 'error');
       setSettleModal(prev => ({ ...prev, isSubmitting: false }));
     }
   };
@@ -318,7 +445,7 @@ const ManageRevocations = () => {
   const cleanQuery = (searchQuery || '').toLowerCase().trim();
   const filteredFranchises = franchises.filter(f => {
     const isSearchMatch = !cleanQuery ||
-      (f.fullName?.toLowerCase() || '').includes(cleanQuery) || 
+      (f.fullName?.toLowerCase() || '').includes(cleanQuery) ||
       (f.plateNo?.toLowerCase() || '').includes(cleanQuery) ||
       (f.todaName?.toLowerCase() || '').includes(cleanQuery);
 
@@ -335,12 +462,23 @@ const ManageRevocations = () => {
 
   // Filtered violations list
   const filteredViolations = violations.filter(v => {
-    const isSearchMatch = !cleanQuery ||
+    const operatorDisplayName = (v.operator?.name || v.franchise?.fullName || '').toLowerCase();
+    return !cleanQuery ||
+      operatorDisplayName.includes(cleanQuery) ||
       (v.plateNo?.toLowerCase() || '').includes(cleanQuery) ||
       (v.violationType?.toLowerCase() || '').includes(cleanQuery) ||
+      (v.violationCode?.toLowerCase() || '').includes(cleanQuery) ||
       (v.driverName?.toLowerCase() || '').includes(cleanQuery);
-    return isSearchMatch;
   });
+
+  // Total unpaid fines across filtered violations for Citation Logs banner
+  const filteredUnpaidFines = useMemo(() => {
+    return filteredViolations.reduce((sum, v) => {
+      if (v.status !== 'Active') return sum;
+      const amt = Number(v.sanction?.fineAmount || 0);
+      return sum + (Number.isFinite(amt) && amt > 0 ? amt : 0);
+    }, 0);
+  }, [filteredViolations]);
 
   // Pagination calculations
   const currentList = activeTab === 'violations' ? filteredViolations : filteredFranchises;
@@ -361,6 +499,39 @@ const ManageRevocations = () => {
   const suspendedCount = franchises.filter(f => f.status === 'Suspended').length;
   const revokedCount = franchises.filter(f => f.status === 'Revoked').length;
 
+  const preview = selectedFranchise ? getReadOnlyPolicyPreview() : null;
+  const isSettleTargetRevoked = Boolean(
+    settleModal.violation?.sanction?.type === 'Revocation' ||
+    settleModal.violation?.franchise?.status === 'Revoked' ||
+    (historyModal.isOpen && historyModal.data?.franchise?.status === 'Revoked')
+  );
+
+  // Shared helper for rendering locked fine + rate comparison badge
+  const renderLockedFineMeta = (v) => {
+    const lockedFine = Number(v?.sanction?.fineAmount ?? 0);
+    const snapshotVersion = v?.policySnapshot?.policyVersion;
+    const liveFine = getLivePolicyFineForViolation(v);
+    const rateChanged = liveFine !== null && liveFine !== lockedFine;
+
+    return (
+      <div className="space-y-1 mt-1">
+        <p className="text-orange-700 dark:text-orange-400 font-mono tabular-nums font-semibold">
+          Fine: ₱{lockedFine.toLocaleString()}
+        </p>
+        {snapshotVersion && (
+          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-[10px] font-mono tabular-nums font-semibold text-[#6B6761] dark:text-[#A8A29E]">
+            <Lock size={10} /> Locked @ Policy v{snapshotVersion}
+          </span>
+        )}
+        {rateChanged && (
+          <p className="text-[11px] font-mono tabular-nums text-amber-800 dark:text-amber-300 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/50 rounded px-1.5 py-0.5 inline-block">
+            Rate locked at ₱{lockedFine.toLocaleString()} (Current policy: ₱{liveFine.toLocaleString()})
+          </p>
+        )}
+      </div>
+    );
+  };
+
   return (
     <MainLayout>
       {/* EVIDENCE VIEWER MODAL */}
@@ -370,18 +541,19 @@ const ManageRevocations = () => {
             <h3 className="text-[#F6F5F3] font-bold text-base flex items-center gap-2">
               <Eye size={18} /> Documentary Evidence Viewer
             </h3>
-            <button 
-              onClick={() => setPreviewDoc(null)} 
+            <button
+              type="button"
+              onClick={() => setPreviewDoc(null)}
               className="text-[#F6F5F3] hover:text-red-400 transition-colors bg-white/10 p-1.5 rounded-lg cursor-pointer"
               aria-label="Close evidence viewer"
             >
               <X size={20} />
             </button>
           </div>
-          <iframe 
-            src={previewDoc} 
-            className="w-full max-w-4xl h-[75vh] md:h-[82vh] bg-white rounded-xl shadow-2xl" 
-            title="Evidence Document" 
+          <iframe
+            src={previewDoc}
+            className="w-full max-w-4xl h-[75vh] md:h-[82vh] bg-white rounded-xl shadow-2xl"
+            title="Evidence Document"
           />
         </div>
       )}
@@ -389,7 +561,7 @@ const ManageRevocations = () => {
       {/* HEADER RIBBON */}
       <PageHeader
         title="Violations & Progressive Sanctions"
-        subtitle="Enforce the municipal 3-tier progressive violation policy: Warning → Suspension → Revocation."
+        subtitle="Enforce the municipal 3-tier progressive violation policy (Warning → Suspension → Revocation) using System Settings rates."
       />
 
       {/* PROGRESSIVE ENGINE SUMMARY METRICS */}
@@ -400,7 +572,7 @@ const ManageRevocations = () => {
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
           </div>
           <p className="text-xl sm:text-2xl font-bold font-mono text-[#1F1D1B] dark:text-[#F6F5F3] tabular-nums">{activeCount}</p>
-          <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium mt-0.5">Good Standing</p>
+          <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-medium mt-0.5">Good Standing</p>
         </div>
 
         <div className="p-4 rounded-xl bg-white dark:bg-[#1C1917] border border-amber-200 dark:border-amber-900/40 shadow-sm">
@@ -432,36 +604,39 @@ const ManageRevocations = () => {
       </div>
 
       {/* MAIN CONTAINER */}
-      <div className="bg-white dark:bg-[#1C1917] rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] overflow-hidden transition-colors shadow-sm">
+      <div className="bg-white dark:bg-[#1C1917] rounded-xl border border-[#E4E1DC] dark:border-[#2E2A27] overflow-hidden transition-colors shadow-sm">
         {/* TABS */}
         <div className="flex border-b border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F]">
-          <button 
+          <button
+            type="button"
             onClick={() => { setActiveTab('operators'); setSearchQuery(''); setStatusFilter('All'); }}
-            className={`flex-1 py-3 text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer ${
-              activeTab === 'operators' 
-                ? 'text-[#9E2A2B] dark:text-[#F6F5F3] border-b-2 border-[#9E2A2B] bg-white dark:bg-[#1C1917]' 
+            className={`flex-1 py-3 px-2 text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer ${
+              activeTab === 'operators'
+                ? 'text-[#9E2A2B] dark:text-[#F6F5F3] border-b-2 border-[#9E2A2B] bg-white dark:bg-[#1C1917]'
                 : 'text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3]'
             }`}
           >
             <ShieldCheck size={16} /> Operators & Franchises
           </button>
-          
-          <button 
+
+          <button
+            type="button"
             onClick={() => { setActiveTab('violations'); setSearchQuery(''); }}
-            className={`flex-1 py-3 text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer ${
-              activeTab === 'violations' 
-                ? 'text-[#9E2A2B] dark:text-[#F6F5F3] border-b-2 border-[#9E2A2B] bg-white dark:bg-[#1C1917]' 
+            className={`flex-1 py-3 px-2 text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer ${
+              activeTab === 'violations'
+                ? 'text-[#9E2A2B] dark:text-[#F6F5F3] border-b-2 border-[#9E2A2B] bg-white dark:bg-[#1C1917]'
                 : 'text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3]'
             }`}
           >
             <History size={16} /> Violation Citation Logs ({violations.length})
           </button>
 
-          <button 
+          <button
+            type="button"
             onClick={() => { setActiveTab('revoked'); setSearchQuery(''); }}
-            className={`flex-1 py-3 text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer ${
-              activeTab === 'revoked' 
-                ? 'text-red-700 dark:text-red-400 border-b-2 border-red-700 dark:border-red-400 bg-white dark:bg-[#1C1917]' 
+            className={`flex-1 py-3 px-2 text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 transition-colors cursor-pointer ${
+              activeTab === 'revoked'
+                ? 'text-red-700 dark:text-red-400 border-b-2 border-red-700 dark:border-red-400 bg-white dark:bg-[#1C1917]'
                 : 'text-[#6B6761] dark:text-[#A8A29E] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3]'
             }`}
           >
@@ -475,20 +650,20 @@ const ManageRevocations = () => {
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#6B6761] dark:text-[#A8A29E]" size={15} />
             <input
               type="text"
-              placeholder={activeTab === 'violations' ? "Search violations, plate, driver..." : "Search operator, plate, TODA..."}
+              placeholder={activeTab === 'violations' ? 'Search operator, violation, plate, driver...' : 'Search operator, plate, TODA...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-9 pr-3.5 py-1.5 bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg text-xs text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-[#9E2A2B] transition-all"
+              className="w-full pl-9 pr-3.5 py-2 bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg text-xs text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-[#9E2A2B] transition-all"
             />
           </div>
 
-          {activeTab === 'operators' && (
+          {activeTab === 'operators' ? (
             <div className="flex items-center gap-2 w-full sm:w-auto">
               <span className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-medium shrink-0">Filter Status:</span>
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-2.5 py-1.5 text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] outline-none cursor-pointer"
+                className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-2.5 py-2 text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] outline-none cursor-pointer"
               >
                 <option value="All">All Standings</option>
                 <option value="Active">Active (Good Standing)</option>
@@ -497,20 +672,37 @@ const ManageRevocations = () => {
                 <option value="Revoked">Revoked</option>
               </select>
             </div>
-          )}
+          ) : activeTab === 'violations' ? (
+            <div className="flex items-center gap-2.5 flex-wrap w-full sm:w-auto justify-end">
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs">
+                <Lock size={13} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                <span className="text-[#6B6761] dark:text-[#A8A29E]">Active Policy:</span>
+                <span className="font-mono font-bold text-[#1F1D1B] dark:text-[#F6F5F3] tabular-nums">
+                  v{violationPolicy?.policyVersion || 1}
+                </span>
+              </div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 text-xs">
+                <Wallet size={13} className="text-amber-700 dark:text-amber-400" />
+                <span className="text-amber-900 dark:text-amber-200 font-medium">Total Unpaid Balance:</span>
+                <span className="font-mono font-bold text-amber-800 dark:text-amber-300 tabular-nums">
+                  ₱{filteredUnpaidFines.toLocaleString()}
+                </span>
+              </div>
+            </div>
+          ) : null}
         </div>
 
         {/* DATA TABLE VIEW */}
         <div className="overflow-x-auto">
           {activeTab === 'violations' ? (
             /* TAB 2: VIOLATION CITATION LOGS TABLE */
-            <table className="w-full text-left border-collapse min-w-[850px] text-xs">
+            <table className="w-full text-left border-collapse min-w-[920px] text-xs">
               <thead>
                 <tr className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider font-semibold">
                   <th className="p-3.5 pl-5">Date & Offense</th>
                   <th className="p-3.5">Operator & Vehicle</th>
                   <th className="p-3.5">Violation Details</th>
-                  <th className="p-3.5">Sanction Enacted</th>
+                  <th className="p-3.5">Sanction & Locked Fine</th>
                   <th className="p-3.5 text-center">Status</th>
                   <th className="p-3.5 text-center pr-5">Action</th>
                 </tr>
@@ -526,78 +718,103 @@ const ManageRevocations = () => {
                     </td>
                   </tr>
                 ) : (
-                  paginatedItems.map((v) => (
-                    <tr key={v._id} className="hover:bg-[#F6F5F3]/70 dark:hover:bg-[#14110F]/70 transition-colors">
-                      <td className="p-3.5 pl-5">
-                        <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold mb-1 ${
-                          v.offenseNumber === 1 
-                            ? 'bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300'
-                            : v.offenseNumber === 2
-                              ? 'bg-orange-100 dark:bg-orange-950/50 text-orange-800 dark:text-orange-300'
-                              : 'bg-red-100 dark:bg-red-950/50 text-red-800 dark:text-red-300'
-                        }`}>
-                          {v.isGrave ? 'GRAVE OFFENSE' : `${v.offenseNumber}${v.offenseNumber === 1 ? 'st' : v.offenseNumber === 2 ? 'nd' : v.offenseNumber === 3 ? 'rd' : 'th'} Offense`}
-                        </span>
-                        <p className="text-[#6B6761] dark:text-[#A8A29E] text-[11px]">{new Date(v.createdAt).toLocaleDateString()}</p>
-                      </td>
+                  paginatedItems.map((v) => {
+                    const operatorDisplayName = v.operator?.name || v.franchise?.fullName || 'Operator';
+                    const isGraveBadge = Boolean(v.isGrave || v.severity === 'Grave');
+                    const offenseBadgeClass = isGraveBadge || v.offenseNumber >= 3
+                      ? 'bg-red-100 dark:bg-red-950/50 text-red-800 dark:text-red-300'
+                      : v.offenseNumber === 2
+                        ? 'bg-orange-100 dark:bg-orange-950/50 text-orange-800 dark:text-orange-300'
+                        : 'bg-amber-100 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300';
 
-                      <td className="p-3.5">
-                        <p className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{v.operator?.name || 'Operator'}</p>
-                        <p className="text-[#6B6761] dark:text-[#A8A29E] font-mono mt-0.5">Plate: {v.plateNo}</p>
-                        {v.driverName && <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">Driver: {v.driverName}</p>}
-                      </td>
+                    const statusBadgeClass = v.status === 'Active'
+                      ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300'
+                      : v.status === 'Lifted'
+                        ? 'bg-[#E4E1DC]/70 dark:bg-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E]'
+                        : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300';
 
-                      <td className="p-3.5">
-                        <p className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{v.violationType}</p>
-                        <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E]">Severity: {v.severity}</span>
-                        {v.remarks && <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] italic mt-0.5">"{v.remarks}"</p>}
-                      </td>
+                    return (
+                      <tr key={v._id} className="hover:bg-[#F6F5F3]/70 dark:hover:bg-[#14110F]/70 transition-colors">
+                        <td className="p-3.5 pl-5 align-top">
+                          <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-bold mb-1 ${offenseBadgeClass}`}>
+                            {isGraveBadge ? 'GRAVE OFFENSE' : formatOrdinal(v.offenseNumber)}
+                          </span>
+                          <p className="text-[#6B6761] dark:text-[#A8A29E] text-[11px] font-mono tabular-nums">
+                            {new Date(v.createdAt).toLocaleDateString()}
+                          </p>
+                        </td>
 
-                      <td className="p-3.5">
-                        <span className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{v.sanction?.type}</span>
-                        {v.sanction?.fineAmount > 0 && (
-                          <p className="text-orange-700 dark:text-orange-400 font-mono font-medium">Fine: ₱{Number(v.sanction?.fineAmount || 0).toLocaleString()}</p>
-                        )}
-                        {v.sanction?.suspensionDays > 0 && (
-                          <p className="text-[#6B6761] dark:text-[#A8A29E] text-[11px]">{v.sanction.suspensionDays} days suspension</p>
-                        )}
-                      </td>
+                        <td className="p-3.5 align-top">
+                          <p className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{operatorDisplayName}</p>
+                          <p className="text-[#6B6761] dark:text-[#A8A29E] font-mono tabular-nums mt-0.5">Plate: {v.plateNo}</p>
+                          {v.driverName && <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">Driver: {v.driverName}</p>}
+                        </td>
 
-                      <td className="p-3.5 text-center">
-                        <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold ${
-                          v.status === 'Active'
-                            ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300'
-                            : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
-                        }`}>
-                          {v.status}
-                        </span>
-                      </td>
+                        <td className="p-3.5 align-top">
+                          <p className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{v.violationType}</p>
+                          <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E]">Severity: {v.severity}</span>
+                          {v.remarks && <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] italic mt-0.5">&ldquo;{v.remarks}&rdquo;</p>}
+                        </td>
 
-                      <td className="p-3.5 pr-5 text-center">
-                        <div className="flex items-center justify-center gap-1.5">
-                          {v.evidenceUrl && (
-                            <button
-                              onClick={() => setPreviewDoc(v.evidenceUrl)}
-                              className="p-1.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] text-[#1F1D1B] dark:text-[#F6F5F3] cursor-pointer"
-                              title="View Citation Evidence"
-                            >
-                              <FileText size={13} />
-                            </button>
+                        <td className="p-3.5 align-top">
+                          <span className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{v.sanction?.type}</span>
+                          {renderLockedFineMeta(v)}
+                          {v.sanction?.suspensionDays > 0 && (
+                            <p className="text-[#6B6761] dark:text-[#A8A29E] text-[11px] font-mono tabular-nums mt-0.5">
+                              {v.sanction.suspensionDays} days suspension
+                            </p>
                           )}
+                        </td>
 
-                          {v.status === 'Active' && (
-                            <button
-                              onClick={() => setSettleModal({ isOpen: true, violation: v, notes: '', isSubmitting: false })}
-                              className="px-2.5 py-1 rounded-lg text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100 cursor-pointer"
-                              title="Settle fine or lift sanction"
-                            >
-                              Settle
-                            </button>
+                        <td className="p-3.5 text-center align-top">
+                          <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold ${statusBadgeClass}`}>
+                            {v.status === 'Lifted' ? 'Dismissed / Lifted' : v.status}
+                          </span>
+                          {v.settledNotes && v.status !== 'Active' && (
+                            <p className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] mt-1 max-w-[140px] mx-auto truncate" title={v.settledNotes}>
+                              {v.settledNotes}
+                            </p>
                           )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))
+                        </td>
+
+                        <td className="p-3.5 pr-5 text-center align-top">
+                          <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                            {v.evidenceUrl && (
+                              <button
+                                type="button"
+                                onClick={() => setPreviewDoc(v.evidenceUrl)}
+                                className="p-1.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] cursor-pointer"
+                                title="View Citation Evidence"
+                              >
+                                <FileText size={13} />
+                              </button>
+                            )}
+
+                            {v.status === 'Active' && (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => openResolutionModal(v, 'settle')}
+                                  className="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100 dark:hover:bg-emerald-950/60 cursor-pointer"
+                                  title="Record fine payment as settled"
+                                >
+                                  Settle Fine
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => openResolutionModal(v, 'lift')}
+                                  className="px-2.5 py-1.5 rounded-lg text-[11px] font-semibold bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 hover:bg-amber-100 dark:hover:bg-amber-950/50 cursor-pointer"
+                                  title="Dismiss citation recorded in error and remove strike"
+                                >
+                                  Dismiss in Error
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
@@ -630,7 +847,7 @@ const ManageRevocations = () => {
                         <p className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] text-sm">{cleanText(f.fullName, 'Operator')}</p>
                         <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5 flex items-center gap-1.5 flex-wrap">
                           <span>Plate:</span>
-                          <span className="font-mono font-medium px-1.5 py-0.5 rounded bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3]">{cleanText(f.plateNo, 'N/A')}</span>
+                          <span className="font-mono tabular-nums font-medium px-1.5 py-0.5 rounded bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3]">{cleanText(f.plateNo, 'N/A')}</span>
                           <span>&bull; {formatVehicleMakeAndModel(f, 'Tricycle Unit')}</span>
                           {cleanText(f.motorNo) && <span>&bull; Eng: {cleanText(f.motorNo)}</span>}
                         </p>
@@ -649,54 +866,62 @@ const ManageRevocations = () => {
                         {f.status === 'Revoked' ? (
                           <div>
                             <p className="font-semibold text-red-700 dark:text-red-400">
-                              {cleanText(f.cancelReason, 'Revoked by SB Franchising (LLSA I)').replace(/Revoked by BPLO/gi, 'Revoked by SB Franchising (LLSA I)')}
+                              {cleanText(f.cancelReason || f.suspensionReason, 'Revoked by OVM Franchising (LLSA I)')}
                             </p>
-                            <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">Date: {new Date(f.updatedAt).toLocaleDateString()}</p>
+                            <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] font-mono tabular-nums">
+                              Date: {new Date(f.updatedAt).toLocaleDateString()}
+                            </p>
                           </div>
                         ) : f.status === 'Suspended' ? (
                           <div>
                             <p className="font-semibold text-orange-700 dark:text-orange-400">{f.suspensionReason || 'Temporary Suspension'}</p>
                             {f.suspensionEndDate && (
-                              <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">Until: {new Date(f.suspensionEndDate).toLocaleDateString()}</p>
+                              <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] font-mono tabular-nums">
+                                Until: {new Date(f.suspensionEndDate).toLocaleDateString()}
+                              </p>
                             )}
                           </div>
                         ) : f.status === 'Active - Under Warning' ? (
                           <div>
-                            <p className="font-semibold text-amber-700 dark:text-amber-400">1st Offense Warning Active</p>
+                            <p className="font-semibold text-amber-700 dark:text-amber-400">{f.currentSanction || 'Warning Active'}</p>
                             <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">Unit operational under probation</p>
                           </div>
                         ) : (
-                          <span className="text-emerald-700 dark:text-emerald-400 font-medium">Clean Record (0 Active Violations)</span>
+                          <span className="text-emerald-700 dark:text-emerald-400 font-medium">Good Standing</span>
                         )}
                       </td>
 
                       <td className="p-3.5 pr-5 text-center">
-                        {f.status === 'Revoked' ? (
-                          <div className="flex items-center justify-center gap-1.5 flex-wrap">
-                            <button
-                              onClick={() => setSelectedCancellation(f)}
-                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 text-red-700 dark:text-red-300 text-xs font-semibold cursor-pointer shadow-sm"
-                              title="Print Official Franchise Cancellation Letter (Office of the Vice Mayor)"
-                            >
-                              <Printer size={13} /> Letter
-                            </button>
-                            {f.evidenceUrl && (
+                        <div className="flex items-center justify-center gap-1.5 flex-wrap">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenHistoryModal(f)}
+                            className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] text-xs font-semibold cursor-pointer transition-colors"
+                            title="Inspect unit violation history & fine ledger"
+                          >
+                            <History size={13} /> History
+                          </button>
+
+                          {f.status === 'Revoked' ? (
+                            f.evidenceUrl && (
                               <button
+                                type="button"
                                 onClick={() => setPreviewDoc(f.evidenceUrl)}
-                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] text-xs font-semibold cursor-pointer"
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] hover:bg-[#F6F5F3] dark:hover:bg-[#14110F] text-[#1F1D1B] dark:text-[#F6F5F3] text-xs font-semibold cursor-pointer"
                               >
                                 <FileText size={13} /> Evidence
                               </button>
-                            )}
-                          </div>
-                        ) : (
-                          <button
-                            onClick={() => handleSelectFranchiseForViolation(f)}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold border bg-red-50 dark:bg-red-950/40 hover:bg-red-100 text-red-700 dark:text-red-400 border-red-200 dark:border-red-900/60 cursor-pointer shadow-sm transition-colors"
-                          >
-                            <ShieldAlert size={13} /> Record Violation
-                          </button>
-                        )}
+                            )
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => handleSelectFranchiseForViolation(f)}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg font-semibold border bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-950/60 text-red-700 dark:text-red-400 border-red-200 dark:border-red-900/60 cursor-pointer shadow-sm transition-colors"
+                            >
+                              <ShieldAlert size={13} /> Record Violation
+                            </button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -708,14 +933,14 @@ const ManageRevocations = () => {
 
         {/* PAGINATION BAR */}
         {!isLoading && totalRecords > 0 && (
-          <div className="px-4 py-3 sm:px-5 bg-[#F6F5F3] dark:bg-[#14110F] border-t border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs rounded-b-lg">
+          <div className="px-4 py-3 sm:px-5 bg-[#F6F5F3] dark:bg-[#14110F] border-t border-[#E4E1DC] dark:border-[#2E2A27] flex flex-col sm:flex-row items-center justify-between gap-3 text-xs rounded-b-xl">
             <div className="flex items-center gap-2 text-[#6B6761] dark:text-[#A8A29E] font-medium">
               <span>Showing</span>
-              <span className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] tabular-nums">{startIndex + 1}</span>
+              <span className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] font-mono tabular-nums">{startIndex + 1}</span>
               <span>to</span>
-              <span className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] tabular-nums">{endIndex}</span>
+              <span className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] font-mono tabular-nums">{endIndex}</span>
               <span>of</span>
-              <span className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] tabular-nums">{totalRecords}</span>
+              <span className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] font-mono tabular-nums">{totalRecords}</span>
               <span>records</span>
 
               <span className="mx-1 text-[#E4E1DC] dark:text-[#2E2A27] hidden sm:inline">|</span>
@@ -743,7 +968,7 @@ const ManageRevocations = () => {
               >
                 <ChevronLeft size={16} />
               </button>
-              <span className="px-2 font-semibold tabular-nums">{validCurrentPage} of {totalPages}</span>
+              <span className="px-2 font-semibold font-mono tabular-nums">{validCurrentPage} of {totalPages}</span>
               <button
                 type="button"
                 onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
@@ -757,19 +982,19 @@ const ManageRevocations = () => {
         )}
       </div>
 
-      {/* RECORD VIOLATION MODAL (PROGRESSIVE DISCIPLINE FORM) */}
+      {/* RECORD VIOLATION MODAL (SIMPLIFIED LLSA I FORM + READ-ONLY POLICY PREVIEW) */}
       {selectedFranchise && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div 
-            className="absolute inset-0 bg-black/60 transition-opacity" 
-            onClick={() => !isSubmitting && setSelectedFranchise(null)} 
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/60 transition-opacity"
+            onClick={() => !isSubmitting && setSelectedFranchise(null)}
           />
 
-          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] w-full max-w-xl rounded-lg shadow-xl relative z-10 max-h-[90vh] overflow-y-auto">
+          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] w-full max-w-xl rounded-xl shadow-xl relative z-10 max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
-            <div className="p-4 sm:p-5 border-b border-[#E4E1DC] dark:border-[#2E2A27] flex justify-between items-center bg-[#F6F5F3] dark:bg-[#14110F] rounded-t-lg">
+            <div className="p-4 sm:p-5 border-b border-[#E4E1DC] dark:border-[#2E2A27] flex justify-between items-center bg-[#F6F5F3] dark:bg-[#14110F] rounded-t-xl">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 bg-red-100 dark:bg-red-950/50 text-red-700 dark:text-red-400 rounded-lg">
+                <div className="p-2 bg-red-100 dark:bg-red-950/50 text-[#9E2A2B] dark:text-red-400 rounded-lg">
                   <ShieldAlert size={18} />
                 </div>
                 <div>
@@ -777,13 +1002,15 @@ const ManageRevocations = () => {
                     Record Operator Violation
                   </h2>
                   <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
-                    3-Tier Progressive Discipline Engine
+                    Sanctions and fines are enforced strictly from System Settings
                   </p>
                 </div>
               </div>
-              <button 
-                onClick={() => !isSubmitting && setSelectedFranchise(null)} 
-                className="text-[#6B6761] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3] cursor-pointer"
+              <button
+                type="button"
+                onClick={() => !isSubmitting && setSelectedFranchise(null)}
+                className="text-[#6B6761] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3] cursor-pointer p-1"
+                aria-label="Close record violation modal"
               >
                 <X size={18} />
               </button>
@@ -792,177 +1019,164 @@ const ManageRevocations = () => {
             <form onSubmit={handleRecordViolationSubmit} className="p-5 space-y-4">
               {/* Operator Summary Card */}
               <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-3.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
-                <div className="flex justify-between items-start">
+                <div className="flex justify-between items-start gap-2">
                   <div>
                     <span className="text-[10px] text-[#6B6761] dark:text-[#A8A29E] font-bold uppercase tracking-wider">Target Operator</span>
                     <p className="font-semibold text-sm text-[#1F1D1B] dark:text-[#F6F5F3]">{selectedFranchise.fullName}</p>
                     <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mt-0.5">
-                      Plate: <span className="font-mono font-semibold px-1 py-0.5 rounded bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27]">{selectedFranchise.plateNo}</span>
-                      &bull; TODA: {selectedFranchise.todaName || 'NON-TODA'}
+                      Plate: <span className="font-mono tabular-nums font-semibold px-1 py-0.5 rounded bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27]">{selectedFranchise.plateNo}</span>
+                      {' '}&bull; TODA: {selectedFranchise.todaName || 'NON-TODA'}
                     </p>
                   </div>
                   <StatusBadge status={selectedFranchise.status} />
                 </div>
 
-                {/* Prior Offenses Auto-Count */}
-                <div className="mt-3 pt-2.5 border-t border-[#E4E1DC] dark:border-[#2E2A27] flex items-center justify-between text-xs">
+                {/* Cumulative & Active Offenses */}
+                <div className="mt-3 pt-2.5 border-t border-[#E4E1DC] dark:border-[#2E2A27] flex flex-wrap items-center justify-between gap-2 text-xs">
                   <span className="text-[#6B6761] dark:text-[#A8A29E] flex items-center gap-1.5">
-                    <History size={13} /> Active Prior Offenses:
+                    <History size={13} /> Cumulative Strike History:
                   </span>
                   {isHistoryLoading ? (
-                    <span className="text-[#6B6761] animate-pulse">Calculating...</span>
+                    <span className="text-[#6B6761] dark:text-[#A8A29E] animate-pulse">Syncing history & policy...</span>
+                  ) : historyError ? (
+                    <span className="text-red-700 dark:text-red-400 font-semibold">Sync failed</span>
                   ) : (
-                    <span className="font-bold font-mono text-[#1F1D1B] dark:text-[#F6F5F3]">
-                      {operatorHistory?.activeViolationsCount ?? 0} Recorded
+                    <span className="font-bold font-mono tabular-nums text-[#1F1D1B] dark:text-[#F6F5F3]">
+                      {operatorHistory?.cumulativeOffenseCount ?? 0} Recorded ({operatorHistory?.activeViolationCount ?? 0} Unsettled)
                     </span>
                   )}
                 </div>
+
+                {/* Total Unpaid Fine Balance Banner inside Modal */}
+                {!isHistoryLoading && !historyError && (operatorHistory?.fineSummary?.totalUnpaidFines || 0) > 0 && (
+                  <div className="mt-2.5 p-2.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-900/60 flex items-center justify-between gap-2 text-xs">
+                    <span className="text-amber-900 dark:text-amber-200 font-semibold flex items-center gap-1.5">
+                      <Wallet size={13} /> Existing Unpaid Fine Balance
+                    </span>
+                    <span className="font-mono tabular-nums font-bold text-amber-800 dark:text-amber-300">
+                      ₱{Number(operatorHistory.fineSummary.totalUnpaidFines).toLocaleString()}
+                    </span>
+                  </div>
+                )}
               </div>
 
-              {/* DYNAMIC SANCTION PREVIEW ALERT */}
-              {(() => {
-                const sanction = getCalculatedSanctionPreview();
-                return (
-                  <div className={`p-4 rounded-lg border ${sanction.color} transition-all`}>
-                    <div className="flex items-center justify-between mb-1">
-                      <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${sanction.badge}`}>
-                        {sanction.offenseLabel}
-                      </span>
-                      <span className="text-[11px] font-semibold uppercase tracking-wider">
-                        Next Sanction
-                      </span>
-                    </div>
-                    <p className="text-xs font-bold mt-1">{sanction.title}</p>
-                    <p className="text-[11px] mt-1 leading-relaxed opacity-90">{sanction.description}</p>
-                  </div>
-                );
-              })()}
-
-              {/* Violation Type Selector */}
+              {/* 1. VIOLATION TYPE / REASON SELECTOR (Active Types Only) */}
               <div>
                 <label className="block text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] mb-1.5">
-                  Select Violation Committed
+                  Violation Type / Reason <span className="text-[#9E2A2B]">*</span>
                 </label>
-                <select 
-                  value={selectedViolation} 
-                  onChange={(e) => handleViolationTypeChange(e.target.value)} 
-                  className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] rounded-lg px-3 py-2 text-xs outline-none focus:border-red-500 cursor-pointer font-medium"
+                <select
+                  value={selectedPolicyType?.code || ''}
+                  onChange={(e) => setSelectedViolationCode(e.target.value)}
+                  disabled={isHistoryLoading || activePolicyTypes.length === 0}
+                  className="w-full min-h-[44px] bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] rounded-lg px-3 py-2 text-xs outline-none focus:border-[#9E2A2B] cursor-pointer font-medium disabled:opacity-60"
                 >
-                  {(violationPolicy.types || []).map((v, i) => (
-                    <option key={i} value={v.name || 'Violation'}>
-                      {v.name || 'Violation'} ({v.severity || 'Medium'}{v.isGrave ? ' - Direct Revoke' : ''})
-                    </option>
-                  ))}
+                  {activePolicyTypes.length === 0 ? (
+                    <option value="">No active violation types configured</option>
+                  ) : (
+                    activePolicyTypes.map((v) => (
+                      <option key={v.code} value={v.code}>
+                        {v.name} ({v.severity}{v.isGrave || v.severity === 'Grave' ? ' — Direct Revocation' : ''})
+                      </option>
+                    ))
+                  )}
                 </select>
               </div>
 
-              {/* Severity & Grave Override */}
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[11px] font-semibold text-[#6B6761] dark:text-[#A8A29E] mb-1">
-                    Severity Level
-                  </label>
-                  <select
-                    value={selectedSeverity}
-                    onChange={(e) => {
-                      setSelectedSeverity(e.target.value);
-                      if (e.target.value === 'Grave') setIsGraveViolation(true);
-                    }}
-                    className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] rounded-lg px-2.5 py-1.5 text-xs outline-none"
+              {/* READ-ONLY SYSTEM POLICY PREVIEW CARD */}
+              {isHistoryLoading ? (
+                <div className="p-4 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] flex items-center justify-center gap-2 text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                  <Loader2 size={15} className="animate-spin" />
+                  <span>Loading live System Settings policy preview...</span>
+                </div>
+              ) : historyError ? (
+                <div className="p-3.5 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/30 flex items-center justify-between gap-2 text-xs text-red-800 dark:text-red-300">
+                  <span>{historyError}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleSelectFranchiseForViolation(selectedFranchise)}
+                    className="px-2.5 py-1 rounded bg-white dark:bg-[#1C1917] border border-red-200 dark:border-red-800 font-semibold cursor-pointer shrink-0"
                   >
-                    <option value="Low">Low</option>
-                    <option value="Medium">Medium</option>
-                    <option value="High">High</option>
-                    <option value="Grave">Grave (Critical Escalation)</option>
-                  </select>
+                    Retry
+                  </button>
                 </div>
-
-                <div className="flex items-center pt-5">
-                  <label className="flex items-center gap-2 cursor-pointer text-xs font-semibold text-rose-800 dark:text-rose-300">
-                    <input
-                      type="checkbox"
-                      checked={isGraveViolation}
-                      onChange={(e) => {
-                        setIsGraveViolation(e.target.checked);
-                        if (e.target.checked) setSelectedSeverity('Grave');
-                      }}
-                      className="rounded text-rose-600 focus:ring-rose-500 cursor-pointer"
-                    />
-                    <span>Grave Infraction (Bypass to Revoke)</span>
-                  </label>
-                </div>
-              </div>
-
-              {/* 2nd Offense Fine and Suspension customization if applicable */}
-              {((operatorHistory?.activeViolationsCount === 1 && !isGraveViolation) || selectedSeverity === 'High') && (
-                <div className="grid grid-cols-2 gap-3 p-3 rounded-lg bg-orange-50/50 dark:bg-orange-950/20 border border-orange-200 dark:border-orange-900/40">
-                  <div>
-                    <label className="block text-[11px] font-semibold text-orange-900 dark:text-orange-200 mb-1">
-                      Administrative Fine (₱)
-                    </label>
-                    <input
-                      type="number"
-                      min="0"
-                      value={fineAmount}
-                      onChange={(e) => setFineAmount(Number(e.target.value))}
-                      className="w-full bg-white dark:bg-[#1C1917] border border-orange-200 dark:border-orange-900/60 rounded px-2.5 py-1.5 text-xs font-semibold outline-none"
-                    />
+              ) : preview ? (
+                <div className={`p-4 rounded-lg border ${preview.color} transition-all space-y-2.5`}>
+                  <div className="flex items-center justify-between gap-2 flex-wrap">
+                    <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${preview.badge}`}>
+                      {preview.offenseLabel}
+                    </span>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-white/80 dark:bg-[#14110F]/80 border border-current/20 text-[10px] font-mono tabular-nums font-bold">
+                      <Lock size={10} /> System Policy v{preview.policyVersion} (Read-Only)
+                    </span>
                   </div>
-                  <div>
-                    <label className="block text-[11px] font-semibold text-orange-900 dark:text-orange-200 mb-1">
-                      Suspension Period (Days)
-                    </label>
-                    <input
-                      type="number"
-                      min="1"
-                      max="180"
-                      value={suspensionDays}
-                      onChange={(e) => setSuspensionDays(Number(e.target.value))}
-                      className="w-full bg-white dark:bg-[#1C1917] border border-orange-200 dark:border-orange-900/60 rounded px-2.5 py-1.5 text-xs font-semibold outline-none"
-                    />
-                  </div>
-                </div>
-              )}
 
-              {/* Driver Name & Specific Remarks */}
+                  <p className="text-xs font-bold">{preview.title}</p>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+                    <div className="p-2 rounded bg-white/75 dark:bg-[#14110F]/60 border border-black/5 dark:border-white/10">
+                      <p className="text-[10px] uppercase tracking-wider opacity-75">Severity</p>
+                      <p className="text-xs font-bold mt-0.5">{preview.severity}</p>
+                    </div>
+                    <div className="p-2 rounded bg-white/75 dark:bg-[#14110F]/60 border border-black/5 dark:border-white/10">
+                      <p className="text-[10px] uppercase tracking-wider opacity-75">Next Tier</p>
+                      <p className="text-xs font-bold mt-0.5">{preview.sanctionType}</p>
+                    </div>
+                    <div className="p-2 rounded bg-white/75 dark:bg-[#14110F]/60 border border-black/5 dark:border-white/10">
+                      <p className="text-[10px] uppercase tracking-wider opacity-75">Locked Fine</p>
+                      <p className="text-xs font-bold font-mono tabular-nums mt-0.5">₱{preview.lockedFine.toLocaleString()}</p>
+                    </div>
+                    <div className="p-2 rounded bg-white/75 dark:bg-[#14110F]/60 border border-black/5 dark:border-white/10">
+                      <p className="text-[10px] uppercase tracking-wider opacity-75">Suspension</p>
+                      <p className="text-xs font-bold font-mono tabular-nums mt-0.5">
+                        {preview.suspensionDays > 0 ? `${preview.suspensionDays} Days` : 'None'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <p className="text-[11px] leading-relaxed opacity-90">{preview.description}</p>
+                </div>
+              ) : null}
+
+              {/* 2. OPERATING DRIVER & INCIDENT REMARKS / DETAILS */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-[11px] font-semibold text-[#6B6761] dark:text-[#A8A29E] mb-1">
-                    Operating Driver (if not operator)
+                    Operating Driver (optional)
                   </label>
                   <input
                     type="text"
                     value={driverName}
                     onChange={(e) => setDriverName(e.target.value)}
                     placeholder="Driver's full name"
-                    className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] rounded-lg px-2.5 py-1.5 text-xs outline-none"
+                    className="w-full min-h-[44px] bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] rounded-lg px-3 py-2 text-xs outline-none focus:border-[#9E2A2B]"
                   />
                 </div>
 
                 <div>
                   <label className="block text-[11px] font-semibold text-[#6B6761] dark:text-[#A8A29E] mb-1">
-                    Citation Remarks / Location
+                    Incident Remarks / Details
                   </label>
                   <input
                     type="text"
                     value={remarks}
                     onChange={(e) => setRemarks(e.target.value)}
-                    placeholder="e.g. Brgy. Poblacion checkpoint"
-                    className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] rounded-lg px-2.5 py-1.5 text-xs outline-none"
+                    placeholder="e.g. Brgy. Poblacion checkpoint / citation details"
+                    className="w-full min-h-[44px] bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] rounded-lg px-3 py-2 text-xs outline-none focus:border-[#9E2A2B]"
                   />
                 </div>
               </div>
 
-              {/* Upload Documentary Evidence */}
+              {/* 3. DOCUMENTARY EVIDENCE (REQUIRED) */}
               <div>
                 <label className="block text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] mb-1.5">
-                  Upload Documentary Evidence (Citation Ticket / Photo)
+                  Documentary Evidence (Citation Ticket / Photo) <span className="text-[#9E2A2B]">*</span>
                 </label>
                 <div className="border border-dashed border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg p-4 text-center relative cursor-pointer hover:border-[#9E2A2B] transition-colors">
-                  <input 
-                    type="file" 
-                    accept=".pdf, image/*" 
-                    onChange={(e) => setEvidenceFile(e.target.files[0])} 
+                  <input
+                    type="file"
+                    accept=".pdf, image/*"
+                    onChange={(e) => setEvidenceFile(e.target.files?.[0] || null)}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     required
                   />
@@ -976,37 +1190,39 @@ const ManageRevocations = () => {
 
               {/* Action Buttons */}
               <div className="flex gap-2 pt-3 border-t border-[#E4E1DC] dark:border-[#2E2A27]">
-                <button 
-                  type="button" 
-                  onClick={() => setSelectedFranchise(null)} 
+                <button
+                  type="button"
+                  onClick={() => setSelectedFranchise(null)}
                   disabled={isSubmitting}
-                  className="flex-1 py-2 rounded-lg font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#E4E1DC] border border-[#E4E1DC] dark:border-[#2E2A27] transition-colors text-xs cursor-pointer"
+                  className="flex-1 min-h-[44px] py-2 rounded-lg font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] bg-[#F6F5F3] dark:bg-[#14110F] hover:bg-[#E4E1DC] dark:hover:bg-[#2E2A27] border border-[#E4E1DC] dark:border-[#2E2A27] transition-colors text-xs cursor-pointer"
                 >
                   Cancel
                 </button>
-                <button 
-                  type="submit" 
-                  disabled={isSubmitting} 
-                  className={`flex-1 py-2 rounded-lg font-semibold text-white transition-colors text-xs shadow-sm flex items-center justify-center gap-1.5 cursor-pointer ${
-                    isGraveViolation || operatorHistory?.activeViolationsCount >= 2
+                <button
+                  type="submit"
+                  disabled={isSubmitting || isHistoryLoading || Boolean(historyError) || !selectedPolicyType}
+                  className={`flex-1 min-h-[44px] py-2 rounded-lg font-semibold text-white transition-colors text-xs shadow-sm flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${
+                    preview?.resultingStatus === 'Revoked'
                       ? 'bg-red-700 hover:bg-red-800'
-                      : operatorHistory?.activeViolationsCount === 1
+                      : preview?.resultingStatus === 'Suspended'
                         ? 'bg-orange-700 hover:bg-orange-800'
-                        : 'bg-amber-700 hover:bg-amber-800'
+                        : 'bg-[#9E2A2B] hover:bg-[#7A1B22]'
                   }`}
                 >
-                  {isSubmitting ? (
+                  {isSubmitting || isHistoryLoading ? (
                     <Loader2 size={14} className="animate-spin" />
                   ) : (
                     <ShieldAlert size={14} />
                   )}
-                  {isSubmitting 
-                    ? 'Recording...' 
-                    : isGraveViolation || operatorHistory?.activeViolationsCount >= 2
-                      ? 'Confirm Revocation'
-                      : operatorHistory?.activeViolationsCount === 1
-                        ? 'Enforce Suspension'
-                        : 'Issue Official Warning'
+                  {isSubmitting
+                    ? 'Recording...'
+                    : isHistoryLoading
+                      ? 'Syncing Policy...'
+                      : preview?.resultingStatus === 'Revoked'
+                        ? 'Confirm Revocation'
+                        : preview?.resultingStatus === 'Suspended'
+                          ? 'Enforce Suspension'
+                          : 'Issue Official Warning'
                   }
                 </button>
               </div>
@@ -1015,22 +1231,218 @@ const ManageRevocations = () => {
         </div>
       )}
 
-      {/* SETTLE VIOLATION MODAL */}
-      {settleModal.isOpen && settleModal.violation && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div 
-            className="absolute inset-0 bg-black/60 transition-opacity" 
-            onClick={() => !settleModal.isSubmitting && setSettleModal(prev => ({ ...prev, isOpen: false }))} 
+      {/* UNIT VIOLATION HISTORY & FINE LEDGER MODAL */}
+      {historyModal.isOpen && historyModal.franchise && (
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/60 transition-opacity"
+            onClick={() => setHistoryModal(prev => ({ ...prev, isOpen: false }))}
           />
 
-          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] w-full max-w-md rounded-lg shadow-xl relative z-10 p-5">
+          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] w-full max-w-2xl rounded-xl shadow-xl relative z-10 max-h-[90vh] flex flex-col">
+            <div className="p-4 sm:p-5 border-b border-[#E4E1DC] dark:border-[#2E2A27] flex justify-between items-center bg-[#F6F5F3] dark:bg-[#14110F] rounded-t-xl">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#9E2A2B] dark:text-[#D4AF37] rounded-lg">
+                  <History size={18} />
+                </div>
+                <div>
+                  <h2 className="text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
+                    Unit Violation Ledger & History
+                  </h2>
+                  <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
+                    {historyModal.franchise.fullName} &bull; Plate{' '}
+                    <span className="font-mono font-semibold">{historyModal.franchise.plateNo}</span>
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setHistoryModal(prev => ({ ...prev, isOpen: false }))}
+                className="text-[#6B6761] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3] cursor-pointer p-1"
+                aria-label="Close violation history modal"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="p-5 overflow-y-auto space-y-4">
+              {historyModal.isLoading ? (
+                <div className="py-10 flex items-center justify-center gap-2 text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                  <Loader2 size={16} className="animate-spin" />
+                  <span>Loading violation history and fine balance...</span>
+                </div>
+              ) : historyModal.error ? (
+                <div className="p-4 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/30 text-xs text-red-800 dark:text-red-300 flex items-center justify-between gap-2">
+                  <span>{historyModal.error}</span>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenHistoryModal(historyModal.franchise)}
+                    className="px-3 py-1 rounded bg-white dark:bg-[#1C1917] border border-red-200 dark:border-red-800 font-semibold cursor-pointer"
+                  >
+                    Retry
+                  </button>
+                </div>
+              ) : historyModal.data ? (
+                <>
+                  {/* TOTAL UNPAID FINE BALANCE BANNER */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="p-3.5 rounded-lg bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/60">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-amber-800 dark:text-amber-300 flex items-center gap-1">
+                        <Wallet size={12} /> Total Unpaid Fine Balance
+                      </p>
+                      <p className="text-lg font-bold font-mono tabular-nums text-amber-900 dark:text-amber-200 mt-1">
+                        ₱{Number(historyModal.data.fineSummary?.totalUnpaidFines || 0).toLocaleString()}
+                      </p>
+                    </div>
+
+                    <div className="p-3.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E]">
+                        Settled Fines / Assessed
+                      </p>
+                      <p className="text-sm font-bold font-mono tabular-nums text-[#1F1D1B] dark:text-[#F6F5F3] mt-1">
+                        ₱{Number(historyModal.data.fineSummary?.totalSettledFines || 0).toLocaleString()}
+                        <span className="text-[11px] font-normal text-[#6B6761] dark:text-[#A8A29E]">
+                          {' '}/ ₱{Number(historyModal.data.fineSummary?.totalFinesAssessed || 0).toLocaleString()}
+                        </span>
+                      </p>
+                    </div>
+
+                    <div className="p-3.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-[#6B6761] dark:text-[#A8A29E]">
+                        Cumulative Strikes
+                      </p>
+                      <p className="text-sm font-bold font-mono tabular-nums text-[#1F1D1B] dark:text-[#F6F5F3] mt-1">
+                        {historyModal.data.cumulativeOffenseCount ?? 0} Valid
+                        <span className="text-[11px] font-normal text-[#6B6761] dark:text-[#A8A29E]">
+                          {' '}({historyModal.data.activeViolationCount ?? 0} Unsettled)
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* HISTORY LIST */}
+                  {(historyModal.data.history || []).length === 0 ? (
+                    <div className="py-10 text-center text-[#6B6761] dark:text-[#A8A29E]">
+                      <CheckCircle size={28} className="mx-auto mb-2 opacity-50" />
+                      <p className="text-xs font-semibold">No violation citations on record for this tricycle unit.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2.5">
+                      {historyModal.data.history.map((v) => {
+                        const isGraveBadge = Boolean(v.isGrave || v.severity === 'Grave');
+                        return (
+                          <div
+                            key={v._id}
+                            className="p-3.5 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#14110F]/60 text-xs space-y-2"
+                          >
+                            <div className="flex items-start justify-between gap-2 flex-wrap">
+                              <div>
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
+                                    isGraveBadge || v.offenseNumber >= 3
+                                      ? 'bg-red-100 dark:bg-red-950/60 text-red-800 dark:text-red-300'
+                                      : v.offenseNumber === 2
+                                        ? 'bg-orange-100 dark:bg-orange-950/60 text-orange-800 dark:text-orange-300'
+                                        : 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300'
+                                  }`}>
+                                    {isGraveBadge ? 'GRAVE OFFENSE' : formatOrdinal(v.offenseNumber)}
+                                  </span>
+                                  <span className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{v.violationType}</span>
+                                </div>
+                                <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] mt-0.5 font-mono tabular-nums">
+                                  {new Date(v.createdAt).toLocaleDateString()} &bull; Severity: {v.severity} &bull; Sanction: {v.sanction?.type}
+                                </p>
+                              </div>
+
+                              <span className={`px-2 py-0.5 rounded text-[10px] font-semibold ${
+                                v.status === 'Active'
+                                  ? 'bg-amber-100 dark:bg-amber-950/60 text-amber-800 dark:text-amber-300'
+                                  : v.status === 'Lifted'
+                                    ? 'bg-[#E4E1DC]/70 dark:bg-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E]'
+                                    : 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
+                              }`}>
+                                {v.status === 'Lifted' ? 'Dismissed / Lifted' : v.status}
+                              </span>
+                            </div>
+
+                            {renderLockedFineMeta(v)}
+
+                            {v.remarks && (
+                              <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] italic">&ldquo;{v.remarks}&rdquo;</p>
+                            )}
+                            {v.settledNotes && v.status !== 'Active' && (
+                              <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
+                                Resolution Notes: {v.settledNotes}
+                              </p>
+                            )}
+
+                            <div className="flex items-center justify-end gap-1.5 pt-1 flex-wrap">
+                              {v.evidenceUrl && (
+                                <button
+                                  type="button"
+                                  onClick={() => setPreviewDoc(v.evidenceUrl)}
+                                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#1C1917] text-[11px] font-semibold cursor-pointer"
+                                >
+                                  <FileText size={12} /> Evidence
+                                </button>
+                              )}
+                              {v.status === 'Active' && (
+                                <>
+                                  <button
+                                    type="button"
+                                    onClick={() => openResolutionModal(v, 'settle')}
+                                    className="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60 hover:bg-emerald-100 cursor-pointer"
+                                  >
+                                    Settle Fine
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => openResolutionModal(v, 'lift')}
+                                    className="px-2.5 py-1 rounded-lg text-[11px] font-semibold bg-amber-50 dark:bg-amber-950/30 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60 hover:bg-amber-100 cursor-pointer"
+                                  >
+                                    Dismiss in Error
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SETTLE FINE / DISMISS IN ERROR MODAL */}
+      {settleModal.isOpen && settleModal.violation && (
+        <div role="dialog" aria-modal="true" className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+          <div
+            className="absolute inset-0 bg-black/60 transition-opacity"
+            onClick={() => !settleModal.isSubmitting && setSettleModal(prev => ({ ...prev, isOpen: false }))}
+          />
+
+          <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] w-full max-w-md rounded-xl shadow-xl relative z-10 p-5">
             <div className="flex items-center justify-between pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27] mb-4">
               <h3 className="font-semibold text-sm text-[#1F1D1B] dark:text-[#F6F5F3] flex items-center gap-2">
-                <CheckCircle2 size={16} className="text-emerald-600" /> Settle Violation Citation
+                {settleModal.action === 'lift' ? (
+                  <>
+                    <RotateCcw size={16} className="text-amber-700 dark:text-amber-400" /> Dismiss Citation in Error
+                  </>
+                ) : (
+                  <>
+                    <CheckCircle2 size={16} className="text-emerald-700 dark:text-emerald-400" /> Settle Violation Fine
+                  </>
+                )}
               </h3>
-              <button 
-                onClick={() => setSettleModal(prev => ({ ...prev, isOpen: false }))}
-                className="text-[#6B6761] hover:text-[#1F1D1B] cursor-pointer"
+              <button
+                type="button"
+                onClick={() => !settleModal.isSubmitting && setSettleModal(prev => ({ ...prev, isOpen: false }))}
+                className="text-[#6B6761] hover:text-[#1F1D1B] dark:hover:text-[#F6F5F3] cursor-pointer"
+                aria-label="Close resolution modal"
               >
                 <X size={16} />
               </button>
@@ -1039,25 +1451,46 @@ const ManageRevocations = () => {
             <form onSubmit={handleSettleViolationSubmit} className="space-y-3.5 text-xs">
               <div className="bg-[#F6F5F3] dark:bg-[#14110F] p-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
                 <p className="text-[10px] uppercase font-bold text-[#6B6761] dark:text-[#A8A29E]">Citation Target</p>
-                <p className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] text-sm">{settleModal.violation?.plateNo}</p>
-                <p className="text-[#6B6761] dark:text-[#A8A29E] mt-0.5">Offense: {settleModal.violation?.violationType}</p>
-                {settleModal.violation?.sanction?.fineAmount > 0 && (
-                  <p className="text-orange-700 dark:text-orange-400 font-mono font-bold mt-1">
-                    Fine to Settle: ₱{Number(settleModal.violation?.sanction?.fineAmount || 0).toLocaleString()}
-                  </p>
-                )}
+                <p className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] text-sm font-mono tabular-nums">
+                  {settleModal.violation?.plateNo}
+                </p>
+                <p className="text-[#6B6761] dark:text-[#A8A29E] mt-0.5">
+                  Offense: {settleModal.violation?.violationType}
+                </p>
+                {renderLockedFineMeta(settleModal.violation)}
               </div>
+
+              {settleModal.action === 'lift' ? (
+                <div className="p-3 rounded-lg border border-amber-200 dark:border-amber-900/60 bg-amber-50 dark:bg-amber-950/30 text-amber-900 dark:text-amber-200 text-[11px] leading-relaxed">
+                  <strong>Dismiss in Error:</strong> Use only when this citation was issued mistakenly or overturned on appeal.
+                  The citation will be marked <strong>Lifted</strong>, removed from the operator&apos;s cumulative offense strike history, and permit standing will be recalculated.
+                </div>
+              ) : isSettleTargetRevoked ? (
+                <div className="p-3 rounded-lg border border-red-200 dark:border-red-900/60 bg-red-50 dark:bg-red-950/30 text-red-900 dark:text-red-200 text-[11px] leading-relaxed">
+                  <strong>Permanent Revocation Notice:</strong> Settling this fine records payment of the locked monetary balance only.
+                  The franchise will remain permanently <strong>Revoked</strong>. Use <em>Dismiss in Error</em> only if the revocation citation itself was mistaken.
+                </div>
+              ) : (
+                <div className="p-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E] text-[11px] leading-relaxed">
+                  Marking this violation as <strong>Settled</strong> clears the unpaid fine and lifts suspension/warning if no other unsettled citations remain.
+                  Valid prior offense strikes stay on record for future progressive escalation.
+                </div>
+              )}
 
               <div>
                 <label className="block font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] mb-1">
-                  Settlement Notes / Treasury OR Number
+                  {settleModal.action === 'lift'
+                    ? 'Reason for Dismissal / Appeal Reference'
+                    : 'Settlement Notes / Treasury OR Number'}
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Paid via OR #1234567 / Suspension served"
+                  placeholder={settleModal.action === 'lift'
+                    ? 'e.g. Wrong plate encoded / OVM review approval'
+                    : 'e.g. Paid via OR #1234567 / Suspension served'}
                   value={settleModal.notes}
                   onChange={(e) => setSettleModal(prev => ({ ...prev, notes: e.target.value }))}
-                  className="w-full bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-3 py-2 text-xs outline-none"
+                  className="w-full min-h-[44px] bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] rounded-lg px-3 py-2 text-xs outline-none focus:border-[#9E2A2B]"
                 />
               </div>
 
@@ -1065,17 +1498,28 @@ const ManageRevocations = () => {
                 <button
                   type="button"
                   onClick={() => setSettleModal(prev => ({ ...prev, isOpen: false }))}
-                  className="flex-1 py-2 rounded-lg font-semibold bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs cursor-pointer"
+                  disabled={settleModal.isSubmitting}
+                  className="flex-1 min-h-[44px] py-2 rounded-lg font-semibold bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-[#1F1D1B] dark:text-[#F6F5F3] text-xs cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={settleModal.isSubmitting}
-                  className="flex-1 py-2 rounded-lg font-semibold bg-emerald-700 hover:bg-emerald-800 text-white text-xs shadow-sm cursor-pointer flex items-center justify-center gap-1.5"
+                  className={`flex-1 min-h-[44px] py-2 rounded-lg font-semibold text-white text-xs shadow-sm cursor-pointer flex items-center justify-center gap-1.5 ${
+                    settleModal.action === 'lift'
+                      ? 'bg-amber-700 hover:bg-amber-800'
+                      : 'bg-emerald-700 hover:bg-emerald-800'
+                  }`}
                 >
-                  {settleModal.isSubmitting ? <Loader2 size={13} className="animate-spin" /> : <Check size={13} />}
-                  Mark as Settled
+                  {settleModal.isSubmitting ? (
+                    <Loader2 size={13} className="animate-spin" />
+                  ) : settleModal.action === 'lift' ? (
+                    <RotateCcw size={13} />
+                  ) : (
+                    <Check size={13} />
+                  )}
+                  {settleModal.action === 'lift' ? 'Confirm Dismiss / Lift' : 'Confirm Fine Settlement'}
                 </button>
               </div>
             </form>
@@ -1105,15 +1549,6 @@ const ManageRevocations = () => {
             </div>
           </div>
         </div>
-      )}
-
-      {/* Official Sangguniang Bayan / OVM Franchise Cancellation Letter */}
-      {selectedCancellation && (
-        <OfficialCancellationLetterModal
-          isOpen={!!selectedCancellation}
-          onClose={() => setSelectedCancellation(null)}
-          franchise={selectedCancellation}
-        />
       )}
     </MainLayout>
   );

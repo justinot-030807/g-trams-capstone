@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { GASAN_BARANGAYS, TODA_LIST, getTodasForBarangay } from '../utils/constants';
 import { resilientApiFetch } from '../utils/googleAuthUtils';
+import { sanitizeMobileInput, normalizePhMobile, isValidPhMobile } from '../utils/contactValidation';
+import { extractNameTokens } from '../utils/nameMatcher';
 import TermsPolicyModal from './common/TermsPolicyModal';
 import LguAdvisoryModal from './common/LguAdvisoryModal';
 import { 
@@ -35,7 +37,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
       setError('');
       const initialName = (googleProfile.name || googleProfile.fullName || '').trim();
       setEditableName(initialName);
-      setPhoneNumber(googleProfile.phoneNumber || googleProfile.phone || '');
+      setPhoneNumber(normalizePhMobile(googleProfile.phoneNumber || googleProfile.phone || ''));
       setSelectedBarangay('');
       setSelectedToda('');
       setBodyNumber('');
@@ -49,10 +51,12 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
   useEffect(() => {
     if (!selectedToda || selectedToda === 'NON-TODA') {
       setTodaCheckResult(null);
+      setIsCheckingToda(false);
       return;
     }
 
     if (!editableName || !bodyNumber) {
+      setIsCheckingToda(false);
       setTodaCheckResult({
         status: 'pending_input',
         message: 'Punan ang inyong Legal Name at Assigned Body Number upang masuri ang roster status.'
@@ -60,12 +64,18 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
       return;
     }
 
+    // Clear stale verification immediately when inputs change to prevent debounce race
+    let cancelled = false;
+    const controller = new AbortController();
+    setTodaCheckResult(null);
+    setIsCheckingToda(true);
+
     const timer = setTimeout(async () => {
-      setIsCheckingToda(true);
       try {
         const res = await resilientApiFetch('/api/v1/auth/verify-roster', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
           body: JSON.stringify({
             fullName: editableName,
             todaAssociation: selectedToda,
@@ -73,15 +83,25 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
           })
         });
         const data = await res.json();
-        setTodaCheckResult(data);
+        if (!cancelled) {
+          setTodaCheckResult(data);
+        }
       } catch (e) {
-        console.error('TODA check error in Google onboarding:', e);
+        if (!cancelled && e?.name !== 'AbortError') {
+          console.error('TODA check error in Google onboarding:', e);
+        }
       } finally {
-        setIsCheckingToda(false);
+        if (!cancelled) {
+          setIsCheckingToda(false);
+        }
       }
     }, 400);
 
-    return () => clearTimeout(timer);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, [selectedToda, editableName, bodyNumber]);
 
   if (!isOpen || !googleProfile) return null;
@@ -91,7 +111,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (isLoading) return;
+    if (isLoading || isCheckingToda) return;
     setError('');
 
     if (!editableName || editableName.trim().length < 2) {
@@ -99,16 +119,20 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
       return;
     }
 
+    if (extractNameTokens(editableName).length < 2) {
+      setError('PLEASE ENTER YOUR COMPLETE LEGAL NAME (FIRST NAME AND SURNAME).');
+      return;
+    }
+
     let formattedPhone = '';
     const trimmedPhone = (phoneNumber || '').trim();
     if (trimmedPhone) {
-      const cleanPhone = trimmedPhone.replace(/[\s\-()]/g, '');
-      const isValidPHPhone = /^09\d{9}$/.test(cleanPhone) || /^\+639\d{9}$/.test(cleanPhone);
-      if (!isValidPHPhone) {
-        setError('PLEASE ENTER A VALID PHILIPPINE MOBILE NUMBER (E.G. 09123456789) OR LEAVE IT BLANK.');
+      const normalizedPhone = normalizePhMobile(trimmedPhone);
+      if (!isValidPhMobile(normalizedPhone)) {
+        setError('PLEASE ENTER A VALID 11-DIGIT PHILIPPINE MOBILE NUMBER (E.G. 09123456789) OR LEAVE IT BLANK.');
         return;
       }
-      formattedPhone = cleanPhone.startsWith('+63') ? '0' + cleanPhone.slice(3) : cleanPhone;
+      formattedPhone = normalizedPhone;
     }
 
     if (!selectedBarangay) {
@@ -278,6 +302,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
                 name="fullName"
                 value={editableName}
                 onChange={(e) => {
+                  setTodaCheckResult(null);
                   setEditableName(e.target.value);
                   if (error) setError('');
                 }}
@@ -333,10 +358,10 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
                 autoComplete="tel"
                 value={phoneNumber}
                 onChange={(e) => {
-                  setPhoneNumber(e.target.value);
+                  setPhoneNumber(sanitizeMobileInput(e.target.value));
                   if (error) setError('');
                 }}
-                maxLength={13}
+                maxLength={11}
                 className={inputClasses}
                 placeholder="09123456789 (Optional)"
               />
@@ -362,6 +387,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
                   setSelectedBarangay(newBrgy);
                   const valid = getTodasForBarangay(newBrgy);
                   if (!valid.includes(selectedToda)) {
+                    setTodaCheckResult(null);
                     setSelectedToda('');
                   }
                   if (error) setError('');
@@ -396,6 +422,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
               <select
                 value={selectedToda}
                 onChange={(e) => {
+                  setTodaCheckResult(null);
                   setSelectedToda(e.target.value);
                   if (error) setError('');
                 }}
@@ -434,6 +461,7 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
                 name="bodyNumber"
                 value={bodyNumber}
                 onChange={(e) => {
+                  setTodaCheckResult(null);
                   setBodyNumber(e.target.value.toUpperCase());
                   if (error) setError('');
                 }}
@@ -584,13 +612,18 @@ const GoogleOnboardingModal = ({ isOpen, onClose, googleProfile, onSuccess }) =>
           <div className="pt-2">
             <button
               type="submit"
-              disabled={isLoading}
+              disabled={isLoading || isCheckingToda}
               className="w-full flex items-center justify-center gap-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white py-3 rounded-lg text-base font-bold shadow-sm active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer min-h-[44px]"
             >
               {isLoading ? (
                 <>
                   <Loader2 size={18} className="animate-spin" />
                   <span>Activating Account...</span>
+                </>
+              ) : isCheckingToda ? (
+                <>
+                  <Loader2 size={18} className="animate-spin" />
+                  <span>Verifying TODA Roster...</span>
                 </>
               ) : (
                 <span>Complete Registration</span>

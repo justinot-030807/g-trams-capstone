@@ -4,6 +4,7 @@ import { ShieldAlert, KeyRound, ArrowLeft, RefreshCw, Loader2, User, Lock, Phone
 import AuthNavbar from '../components/common/AuthNavbar';
 import AuthFooter from '../components/common/AuthFooter';
 import { resilientApiFetch } from '../utils/googleAuthUtils';
+import { sanitizeDualContactInput } from '../utils/contactValidation';
 
 const ForgotPassword = () => {
   const navigate = useNavigate();
@@ -436,8 +437,9 @@ const ForgotPassword = () => {
                     </div>
                     <input 
                       type="text" 
+                      maxLength={60}
                       value={contact}
-                      onChange={(e) => setContact(e.target.value)}
+                      onChange={(e) => setContact(sanitizeDualContactInput(e.target.value))}
                       required 
                       className={`w-full pl-10 pr-3.5 py-3 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-[#F6F5F3] dark:bg-[#14110F] text-sm text-[#1F1D1B] dark:text-[#F6F5F3] placeholder-[#6B6761] outline-none focus:outline-none focus:bg-white dark:focus:bg-[#1C1917] focus:border-[#9E2A2B] focus:ring-1 focus:ring-[#9E2A2B] transition-colors font-medium min-h-[46px]`} 
                       placeholder="Enter email or phone number" 
@@ -597,8 +599,9 @@ const ForgotPassword = () => {
                           <div className="mt-2.5 flex gap-2">
                             <input
                               type="text"
+                              maxLength={60}
                               value={manualRecoveryContact}
-                              onChange={(e) => setManualRecoveryContact(e.target.value)}
+                              onChange={(e) => setManualRecoveryContact(sanitizeDualContactInput(e.target.value))}
                               placeholder="Enter recovery email or 0912..."
                               className="flex-1 px-3 py-2 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] bg-white dark:bg-[#1C1917] text-xs text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-[#9E2A2B]"
                             />

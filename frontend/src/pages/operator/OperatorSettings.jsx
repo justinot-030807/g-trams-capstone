@@ -26,6 +26,7 @@ import {
   sendTestPush
 } from '../../utils/pushNotification';
 import { resilientApiFetch, DEFAULT_GOOGLE_CLIENT_ID } from '../../utils/googleAuthUtils';
+import { sanitizeMobileInput, sanitizeDualContactInput, isValidPhMobile } from '../../utils/contactValidation';
 
 const getEffectiveRecovery = (userObj) => {
   const recEmail = String(userObj?.recoveryEmail || '').trim();
@@ -615,6 +616,16 @@ const OperatorSettings = () => {
       }
     }
 
+    if (normField(profileData.emergencyContact) && !isValidPhMobile(profileData.emergencyContact)) {
+      showToast('Please enter a valid 11-digit Philippine mobile number for Emergency Contact (e.g. 09123456789).', 'error');
+      return;
+    }
+
+    if (isRecPhoneModified && normField(profileData.recoveryPhone) && !isValidPhMobile(profileData.recoveryPhone)) {
+      showToast('Please enter a valid 11-digit Philippine mobile number for Recovery Phone (e.g. 09123456789).', 'error');
+      return;
+    }
+
     if (requiresSensitivePasswordConfirm && !profileConfirmPassword) {
       showToast('Please enter your current password to confirm contact or recovery changes.', 'error');
       return;
@@ -797,9 +808,16 @@ const OperatorSettings = () => {
       showToast('Please provide both a subject and message.', 'error');
       return;
     }
+    if (ticketContact.trim() && !isValidPhMobile(ticketContact)) {
+      showToast('Please enter a valid 11-digit Philippine mobile number (e.g. 09123456789).', 'error');
+      return;
+    }
     setIsSubmittingTicket(true);
     try {
       const token = localStorage.getItem('token');
+      const fallbackContact = String(profileData.contact || '').includes('@')
+        ? profileData.contact
+        : sanitizeMobileInput(profileData.contact);
       const res = await fetch(`${import.meta.env.VITE_API_URL || ''}/api/v1/tickets`, {
         method: 'POST',
         headers: {
@@ -808,7 +826,7 @@ const OperatorSettings = () => {
         },
         body: JSON.stringify({
           subject: ticketSubject.trim(),
-          contactNumber: ticketContact.trim() || profileData.contact,
+          contactNumber: ticketContact.trim() || fallbackContact,
           message: ticketMessage.trim()
         })
       });
@@ -834,12 +852,17 @@ const OperatorSettings = () => {
     }
   };
 
-  // Sync ticket contact when support modal opens
+  // Sync ticket contact when support modal opens (guard against prefilling email addresses)
   useEffect(() => {
-    if (isSupportModalOpen && profileData.contact) {
-      setTicketContact(profileData.contact);
+    if (isSupportModalOpen) {
+      const fallbackPhone =
+        (!String(profileData.contact || '').includes('@') && profileData.contact) ||
+        profileData.emergencyContact ||
+        profileData.recoveryPhone ||
+        '';
+      setTicketContact(sanitizeMobileInput(fallbackPhone));
     }
-  }, [isSupportModalOpen, profileData.contact]);
+  }, [isSupportModalOpen, profileData.contact, profileData.emergencyContact, profileData.recoveryPhone]);
 
   // Theme Switcher
   const handleThemeToggle = (newTheme) => {
@@ -1597,11 +1620,12 @@ const OperatorSettings = () => {
                   )}
                   <input
                     type="text"
+                    maxLength={60}
                     value={profileData.contact}
-                    onChange={(e) => setProfileData(prev => ({ ...prev, contact: e.target.value }))}
+                    onChange={(e) => setProfileData(prev => ({ ...prev, contact: sanitizeDualContactInput(e.target.value) }))}
                     className={`${inputClasses} pl-10`}
                     required
-                    placeholder="e.g. 0912 345 6789 or operator@gmail.com"
+                    placeholder="e.g. 09123456789 or operator@gmail.com"
                   />
                 </div>
               </div>
@@ -1612,10 +1636,11 @@ const OperatorSettings = () => {
                   <span>Emergency Contact Number</span>
                 </label>
                 <input
-                  type="text"
-                  maxLength="50"
+                  type="tel"
+                  inputMode="numeric"
+                  maxLength={11}
                   value={profileData.emergencyContact}
-                  onChange={(e) => setProfileData(prev => ({ ...prev, emergencyContact: e.target.value }))}
+                  onChange={(e) => setProfileData(prev => ({ ...prev, emergencyContact: sanitizeMobileInput(e.target.value) }))}
                   placeholder="e.g. 09123456789"
                   className={inputClasses}
                 />
@@ -1653,9 +1678,10 @@ const OperatorSettings = () => {
                   </label>
                   <input
                     type="tel"
-                    maxLength="20"
+                    inputMode="numeric"
+                    maxLength={11}
                     value={profileData.recoveryPhone}
-                    onChange={(e) => setProfileData(prev => ({ ...prev, recoveryPhone: e.target.value }))}
+                    onChange={(e) => setProfileData(prev => ({ ...prev, recoveryPhone: sanitizeMobileInput(e.target.value) }))}
                     placeholder="e.g. 09187654321"
                     className={inputClasses}
                   />
@@ -1858,9 +1884,10 @@ const OperatorSettings = () => {
                   <input
                     id="recovery-modal-phone"
                     type="tel"
-                    maxLength="20"
+                    inputMode="numeric"
+                    maxLength={11}
                     value={profileData.recoveryPhone}
-                    onChange={(e) => setProfileData(prev => ({ ...prev, recoveryPhone: e.target.value }))}
+                    onChange={(e) => setProfileData(prev => ({ ...prev, recoveryPhone: sanitizeMobileInput(e.target.value) }))}
                     placeholder="e.g. 09187654321"
                     className={`${inputClasses} pl-10 min-h-[44px]`}
                   />
@@ -2860,11 +2887,12 @@ const OperatorSettings = () => {
                     Contact Number
                   </label>
                   <input
-                    type="text"
-                    maxLength="50"
-                    placeholder="Contact number for officer follow-up"
+                    type="tel"
+                    inputMode="numeric"
+                    maxLength={11}
+                    placeholder="09123456789"
                     value={ticketContact}
-                    onChange={(e) => setTicketContact(e.target.value)}
+                    onChange={(e) => setTicketContact(sanitizeMobileInput(e.target.value))}
                     className={inputClasses}
                   />
                 </div>

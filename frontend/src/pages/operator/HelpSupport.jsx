@@ -8,6 +8,7 @@ import {
 import { useLanguage } from '../../context/LanguageContext';
 import TermsPolicyModal from '../../components/common/TermsPolicyModal';
 import { HELP_DESK_EMAIL, HOTLINE_DISPLAY, HOTLINE_NUMBER, MUNICIPAL_OFFICE_NAME } from '../../utils/contactConfig';
+import { sanitizeMobileInput, isValidPhMobile } from '../../utils/contactValidation';
 import { toast } from 'sonner';
 
 const buildFaqsData = ({ maxUnitsPerOperator = 2, renewalReminderDays = 30, validityNew = 3, validityRenew = 1 } = {}) => ({
@@ -172,6 +173,14 @@ const HelpSupport = () => {
 
   const handleTicketSubmit = async (e) => {
     e.preventDefault();
+    if (!isValidPhMobile(ticketData.contactNumber)) {
+      toast.error(
+        currentLang === 'fil'
+          ? 'Mangyaring maglagay ng wastong 11-digit na Philippine mobile number (hal. 09123456789).'
+          : 'Please enter a valid 11-digit Philippine mobile number (e.g. 09123456789).'
+      );
+      return;
+    }
     setIsSubmitting(true);
     try {
       const token = localStorage.getItem('token');
@@ -584,11 +593,13 @@ const HelpSupport = () => {
                     {currentLang === 'fil' ? 'Numero sa Telepono' : 'Contact Number'}
                   </label>
                   <input 
-                    type="text" 
+                    type="tel"
+                    inputMode="numeric"
+                    maxLength={11}
                     placeholder="09123456789" 
                     className="w-full bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-4 py-2.5 text-xs sm:text-sm font-medium text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37] focus:ring-1 focus:ring-[#9E2A2B] min-h-[44px]" 
                     value={ticketData.contactNumber}
-                    onChange={(e) => setTicketData({...ticketData, contactNumber: e.target.value})}
+                    onChange={(e) => setTicketData({...ticketData, contactNumber: sanitizeMobileInput(e.target.value)})}
                     required
                   />
                 </div>

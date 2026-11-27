@@ -28,6 +28,15 @@ const STATUS_OPTIONS = [
 
 const PAGE_SIZE_OPTIONS = [5, 10, 25, 50];
 
+const normalizeFiscalYear = (val) => {
+  const match = String(val ?? '').trim().match(/^(\d{4})/);
+  if (match) {
+    const yr = Number(match[1]);
+    if (yr >= 2020 && yr <= 2100) return match[1];
+  }
+  return new Date().getFullYear().toString();
+};
+
 const FranchiseMasterlist = () => {
   const [franchises, setFranchises] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -71,7 +80,28 @@ const FranchiseMasterlist = () => {
   const [archiveYearSort, setArchiveYearSort] = useState('desc'); // 'desc' (Newest Year First) | 'asc' (Oldest Year First)
   const [collapsedArchiveYears, setCollapsedArchiveYears] = useState({});
 
-  const currentFiscalYear = localStorage.getItem('fiscal_year') || new Date().getFullYear().toString();
+  const [currentFiscalYear, setCurrentFiscalYear] = useState(() => {
+    const raw = localStorage.getItem('fiscal_year');
+    const normalized = normalizeFiscalYear(raw);
+    if (raw && raw !== normalized) {
+      try {
+        localStorage.setItem('fiscal_year', normalized);
+      } catch {}
+    }
+    return normalized;
+  });
+
+  useEffect(() => {
+    const syncFiscalYear = () => {
+      setCurrentFiscalYear(normalizeFiscalYear(localStorage.getItem('fiscal_year')));
+    };
+    window.addEventListener('gtrams_settings_updated', syncFiscalYear);
+    window.addEventListener('storage', syncFiscalYear);
+    return () => {
+      window.removeEventListener('gtrams_settings_updated', syncFiscalYear);
+      window.removeEventListener('storage', syncFiscalYear);
+    };
+  }, []);
 
   const getRecordArchiveYear = useCallback((record) => {
     if (!record) return currentFiscalYear;

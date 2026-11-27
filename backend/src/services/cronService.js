@@ -1,6 +1,7 @@
 const cron = require('node-cron');
 const { Types } = require('mongoose');
 const Franchise = require('../models/franchiseModel');
+const Violation = require('../models/violationModel');
 const Notification = require('../models/notificationModel');
 const SystemSettings = require('../models/systemSettingsModel');
 const { emitToUser } = require('../config/socket');
@@ -20,7 +21,7 @@ const issuedPermitFields = [
     { scope: withoutIssuedSnapshot, statusField: 'status', expiryField: 'expiryDate' },
     { scope: issuedPermitSnapshotQuery(), statusField: 'previousStatus', expiryField: 'previousExpiryDate' }
 ];
-const completedSuspension = { suspensionEndDate: null, currentSanction: 'Warning' };
+const completedSuspension = { suspensionEndDate: null, suspensionReason: '', currentSanction: 'Warning' };
 const expiryNotificationTitle = 'Franchise Permit Expired';
 
 async function deliverPendingExpiryNotifications() {
@@ -116,6 +117,13 @@ async function syncFranchiseStatuses() {
             }
         }
 
+        // Never auto-reinstate a Suspended franchise whose suspension fine is still unpaid.
+        const unpaidSuspensionFranchiseIds = await Violation.distinct('franchise', {
+            status: 'Active',
+            'sanction.type': 'Suspension',
+            'sanction.fineAmount': { $gt: 0 }
+        });
+
         let synchronizedCount = 0;
         for (const { scope, statusField, expiryField } of issuedPermitFields) {
             const endedSuspension = {
@@ -126,6 +134,7 @@ async function syncFranchiseStatuses() {
                 {
                     ...scope,
                     ...endedSuspension,
+                    ...(unpaidSuspensionFranchiseIds.length > 0 ? { _id: { $nin: unpaidSuspensionFranchiseIds } } : {}),
                     [expiryField]: { $gt: now }
                 },
                 {

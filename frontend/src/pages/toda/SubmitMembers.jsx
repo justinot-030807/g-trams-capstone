@@ -13,6 +13,7 @@ import TricycleIcon from '../../components/common/TricycleIcon';
 import StatusBadge from '../../components/common/StatusBadge';
 import { formatZoneLabel } from '../../utils/constants';
 import { compressImage } from '../../utils/imageCompressor';
+import { sanitizeMobileInput, isValidPhMobile } from '../../utils/contactValidation';
 
 const REMOVAL_REASONS = [
   'No longer operating / Inactive',
@@ -459,6 +460,14 @@ const SubmitMembers = () => {
     e.preventDefault();
     if (!individualModal.operatorName.trim()) {
       setIndividualModal(prev => ({ ...prev, error: 'Please enter the full legal name of the operator/member.' }));
+      return;
+    }
+
+    if (individualModal.contact.trim() && !isValidPhMobile(individualModal.contact)) {
+      setIndividualModal(prev => ({
+        ...prev,
+        error: 'Please enter a valid 11-digit Philippine mobile number (e.g. 09123456789) or leave it blank.'
+      }));
       return;
     }
 
@@ -1896,9 +1905,11 @@ const SubmitMembers = () => {
                     Contact Number <span className="text-[10px] text-[#6B6761] font-normal">(Optional)</span>
                   </label>
                   <input
-                    type="text"
+                    type="tel"
+                    inputMode="numeric"
+                    maxLength={11}
                     value={individualModal.contact}
-                    onChange={(e) => setIndividualModal(prev => ({ ...prev, contact: e.target.value }))}
+                    onChange={(e) => setIndividualModal(prev => ({ ...prev, contact: sanitizeMobileInput(e.target.value), error: '' }))}
                     placeholder="e.g. 09123456789"
                     className="w-full px-3 py-2 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] text-xs font-medium text-[#1F1D1B] dark:text-[#EAE7E1] focus:outline-none focus:border-[#9E2A2B] min-h-[40px]"
                   />

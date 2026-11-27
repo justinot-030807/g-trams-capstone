@@ -114,10 +114,18 @@ function isFinalizedVoluntaryCancellation(franchise) {
 }
 
 /**
- * Resolve all Active (unsettled) violations tied to the unit identifiers or franchise chain
- * so progressive discipline cannot be reset by surrendering and re-applying for the same tricycle.
+ * Build the MongoDB $or matcher covering all Violation records tied to the unit's
+ * physical identifiers (plateNo, motorNo, chassisNo) or franchise lineage.
  */
-async function findUnsettledViolationsForUnit({ plateNo, motorNo, chassisNo, operatorId, franchiseId } = {}) {
+async function buildUnitViolationOr(franchiseLike = {}) {
+    if (!franchiseLike || typeof franchiseLike !== 'object') return [];
+
+    const plateNo = franchiseLike.plateNo;
+    const motorNo = franchiseLike.motorNo;
+    const chassisNo = franchiseLike.chassisNo;
+    const franchiseId = franchiseLike.franchiseId || franchiseLike._id;
+    const operatorId = franchiseLike.operatorId || franchiseLike.operator?._id || franchiseLike.operator;
+
     const franchiseIds = new Set();
     if (franchiseId) franchiseIds.add(String(franchiseId));
 
@@ -140,9 +148,29 @@ async function findUnsettledViolationsForUnit({ plateNo, motorNo, chassisNo, ope
     if (operatorId && isMeaningfulIdentifier(plateNo)) {
         violationOr.push({ operator: operatorId, plateNo: exactInsensitive(plateNo) });
     }
+    return violationOr;
+}
+
+/**
+ * Resolve all Active (unsettled) violations tied to the unit identifiers or franchise chain
+ * so progressive discipline cannot be reset by surrendering and re-applying for the same tricycle.
+ */
+async function findUnsettledViolationsForUnit(franchiseLike = {}) {
+    const violationOr = await buildUnitViolationOr(franchiseLike);
     if (violationOr.length === 0) return [];
 
     return Violation.find({ status: 'Active', $or: violationOr }).lean();
+}
+
+/**
+ * Resolve all cumulative valid violations (Active + Settled, excluding only Lifted/dismissed)
+ * across the unit lineage so progressive offense strikes persist even after fines are paid.
+ */
+async function findCumulativeValidViolationsForUnit(franchiseLike = {}) {
+    const violationOr = await buildUnitViolationOr(franchiseLike);
+    if (violationOr.length === 0) return [];
+
+    return Violation.find({ status: { $in: ['Active', 'Settled'] }, $or: violationOr }).lean();
 }
 
 module.exports = {
@@ -150,5 +178,7 @@ module.exports = {
     countOperatorOccupiedSlots,
     isFranchiseOccupyingSlot,
     isFinalizedVoluntaryCancellation,
-    findUnsettledViolationsForUnit
+    buildUnitViolationOr,
+    findUnsettledViolationsForUnit,
+    findCumulativeValidViolationsForUnit
 };

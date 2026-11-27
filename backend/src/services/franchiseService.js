@@ -93,6 +93,7 @@ const CREATE_STRING_LIMITS = [
     ['orNo', 40, 'OR number'],
     ['fileNo', 40, 'MV file number'],
     ['series', 60, 'Vehicle series'],
+    ['color', 50, 'Tricycle color'],
     ['grossWeight', 20, 'Gross weight'],
     ['registeredOwner', 100, 'Registered owner'],
     ['driverName', 100, 'Driver name'],
@@ -137,6 +138,26 @@ function validateNormalizedDlCodes(rawValue) {
         err.statusCode = 400;
         throw err;
     }
+    return clean;
+}
+
+function validateNormalizedPhMobile(rawValue, label = 'Driver contact number') {
+    if (rawValue === undefined || rawValue === null) return '';
+    if (typeof rawValue !== 'string') {
+        const err = new Error(`${label} must be a valid text string.`);
+        err.statusCode = 400;
+        throw err;
+    }
+    const trimmed = rawValue.trim();
+    if (!trimmed) return '';
+    const clean = trimmed.replace(/[\s\-()]/g, '');
+    if (!/^(09\d{9}|\+639\d{9}|639\d{9})$/.test(clean)) {
+        const err = new Error(`${label} must be a valid 11-digit Philippine mobile number (e.g. 09123456789).`);
+        err.statusCode = 400;
+        throw err;
+    }
+    if (clean.startsWith('+639')) return '0' + clean.slice(3);
+    if (clean.startsWith('639') && clean.length === 12) return '0' + clean.slice(2);
     return clean;
 }
 
@@ -277,6 +298,7 @@ class FranchiseService {
         // M7: Enforce server-side string types, length limits, and authorized DL categories
         validateFranchiseStringLimits(data, CREATE_STRING_LIMITS);
         const validatedDlCodes = validateNormalizedDlCodes(data.driverDlCodes);
+        const validatedDriverContact = validateNormalizedPhMobile(data.driverContact, 'Driver contact number');
 
         const motorNo = String(data.motorNo || '').trim().toUpperCase();
         const chassisNo = String(data.chassisNo || '').trim().toUpperCase();
@@ -425,7 +447,7 @@ class FranchiseService {
                 isOperatorDriver: data.isOperatorDriver !== undefined ? (data.isOperatorDriver === true || data.isOperatorDriver === 'true') : true,
                 numberOfUnits: Math.min(2, Math.max(1, Number(data.numberOfUnits) || 1)),
                 driverName: data.driverName || '',
-                driverContact: data.driverContact || '',
+                driverContact: validatedDriverContact,
                 driverLicenseNo: data.driverLicenseNo || '',
                 driverLicenseSerialNo: data.driverLicenseSerialNo || '',
                 driverLicenseExpiryDate: data.driverLicenseExpiryDate && !isNaN(new Date(data.driverLicenseExpiryDate).getTime()) ? new Date(data.driverLicenseExpiryDate) : undefined,
@@ -918,5 +940,6 @@ FranchiseService.isTrustedDocumentUrl = isTrustedDocumentUrl;
 FranchiseService.validateDocumentUrls = validateDocumentUrls;
 FranchiseService.validateFranchiseStringLimits = validateFranchiseStringLimits;
 FranchiseService.validateNormalizedDlCodes = validateNormalizedDlCodes;
+FranchiseService.validateNormalizedPhMobile = validateNormalizedPhMobile;
 
 module.exports = FranchiseService;

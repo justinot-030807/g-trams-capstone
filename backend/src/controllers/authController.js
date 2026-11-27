@@ -769,6 +769,21 @@ exports.register = async (req, res) => {
         const cleanRecEmail = recoveryEmail && String(recoveryEmail).includes('@') ? String(recoveryEmail).toLowerCase().trim() : '';
         const cleanRecPhone = recoveryPhone ? String(recoveryPhone).replace(/[\s\-()]/g, '').trim() : '';
 
+        if (rawBackupContact) {
+            const isBackupEmail = rawBackupContact.includes('@');
+            if (isBackupEmail ? !isValidEmailFormat(rawBackupContact) : !isValidPhMobileFormat(rawBackupContact)) {
+                return res.status(400).json({
+                    message: 'Please enter a valid email address or 11-digit Philippine mobile number for backup contact.'
+                });
+            }
+        }
+
+        if (cleanRecPhone && !isValidPhMobileFormat(cleanRecPhone)) {
+            return res.status(400).json({
+                message: 'Please enter a valid 11-digit Philippine mobile number for recovery phone (e.g. 09XXXXXXXXX).'
+            });
+        }
+
         if (cleanRecEmail && (cleanRecEmail === rawContact.toLowerCase() || cleanRecEmail === normalizedContact.toLowerCase())) {
             return res.status(400).json({ 
                 message: 'Ang Recovery Email ay dapat iba sa inyong pangunahing contact email.' 
@@ -2009,6 +2024,37 @@ exports.updateProfile = async (req, res) => {
             }
         }
 
+        const rawEmergencyContact = req.body.emergencyContact !== undefined
+            ? String(req.body.emergencyContact || '').trim()
+            : undefined;
+        if (rawEmergencyContact && !isValidPhMobileFormat(rawEmergencyContact)) {
+            return res.status(400).json({
+                message: 'Please enter a valid 11-digit Philippine mobile number for emergency contact (e.g. 09XXXXXXXXX).'
+            });
+        }
+        const normalizedEmergencyContact = rawEmergencyContact !== undefined
+            ? (rawEmergencyContact ? normalizeContact(rawEmergencyContact) : '')
+            : undefined;
+
+        if (isContactChanging) {
+            const rawUpdatedContact = String(contact || '').trim();
+            const isLandlineAllowed = ['system_admin', 'admin', 'administrator'].includes(currentUserRole) &&
+                /^\(?\d{2,4}\)?[\s\-]?\d{3}[\s\-]?\d{4}$/.test(rawUpdatedContact);
+            if (!rawUpdatedContact || (!isValidEmailFormat(rawUpdatedContact) && !isValidPhMobileFormat(rawUpdatedContact) && !isLandlineAllowed)) {
+                return res.status(400).json({
+                    message: 'Please enter a valid email address or 11-digit Philippine mobile number (e.g. 09XXXXXXXXX).'
+                });
+            }
+        }
+        if (isRecEmailChanging && rawReqRecEmail && !isValidEmailFormat(rawReqRecEmail)) {
+            return res.status(400).json({ message: 'Invalid recovery email format.' });
+        }
+        if (isRecPhoneChanging && rawReqRecPhone && !isValidPhMobileFormat(rawReqRecPhone)) {
+            return res.status(400).json({
+                message: 'Please enter a valid 11-digit Philippine mobile number for recovery phone (e.g. 09XXXXXXXXX).'
+            });
+        }
+
         if (requiredTargets.size > 1 || (requiredTargets.size && !requiredTargets.has(selectedTarget))) {
             return res.status(400).json({ message: 'Verify and save one contact at a time.' });
         }
@@ -2085,15 +2131,15 @@ exports.updateProfile = async (req, res) => {
                 updateData.isRecoveryEmailVerified = false;
             }
             if (isRecPhoneChanging) {
-                updateData.recoveryPhone = rawReqRecPhone;
+                updateData.recoveryPhone = rawReqRecPhone ? normalizeContact(rawReqRecPhone) : '';
                 updateData.isRecoveryPhoneVerified = false;
             }
-            const nextRecPhone = isRecPhoneChanging ? rawReqRecPhone : dbRecPhone;
+            const nextRecPhone = isRecPhoneChanging ? (rawReqRecPhone ? normalizeContact(rawReqRecPhone) : '') : dbRecPhone;
             const nextRecEmail = isRecEmailChanging ? rawReqRecEmail : dbRecEmail;
             updateData.backupContact = nextRecPhone || nextRecEmail || '';
         }
 
-        if (req.body.emergencyContact !== undefined) updateData.emergencyContact = String(req.body.emergencyContact || '').trim();
+        if (normalizedEmergencyContact !== undefined) updateData.emergencyContact = normalizedEmergencyContact;
         if (todaAssociation !== undefined && currentUserRole !== 'toda_president' && !isOperatorRole(currentUserRole)) {
             updateData.todaAssociation = todaAssociation;
         }
@@ -2687,6 +2733,11 @@ exports.googleAuth = async (req, res) => {
             (onboardingData?.contact && !String(onboardingData.contact).includes('@') ? onboardingData.contact : '') ||
             onboardingData?.emergencyContact ||
             '';
+        if (submittedPhoneCandidate && !isValidPhMobileFormat(submittedPhoneCandidate)) {
+            return res.status(400).json({
+                message: 'Please enter a valid 11-digit Philippine mobile number (e.g. 09XXXXXXXXX).'
+            });
+        }
         const emergencyContact = submittedPhoneCandidate ? normalizeContact(submittedPhoneCandidate) : '';
 
         // Create new Google-only operator user (authProvider: 'google', hasLocalPassword: false)
@@ -2699,7 +2750,12 @@ exports.googleAuth = async (req, res) => {
         const rawRecoveryEmail = onboardingData?.recoveryEmail || req.body?.recoveryEmail || (backupContact && backupContact.includes('@') ? backupContact : '');
         const recoveryEmail = rawRecoveryEmail && String(rawRecoveryEmail).includes('@') ? String(rawRecoveryEmail).toLowerCase().trim() : '';
         const rawRecoveryPhone = onboardingData?.recoveryPhone || req.body?.recoveryPhone || (backupContact && !backupContact.includes('@') ? backupContact : '');
-        const recoveryPhone = rawRecoveryPhone ? String(rawRecoveryPhone).trim() : '';
+        if (rawRecoveryPhone && !isValidPhMobileFormat(rawRecoveryPhone)) {
+            return res.status(400).json({
+                message: 'Please enter a valid 11-digit Philippine mobile number for recovery phone (e.g. 09XXXXXXXXX).'
+            });
+        }
+        const recoveryPhone = rawRecoveryPhone ? normalizeContact(rawRecoveryPhone) : '';
 
         const newUserId = new mongoose.Types.ObjectId();
         let claimedRosterId = null;

@@ -1,15 +1,33 @@
 const mongoose = require('mongoose');
+const { getManilaDateString } = require('../utils/phTime');
+
+const getCurrentManilaYear = () => {
+  const manilaDate = getManilaDateString();
+  return manilaDate ? manilaDate.slice(0, 4) : new Date().getFullYear().toString();
+};
 
 const systemSettingsSchema = new mongoose.Schema({
-  validityNew: { type: Number, default: 3 },
-  validityRenew: { type: Number, default: 1 },
-  expiryWarningDays: { type: Number, default: 30 },
-  fiscalYear: { type: String, default: () => new Date().getFullYear().toString() },
-  franchiseFee: { type: Number, default: 500 },
-  penaltyRate: { type: Number, default: 50 },
-  baseFare: { type: Number, default: 15 },
-  farePerKm: { type: Number, default: 2.5 },
-  maxUnitsPerOperator: { type: Number, default: 2 },
+  validityNew: { type: Number, default: 3, min: 1 },
+  validityRenew: { type: Number, default: 1, min: 1 },
+  expiryWarningDays: { type: Number, default: 30, min: 0 },
+  fiscalYear: {
+    type: String,
+    default: getCurrentManilaYear,
+    trim: true,
+    validate: {
+      validator: (v) => {
+        if (typeof v !== 'string' || !/^\d{4}$/.test(v)) return false;
+        const year = Number(v);
+        return year >= 2020 && year <= 2100;
+      },
+      message: 'Fiscal year must be a single 4-digit year (e.g., 2026).'
+    }
+  },
+  franchiseFee: { type: Number, default: 500, min: 0 },
+  penaltyRate: { type: Number, default: 50, min: 0 },
+  baseFare: { type: Number, default: 15, min: 0 },
+  farePerKm: { type: Number, default: 2.5, min: 0 },
+  maxUnitsPerOperator: { type: Number, default: 2, min: 1 },
   requiredDocs: { 
     type: [String], 
     default: ['OR / CR ng Motor', "Driver's License", 'TODA Endorsement', 'Barangay Clearance'] 
@@ -50,14 +68,16 @@ const systemSettingsSchema = new mongoose.Schema({
     ]
   },
   violationPolicy: {
+    policyVersion: { type: Number, default: 1 },
+    policyUpdatedAt: { type: Date, default: Date.now },
     types: {
       type: [{
-        code: { type: String, required: true },
-        name: { type: String, required: true },
+        code: { type: String, required: true, trim: true },
+        name: { type: String, required: true, trim: true },
         severity: { type: String, enum: ['Low', 'Medium', 'High', 'Grave'], default: 'Medium' },
         isGrave: { type: Boolean, default: false },
-        defaultFine: { type: Number, default: 500 },
-        suspensionDays: { type: Number, default: 15 },
+        defaultFine: { type: Number, default: 500, min: 0 },
+        suspensionDays: { type: Number, default: 15, min: 0 },
         isActive: { type: Boolean, default: true }
       }],
       default: [

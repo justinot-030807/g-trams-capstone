@@ -63,9 +63,9 @@ function recordViolation(permit, fields = {}) {
   });
 }
 
-function settleViolation(id) {
+function settleViolation(id, body = {}) {
   return request(app).put(`/violations/${id}/settle`)
-    .set('Authorization', authorization).send({ settledNotes: 'Citation reviewed.' });
+    .set('Authorization', authorization).send({ settledNotes: 'Citation reviewed.', ...body });
 }
 
 beforeAll(async () => {
@@ -94,7 +94,7 @@ describe('Batch 2 H8 settlement standing', () => {
   ])('preserves an unresolved suspension when settling a warning on a %s', async (_label, overrides, statusField) => {
     const permit = await createPermit(overrides);
     const warning = (await recordViolation(permit).expect(201)).body.violation;
-    const suspension = (await recordViolation(permit, { violationType: 'Refusal to convey' }).expect(201)).body.violation;
+    const suspension = (await recordViolation(permit, { violationType: 'Refusal to convey passengers' }).expect(201)).body.violation;
     const suspended = await Franchise.findById(permit._id).lean();
 
     await settleViolation(warning._id).expect(200);
@@ -112,18 +112,19 @@ describe('Batch 2 H8 settlement standing', () => {
   });
 
   it.each([
-    ['warning', 'Revoked'],
-    ['revocation', 'Suspended']
-  ])('settles a %s on a revoked issued permit while two citations remain', async (settledSanction, expectedStatus) => {
+    ['warning', 'settle', 'Revoked'],
+    ['revocation', 'settle', 'Revoked'],
+    ['revocation', 'lift', 'Suspended']
+  ])('resolves (%s via %s) on a revoked issued permit while two citations remain', async (targetSanction, action, expectedStatus) => {
     const permit = await createPermit({ status: 'Pending' });
     const warning = (await recordViolation(permit).expect(201)).body.violation;
-    const suspension = (await recordViolation(permit, { violationType: 'Refusal to convey' }).expect(201)).body.violation;
-    const recordedRevocation = await recordViolation(permit, { violationType: 'Reckless driving' }).expect(201);
+    const suspension = (await recordViolation(permit, { violationType: 'Refusal to convey passengers' }).expect(201)).body.violation;
+    const recordedRevocation = await recordViolation(permit, { violationType: 'Reckless or dangerous driving' }).expect(201);
     const revocation = recordedRevocation.body.violation;
     expect(recordedRevocation.body.franchise.status).toBe('Revoked');
 
-    const citation = settledSanction === 'warning' ? warning : revocation;
-    const settlement = await settleViolation(citation._id).expect(200);
+    const citation = targetSanction === 'warning' ? warning : revocation;
+    const settlement = await settleViolation(citation._id, { action }).expect(200);
 
     expect(settlement.body.franchiseStatus).toBe(expectedStatus);
     expect(await Franchise.findById(permit._id).lean()).toMatchObject({
@@ -147,16 +148,20 @@ describe('Batch 2 H8 settlement standing', () => {
     });
   });
 
-  it('clears citation revocation details when the last citation on a standalone permit is settled', async () => {
+  it('clears citation revocation details when the last grave citation on a standalone permit is lifted in error', async () => {
     const permit = await createPermit({
       applicationType: 'New', status: 'Active', isRenewalPending: false, previousStatus: '', previousExpiryDate: null
     });
-    const recorded = await recordViolation(permit, { isGrave: true, evidenceUrl: '/uploads/evidence.pdf' }).expect(201);
+    const recorded = await recordViolation(permit, {
+      violationCode: 'NO_FRANCHISE',
+      violationType: 'Operating without valid franchise / Colorum',
+      evidenceUrl: '/uploads/evidence.pdf'
+    }).expect(201);
     expect(recorded.body.franchise.status).toBe('Revoked');
 
-    const settlement = await settleViolation(recorded.body.violation._id).expect(200);
+    const lifted = await settleViolation(recorded.body.violation._id, { action: 'lift' }).expect(200);
 
-    expect(settlement.body.franchiseStatus).toBe('Active');
+    expect(lifted.body.franchiseStatus).toBe('Active');
     expect(await Franchise.findById(permit._id).lean()).toMatchObject({
       status: 'Active', cancelReason: '', evidenceUrl: '', activeViolationCount: 0
     });
@@ -237,7 +242,10 @@ describe('Batch 2 H9 renewal discipline', () => {
       cancelReason: 'Operator withdrew the renewal.'
     });
 
-    await recordViolation(permit, { isGrave: true }).expect(201);
+    await recordViolation(permit, {
+      violationCode: 'NO_FRANCHISE',
+      violationType: 'Operating without valid franchise / Colorum'
+    }).expect(201);
 
     expect(await Franchise.findById(permit._id).lean()).toMatchObject({
       status: 'Cancelled',

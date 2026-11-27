@@ -30,6 +30,8 @@ import AuthNavbar from '../components/common/AuthNavbar';
 import AuthFooter from '../components/common/AuthFooter';
 import InteractiveLogo from '../components/common/InteractiveLogo';
 import { unwrapGoogleProfile, isValidContact, resilientApiFetch } from '../utils/googleAuthUtils';
+import { sanitizeDualContactInput } from '../utils/contactValidation';
+import { extractNameTokens } from '../utils/nameMatcher';
 
 const Register = () => {
   const navigate = useNavigate();
@@ -81,10 +83,12 @@ const Register = () => {
   useEffect(() => {
     if (!formData.todaAssociation || formData.todaAssociation === 'NON-TODA') {
       setTodaCheckResult(null);
+      setIsCheckingToda(false);
       return;
     }
 
     if (!formData.name || !formData.bodyNumber) {
+      setIsCheckingToda(false);
       setTodaCheckResult({
         status: 'pending_input',
         message: 'Punan ang inyong Legal Name at Assigned Body Number upang masuri ang roster status.'
@@ -92,12 +96,18 @@ const Register = () => {
       return;
     }
 
+    // Clear stale verification immediately when inputs change to prevent debounce race
+    let cancelled = false;
+    const controller = new AbortController();
+    setTodaCheckResult(null);
+    setIsCheckingToda(true);
+
     const timer = setTimeout(async () => {
-      setIsCheckingToda(true);
       try {
         const res = await resilientApiFetch('/api/v1/auth/verify-roster', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          signal: controller.signal,
           body: JSON.stringify({
             fullName: formData.name,
             todaAssociation: formData.todaAssociation,
@@ -105,15 +115,25 @@ const Register = () => {
           })
         });
         const data = await res.json();
-        setTodaCheckResult(data);
+        if (!cancelled) {
+          setTodaCheckResult(data);
+        }
       } catch (e) {
-        console.error('TODA check error in Register:', e);
+        if (!cancelled && e?.name !== 'AbortError') {
+          console.error('TODA check error in Register:', e);
+        }
       } finally {
-        setIsCheckingToda(false);
+        if (!cancelled) {
+          setIsCheckingToda(false);
+        }
       }
     }, 400);
 
-    return () => clearTimeout(timer);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+      controller.abort();
+    };
   }, [formData.todaAssociation, formData.name, formData.bodyNumber]);
 
   // Ensure light canvas consistency for auth view
@@ -158,6 +178,9 @@ const Register = () => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (name === 'name' || name === 'todaAssociation' || name === 'address') {
+      setTodaCheckResult(null);
+    }
     if (name === 'address') {
       const validTodas = getTodasForBarangay(value);
       setFormData(prev => ({ 
@@ -165,6 +188,8 @@ const Register = () => {
         address: value,
         todaAssociation: validTodas.includes(prev.todaAssociation) ? prev.todaAssociation : ''
       }));
+    } else if (name === 'contact') {
+      setFormData(prev => ({ ...prev, contact: sanitizeDualContactInput(value) }));
     } else {
       setFormData(prev => ({ ...prev, [name]: value }));
     }
@@ -178,6 +203,7 @@ const Register = () => {
 
   const handleRequestOTP = async (e) => {
     e.preventDefault();
+    if (isLoading || isCheckingToda) return;
     setHasAttemptedSubmit(true);
     setError('');
     setIsDeliveryError(false);
@@ -185,6 +211,10 @@ const Register = () => {
 
     if (!formData.name || formData.name.trim().length < 2) {
       return setError('PLEASE ENTER YOUR FULL LEGAL NAME (AT LEAST 2 CHARACTERS).');
+    }
+
+    if (extractNameTokens(formData.name).length < 2) {
+      return setError('PLEASE ENTER YOUR COMPLETE LEGAL NAME (FIRST NAME AND SURNAME).');
     }
 
     if (!formData.address) {
@@ -626,6 +656,7 @@ const Register = () => {
                           value={formData.bodyNumber} 
                           onChange={(e) => {
                             const val = e.target.value.toUpperCase();
+                            setTodaCheckResult(null);
                             setFormData(prev => ({ ...prev, bodyNumber: val }));
                             if (error) setError('');
                           }} 
@@ -750,7 +781,7 @@ const Register = () => {
                         <input 
                           type="text" 
                           name="contact" 
-                          maxLength="50" 
+                          maxLength={60}
                           value={formData.contact} 
                           onChange={handleChange} 
                           autoComplete="username"
@@ -945,13 +976,18 @@ const Register = () => {
                     <div className="pt-2">
                       <button 
                         type="submit" 
-                        disabled={isLoading}
+                        disabled={isLoading || isCheckingToda}
                         className="w-full flex items-center justify-center gap-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white py-3 rounded-lg text-base font-bold shadow-sm active:scale-[0.99] transition-all disabled:opacity-50 cursor-pointer min-h-[46px]"
                       >
                         {isLoading ? (
                           <>
                             <Loader2 size={18} className="animate-spin motion-reduce:animate-none" />
                             <span>Sending code...</span>
+                          </>
+                        ) : isCheckingToda ? (
+                          <>
+                            <Loader2 size={18} className="animate-spin motion-reduce:animate-none" />
+                            <span>Verifying TODA roster...</span>
                           </>
                         ) : (
                           <>

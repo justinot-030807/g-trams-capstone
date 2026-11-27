@@ -1,4 +1,4 @@
-const { isNameMatch } = require('./nameMatcher');
+const { isNameMatch, extractNameTokens } = require('./nameMatcher');
 const TodaSubmission = require('../models/todaSubmission');
 const TodaRoster = require('../models/todaModel');
 const { rosterAssociation, rosterBodyKey, sameRosterName } = require('./rosterClaims');
@@ -85,6 +85,26 @@ async function validateOperatorAgainstRoster({ fullName, todaAssociation, bodyNu
             status: 'missing_name',
             message: 'Kumpletong legal na pangalan ay kinakailangan.',
             advisory: null
+        };
+    }
+
+    if (extractNameTokens(cleanName).length < 2) {
+        return {
+            isValid: false,
+            status: 'incomplete_name',
+            message: 'Kinakailangan ang kumpletong legal na pangalan (First Name at Surname) na tumutugma sa opisyal na TODA Masterlist.',
+            advisory: {
+                title: 'OPISYAL NA ADVISORY NG PAMAHALAANG BAYAN NG GASAN',
+                department: 'Office of the Vice Mayor (OVM) • Tanggapan ng Sangguniang Bayan',
+                ordinance: 'Municipal Ordinance No. 2020-04 (Mandatory Roster Certification)',
+                reason: 'Hindi kumpleto ang inilagay na pangalan. Kailangan ng parehong First Name at Surname na tugma sa TODA Masterlist.',
+                details: {
+                    fullName: cleanName,
+                    todaAssociation: cleanToda || 'N/A',
+                    bodyNumber: cleanBodyNo || 'N/A'
+                },
+                action: 'Ipasok ang inyong kumpletong legal na pangalan (First Name at Surname) nang walang mali sa baybay ayon sa opisyal na masterlist ng inyong TODA.'
+            }
         };
     }
 

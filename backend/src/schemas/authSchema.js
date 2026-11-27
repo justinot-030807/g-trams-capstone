@@ -11,7 +11,19 @@ const registerSchema = z.object({
             z.string().min(2, 'Full name must be at least 2 characters').optional()
         ),
         contact: z.string().trim().min(5, 'Valid email or phone number is required'),
-        backupContact: z.preprocess((v) => (typeof v === 'string' && v.trim() ? v.trim() : undefined), z.string().min(5, 'Backup contact (email or phone number) is required').optional()),
+        backupContact: z.preprocess(
+            (v) => (typeof v === 'string' && v.trim() ? v.trim() : undefined),
+            z.string().refine(
+                (val) => {
+                    if (val.includes('@')) {
+                        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(val);
+                    }
+                    const clean = val.replace(/[\s\-()]/g, '');
+                    return /^(09\d{9}|\+639\d{9}|639\d{9})$/.test(clean);
+                },
+                'Backup contact must be a valid email address or 11-digit Philippine mobile number (e.g. 09XXXXXXXXX)'
+            ).optional()
+        ),
         address: z.string().trim().min(2, 'Valid address is required'),
         recoveryEmail: z.preprocess(
             (val) => (typeof val === 'string' ? val.trim() : ''),
@@ -19,7 +31,7 @@ const registerSchema = z.object({
         ).optional(),
         recoveryPhone: z.preprocess(
             (val) => (typeof val === 'string' ? val.replace(/[\s\-()]/g, '') : ''),
-            z.union([z.string().regex(/^(09|\+639)\d{9}$/, 'Invalid recovery phone number (e.g. 09XXXXXXXXX)'), z.literal('')]).optional()
+            z.union([z.string().regex(/^(09|\+639|639)\d{9}$/, 'Invalid recovery phone number (e.g. 09XXXXXXXXX)'), z.literal('')]).optional()
         ).optional(),
         todaAssociation: z.string().trim().optional(),
         bodyNumber: z.string().trim().optional(),

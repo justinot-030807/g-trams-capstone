@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import MainLayout from '../../components/MainLayout';
 import { unsubscribeFromPush } from '../../utils/pushNotification';
@@ -30,6 +30,118 @@ const EMPTY_RESTORE_MODAL = {
 const RESTORE_OUTCOME_UNKNOWN =
   'The restore result could not be confirmed. Check the audit log before trying again.';
 
+const DEFAULT_REQUIRED_DOCS = ['OR / CR ng Motor', "Driver's License", 'TODA Endorsement', 'Barangay Clearance'];
+const DEFAULT_MAINTENANCE_MESSAGE = 'G-TRAMS portal is currently undergoing scheduled system maintenance. Please check back later.';
+
+const DEFAULT_VIOLATION_TYPES = [
+  { code: 'OVERCHARGING', name: 'Overcharging of fare', severity: 'Medium', isGrave: false, defaultFine: 500, suspensionDays: 15, isActive: true },
+  { code: 'REFUSAL_CONVEY', name: 'Refusal to convey passengers', severity: 'Medium', isGrave: false, defaultFine: 500, suspensionDays: 15, isActive: true },
+  { code: 'DISCOURTEOUS', name: 'Arrogant/Discourteous behavior', severity: 'Low', isGrave: false, defaultFine: 300, suspensionDays: 7, isActive: true },
+  { code: 'NO_FRANCHISE', name: 'Operating without valid franchise / Colorum', severity: 'Grave', isGrave: true, defaultFine: 2000, suspensionDays: 30, isActive: true },
+  { code: 'OUT_OF_LINE', name: 'Out of line operation', severity: 'Medium', isGrave: false, defaultFine: 500, suspensionDays: 15, isActive: true },
+  { code: 'RECKLESS_DRIVING', name: 'Reckless or dangerous driving', severity: 'High', isGrave: false, defaultFine: 1000, suspensionDays: 30, isActive: true },
+  { code: 'OTHER', name: 'Other municipal ordinance violation', severity: 'Low', isGrave: false, defaultFine: 300, suspensionDays: 7, isActive: true }
+];
+
+const DEFAULT_VIOLATION_TIERS = {
+  firstOffense: { sanction: 'Warning', resultingStatus: 'Active - Under Warning', description: 'Official Warning recorded in municipal database; franchise remains operational.' },
+  secondOffense: { sanction: 'Suspension', resultingStatus: 'Suspended', defaultFine: 500, defaultSuspensionDays: 15, description: 'Temporary suspension of franchise operations and imposition of administrative fine.' },
+  thirdOffense: { sanction: 'Revocation', resultingStatus: 'Revoked', description: 'Immediate and permanent revocation of MTOP franchise and permit.' },
+  graveViolation: { sanction: 'Revocation', resultingStatus: 'Revoked', description: 'Direct revocation regardless of prior offense count due to critical offense severity.' }
+};
+
+const normalizeFiscalYear = (val) => {
+  const match = String(val ?? '').trim().match(/^(\d{4})/);
+  if (match) {
+    const yr = Number(match[1]);
+    if (yr >= 2020 && yr <= 2100) return match[1];
+  }
+  return new Date().getFullYear().toString();
+};
+
+const buildFiscalYearOptions = (currentValue) => {
+  const currentYear = new Date().getFullYear();
+  const options = [];
+  for (let yr = currentYear - 1; yr <= currentYear + 5; yr += 1) {
+    options.push(String(yr));
+  }
+  const cleanCurrent = String(currentValue ?? '').trim();
+  if (/^\d{4}$/.test(cleanCurrent)) {
+    const yrNum = Number(cleanCurrent);
+    if (yrNum >= 2020 && yrNum <= 2100 && !options.includes(cleanCurrent)) {
+      options.push(cleanCurrent);
+      options.sort((a, b) => Number(a) - Number(b));
+    }
+  }
+  return options;
+};
+
+const safeParseDocs = (raw, fallback = DEFAULT_REQUIRED_DOCS) => {
+  if (!raw) return [...fallback];
+  try {
+    const parsed = JSON.parse(raw);
+    if (Array.isArray(parsed)) {
+      return parsed.filter((item) => typeof item === 'string' && item.trim() !== '');
+    }
+  } catch {
+    // Ignore corrupted cached JSON and fall back cleanly
+  }
+  return [...fallback];
+};
+
+const cloneViolationPolicy = (policy) => {
+  const types = Array.isArray(policy?.types)
+    ? policy.types.map((t) => ({
+        ...(t?._id ? { _id: t._id } : {}),
+        code: String(t?.code || '').trim(),
+        name: String(t?.name || '').trim(),
+        severity: (t?.isGrave || t?.severity === 'Grave') ? 'Grave' : (t?.severity || 'Medium'),
+        isGrave: Boolean(t?.isGrave || t?.severity === 'Grave'),
+        defaultFine: t?.defaultFine ?? 0,
+        suspensionDays: t?.suspensionDays ?? 0,
+        isActive: t?.isActive !== false
+      }))
+    : DEFAULT_VIOLATION_TYPES.map((t) => ({ ...t }));
+
+  const tiers = {
+    firstOffense: { ...DEFAULT_VIOLATION_TIERS.firstOffense, ...(policy?.tiers?.firstOffense || {}) },
+    secondOffense: { ...DEFAULT_VIOLATION_TIERS.secondOffense, ...(policy?.tiers?.secondOffense || {}) },
+    thirdOffense: { ...DEFAULT_VIOLATION_TIERS.thirdOffense, ...(policy?.tiers?.thirdOffense || {}) },
+    graveViolation: { ...DEFAULT_VIOLATION_TIERS.graveViolation, ...(policy?.tiers?.graveViolation || {}) }
+  };
+
+  return {
+    policyVersion: Number(policy?.policyVersion) >= 1 ? Number(policy.policyVersion) : 1,
+    policyUpdatedAt: policy?.policyUpdatedAt || null,
+    types,
+    tiers
+  };
+};
+
+const serializeViolationPolicyForCompare = (policy) => JSON.stringify({
+  types: (policy?.types || []).map((t) => ({
+    code: String(t.code || '').trim().toUpperCase(),
+    name: String(t.name || '').trim(),
+    severity: (t.isGrave || t.severity === 'Grave') ? 'Grave' : (t.severity || 'Medium'),
+    isGrave: Boolean(t.isGrave || t.severity === 'Grave'),
+    defaultFine: String(t.defaultFine ?? ''),
+    suspensionDays: String(t.suspensionDays ?? ''),
+    isActive: t.isActive !== false
+  })),
+  secondOffenseFine: String(policy?.tiers?.secondOffense?.defaultFine ?? ''),
+  secondOffenseDays: String(policy?.tiers?.secondOffense?.defaultSuspensionDays ?? '')
+});
+
+const serializeAnnouncementsForCompare = (list) => JSON.stringify(
+  (Array.isArray(list) ? list : []).map((a) => ({
+    title: String(a.title || '').trim(),
+    desc: String(a.desc || '').trim(),
+    type: a.type || 'info',
+    date: String(a.date || '').trim(),
+    isActive: a.isActive !== false
+  }))
+);
+
 const AdminSettings = () => {
   const navigate = useNavigate();
   const { language, setLanguage, t } = useLanguage();
@@ -41,47 +153,39 @@ const AdminSettings = () => {
   const [activeTab, setActiveTab] = useState(isSystemAdmin ? 'system' : 'account');
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [savingSection, setSavingSection] = useState({
+    validity: false,
+    fiscal: false,
+    documents: false,
+    maintenance: false,
+    violationPolicy: false
+  });
 
   // System configuration state
   const [initialSystemConfig, setInitialSystemConfig] = useState(null);
   const [systemConfig, setSystemConfig] = useState({
     newFranchise: 3,
     renewFranchise: 1,
-    fiscalYear: new Date().getFullYear().toString(),
+    fiscalYear: normalizeFiscalYear(new Date().getFullYear().toString()),
     franchiseFee: 500,
-    penaltyFee: 150,
+    penaltyFee: 50,
     fareBase: 15,
     farePerKm: 2.5,
     maxUnitsPerOperator: 2,
     maintenanceMode: false,
+    maintenanceMessage: DEFAULT_MAINTENANCE_MESSAGE,
     expiryWarningDays: 30,
-    requiredDocs: ['OR / CR ng Motor', "Driver's License", 'TODA Endorsement', 'Barangay Clearance'],
+    requiredDocs: [...DEFAULT_REQUIRED_DOCS],
     newDocInput: '',
-    violationPolicy: {
-      types: [
-        { code: 'OVERCHARGING', name: 'Overcharging of fare', severity: 'Medium', isGrave: false, defaultFine: 500, suspensionDays: 15, isActive: true },
-        { code: 'REFUSAL_CONVEY', name: 'Refusal to convey passengers', severity: 'Medium', isGrave: false, defaultFine: 500, suspensionDays: 15, isActive: true },
-        { code: 'DISCOURTEOUS', name: 'Arrogant/Discourteous behavior', severity: 'Low', isGrave: false, defaultFine: 300, suspensionDays: 7, isActive: true },
-        { code: 'NO_FRANCHISE', name: 'Operating without valid franchise / Colorum', severity: 'Grave', isGrave: true, defaultFine: 2000, suspensionDays: 30, isActive: true },
-        { code: 'OUT_OF_LINE', name: 'Out of line operation', severity: 'Medium', isGrave: false, defaultFine: 500, suspensionDays: 15, isActive: true },
-        { code: 'RECKLESS_DRIVING', name: 'Reckless or dangerous driving', severity: 'High', isGrave: false, defaultFine: 1000, suspensionDays: 30, isActive: true },
-        { code: 'OTHER', name: 'Other municipal ordinance violation', severity: 'Low', isGrave: false, defaultFine: 300, suspensionDays: 7, isActive: true }
-      ],
-      tiers: {
-        firstOffense: { sanction: 'Warning', resultingStatus: 'Active - Under Warning', description: 'Official Warning recorded in municipal database; franchise remains operational.' },
-        secondOffense: { sanction: 'Suspension', resultingStatus: 'Suspended', defaultFine: 500, defaultSuspensionDays: 15, description: 'Temporary suspension of franchise operations and imposition of administrative fine.' },
-        thirdOffense: { sanction: 'Revocation', resultingStatus: 'Revoked', description: 'Immediate and permanent revocation of MTOP franchise and permit.' },
-        graveViolation: { sanction: 'Revocation', resultingStatus: 'Revoked', description: 'Direct revocation regardless of prior offense count due to critical offense severity.' }
-      }
-    }
+    violationPolicy: cloneViolationPolicy(null)
   });
 
   const [newViolationInput, setNewViolationInput] = useState({
     name: '',
     severity: 'Medium',
     isGrave: false,
-    defaultFine: 500,
-    suspensionDays: 15
+    defaultFine: '500',
+    suspensionDays: '15'
   });
 
   // Account and security state
@@ -139,6 +243,7 @@ const AdminSettings = () => {
     type: 'info',
     date: 'General Advisory'
   });
+  const [initialAnnouncements, setInitialAnnouncements] = useState(null);
   const [isSavingAnnouncements, setIsSavingAnnouncements] = useState(false);
 
   // Audit Logs state
@@ -397,7 +502,11 @@ const AdminSettings = () => {
         // 1. Local configuration cache
         const savedNew = localStorage.getItem('validity_new');
         const savedRenew = localStorage.getItem('validity_renew');
-        const savedFiscal = localStorage.getItem('fiscal_year');
+        const savedFiscalRaw = localStorage.getItem('fiscal_year');
+        const savedFiscal = normalizeFiscalYear(savedFiscalRaw);
+        if (savedFiscalRaw && savedFiscalRaw !== savedFiscal) {
+          localStorage.setItem('fiscal_year', savedFiscal);
+        }
         const savedFee = localStorage.getItem('franchise_fee');
         const savedPenalty = localStorage.getItem('penalty_fee');
         const savedFareBase = localStorage.getItem('fare_base');
@@ -407,22 +516,28 @@ const AdminSettings = () => {
         const savedDocs = localStorage.getItem('required_docs');
         const savedMaxUnits = localStorage.getItem('max_units_per_operator');
 
+        const parsedSavedDocs = safeParseDocs(savedDocs, DEFAULT_REQUIRED_DOCS);
+
         setSystemConfig(prev => {
           const newState = {
             ...prev,
-            newFranchise: savedNew ? parseInt(savedNew) : 3,
-            renewFranchise: savedRenew ? parseInt(savedRenew) : 1,
-            fiscalYear: savedFiscal || new Date().getFullYear().toString(),
-            franchiseFee: savedFee ? parseFloat(savedFee) : 500,
-            penaltyFee: savedPenalty ? parseFloat(savedPenalty) : 150,
-            fareBase: savedFareBase ? parseFloat(savedFareBase) : 15,
-            farePerKm: savedFareKm ? parseFloat(savedFareKm) : 2.5,
-            maxUnitsPerOperator: savedMaxUnits ? parseInt(savedMaxUnits) : 2,
+            newFranchise: savedNew !== null && savedNew !== '' && Number.isFinite(Number(savedNew)) ? parseInt(savedNew, 10) : 3,
+            renewFranchise: savedRenew !== null && savedRenew !== '' && Number.isFinite(Number(savedRenew)) ? parseInt(savedRenew, 10) : 1,
+            fiscalYear: savedFiscal,
+            franchiseFee: savedFee !== null && savedFee !== '' && Number.isFinite(Number(savedFee)) ? parseFloat(savedFee) : 500,
+            penaltyFee: savedPenalty !== null && savedPenalty !== '' && Number.isFinite(Number(savedPenalty)) ? parseFloat(savedPenalty) : 50,
+            fareBase: savedFareBase !== null && savedFareBase !== '' && Number.isFinite(Number(savedFareBase)) ? parseFloat(savedFareBase) : 15,
+            farePerKm: savedFareKm !== null && savedFareKm !== '' && Number.isFinite(Number(savedFareKm)) ? parseFloat(savedFareKm) : 2.5,
+            maxUnitsPerOperator: savedMaxUnits !== null && savedMaxUnits !== '' && Number.isFinite(Number(savedMaxUnits)) ? parseInt(savedMaxUnits, 10) : 2,
             maintenanceMode: savedMaint === 'true',
-            expiryWarningDays: savedExpiryDays ? parseInt(savedExpiryDays) : 30,
-            requiredDocs: savedDocs ? JSON.parse(savedDocs) : prev.requiredDocs
+            expiryWarningDays: savedExpiryDays !== null && savedExpiryDays !== '' && Number.isFinite(Number(savedExpiryDays)) ? parseInt(savedExpiryDays, 10) : 30,
+            requiredDocs: parsedSavedDocs
           };
-          setInitialSystemConfig(newState);
+          setInitialSystemConfig({
+            ...newState,
+            requiredDocs: [...newState.requiredDocs],
+            violationPolicy: cloneViolationPolicy(newState.violationPolicy)
+          });
           return newState;
         });
 
@@ -433,32 +548,46 @@ const AdminSettings = () => {
             const setJson = await setRes.json();
             if (setJson.data) {
               const d = setJson.data;
-              const loadedDocs = Array.isArray(d.requiredDocs) && d.requiredDocs.length > 0 
-                ? d.requiredDocs 
-                : (savedDocs ? JSON.parse(savedDocs) : ['OR / CR ng Motor', "Driver's License", 'TODA Endorsement', 'Barangay Clearance']);
-              
+              const loadedDocs = Array.isArray(d.requiredDocs)
+                ? d.requiredDocs
+                : safeParseDocs(savedDocs, DEFAULT_REQUIRED_DOCS);
+              const normalizedFiscalYear = normalizeFiscalYear(d.fiscalYear || savedFiscal);
+              const hydratedPolicy = cloneViolationPolicy(d.violationPolicy);
+
               setSystemConfig(prev => {
                 const newState = {
                   ...prev,
                   newFranchise: d.validityNew ?? prev.newFranchise,
                   renewFranchise: d.validityRenew ?? prev.renewFranchise,
-                  fiscalYear: d.fiscalYear || prev.fiscalYear,
+                  fiscalYear: normalizedFiscalYear,
                   franchiseFee: d.franchiseFee ?? prev.franchiseFee,
                   penaltyFee: d.penaltyRate ?? prev.penaltyFee,
                   fareBase: d.baseFare ?? prev.fareBase,
+                  farePerKm: d.farePerKm ?? prev.farePerKm,
                   maxUnitsPerOperator: d.maxUnitsPerOperator ?? prev.maxUnitsPerOperator,
                   maintenanceMode: Boolean(d.maintenanceMode),
+                  maintenanceMessage: d.maintenanceMessage || DEFAULT_MAINTENANCE_MESSAGE,
                   expiryWarningDays: d.expiryWarningDays ?? prev.expiryWarningDays,
-                  requiredDocs: loadedDocs,
-                  violationPolicy: d.violationPolicy || prev.violationPolicy
+                  requiredDocs: [...loadedDocs],
+                  violationPolicy: hydratedPolicy
                 };
-                setInitialSystemConfig(newState);
+                setInitialSystemConfig({
+                  ...newState,
+                  requiredDocs: [...loadedDocs],
+                  violationPolicy: cloneViolationPolicy(hydratedPolicy)
+                });
 
                 localStorage.setItem('maintenance_mode', d.maintenanceMode ? 'true' : 'false');
-                localStorage.setItem('fiscal_year', newState.fiscalYear || '');
+                localStorage.setItem('fiscal_year', normalizedFiscalYear);
                 localStorage.setItem('franchise_fee', String(newState.franchiseFee ?? ''));
+                localStorage.setItem('penalty_fee', String(newState.penaltyFee ?? ''));
+                localStorage.setItem('fare_base', String(newState.fareBase ?? ''));
+                if (d.farePerKm !== undefined) {
+                  localStorage.setItem('fare_per_km', String(d.farePerKm));
+                }
                 localStorage.setItem('validity_new', String(newState.newFranchise ?? ''));
                 localStorage.setItem('validity_renew', String(newState.renewFranchise ?? ''));
+                localStorage.setItem('expiry_warning_days', String(newState.expiryWarningDays ?? ''));
                 localStorage.setItem('max_units_per_operator', String(newState.maxUnitsPerOperator ?? 2));
                 localStorage.setItem('required_docs', JSON.stringify(loadedDocs));
 
@@ -466,12 +595,12 @@ const AdminSettings = () => {
               });
 
               if (Array.isArray(d.announcements)) {
-                setAnnouncements(
-                  d.announcements.map((item, idx) => ({
-                    ...item,
-                    clientKey: item?._id ? String(item._id) : `loaded-${idx}-${Date.now()}`
-                  }))
-                );
+                const loadedAnnouncements = d.announcements.map((item, idx) => ({
+                  ...item,
+                  clientKey: item?._id ? String(item._id) : `loaded-${idx}-${Date.now()}`
+                }));
+                setAnnouncements(loadedAnnouncements);
+                setInitialAnnouncements(loadedAnnouncements.map((item) => ({ ...item })));
               }
             }
           }
@@ -552,12 +681,77 @@ const AdminSettings = () => {
     }
   }, [activeTab]);
 
+  const fiscalYearOptions = useMemo(
+    () => buildFiscalYearOptions(systemConfig.fiscalYear),
+    [systemConfig.fiscalYear]
+  );
+
+  const isValidityDirty = useMemo(() => {
+    if (!initialSystemConfig) return false;
+    return (
+      String(systemConfig.newFranchise) !== String(initialSystemConfig.newFranchise) ||
+      String(systemConfig.renewFranchise) !== String(initialSystemConfig.renewFranchise) ||
+      String(systemConfig.expiryWarningDays) !== String(initialSystemConfig.expiryWarningDays)
+    );
+  }, [systemConfig.newFranchise, systemConfig.renewFranchise, systemConfig.expiryWarningDays, initialSystemConfig]);
+
+  const isFiscalDirty = useMemo(() => {
+    if (!initialSystemConfig) return false;
+    return (
+      String(systemConfig.fiscalYear) !== String(initialSystemConfig.fiscalYear) ||
+      String(systemConfig.maxUnitsPerOperator) !== String(initialSystemConfig.maxUnitsPerOperator) ||
+      String(systemConfig.franchiseFee) !== String(initialSystemConfig.franchiseFee) ||
+      String(systemConfig.penaltyFee) !== String(initialSystemConfig.penaltyFee) ||
+      String(systemConfig.fareBase) !== String(initialSystemConfig.fareBase)
+    );
+  }, [
+    systemConfig.fiscalYear,
+    systemConfig.maxUnitsPerOperator,
+    systemConfig.franchiseFee,
+    systemConfig.penaltyFee,
+    systemConfig.fareBase,
+    initialSystemConfig
+  ]);
+
+  const isDocumentsDirty = useMemo(() => {
+    if (!initialSystemConfig) return false;
+    return JSON.stringify(systemConfig.requiredDocs || []) !== JSON.stringify(initialSystemConfig.requiredDocs || []);
+  }, [systemConfig.requiredDocs, initialSystemConfig]);
+
+  const isMaintenanceDirty = useMemo(() => {
+    if (!initialSystemConfig) return false;
+    return (
+      Boolean(systemConfig.maintenanceMode) !== Boolean(initialSystemConfig.maintenanceMode) ||
+      String(systemConfig.maintenanceMessage || '') !== String(initialSystemConfig.maintenanceMessage || '')
+    );
+  }, [systemConfig.maintenanceMode, systemConfig.maintenanceMessage, initialSystemConfig]);
+
+  const isViolationPolicyDirty = useMemo(() => {
+    if (!initialSystemConfig) return false;
+    return (
+      serializeViolationPolicyForCompare(systemConfig.violationPolicy) !==
+      serializeViolationPolicyForCompare(initialSystemConfig.violationPolicy)
+    );
+  }, [systemConfig.violationPolicy, initialSystemConfig]);
+
+  const isAnnouncementsDirty = useMemo(() => {
+    if (!initialAnnouncements) return false;
+    return serializeAnnouncementsForCompare(announcements) !== serializeAnnouncementsForCompare(initialAnnouncements);
+  }, [announcements, initialAnnouncements]);
+
   const handleSystemConfigChange = (e) => {
     const { name, value, type, checked } = e.target;
     setSystemConfig(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value
     }));
+  };
+
+  const handleAdminContactChange = (rawValue) => {
+    const val = String(rawValue ?? '');
+    // Cap purely numeric mobile entries at 11 digits while keeping landlines like (042) 342-1234 and emails intact
+    const nextVal = /^\d+$/.test(val) ? val.slice(0, 11) : val.slice(0, 60);
+    setAccountData(prev => ({ ...prev, contact: nextVal }));
   };
 
   const handleAddRequirement = (e) => {
@@ -574,31 +768,50 @@ const AdminSettings = () => {
       requiredDocs: [...(Array.isArray(prev.requiredDocs) ? prev.requiredDocs : []), docName],
       newDocInput: ''
     }));
-    showToast(`Added "${docName}" to document checklist.`, 'success');
+    showToast(`Added "${docName}" to draft list. Click "Save Checklist" to apply.`, 'info');
   };
 
   const handleRemoveRequirement = (docName) => {
     setSystemConfig(prev => ({
       ...prev,
-      requiredDocs: (Array.isArray(systemConfig.requiredDocs) ? systemConfig.requiredDocs : []).filter(d => d !== docName)
+      requiredDocs: (Array.isArray(prev.requiredDocs) ? prev.requiredDocs : []).filter(d => d !== docName)
     }));
-    showToast(`Removed "${docName}" from document checklist.`, 'info');
+    showToast(`Removed "${docName}" from draft list. Click "Save Checklist" to apply.`, 'info');
   };
 
   const handleResetDefaultDocs = () => {
-    const defaults = ['OR / CR ng Motor', "Driver's License", 'TODA Endorsement', 'Barangay Clearance'];
     setSystemConfig(prev => ({
       ...prev,
-      requiredDocs: defaults
+      requiredDocs: [...DEFAULT_REQUIRED_DOCS]
     }));
-    showToast('Reset document requirements to default standard.', 'success');
+    showToast('Reset draft document checklist to defaults. Click "Save Checklist" to apply.', 'info');
+  };
+
+  const handleViolationFieldChange = (index, field, value) => {
+    setSystemConfig(prev => {
+      const types = [...(prev.violationPolicy?.types || [])];
+      if (!types[index]) return prev;
+      if (field === 'severity') {
+        const nextIsGrave = value === 'Grave';
+        types[index] = { ...types[index], severity: value, isGrave: nextIsGrave };
+      } else {
+        types[index] = { ...types[index], [field]: value };
+      }
+      return {
+        ...prev,
+        violationPolicy: {
+          ...(prev.violationPolicy || {}),
+          types
+        }
+      };
+    });
   };
 
   const handleToggleViolationActive = (index) => {
     setSystemConfig(prev => {
       const types = [...(prev.violationPolicy?.types || [])];
       if (types[index]) {
-        types[index] = { ...types[index], isActive: !types[index].isActive };
+        types[index] = { ...types[index], isActive: !(types[index].isActive !== false) };
       }
       return {
         ...prev,
@@ -642,7 +855,7 @@ const AdminSettings = () => {
         }
       };
     });
-    showToast('Violation type removed from list.', 'info');
+    showToast('Removed violation type from draft policy. Click "Save Policy" to apply.', 'info');
   };
 
   const handleAddViolation = (e) => {
@@ -653,19 +866,48 @@ const AdminSettings = () => {
       return;
     }
     const currentTypes = systemConfig.violationPolicy?.types || [];
-    if (currentTypes.some(t => t.name.toLowerCase() === name.toLowerCase())) {
+    if (currentTypes.some(t => String(t.name || '').trim().toLowerCase() === name.toLowerCase())) {
       showToast('This violation type already exists in policy.', 'error');
       return;
     }
 
-    const code = name.toUpperCase().replace(/[^A-Z0-9]+/g, '_').slice(0, 30);
+    const code = name
+      .toUpperCase()
+      .replace(/[^A-Z0-9]+/g, '_')
+      .replace(/^_+|_+$/g, '')
+      .slice(0, 30);
+
+    if (!code) {
+      showToast('Violation name must contain at least one letter or number.', 'error');
+      return;
+    }
+    if (currentTypes.some(t => String(t.code || '').trim().toUpperCase() === code)) {
+      showToast(`A violation with code "${code}" already exists in policy.`, 'error');
+      return;
+    }
+
+    const rawFine = String(newViolationInput.defaultFine ?? '').trim();
+    const parsedFine = rawFine === '' ? NaN : Number(rawFine);
+    if (!Number.isFinite(parsedFine) || parsedFine < 0) {
+      showToast('Default fine must be a valid non-negative amount (₱0 or higher).', 'error');
+      return;
+    }
+
+    const rawDays = String(newViolationInput.suspensionDays ?? '').trim();
+    const parsedDays = rawDays === '' ? NaN : Number(rawDays);
+    if (!Number.isFinite(parsedDays) || !Number.isInteger(parsedDays) || parsedDays < 0 || parsedDays > 365) {
+      showToast('Suspension days must be a whole number between 0 and 365.', 'error');
+      return;
+    }
+
+    const isGrave = Boolean(newViolationInput.isGrave || newViolationInput.severity === 'Grave');
     const newEntry = {
       code,
       name,
-      severity: newViolationInput.isGrave ? 'Grave' : newViolationInput.severity,
-      isGrave: Boolean(newViolationInput.isGrave),
-      defaultFine: Number(newViolationInput.defaultFine) || 500,
-      suspensionDays: Number(newViolationInput.suspensionDays) || 15,
+      severity: isGrave ? 'Grave' : newViolationInput.severity,
+      isGrave,
+      defaultFine: parsedFine,
+      suspensionDays: parsedDays,
       isActive: true
     };
 
@@ -681,11 +923,11 @@ const AdminSettings = () => {
       name: '',
       severity: 'Medium',
       isGrave: false,
-      defaultFine: 500,
-      suspensionDays: 15
+      defaultFine: '500',
+      suspensionDays: '15'
     });
 
-    showToast(`Added "${name}" to violations policy.`, 'success');
+    showToast(`Added "${name}" to draft policy. Click "Save Policy" to apply.`, 'info');
   };
 
   const handleTierConfigChange = (tierName, field, value) => {
@@ -734,6 +976,251 @@ const AdminSettings = () => {
     setConfirmModal({ isOpen: true, type, data });
   };
 
+  const handleSaveSection = async (sectionKey, { skipConfirm = false } = {}) => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      showToast('Authentication error: You must be logged in as an administrator.', 'error', 4500);
+      return;
+    }
+
+    let payload = {};
+    let successMessage = 'Settings saved successfully.';
+
+    if (sectionKey === 'validity') {
+      const validityNew = systemConfig.newFranchise === '' ? NaN : Number(systemConfig.newFranchise);
+      const validityRenew = systemConfig.renewFranchise === '' ? NaN : Number(systemConfig.renewFranchise);
+      const expiryWarningDays = systemConfig.expiryWarningDays === '' ? NaN : Number(systemConfig.expiryWarningDays);
+
+      if (!Number.isInteger(validityNew) || validityNew < 1 || validityNew > 20) {
+        showToast('New Application Validity must be a whole number between 1 and 20 years.', 'error', 4500);
+        return;
+      }
+      if (!Number.isInteger(validityRenew) || validityRenew < 1 || validityRenew > 20) {
+        showToast('Renewal Validity must be a whole number between 1 and 20 years.', 'error', 4500);
+        return;
+      }
+      if (!Number.isInteger(expiryWarningDays) || expiryWarningDays < 0 || expiryWarningDays > 365) {
+        showToast('Expiry Warning Alert must be a whole number between 0 and 365 days.', 'error', 4500);
+        return;
+      }
+      payload = { validityNew, validityRenew, expiryWarningDays };
+      successMessage = 'Franchise validity period saved.';
+    } else if (sectionKey === 'fiscal') {
+      const fiscalYear = String(systemConfig.fiscalYear ?? '').trim();
+      const fyNum = Number(fiscalYear);
+      if (!/^\d{4}$/.test(fiscalYear) || fyNum < 2020 || fyNum > 2100) {
+        showToast('Fiscal year must be a single 4-digit year (e.g., 2026).', 'error', 4500);
+        return;
+      }
+      const maxUnitsPerOperator = systemConfig.maxUnitsPerOperator === '' ? NaN : Number(systemConfig.maxUnitsPerOperator);
+      const franchiseFee = systemConfig.franchiseFee === '' ? NaN : Number(systemConfig.franchiseFee);
+      const penaltyRate = systemConfig.penaltyFee === '' ? NaN : Number(systemConfig.penaltyFee);
+      const baseFare = systemConfig.fareBase === '' ? NaN : Number(systemConfig.fareBase);
+
+      if (!Number.isInteger(maxUnitsPerOperator) || maxUnitsPerOperator < 1 || maxUnitsPerOperator > 50) {
+        showToast('Max Units per Operator must be a whole number of at least 1.', 'error', 4500);
+        return;
+      }
+      if (!Number.isFinite(franchiseFee) || franchiseFee < 0) {
+        showToast('Franchise Application Fee must be ₱0 or higher.', 'error', 4500);
+        return;
+      }
+      if (!Number.isFinite(penaltyRate) || penaltyRate < 0) {
+        showToast('Late Renewal Penalty must be ₱0 or higher.', 'error', 4500);
+        return;
+      }
+      if (!Number.isFinite(baseFare) || baseFare < 0) {
+        showToast('Base TODA Fare Rate must be ₱0 or higher.', 'error', 4500);
+        return;
+      }
+      // Deliberately omit farePerKm so hidden backend farePerKm is never clobbered
+      payload = { fiscalYear, maxUnitsPerOperator, franchiseFee, penaltyRate, baseFare };
+      successMessage = 'Fiscal & fare rate settings saved.';
+    } else if (sectionKey === 'documents') {
+      const docsArray = (Array.isArray(systemConfig.requiredDocs) ? systemConfig.requiredDocs : [])
+        .map((d) => String(d || '').trim())
+        .filter(Boolean);
+      payload = { requiredDocs: docsArray };
+      successMessage = 'Required document checklist saved.';
+    } else if (sectionKey === 'maintenance') {
+      const turningOn = Boolean(systemConfig.maintenanceMode) && !initialSystemConfig?.maintenanceMode;
+      if (turningOn && !skipConfirm) {
+        setConfirmModal({ isOpen: true, type: 'maintenance', data: null });
+        return;
+      }
+      const maintenanceMessage = String(systemConfig.maintenanceMessage || '').trim() || DEFAULT_MAINTENANCE_MESSAGE;
+      payload = {
+        maintenanceMode: Boolean(systemConfig.maintenanceMode),
+        maintenanceMessage
+      };
+      successMessage = systemConfig.maintenanceMode
+        ? 'Maintenance Mode enabled. Non-admin portals are now restricted.'
+        : 'Maintenance settings saved.';
+    } else if (sectionKey === 'violationPolicy') {
+      const rawTypes = Array.isArray(systemConfig.violationPolicy?.types) ? systemConfig.violationPolicy.types : [];
+      const sanitizedTypes = [];
+      const seenCodes = new Set();
+      const seenNames = new Set();
+
+      for (let i = 0; i < rawTypes.length; i += 1) {
+        const vt = rawTypes[i];
+        const name = String(vt?.name || '').trim();
+        const code = String(vt?.code || '').trim().toUpperCase();
+        if (!name || !code) {
+          showToast(`Violation row #${i + 1} is missing a valid name or code.`, 'error', 4500);
+          return;
+        }
+        if (seenCodes.has(code) || seenNames.has(name.toLowerCase())) {
+          showToast(`Duplicate violation entry "${name}" (${code}).`, 'error', 4500);
+          return;
+        }
+        seenCodes.add(code);
+        seenNames.add(name.toLowerCase());
+
+        const rawFine = vt.defaultFine === '' || vt.defaultFine === null || vt.defaultFine === undefined ? '' : String(vt.defaultFine).trim();
+        const fine = rawFine === '' ? NaN : Number(rawFine);
+        if (!Number.isFinite(fine) || fine < 0) {
+          showToast(`Default fine for "${name}" must be ₱0 or higher.`, 'error', 4500);
+          return;
+        }
+
+        const rawDays = vt.suspensionDays === '' || vt.suspensionDays === null || vt.suspensionDays === undefined ? '' : String(vt.suspensionDays).trim();
+        const days = rawDays === '' ? NaN : Number(rawDays);
+        if (!Number.isInteger(days) || days < 0 || days > 365) {
+          showToast(`Suspension days for "${name}" must be a whole number (0–365).`, 'error', 4500);
+          return;
+        }
+
+        const isGrave = Boolean(vt.isGrave || vt.severity === 'Grave');
+        sanitizedTypes.push({
+          ...(vt._id ? { _id: vt._id } : {}),
+          code,
+          name,
+          severity: isGrave ? 'Grave' : (vt.severity || 'Medium'),
+          isGrave,
+          defaultFine: fine,
+          suspensionDays: days,
+          isActive: vt.isActive !== false
+        });
+      }
+
+      const rawTierFine = systemConfig.violationPolicy?.tiers?.secondOffense?.defaultFine;
+      const tierFine = rawTierFine === '' || rawTierFine === null || rawTierFine === undefined ? NaN : Number(rawTierFine);
+      if (!Number.isFinite(tierFine) || tierFine < 0) {
+        showToast('2nd Offense default fine must be ₱0 or higher.', 'error', 4500);
+        return;
+      }
+      const rawTierDays = systemConfig.violationPolicy?.tiers?.secondOffense?.defaultSuspensionDays;
+      const tierDays = rawTierDays === '' || rawTierDays === null || rawTierDays === undefined ? NaN : Number(rawTierDays);
+      if (!Number.isInteger(tierDays) || tierDays < 0 || tierDays > 365) {
+        showToast('2nd Offense suspension days must be a whole number (0–365).', 'error', 4500);
+        return;
+      }
+
+      const sanitizedTiers = {
+        ...DEFAULT_VIOLATION_TIERS,
+        ...(systemConfig.violationPolicy?.tiers || {}),
+        secondOffense: {
+          ...DEFAULT_VIOLATION_TIERS.secondOffense,
+          ...(systemConfig.violationPolicy?.tiers?.secondOffense || {}),
+          defaultFine: tierFine,
+          defaultSuspensionDays: tierDays
+        }
+      };
+
+      payload = {
+        violationPolicy: {
+          types: sanitizedTypes,
+          tiers: sanitizedTiers
+        }
+      };
+    } else {
+      return;
+    }
+
+    setSavingSection(prev => ({ ...prev, [sectionKey]: true }));
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/settings`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        if (res.status === 401) throw new Error('Your session has expired. Please log in again.');
+        if (res.status === 403) throw new Error('Access denied. Administrator privileges required.');
+        const errData = await res.json().catch(() => ({}));
+        throw new Error(errData.message || `Server responded with error ${res.status}`);
+      }
+
+      const resData = await res.json();
+      const saved = resData.data || {};
+
+      // Merge ONLY the saved section's fields into systemConfig & initialSystemConfig so unsaved edits in other cards are preserved!
+      if (sectionKey === 'validity') {
+        const patch = {
+          newFranchise: saved.validityNew ?? payload.validityNew,
+          renewFranchise: saved.validityRenew ?? payload.validityRenew,
+          expiryWarningDays: saved.expiryWarningDays ?? payload.expiryWarningDays
+        };
+        setSystemConfig(prev => ({ ...prev, ...patch }));
+        setInitialSystemConfig(prev => (prev ? { ...prev, ...patch } : prev));
+        localStorage.setItem('validity_new', String(patch.newFranchise));
+        localStorage.setItem('validity_renew', String(patch.renewFranchise));
+        localStorage.setItem('expiry_warning_days', String(patch.expiryWarningDays));
+      } else if (sectionKey === 'fiscal') {
+        const normalizedFy = normalizeFiscalYear(saved.fiscalYear || payload.fiscalYear);
+        const patch = {
+          fiscalYear: normalizedFy,
+          maxUnitsPerOperator: saved.maxUnitsPerOperator ?? payload.maxUnitsPerOperator,
+          franchiseFee: saved.franchiseFee ?? payload.franchiseFee,
+          penaltyFee: saved.penaltyRate ?? payload.penaltyRate,
+          fareBase: saved.baseFare ?? payload.baseFare
+        };
+        setSystemConfig(prev => ({ ...prev, ...patch }));
+        setInitialSystemConfig(prev => (prev ? { ...prev, ...patch } : prev));
+        localStorage.setItem('fiscal_year', normalizedFy);
+        localStorage.setItem('max_units_per_operator', String(patch.maxUnitsPerOperator));
+        localStorage.setItem('franchise_fee', String(patch.franchiseFee));
+        localStorage.setItem('penalty_fee', String(patch.penaltyFee));
+        localStorage.setItem('fare_base', String(patch.fareBase));
+      } else if (sectionKey === 'documents') {
+        const savedDocsList = Array.isArray(saved.requiredDocs) ? saved.requiredDocs : payload.requiredDocs;
+        setSystemConfig(prev => ({ ...prev, requiredDocs: [...savedDocsList] }));
+        setInitialSystemConfig(prev => (prev ? { ...prev, requiredDocs: [...savedDocsList] } : prev));
+        localStorage.setItem('required_docs', JSON.stringify(savedDocsList));
+      } else if (sectionKey === 'maintenance') {
+        const patch = {
+          maintenanceMode: Boolean(saved.maintenanceMode ?? payload.maintenanceMode),
+          maintenanceMessage: saved.maintenanceMessage || payload.maintenanceMessage || DEFAULT_MAINTENANCE_MESSAGE
+        };
+        setSystemConfig(prev => ({ ...prev, ...patch }));
+        setInitialSystemConfig(prev => (prev ? { ...prev, ...patch } : prev));
+        localStorage.setItem('maintenance_mode', patch.maintenanceMode ? 'true' : 'false');
+      } else if (sectionKey === 'violationPolicy') {
+        const savedPolicy = cloneViolationPolicy(saved.violationPolicy || payload.violationPolicy);
+        setSystemConfig(prev => ({ ...prev, violationPolicy: savedPolicy }));
+        setInitialSystemConfig(prev => (prev ? { ...prev, violationPolicy: cloneViolationPolicy(savedPolicy) } : prev));
+        successMessage = `Violation policy saved (Policy v${savedPolicy.policyVersion}).`;
+      }
+
+      window.dispatchEvent(new Event('gtrams_settings_updated'));
+      showToast(successMessage, 'success');
+    } catch (err) {
+      console.error(`Error saving ${sectionKey} settings:`, err);
+      const isFailedFetch = err?.name === 'TypeError' || String(err?.message || '').toLowerCase().includes('failed to fetch');
+      const msg = isFailedFetch
+        ? 'Cannot connect to backend server. It may still be deploying or waking up. Please try again in a few seconds.'
+        : (err.message || 'Error saving settings.');
+      showToast(msg, 'error', 4500);
+    } finally {
+      setSavingSection(prev => ({ ...prev, [sectionKey]: false }));
+    }
+  };
+
   const executeSave = async () => {
     setIsProcessing(true);
     const { type } = confirmModal;
@@ -742,91 +1229,9 @@ const AdminSettings = () => {
     setConfirmModal({ isOpen: false, type: null, data: null });
 
     try {
-      if (type === 'system') {
-        const docsArray = Array.isArray(systemConfig.requiredDocs) ? systemConfig.requiredDocs : [];
-
-        // 1. Save system settings to backend
-        const token = localStorage.getItem('token');
-        if (!token) {
-          showToast('Authentication error: You must be logged in as an administrator.', 'error');
-          setIsProcessing(false);
-          return;
-        }
-
-        const res = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/settings`, {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            validityNew: Number(systemConfig.newFranchise),
-            validityRenew: Number(systemConfig.renewFranchise),
-            fiscalYear: systemConfig.fiscalYear,
-            franchiseFee: Number(systemConfig.franchiseFee),
-            penaltyRate: Number(systemConfig.penaltyFee),
-            baseFare: Number(systemConfig.fareBase),
-            farePerKm: Number(systemConfig.farePerKm),
-            expiryWarningDays: Number(systemConfig.expiryWarningDays),
-            maxUnitsPerOperator: Number(systemConfig.maxUnitsPerOperator) || 2,
-            requiredDocs: docsArray,
-            maintenanceMode: Boolean(systemConfig.maintenanceMode),
-            violationPolicy: systemConfig.violationPolicy
-          })
-        });
-
-        if (!res.ok) {
-          if (res.status === 401) {
-            throw new Error('Your session has expired. Please log in again.');
-          }
-          if (res.status === 403) {
-            throw new Error('Access denied. Administrator privileges required.');
-          }
-          const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.message || `Server responded with error ${res.status}`);
-        }
-
-        const resData = await res.json();
-        const savedBackend = resData.data || {};
-
-        // 2. Save system settings locally to cache
-        localStorage.setItem('validity_new', savedBackend.validityNew ?? systemConfig.newFranchise);
-        localStorage.setItem('validity_renew', savedBackend.validityRenew ?? systemConfig.renewFranchise);
-        localStorage.setItem('fiscal_year', savedBackend.fiscalYear || systemConfig.fiscalYear);
-        localStorage.setItem('franchise_fee', savedBackend.franchiseFee ?? systemConfig.franchiseFee);
-        localStorage.setItem('penalty_fee', savedBackend.penaltyRate ?? systemConfig.penaltyFee);
-        localStorage.setItem('fare_base', savedBackend.baseFare ?? systemConfig.fareBase);
-        localStorage.setItem('fare_per_km', savedBackend.farePerKm ?? systemConfig.farePerKm);
-        localStorage.setItem('max_units_per_operator', savedBackend.maxUnitsPerOperator ?? systemConfig.maxUnitsPerOperator);
-        localStorage.setItem('maintenance_mode', (savedBackend.maintenanceMode ?? systemConfig.maintenanceMode) ? 'true' : 'false');
-        localStorage.setItem('expiry_warning_days', savedBackend.expiryWarningDays ?? systemConfig.expiryWarningDays);
-        localStorage.setItem('required_docs', JSON.stringify(savedBackend.requiredDocs ?? docsArray));
-
-        // Notify other components of settings change immediately
-        window.dispatchEvent(new Event('gtrams_settings_updated'));
-
-        const changes = [];
-        if (initialSystemConfig) {
-          if (Number(systemConfig.newFranchise) !== Number(initialSystemConfig.newFranchise)) changes.push('New Validity');
-          if (Number(systemConfig.renewFranchise) !== Number(initialSystemConfig.renewFranchise)) changes.push('Renew Validity');
-          if (systemConfig.fiscalYear !== initialSystemConfig.fiscalYear) changes.push('Fiscal Year');
-          if (Number(systemConfig.franchiseFee) !== Number(initialSystemConfig.franchiseFee)) changes.push('Franchise Fee');
-          if (Number(systemConfig.penaltyFee) !== Number(initialSystemConfig.penaltyFee)) changes.push('Penalty Fee');
-          if (Number(systemConfig.fareBase) !== Number(initialSystemConfig.fareBase)) changes.push('Base Fare');
-          if (Number(systemConfig.farePerKm) !== Number(initialSystemConfig.farePerKm)) changes.push('Fare Per KM');
-          if (Number(systemConfig.maxUnitsPerOperator) !== Number(initialSystemConfig.maxUnitsPerOperator)) changes.push('Max Units');
-          if (systemConfig.maintenanceMode !== initialSystemConfig.maintenanceMode) changes.push('Maintenance Mode');
-          if (Number(systemConfig.expiryWarningDays) !== Number(initialSystemConfig.expiryWarningDays)) changes.push('Expiry Warning');
-          if (JSON.stringify(docsArray) !== JSON.stringify(initialSystemConfig.requiredDocs)) changes.push('Required Docs');
-        }
-
-        setInitialSystemConfig(systemConfig);
-        if (changes.length > 0) {
-          showToast(`Updated: ${changes.join(', ')}`, 'success');
-        } else {
-          showToast('Settings saved successfully.', 'info');
-        }
-      } 
+      if (type === 'maintenance') {
+        await handleSaveSection('maintenance', { skipConfirm: true });
+      }
       else if (type === 'account') {
         const formData = new FormData();
         formData.append('name', accountData.name);
@@ -1014,12 +1419,12 @@ const AdminSettings = () => {
         const persisted = Array.isArray(savedJson.data?.announcements)
           ? savedJson.data.announcements
           : sanitized;
-        setAnnouncements(
-          persisted.map((item, idx) => ({
-            ...item,
-            clientKey: item?._id ? String(item._id) : `saved-${idx}-${Date.now()}`
-          }))
-        );
+        const normalizedSaved = persisted.map((item, idx) => ({
+          ...item,
+          clientKey: item?._id ? String(item._id) : `saved-${idx}-${Date.now()}`
+        }));
+        setAnnouncements(normalizedSaved);
+        setInitialAnnouncements(normalizedSaved.map((item) => ({ ...item })));
         window.dispatchEvent(new Event('gtrams_settings_updated'));
         showToast(
           persisted.length === 0
@@ -1042,8 +1447,8 @@ const AdminSettings = () => {
 
   return (
     <MainLayout>
-      {/* Floating Toast Notification */}
-      {toast.show && preferences.inAppToastAlerts && (
+      {/* Floating Toast Notification (never suppress error alerts) */}
+      {toast.show && (preferences.inAppToastAlerts || toast.type === 'error') && (
         <div className="fixed bottom-6 right-6 z-[9999] pointer-events-none">
           <div className="bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] shadow-xl rounded-lg px-4 py-3 flex items-center gap-3 max-w-sm">
             <div className={`w-6 h-6 rounded-lg flex items-center justify-center shrink-0 border ${
@@ -1140,15 +1545,34 @@ const AdminSettings = () => {
           {/* TAB 1: SYSTEM & PLATFORM CONFIGURATION */}
           {activeTab === 'system' && isSystemAdmin && (
             <div className="space-y-6">
-              {/* Franchise Rules & Validity */}
+              {/* 1. Franchise Rules & Validity */}
               <div className="bg-white dark:bg-[#1C1917] p-5 sm:p-6 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm transition-colors">
-                <div className="flex items-center gap-3 mb-5 pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
-                  <div className="p-2 bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] rounded-lg">
-                    <Clock size={18} />
+                <div className="flex items-center justify-between flex-wrap gap-3 mb-5 pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] rounded-lg">
+                      <Clock size={18} />
+                    </div>
+                    <div>
+                      <h2 className="text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">Franchise Validity Period</h2>
+                      <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">Configure validity duration for first-time and renewed permits</p>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">Franchise Validity Period</h2>
-                    <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">Configure validity duration for first-time and renewed permits</p>
+                  <div className="flex items-center gap-2">
+                    {isValidityDirty && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-600 dark:bg-amber-400" />
+                        Unsaved changes
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleSaveSection('validity')}
+                      disabled={savingSection.validity}
+                      className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#9E2A2B] hover:bg-[#7A1B22] text-white shadow-sm transition-colors cursor-pointer disabled:opacity-50"
+                    >
+                      {savingSection.validity ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                      <span>{savingSection.validity ? 'Saving...' : 'Save Validity'}</span>
+                    </button>
                   </div>
                 </div>
 
@@ -1162,7 +1586,8 @@ const AdminSettings = () => {
                         type="number"
                         name="newFranchise"
                         min="1"
-                        max="10"
+                        max="20"
+                        disabled={savingSection.validity}
                         value={systemConfig.newFranchise}
                         onChange={handleSystemConfigChange}
                         className={inputClasses}
@@ -1180,7 +1605,8 @@ const AdminSettings = () => {
                         type="number"
                         name="renewFranchise"
                         min="1"
-                        max="10"
+                        max="20"
+                        disabled={savingSection.validity}
                         value={systemConfig.renewFranchise}
                         onChange={handleSystemConfigChange}
                         className={inputClasses}
@@ -1197,8 +1623,9 @@ const AdminSettings = () => {
                       <input
                         type="number"
                         name="expiryWarningDays"
-                        min="5"
-                        max="90"
+                        min="0"
+                        max="365"
+                        disabled={savingSection.validity}
                         value={systemConfig.expiryWarningDays}
                         onChange={handleSystemConfigChange}
                         className={inputClasses}
@@ -1209,33 +1636,58 @@ const AdminSettings = () => {
                 </div>
               </div>
 
-              {/* Fiscal & Fare Settings */}
+              {/* 2. Fiscal & Fare Settings */}
               <div className="bg-white dark:bg-[#1C1917] p-5 sm:p-6 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm transition-colors">
-                <div className="flex items-center gap-3 mb-5 pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
-                  <div className="p-2 bg-amber-50 dark:bg-amber-950/40 rounded-lg border border-amber-200 dark:border-amber-800/60">
-                    <Wallet size={18} className="text-amber-700 dark:text-amber-400" />
+                <div className="flex items-center justify-between flex-wrap gap-3 mb-5 pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-amber-50 dark:bg-amber-950/40 rounded-lg border border-amber-200 dark:border-amber-800/60">
+                      <Wallet size={18} className="text-amber-700 dark:text-amber-400" />
+                    </div>
+                    <div>
+                      <h2 className="text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">Fiscal & Fare Rates</h2>
+                      <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">Establish municipal fees, penalties, and official TODA fare tariffs</p>
+                    </div>
                   </div>
-                  <div>
-                    <h2 className="text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">Fiscal & Fare Rates</h2>
-                    <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">Establish municipal fees, penalties, and official TODA fare tariffs</p>
+                  <div className="flex items-center gap-2">
+                    {isFiscalDirty && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-600 dark:bg-amber-400" />
+                        Unsaved changes
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleSaveSection('fiscal')}
+                      disabled={savingSection.fiscal}
+                      className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#9E2A2B] hover:bg-[#7A1B22] text-white shadow-sm transition-colors cursor-pointer disabled:opacity-50"
+                    >
+                      {savingSection.fiscal ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                      <span>{savingSection.fiscal ? 'Saving...' : 'Save Rates'}</span>
+                    </button>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div>
-                    <label className="block text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider mb-1.5">
-                      Fiscal Year Cycle
+                    <label htmlFor="settings-fiscal-year" className="block text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider mb-1.5">
+                      Fiscal Year
                     </label>
                     <div className="relative">
-                      <CalendarDays size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B6761] dark:text-[#A8A29E]" />
-                      <input
-                        type="text"
+                      <CalendarDays size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-[#6B6761] dark:text-[#A8A29E] pointer-events-none" />
+                      <select
+                        id="settings-fiscal-year"
                         name="fiscalYear"
+                        disabled={savingSection.fiscal}
                         value={systemConfig.fiscalYear}
                         onChange={handleSystemConfigChange}
-                        className={`${inputClasses} pl-9`}
-                        placeholder="2026-2027"
-                      />
+                        className={`${inputClasses} pl-9 font-mono tabular-nums cursor-pointer`}
+                      >
+                        {fiscalYearOptions.map((yr) => (
+                          <option key={yr} value={yr}>
+                            {yr}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </div>
 
@@ -1247,8 +1699,9 @@ const AdminSettings = () => {
                       <input
                         type="number"
                         min="1"
-                        max="10"
+                        max="50"
                         name="maxUnitsPerOperator"
+                        disabled={savingSection.fiscal}
                         value={systemConfig.maxUnitsPerOperator}
                         onChange={handleSystemConfigChange}
                         className={inputClasses}
@@ -1265,8 +1718,10 @@ const AdminSettings = () => {
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E]">₱</span>
                       <input
                         type="number"
+                        min="0"
                         step="0.01"
                         name="franchiseFee"
+                        disabled={savingSection.fiscal}
                         value={systemConfig.franchiseFee}
                         onChange={handleSystemConfigChange}
                         className={`${inputClasses} pl-7 font-mono tabular-nums`}
@@ -1282,8 +1737,10 @@ const AdminSettings = () => {
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E]">₱</span>
                       <input
                         type="number"
+                        min="0"
                         step="0.01"
                         name="penaltyFee"
+                        disabled={savingSection.fiscal}
                         value={systemConfig.penaltyFee}
                         onChange={handleSystemConfigChange}
                         className={`${inputClasses} pl-7 font-mono tabular-nums`}
@@ -1299,8 +1756,10 @@ const AdminSettings = () => {
                       <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E]">₱</span>
                       <input
                         type="number"
+                        min="0"
                         step="0.5"
                         name="fareBase"
+                        disabled={savingSection.fiscal}
                         value={systemConfig.fareBase}
                         onChange={handleSystemConfigChange}
                         className={`${inputClasses} pl-7 font-mono tabular-nums`}
@@ -1310,37 +1769,56 @@ const AdminSettings = () => {
                 </div>
               </div>
 
-              {/* Requirement Checklist Builder & Maintenance Mode */}
+              {/* 3. Requirement Checklist Builder & 4. Maintenance Mode */}
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <div className="bg-white dark:bg-[#1C1917] p-5 sm:p-6 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm transition-colors flex flex-col justify-between">
                   <div>
-                    <div className="flex items-center justify-between gap-3 mb-4 pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
-                      <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-between flex-wrap gap-2.5 mb-4 pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+                      <div className="flex items-center gap-2.5">
                         <FileCheck size={18} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
                         <h2 className="text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">Required Documents</h2>
                       </div>
-                      <button
-                        type="button"
-                        onClick={handleResetDefaultDocs}
-                        className="text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] hover:text-[#9E2A2B] dark:hover:text-[#D4AF37] transition-colors cursor-pointer"
-                      >
-                        Reset Defaults
-                      </button>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {isDocumentsDirty && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-600 dark:bg-amber-400" />
+                            Unsaved changes
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={handleResetDefaultDocs}
+                          disabled={savingSection.documents}
+                          className="text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] hover:text-[#9E2A2B] dark:hover:text-[#D4AF37] transition-colors cursor-pointer disabled:opacity-50"
+                        >
+                          Reset Defaults
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleSaveSection('documents')}
+                          disabled={savingSection.documents}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#9E2A2B] hover:bg-[#7A1B22] text-white shadow-sm transition-colors cursor-pointer disabled:opacity-50"
+                        >
+                          {savingSection.documents ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
+                          <span>{savingSection.documents ? 'Saving...' : 'Save Checklist'}</span>
+                        </button>
+                      </div>
                     </div>
                     <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] mb-4">Manage the list of documents required from operators when submitting franchise applications:</p>
 
                     {/* DYNAMIC DOCUMENT LIST */}
                     <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                       {(Array.isArray(systemConfig.requiredDocs) ? systemConfig.requiredDocs : []).map((doc, idx) => (
-                        <div key={idx} className="flex items-center justify-between p-2.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] transition-colors">
+                        <div key={`${doc}-${idx}`} className="flex items-center justify-between p-2.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] transition-colors">
                           <span className="text-xs font-medium text-[#1F1D1B] dark:text-[#F6F5F3] flex items-center gap-2">
                             <span className="w-1.5 h-1.5 rounded-full bg-[#9E2A2B] dark:bg-[#D4AF37]" />
                             {doc}
                           </span>
                           <button
                             type="button"
+                            disabled={savingSection.documents}
                             onClick={() => handleRemoveRequirement(doc)}
-                            className="text-[#6B6761] dark:text-[#A8A29E] hover:text-red-600 p-1 rounded transition-colors cursor-pointer"
+                            className="text-[#6B6761] dark:text-[#A8A29E] hover:text-red-600 p-1 rounded transition-colors cursor-pointer disabled:opacity-50"
                             title="Remove document requirement"
                           >
                             <X size={14} />
@@ -1358,6 +1836,7 @@ const AdminSettings = () => {
                     <input
                       type="text"
                       name="newDocInput"
+                      disabled={savingSection.documents}
                       value={systemConfig.newDocInput || ''}
                       onChange={handleSystemConfigChange}
                       onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddRequirement(); } }}
@@ -1366,8 +1845,9 @@ const AdminSettings = () => {
                     />
                     <button
                       type="button"
+                      disabled={savingSection.documents}
                       onClick={handleAddRequirement}
-                      className="px-3.5 py-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white rounded-lg text-xs font-medium shrink-0 transition-colors shadow-sm cursor-pointer"
+                      className="px-3.5 py-1.5 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white rounded-lg text-xs font-medium shrink-0 transition-colors shadow-sm cursor-pointer disabled:opacity-50"
                     >
                       + Add
                     </button>
@@ -1376,13 +1856,48 @@ const AdminSettings = () => {
 
                 <div className="bg-white dark:bg-[#1C1917] p-5 sm:p-6 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm flex flex-col justify-between transition-colors">
                   <div>
-                    <div className="flex items-center gap-3 mb-4 pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
-                      <AlertTriangle size={18} className="text-amber-600 dark:text-amber-400" />
-                      <h2 className="text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">Maintenance Mode</h2>
+                    <div className="flex items-center justify-between flex-wrap gap-2.5 mb-4 pb-3 border-b border-[#E4E1DC] dark:border-[#2E2A27]">
+                      <div className="flex items-center gap-2.5">
+                        <AlertTriangle size={18} className="text-amber-600 dark:text-amber-400" />
+                        <h2 className="text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">Maintenance Mode</h2>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {isMaintenanceDirty && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
+                            <span className="w-1.5 h-1.5 rounded-full bg-amber-600 dark:bg-amber-400" />
+                            Unsaved changes
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          onClick={() => handleSaveSection('maintenance')}
+                          disabled={savingSection.maintenance}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-[#9E2A2B] hover:bg-[#7A1B22] text-white shadow-sm transition-colors cursor-pointer disabled:opacity-50"
+                        >
+                          {savingSection.maintenance ? <Loader2 size={13} className="animate-spin" /> : <Save size={13} />}
+                          <span>{savingSection.maintenance ? 'Saving...' : 'Save Maintenance'}</span>
+                        </button>
+                      </div>
                     </div>
-                    <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] leading-relaxed mb-6">
+                    <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] leading-relaxed mb-4">
                       Enabling Maintenance Mode prevents operators from submitting new applications while system maintenance or database migration is in progress.
                     </p>
+
+                    <div className="mb-4">
+                      <label htmlFor="settings-maintenance-message" className="block text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider mb-1.5">
+                        Maintenance Advisory Message
+                      </label>
+                      <textarea
+                        id="settings-maintenance-message"
+                        name="maintenanceMessage"
+                        rows={2}
+                        disabled={savingSection.maintenance}
+                        value={systemConfig.maintenanceMessage || ''}
+                        onChange={handleSystemConfigChange}
+                        placeholder={DEFAULT_MAINTENANCE_MESSAGE}
+                        className={`${inputClasses} text-xs`}
+                      />
+                    </div>
                   </div>
 
                   <div className="p-3.5 rounded-lg bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/40 flex items-center justify-between">
@@ -1395,8 +1910,12 @@ const AdminSettings = () => {
 
                     <button
                       type="button"
+                      disabled={savingSection.maintenance}
                       onClick={() => setSystemConfig(prev => ({ ...prev, maintenanceMode: !prev.maintenanceMode }))}
-                      className={`relative inline-flex h-6 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                      role="switch"
+                      aria-checked={Boolean(systemConfig.maintenanceMode)}
+                      aria-label="Toggle Maintenance Mode"
+                      className={`relative inline-flex h-6 w-12 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none disabled:opacity-50 ${
                         systemConfig.maintenanceMode ? 'bg-[#9E2A2B]' : 'bg-[#E4E1DC] dark:bg-[#2E2A27]'
                       }`}
                     >
@@ -1410,8 +1929,8 @@ const AdminSettings = () => {
                 </div>
               </div>
 
-              {/* PROGRESSIVE VIOLATION & PENALTY POLICY CONFIGURATION */}
-              <div className="bg-white dark:bg-[#1C1917] p-5 sm:p-6 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm transition-colors space-y-6">
+              {/* 5. PROGRESSIVE VIOLATION & PENALTY POLICY CONFIGURATION */}
+              <div className="bg-white dark:bg-[#1C1917] p-5 sm:p-6 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm transition-colors space-y-5">
                 <div className="flex items-center justify-between pb-4 border-b border-[#E4E1DC] dark:border-[#2E2A27] flex-wrap gap-3">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37] rounded-lg">
@@ -1426,9 +1945,35 @@ const AdminSettings = () => {
                       </p>
                     </div>
                   </div>
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/60">
-                    <CheckCircle2 size={13} /> Progressive Engine Active
-                  </span>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-mono font-semibold bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#D4AF37] border border-[#E4E1DC] dark:border-[#2E2A27]">
+                      <ShieldCheck size={13} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                      Policy v{systemConfig.violationPolicy?.policyVersion || 1}
+                    </span>
+                    {isViolationPolicyDirty && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-600 dark:bg-amber-400" />
+                        Unsaved changes
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => handleSaveSection('violationPolicy')}
+                      disabled={savingSection.violationPolicy}
+                      className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#9E2A2B] hover:bg-[#7A1B22] text-white shadow-sm transition-colors cursor-pointer disabled:opacity-50"
+                    >
+                      {savingSection.violationPolicy ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
+                      <span>{savingSection.violationPolicy ? 'Saving...' : 'Save Policy'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Non-Retroactive Rate Policy Banner */}
+                <div className="p-3.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] flex items-start gap-2.5 text-xs">
+                  <Info size={16} className="text-[#9E2A2B] dark:text-[#D4AF37] shrink-0 mt-0.5" />
+                  <p className="text-[#1F1D1B] dark:text-[#EAE7E1] leading-relaxed">
+                    <span className="font-semibold">Non-Retroactive Rate Policy:</span> Changes to violation fines, suspension durations, or severity classifications automatically increment the policy version, log an exact audit diff, and apply <span className="font-semibold">only to future citations</span> — historical violations remain permanently locked at the rate active when recorded.
+                  </p>
                 </div>
 
                 {/* 3-Tier Policy Architecture Cards */}
@@ -1446,13 +1991,13 @@ const AdminSettings = () => {
                             1st Offense
                           </span>
                         </div>
-                        <p className="text-xs font-bold text-[#1F1D1B] dark:text-[#F6F5F3] mb-1">Official Warning</p>
+                        <p className="text-xs font-bold text-[#1F1D1B] dark:text-[#F6F5F3] mb-1">Official Warning & Fine</p>
                         <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] leading-relaxed">
-                          Resulting Status: <span className="font-semibold text-amber-700 dark:text-amber-400">Active - Under Warning</span>. Unit remains authorized to operate while notice is recorded.
+                          Resulting Status: <span className="font-semibold text-amber-700 dark:text-amber-400">Active - Under Warning</span>. Unit remains authorized while violation fine and notice are recorded.
                         </p>
                       </div>
                       <div className="mt-3 pt-2 border-t border-amber-200/60 dark:border-amber-900/40 text-[10px] font-medium text-amber-800 dark:text-amber-300">
-                        Sanction: Formal Written Warning
+                        Sanction: Formal Warning + Policy Fine
                       </div>
                     </div>
 
@@ -1472,24 +2017,26 @@ const AdminSettings = () => {
 
                         <div className="grid grid-cols-2 gap-2 mt-2">
                           <div>
-                            <label className="text-[10px] font-semibold text-[#6B6761] dark:text-[#A8A29E]">Default Fine (₱)</label>
+                            <label className="text-[10px] font-semibold text-[#6B6761] dark:text-[#A8A29E]">Fallback Fine (₱)</label>
                             <input
                               type="number"
                               min="0"
+                              disabled={savingSection.violationPolicy}
                               value={systemConfig.violationPolicy?.tiers?.secondOffense?.defaultFine ?? 500}
-                              onChange={(e) => handleTierConfigChange('secondOffense', 'defaultFine', Number(e.target.value))}
-                              className="w-full bg-white dark:bg-[#1C1917] border border-orange-200 dark:border-orange-900/60 rounded px-2 py-1 text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] outline-none"
+                              onChange={(e) => handleTierConfigChange('secondOffense', 'defaultFine', e.target.value)}
+                              className="w-full bg-white dark:bg-[#1C1917] border border-orange-200 dark:border-orange-900/60 rounded px-2 py-1 text-xs font-mono font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] outline-none"
                             />
                           </div>
                           <div>
-                            <label className="text-[10px] font-semibold text-[#6B6761] dark:text-[#A8A29E]">Days Suspended</label>
+                            <label className="text-[10px] font-semibold text-[#6B6761] dark:text-[#A8A29E]">Fallback Days</label>
                             <input
                               type="number"
-                              min="1"
-                              max="180"
+                              min="0"
+                              max="365"
+                              disabled={savingSection.violationPolicy}
                               value={systemConfig.violationPolicy?.tiers?.secondOffense?.defaultSuspensionDays ?? 15}
-                              onChange={(e) => handleTierConfigChange('secondOffense', 'defaultSuspensionDays', Number(e.target.value))}
-                              className="w-full bg-white dark:bg-[#1C1917] border border-orange-200 dark:border-orange-900/60 rounded px-2 py-1 text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] outline-none"
+                              onChange={(e) => handleTierConfigChange('secondOffense', 'defaultSuspensionDays', e.target.value)}
+                              className="w-full bg-white dark:bg-[#1C1917] border border-orange-200 dark:border-orange-900/60 rounded px-2 py-1 text-xs font-mono font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] outline-none"
                             />
                           </div>
                         </div>
@@ -1539,52 +2086,65 @@ const AdminSettings = () => {
                   </div>
                 </div>
 
-                {/* Configured Violation Types Table */}
+                {/* Configured Violation Types Table (Inline Editable) */}
                 <div>
                   <div className="flex items-center justify-between mb-3">
                     <label className="block text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider">
                       Municipal Violation Types & Classifications ({systemConfig.violationPolicy?.types?.length || 0})
                     </label>
+                    <span className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">
+                      Edit fines, suspension days, severity, or status inline then click Save Policy
+                    </span>
                   </div>
 
                   <div className="overflow-x-auto rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27]">
-                    <table className="w-full text-left border-collapse min-w-[700px] text-xs">
+                    <table className="w-full text-left border-collapse min-w-[760px] text-xs">
                       <thead>
                         <tr className="bg-[#F6F5F3] dark:bg-[#14110F] border-b border-[#E4E1DC] dark:border-[#2E2A27] text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider font-semibold">
                           <th className="p-3 pl-4">Violation Name</th>
                           <th className="p-3">Severity</th>
                           <th className="p-3 text-center">Direct Revoke (Grave)</th>
-                          <th className="p-3 text-right">Default Fine</th>
-                          <th className="p-3 text-center">Suspension</th>
+                          <th className="p-3 text-right">Default Fine (₱)</th>
+                          <th className="p-3 text-center">Suspension (Days)</th>
                           <th className="p-3 text-center">Status</th>
                           <th className="p-3 text-center pr-4">Action</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[#E4E1DC] dark:divide-[#2E2A27]">
                         {(systemConfig.violationPolicy?.types || []).map((vt, index) => (
-                          <tr key={index} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50 transition-colors">
+                          <tr key={vt.code || index} className="hover:bg-[#F6F5F3]/50 dark:hover:bg-[#14110F]/50 transition-colors">
                             <td className="p-3 pl-4 font-medium text-[#1F1D1B] dark:text-[#F6F5F3]">
                               <p className="font-semibold">{vt.name}</p>
                               <span className="text-[10px] font-mono text-[#6B6761] dark:text-[#A8A29E]">{vt.code}</span>
                             </td>
                             <td className="p-3">
-                              <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold ${
-                                vt.severity === 'Grave'
-                                  ? 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border border-rose-300 dark:border-rose-900/60'
-                                  : vt.severity === 'High'
-                                    ? 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 border border-red-200 dark:border-red-900/40'
-                                    : vt.severity === 'Medium'
-                                      ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border border-amber-200 dark:border-amber-900/40'
-                                      : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E] border border-[#E4E1DC] dark:border-[#2E2A27]'
-                              }`}>
-                                {vt.severity}
-                              </span>
+                              <select
+                                aria-label={`Severity for ${vt.name}`}
+                                disabled={savingSection.violationPolicy}
+                                value={vt.isGrave ? 'Grave' : (vt.severity || 'Medium')}
+                                onChange={(e) => handleViolationFieldChange(index, 'severity', e.target.value)}
+                                className={`text-[11px] font-semibold rounded px-2 py-1 border outline-none cursor-pointer ${
+                                  (vt.isGrave || vt.severity === 'Grave')
+                                    ? 'bg-rose-50 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300 border-rose-300 dark:border-rose-900/60'
+                                    : vt.severity === 'High'
+                                      ? 'bg-red-50 dark:bg-red-950/40 text-red-700 dark:text-red-400 border-red-200 dark:border-red-900/40'
+                                      : vt.severity === 'Medium'
+                                        ? 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-900/40'
+                                        : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#1F1D1B] dark:text-[#EAE7E1] border-[#E4E1DC] dark:border-[#2E2A27]'
+                                }`}
+                              >
+                                <option value="Low">Low</option>
+                                <option value="Medium">Medium</option>
+                                <option value="High">High</option>
+                                <option value="Grave">Grave</option>
+                              </select>
                             </td>
                             <td className="p-3 text-center">
                               <button
                                 type="button"
+                                disabled={savingSection.violationPolicy}
                                 onClick={() => handleToggleViolationGrave(index)}
-                                className={`text-[10px] font-semibold px-2 py-0.5 rounded border transition-colors cursor-pointer ${
+                                className={`text-[10px] font-semibold px-2 py-1 rounded border transition-colors cursor-pointer disabled:opacity-50 ${
                                   vt.isGrave
                                     ? 'bg-rose-600 text-white border-rose-600'
                                     : 'bg-white dark:bg-[#1C1917] text-[#6B6761] dark:text-[#A8A29E] border-[#E4E1DC] dark:border-[#2E2A27] hover:border-rose-400'
@@ -1594,17 +2154,42 @@ const AdminSettings = () => {
                                 {vt.isGrave ? 'Yes (Direct Revocation)' : 'No (3-Tier)'}
                               </button>
                             </td>
-                            <td className="p-3 text-right font-mono tabular-nums font-medium text-[#1F1D1B] dark:text-[#F6F5F3]">
-                              ₱{vt.defaultFine?.toLocaleString() || 0}
+                            <td className="p-3 text-right">
+                              <div className="inline-flex items-center relative">
+                                <span className="absolute left-2 text-[11px] font-semibold text-[#6B6761] dark:text-[#A8A29E] pointer-events-none">₱</span>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="50"
+                                  aria-label={`Default fine for ${vt.name}`}
+                                  disabled={savingSection.violationPolicy}
+                                  value={vt.defaultFine ?? 0}
+                                  onChange={(e) => handleViolationFieldChange(index, 'defaultFine', e.target.value)}
+                                  className="w-24 bg-white dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded pl-5 pr-2 py-1 text-right font-mono tabular-nums text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37]"
+                                />
+                              </div>
                             </td>
-                            <td className="p-3 text-center text-[#6B6761] dark:text-[#A8A29E]">
-                              {vt.suspensionDays || 0} days
+                            <td className="p-3 text-center">
+                              <div className="inline-flex items-center gap-1">
+                                <input
+                                  type="number"
+                                  min="0"
+                                  max="365"
+                                  aria-label={`Suspension days for ${vt.name}`}
+                                  disabled={savingSection.violationPolicy}
+                                  value={vt.suspensionDays ?? 0}
+                                  onChange={(e) => handleViolationFieldChange(index, 'suspensionDays', e.target.value)}
+                                  className="w-16 bg-white dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] rounded px-2 py-1 text-center font-mono tabular-nums text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] outline-none focus:border-[#9E2A2B] dark:focus:border-[#D4AF37]"
+                                />
+                                <span className="text-[11px] text-[#6B6761] dark:text-[#A8A29E]">d</span>
+                              </div>
                             </td>
                             <td className="p-3 text-center">
                               <button
                                 type="button"
+                                disabled={savingSection.violationPolicy}
                                 onClick={() => handleToggleViolationActive(index)}
-                                className={`text-[10px] font-bold px-2 py-0.5 rounded cursor-pointer ${
+                                className={`text-[10px] font-bold px-2.5 py-1 rounded cursor-pointer disabled:opacity-50 ${
                                   vt.isActive !== false
                                     ? 'bg-emerald-100 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300'
                                     : 'bg-[#F6F5F3] dark:bg-[#14110F] text-[#6B6761] dark:text-[#A8A29E] border border-[#E4E1DC] dark:border-[#2E2A27]'
@@ -1616,8 +2201,9 @@ const AdminSettings = () => {
                             <td className="p-3 text-center pr-4">
                               <button
                                 type="button"
+                                disabled={savingSection.violationPolicy}
                                 onClick={() => handleRemoveViolation(index)}
-                                className="p-1 rounded text-red-600 hover:text-red-800 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer"
+                                className="p-1 rounded text-red-600 hover:text-red-800 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-950/30 transition-colors cursor-pointer disabled:opacity-50"
                                 title="Remove violation from policy"
                               >
                                 <Trash2 size={14} />
@@ -1625,6 +2211,13 @@ const AdminSettings = () => {
                             </td>
                           </tr>
                         ))}
+                        {(systemConfig.violationPolicy?.types || []).length === 0 && (
+                          <tr>
+                            <td colSpan={7} className="p-6 text-center text-xs text-[#6B6761] dark:text-[#A8A29E] italic">
+                              No violation types configured. Add a municipal violation type below.
+                            </td>
+                          </tr>
+                        )}
                       </tbody>
                     </table>
                   </div>
@@ -1634,11 +2227,12 @@ const AdminSettings = () => {
                     <p className="text-xs font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] mb-3 flex items-center gap-1.5">
                       <Plus size={14} className="text-[#9E2A2B] dark:text-[#D4AF37]" /> Add New Municipal Violation Type
                     </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 items-end">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3 items-end">
                       <div className="lg:col-span-2">
                         <label className="block text-[10px] font-semibold text-[#6B6761] dark:text-[#A8A29E] mb-1">Violation Name / Description</label>
                         <input
                           type="text"
+                          disabled={savingSection.violationPolicy}
                           placeholder="e.g. Failure to convey student discount"
                           value={newViolationInput.name}
                           onChange={(e) => setNewViolationInput(prev => ({ ...prev, name: e.target.value }))}
@@ -1648,8 +2242,16 @@ const AdminSettings = () => {
                       <div>
                         <label className="block text-[10px] font-semibold text-[#6B6761] dark:text-[#A8A29E] mb-1">Severity Level</label>
                         <select
+                          disabled={savingSection.violationPolicy}
                           value={newViolationInput.severity}
-                          onChange={(e) => setNewViolationInput(prev => ({ ...prev, severity: e.target.value }))}
+                          onChange={(e) => {
+                            const nextSev = e.target.value;
+                            setNewViolationInput(prev => ({
+                              ...prev,
+                              severity: nextSev,
+                              isGrave: nextSev === 'Grave'
+                            }));
+                          }}
                           className="w-full bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-2 py-1.5 text-xs text-[#1F1D1B] dark:text-[#F6F5F3] outline-none"
                         >
                           <option value="Low">Low</option>
@@ -1663,16 +2265,30 @@ const AdminSettings = () => {
                         <input
                           type="number"
                           min="0"
+                          disabled={savingSection.violationPolicy}
                           value={newViolationInput.defaultFine}
-                          onChange={(e) => setNewViolationInput(prev => ({ ...prev, defaultFine: Number(e.target.value) }))}
-                          className="w-full bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-2 py-1.5 text-xs text-[#1F1D1B] dark:text-[#F6F5F3] outline-none"
+                          onChange={(e) => setNewViolationInput(prev => ({ ...prev, defaultFine: e.target.value }))}
+                          className="w-full bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-2 py-1.5 text-xs font-mono tabular-nums text-[#1F1D1B] dark:text-[#F6F5F3] outline-none"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-[10px] font-semibold text-[#6B6761] dark:text-[#A8A29E] mb-1">Suspension Days</label>
+                        <input
+                          type="number"
+                          min="0"
+                          max="365"
+                          disabled={savingSection.violationPolicy}
+                          value={newViolationInput.suspensionDays}
+                          onChange={(e) => setNewViolationInput(prev => ({ ...prev, suspensionDays: e.target.value }))}
+                          className="w-full bg-white dark:bg-[#1C1917] border border-[#E4E1DC] dark:border-[#2E2A27] rounded-lg px-2 py-1.5 text-xs font-mono tabular-nums text-[#1F1D1B] dark:text-[#F6F5F3] outline-none"
                         />
                       </div>
                       <div>
                         <button
                           type="button"
+                          disabled={savingSection.violationPolicy}
                           onClick={handleAddViolation}
-                          className="w-full bg-[#9E2A2B] hover:bg-[#7A1B22] text-white py-1.5 rounded-lg text-xs font-semibold shadow-sm transition-colors flex items-center justify-center gap-1 cursor-pointer"
+                          className="w-full bg-[#9E2A2B] hover:bg-[#7A1B22] text-white py-1.5 rounded-lg text-xs font-semibold shadow-sm transition-colors flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
                         >
                           <Plus size={14} /> Add Violation
                         </button>
@@ -1682,7 +2298,7 @@ const AdminSettings = () => {
                 </div>
               </div>
 
-              {/* HOMEPAGE BULLETIN BOARD ANNOUNCEMENTS */}
+              {/* 6. HOMEPAGE BULLETIN BOARD ANNOUNCEMENTS */}
               <div className="bg-white dark:bg-[#1C1917] p-5 sm:p-6 rounded-lg border border-[#E4E1DC] dark:border-[#2E2A27] shadow-sm transition-colors space-y-5">
                 <div className="flex items-center justify-between pb-4 border-b border-[#E4E1DC] dark:border-[#2E2A27] flex-wrap gap-3">
                   <div className="flex items-center gap-3">
@@ -1699,7 +2315,13 @@ const AdminSettings = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    {isAnnouncementsDirty && (
+                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-50 dark:bg-amber-950/40 text-amber-800 dark:text-amber-300 border border-amber-200 dark:border-amber-800/60">
+                        <span className="w-1.5 h-1.5 rounded-full bg-amber-600 dark:bg-amber-400" />
+                        Unsaved changes
+                      </span>
+                    )}
                     {announcements.length > 0 && (
                       <button
                         type="button"
@@ -1796,6 +2418,7 @@ const AdminSettings = () => {
                           </label>
                           <textarea
                             rows={2}
+                            disabled={isSavingAnnouncements}
                             value={item.desc || ''}
                             onChange={(e) => handleUpdateAnnouncement(idx, 'desc', e.target.value)}
                             className={inputClasses}
@@ -1815,12 +2438,14 @@ const AdminSettings = () => {
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
                     <input
                       type="text"
+                      disabled={isSavingAnnouncements}
                       value={newAnnouncement.title}
                       onChange={(e) => setNewAnnouncement(prev => ({ ...prev, title: e.target.value }))}
                       placeholder="Announcement title (required)"
                       className={inputClasses}
                     />
                     <select
+                      disabled={isSavingAnnouncements}
                       value={newAnnouncement.type}
                       onChange={(e) => setNewAnnouncement(prev => ({ ...prev, type: e.target.value }))}
                       className={inputClasses}
@@ -1831,6 +2456,7 @@ const AdminSettings = () => {
                     </select>
                     <input
                       type="text"
+                      disabled={isSavingAnnouncements}
                       value={newAnnouncement.date}
                       onChange={(e) => setNewAnnouncement(prev => ({ ...prev, date: e.target.value }))}
                       placeholder="Date / Label (e.g. Annual Cycle)"
@@ -1840,6 +2466,7 @@ const AdminSettings = () => {
                   <div className="flex flex-col sm:flex-row gap-2.5 items-stretch sm:items-end">
                     <textarea
                       rows={2}
+                      disabled={isSavingAnnouncements}
                       value={newAnnouncement.desc}
                       onChange={(e) => setNewAnnouncement(prev => ({ ...prev, desc: e.target.value }))}
                       placeholder="Announcement description (required)"
@@ -1847,25 +2474,15 @@ const AdminSettings = () => {
                     />
                     <button
                       type="button"
+                      disabled={isSavingAnnouncements}
                       onClick={handleAddAnnouncement}
-                      className="px-4 py-2 bg-[#1F1D1B] dark:bg-[#2E2A27] hover:bg-[#9E2A2B] text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shrink-0"
+                      className="px-4 py-2 bg-[#1F1D1B] dark:bg-[#2E2A27] hover:bg-[#9E2A2B] text-white rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer shrink-0 disabled:opacity-50"
                     >
                       <Plus size={14} />
                       <span>Add Draft</span>
                     </button>
                   </div>
                 </div>
-              </div>
-
-              {/* SAVE BUTTON FOR SYSTEM CONFIG */}
-              <div className="flex justify-end pt-2">
-                <button
-                  type="button"
-                  onClick={() => handleOpenConfirm('system')}
-                  className="flex items-center gap-2 bg-[#9E2A2B] hover:bg-[#7A1B22] text-white px-5 py-2.5 rounded-lg font-medium text-xs sm:text-sm shadow-sm active:scale-95 transition-all cursor-pointer"
-                >
-                  <Save size={15} /> Save System Configurations
-                </button>
               </div>
             </div>
           )}
@@ -1917,7 +2534,7 @@ const AdminSettings = () => {
                     <input
                       type="text"
                       value={accountData.contact}
-                      onChange={(e) => setAccountData(prev => ({ ...prev, contact: e.target.value }))}
+                      onChange={(e) => handleAdminContactChange(e.target.value)}
                       placeholder="(042) 342-1234"
                       className={inputClasses}
                     />
@@ -2465,14 +3082,22 @@ const AdminSettings = () => {
             {/* Header */}
             <div className="flex items-center justify-between pb-3.5 border-b border-[#E4E1DC] dark:border-[#2E2A27] mb-4">
               <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 flex items-center justify-center text-[#9E2A2B] dark:text-[#D4AF37]">
-                  <Save size={16} />
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
+                  confirmModal.type === 'maintenance'
+                    ? 'bg-amber-100 dark:bg-amber-950/50 text-amber-700 dark:text-amber-400'
+                    : 'bg-[#9E2A2B]/10 dark:bg-[#D4AF37]/15 text-[#9E2A2B] dark:text-[#D4AF37]'
+                }`}>
+                  {confirmModal.type === 'maintenance' ? <AlertTriangle size={16} /> : <Save size={16} />}
                 </div>
                 <div>
                   <h3 className="text-sm font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">
-                    {confirmModal.type === 'system' ? 'Save System Configuration' : 'Confirm Action'}
+                    {confirmModal.type === 'maintenance' ? 'Enable Maintenance Mode' : 'Confirm Action'}
                   </h3>
-                  <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">Apply updates to platform database</p>
+                  <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">
+                    {confirmModal.type === 'maintenance'
+                      ? 'Restrict operator application & renewal portals'
+                      : 'Apply updates to platform database'}
+                  </p>
                 </div>
               </div>
               <button
@@ -2486,34 +3111,19 @@ const AdminSettings = () => {
             </div>
 
             {/* Content Summary Breakdown */}
-            {confirmModal.type === 'system' ? (
+            {confirmModal.type === 'maintenance' ? (
               <div className="space-y-3 mb-5">
-                <div className="bg-[#F6F5F3] dark:bg-[#14110F] rounded-lg p-3.5 border border-[#E4E1DC] dark:border-[#2E2A27] space-y-2 text-xs">
-                  <div className="flex justify-between items-center text-[#6B6761] dark:text-[#A8A29E]">
-                    <span>Max Units / Operator:</span>
-                    <span className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{systemConfig.maxUnitsPerOperator} unit(s)</span>
-                  </div>
-                  <div className="flex justify-between items-center text-[#6B6761] dark:text-[#A8A29E]">
-                    <span>Fiscal Year Cycle:</span>
-                    <span className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{systemConfig.fiscalYear}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-[#6B6761] dark:text-[#A8A29E]">
-                    <span>Franchise Application Fee:</span>
-                    <span className="font-semibold text-emerald-700 dark:text-emerald-400 font-mono tabular-nums">₱{Number(systemConfig.franchiseFee).toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between items-center text-[#6B6761] dark:text-[#A8A29E]">
-                    <span>Maintenance Mode:</span>
-                    <span className={`font-semibold ${systemConfig.maintenanceMode ? 'text-amber-700 dark:text-amber-400' : 'text-[#6B6761] dark:text-[#A8A29E]'}`}>
-                      {systemConfig.maintenanceMode ? 'Active (Restricted)' : 'Inactive (Public Access)'}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center text-[#6B6761] dark:text-[#A8A29E]">
-                    <span>Required Documents:</span>
-                    <span className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">{Array.isArray(systemConfig.requiredDocs) ? systemConfig.requiredDocs.length : 0} items</span>
-                  </div>
+                <div className="bg-amber-50 dark:bg-amber-950/30 rounded-lg p-3.5 border border-amber-200 dark:border-amber-900/50 space-y-2 text-xs">
+                  <p className="font-semibold text-amber-900 dark:text-amber-200">
+                    Operators and TODA members will be temporarily blocked from submitting new applications or renewals.
+                  </p>
+                  <p className="text-[#6B6761] dark:text-[#A8A29E] leading-relaxed">
+                    <span className="font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">Banner Message:</span>{' '}
+                    {String(systemConfig.maintenanceMessage || '').trim() || DEFAULT_MAINTENANCE_MESSAGE}
+                  </p>
                 </div>
                 <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] text-center">
-                  Changes will take effect immediately across all operator portals.
+                  Administrators, LLSA I staff, and Cashiers will retain portal access.
                 </p>
               </div>
             ) : (

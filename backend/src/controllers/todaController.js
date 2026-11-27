@@ -81,6 +81,21 @@ exports.addIndividualMember = async (req, res) => {
             });
         }
 
+        const rawContact = String(contact || '').trim();
+        let normalizedContact = '';
+        if (rawContact) {
+            const cleanContact = rawContact.replace(/[\s\-()]/g, '');
+            if (!/^(09\d{9}|\+639\d{9}|639\d{9})$/.test(cleanContact)) {
+                return res.status(400).json({
+                    success: false,
+                    message: 'Contact number must be a valid 11-digit Philippine mobile number (e.g. 09123456789).'
+                });
+            }
+            normalizedContact = cleanContact.startsWith('+639')
+                ? '0' + cleanContact.slice(3)
+                : (cleanContact.startsWith('639') && cleanContact.length === 12 ? '0' + cleanContact.slice(2) : cleanContact);
+        }
+
         const userRole = String(req.user?.role || '').toLowerCase().trim().replace(/[\s-]+/g, '_');
         const isBploStaff = userRole === 'bplo_staff';
         const isTodaPresident = userRole === 'toda_president';
@@ -171,7 +186,7 @@ exports.addIndividualMember = async (req, res) => {
                     bodyNumber: assignedBodyNumber,
                     claimKey: rosterClaimKey(targetToda, assignedBodyNumber),
                     plateNo: String(plateNo || '').trim().toUpperCase(),
-                    contact: String(contact || '').trim(),
+                    contact: normalizedContact,
                     status: 'Active',
                     remarks: remarks || `Individually registered by ${req.user.name} (${req.user.role}) on ${new Date().toLocaleDateString('en-PH')}`
                 });
