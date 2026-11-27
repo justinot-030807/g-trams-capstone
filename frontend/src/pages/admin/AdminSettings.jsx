@@ -169,8 +169,6 @@ const AdminSettings = () => {
     fiscalYear: normalizeFiscalYear(new Date().getFullYear().toString()),
     franchiseFee: 500,
     penaltyFee: 50,
-    fareBase: 15,
-    farePerKm: 2.5,
     maxUnitsPerOperator: 2,
     maintenanceMode: false,
     maintenanceMessage: DEFAULT_MAINTENANCE_MESSAGE,
@@ -509,8 +507,6 @@ const AdminSettings = () => {
         }
         const savedFee = localStorage.getItem('franchise_fee');
         const savedPenalty = localStorage.getItem('penalty_fee');
-        const savedFareBase = localStorage.getItem('fare_base');
-        const savedFareKm = localStorage.getItem('fare_per_km');
         const savedMaint = localStorage.getItem('maintenance_mode');
         const savedExpiryDays = localStorage.getItem('expiry_warning_days');
         const savedDocs = localStorage.getItem('required_docs');
@@ -526,8 +522,6 @@ const AdminSettings = () => {
             fiscalYear: savedFiscal,
             franchiseFee: savedFee !== null && savedFee !== '' && Number.isFinite(Number(savedFee)) ? parseFloat(savedFee) : 500,
             penaltyFee: savedPenalty !== null && savedPenalty !== '' && Number.isFinite(Number(savedPenalty)) ? parseFloat(savedPenalty) : 50,
-            fareBase: savedFareBase !== null && savedFareBase !== '' && Number.isFinite(Number(savedFareBase)) ? parseFloat(savedFareBase) : 15,
-            farePerKm: savedFareKm !== null && savedFareKm !== '' && Number.isFinite(Number(savedFareKm)) ? parseFloat(savedFareKm) : 2.5,
             maxUnitsPerOperator: savedMaxUnits !== null && savedMaxUnits !== '' && Number.isFinite(Number(savedMaxUnits)) ? parseInt(savedMaxUnits, 10) : 2,
             maintenanceMode: savedMaint === 'true',
             expiryWarningDays: savedExpiryDays !== null && savedExpiryDays !== '' && Number.isFinite(Number(savedExpiryDays)) ? parseInt(savedExpiryDays, 10) : 30,
@@ -562,8 +556,6 @@ const AdminSettings = () => {
                   fiscalYear: normalizedFiscalYear,
                   franchiseFee: d.franchiseFee ?? prev.franchiseFee,
                   penaltyFee: d.penaltyRate ?? prev.penaltyFee,
-                  fareBase: d.baseFare ?? prev.fareBase,
-                  farePerKm: d.farePerKm ?? prev.farePerKm,
                   maxUnitsPerOperator: d.maxUnitsPerOperator ?? prev.maxUnitsPerOperator,
                   maintenanceMode: Boolean(d.maintenanceMode),
                   maintenanceMessage: d.maintenanceMessage || DEFAULT_MAINTENANCE_MESSAGE,
@@ -581,10 +573,6 @@ const AdminSettings = () => {
                 localStorage.setItem('fiscal_year', normalizedFiscalYear);
                 localStorage.setItem('franchise_fee', String(newState.franchiseFee ?? ''));
                 localStorage.setItem('penalty_fee', String(newState.penaltyFee ?? ''));
-                localStorage.setItem('fare_base', String(newState.fareBase ?? ''));
-                if (d.farePerKm !== undefined) {
-                  localStorage.setItem('fare_per_km', String(d.farePerKm));
-                }
                 localStorage.setItem('validity_new', String(newState.newFranchise ?? ''));
                 localStorage.setItem('validity_renew', String(newState.renewFranchise ?? ''));
                 localStorage.setItem('expiry_warning_days', String(newState.expiryWarningDays ?? ''));
@@ -701,15 +689,13 @@ const AdminSettings = () => {
       String(systemConfig.fiscalYear) !== String(initialSystemConfig.fiscalYear) ||
       String(systemConfig.maxUnitsPerOperator) !== String(initialSystemConfig.maxUnitsPerOperator) ||
       String(systemConfig.franchiseFee) !== String(initialSystemConfig.franchiseFee) ||
-      String(systemConfig.penaltyFee) !== String(initialSystemConfig.penaltyFee) ||
-      String(systemConfig.fareBase) !== String(initialSystemConfig.fareBase)
+      String(systemConfig.penaltyFee) !== String(initialSystemConfig.penaltyFee)
     );
   }, [
     systemConfig.fiscalYear,
     systemConfig.maxUnitsPerOperator,
     systemConfig.franchiseFee,
     systemConfig.penaltyFee,
-    systemConfig.fareBase,
     initialSystemConfig
   ]);
 
@@ -1015,7 +1001,6 @@ const AdminSettings = () => {
       const maxUnitsPerOperator = systemConfig.maxUnitsPerOperator === '' ? NaN : Number(systemConfig.maxUnitsPerOperator);
       const franchiseFee = systemConfig.franchiseFee === '' ? NaN : Number(systemConfig.franchiseFee);
       const penaltyRate = systemConfig.penaltyFee === '' ? NaN : Number(systemConfig.penaltyFee);
-      const baseFare = systemConfig.fareBase === '' ? NaN : Number(systemConfig.fareBase);
 
       if (!Number.isInteger(maxUnitsPerOperator) || maxUnitsPerOperator < 1 || maxUnitsPerOperator > 50) {
         showToast('Max Units per Operator must be a whole number of at least 1.', 'error', 4500);
@@ -1029,13 +1014,9 @@ const AdminSettings = () => {
         showToast('Late Renewal Penalty must be ₱0 or higher.', 'error', 4500);
         return;
       }
-      if (!Number.isFinite(baseFare) || baseFare < 0) {
-        showToast('Base TODA Fare Rate must be ₱0 or higher.', 'error', 4500);
-        return;
-      }
-      // Deliberately omit farePerKm so hidden backend farePerKm is never clobbered
-      payload = { fiscalYear, maxUnitsPerOperator, franchiseFee, penaltyRate, baseFare };
-      successMessage = 'Fiscal & fare rate settings saved.';
+      // Deliberately omit hidden fare fields (baseFare, farePerKm) so backend defaults remain untouched
+      payload = { fiscalYear, maxUnitsPerOperator, franchiseFee, penaltyRate };
+      successMessage = 'Fiscal & municipal fee settings saved.';
     } else if (sectionKey === 'documents') {
       const docsArray = (Array.isArray(systemConfig.requiredDocs) ? systemConfig.requiredDocs : [])
         .map((d) => String(d || '').trim())
@@ -1177,8 +1158,7 @@ const AdminSettings = () => {
           fiscalYear: normalizedFy,
           maxUnitsPerOperator: saved.maxUnitsPerOperator ?? payload.maxUnitsPerOperator,
           franchiseFee: saved.franchiseFee ?? payload.franchiseFee,
-          penaltyFee: saved.penaltyRate ?? payload.penaltyRate,
-          fareBase: saved.baseFare ?? payload.baseFare
+          penaltyFee: saved.penaltyRate ?? payload.penaltyRate
         };
         setSystemConfig(prev => ({ ...prev, ...patch }));
         setInitialSystemConfig(prev => (prev ? { ...prev, ...patch } : prev));
@@ -1186,7 +1166,6 @@ const AdminSettings = () => {
         localStorage.setItem('max_units_per_operator', String(patch.maxUnitsPerOperator));
         localStorage.setItem('franchise_fee', String(patch.franchiseFee));
         localStorage.setItem('penalty_fee', String(patch.penaltyFee));
-        localStorage.setItem('fare_base', String(patch.fareBase));
       } else if (sectionKey === 'documents') {
         const savedDocsList = Array.isArray(saved.requiredDocs) ? saved.requiredDocs : payload.requiredDocs;
         setSystemConfig(prev => ({ ...prev, requiredDocs: [...savedDocsList] }));
@@ -1644,8 +1623,8 @@ const AdminSettings = () => {
                       <Wallet size={18} className="text-amber-700 dark:text-amber-400" />
                     </div>
                     <div>
-                      <h2 className="text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">Fiscal & Fare Rates</h2>
-                      <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">Establish municipal fees, penalties, and official TODA fare tariffs</p>
+                      <h2 className="text-sm sm:text-base font-semibold text-[#1F1D1B] dark:text-[#F6F5F3]">Fiscal & Municipal Fees</h2>
+                      <p className="text-xs text-[#6B6761] dark:text-[#A8A29E]">Establish fiscal year, unit cap, franchise fees, and late renewal penalties</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
@@ -1662,12 +1641,12 @@ const AdminSettings = () => {
                       className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-[#9E2A2B] hover:bg-[#7A1B22] text-white shadow-sm transition-colors cursor-pointer disabled:opacity-50"
                     >
                       {savingSection.fiscal ? <Loader2 size={14} className="animate-spin" /> : <Save size={14} />}
-                      <span>{savingSection.fiscal ? 'Saving...' : 'Save Rates'}</span>
+                      <span>{savingSection.fiscal ? 'Saving...' : 'Save Fees'}</span>
                     </button>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div>
                     <label htmlFor="settings-fiscal-year" className="block text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider mb-1.5">
                       Fiscal Year
@@ -1742,25 +1721,6 @@ const AdminSettings = () => {
                         name="penaltyFee"
                         disabled={savingSection.fiscal}
                         value={systemConfig.penaltyFee}
-                        onChange={handleSystemConfigChange}
-                        className={`${inputClasses} pl-7 font-mono tabular-nums`}
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E] uppercase tracking-wider mb-1.5">
-                      Base TODA Fare Rate
-                    </label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-[#6B6761] dark:text-[#A8A29E]">₱</span>
-                      <input
-                        type="number"
-                        min="0"
-                        step="0.5"
-                        name="fareBase"
-                        disabled={savingSection.fiscal}
-                        value={systemConfig.fareBase}
                         onChange={handleSystemConfigChange}
                         className={`${inputClasses} pl-7 font-mono tabular-nums`}
                       />

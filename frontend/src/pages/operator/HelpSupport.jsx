@@ -3,13 +3,21 @@ import MainLayout from '../../components/MainLayout';
 import { 
   HelpCircle, Phone, Mail, Building, ChevronDown, 
   Search, Flame, Info, ShieldCheck, MapPin, FileText, Clock,
-  Users, GraduationCap, Code, Server, Heart, Send, MessageSquare
+  Users, GraduationCap, Code2, Briefcase, Cpu, BookOpen, Send, MessageSquare
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import TermsPolicyModal from '../../components/common/TermsPolicyModal';
 import { HELP_DESK_EMAIL, HOTLINE_DISPLAY, HOTLINE_NUMBER, MUNICIPAL_OFFICE_NAME } from '../../utils/contactConfig';
 import { sanitizeMobileInput, isValidPhMobile } from '../../utils/contactValidation';
+import { CAPSTONE_TEAM } from '../../utils/projectInfo';
 import { toast } from 'sonner';
+
+const TEAM_ROLE_ICONS = {
+  lead_dev: Code2,
+  project_manager: Briefcase,
+  system_analyst: Cpu,
+  researcher: BookOpen,
+};
 
 const buildFaqsData = ({ maxUnitsPerOperator = 2, renewalReminderDays = 30, validityNew = 3, validityRenew = 1 } = {}) => ({
   en: [
@@ -647,23 +655,20 @@ const HelpSupport = () => {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5">
-            {[
-              { name: "John Doe", role: "Project Manager / Lead Dev", icon: <Users size={18} className="text-[#9E2A2B] dark:text-[#D4AF37]" /> },
-              { name: "Jane Smith", role: "Frontend Developer", icon: <Code size={18} className="text-[#9E2A2B] dark:text-[#D4AF37]" /> },
-              { name: "Juan Dela Cruz", role: "Backend / Database", icon: <Server size={18} className="text-[#9E2A2B] dark:text-[#D4AF37]" /> },
-              { name: "Maria Clara", role: "UI/UX Designer", icon: <Heart size={18} className="text-[#9E2A2B] dark:text-[#D4AF37]" /> },
-              { name: "Pedro Penduko", role: "QA / Compliance Specialist", icon: <ShieldCheck size={18} className="text-[#9E2A2B] dark:text-[#D4AF37]" /> },
-            ].map((dev, idx) => (
-              <div key={idx} className="p-3.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center gap-3 hover:border-[#9E2A2B]/40 transition-colors">
-                <div className="w-10 h-10 rounded-lg bg-white dark:bg-[#1C1917] shadow-sm flex items-center justify-center shrink-0 border border-[#E4E1DC] dark:border-[#2E2A27]">
-                  {dev.icon}
+            {CAPSTONE_TEAM.map((dev, idx) => {
+              const IconComponent = TEAM_ROLE_ICONS[dev.iconKey] || BookOpen;
+              return (
+                <div key={idx} className="p-3.5 rounded-lg bg-[#F6F5F3] dark:bg-[#14110F] border border-[#E4E1DC] dark:border-[#2E2A27] flex items-center gap-3 hover:border-[#9E2A2B]/40 transition-colors">
+                  <div className="w-10 h-10 rounded-lg bg-white dark:bg-[#1C1917] shadow-sm flex items-center justify-center shrink-0 border border-[#E4E1DC] dark:border-[#2E2A27]">
+                    <IconComponent size={18} className="text-[#9E2A2B] dark:text-[#D4AF37]" />
+                  </div>
+                  <div className="min-w-0">
+                    <h4 className="font-bold text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3] leading-snug">{dev.name}</h4>
+                    <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-medium mt-0.5">{dev.role}</p>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <h4 className="font-bold text-xs sm:text-sm text-[#1F1D1B] dark:text-[#F6F5F3] truncate">{dev.name}</h4>
-                  <p className="text-xs text-[#6B6761] dark:text-[#A8A29E] font-medium truncate">{dev.role}</p>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 

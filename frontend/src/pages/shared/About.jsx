@@ -1,20 +1,26 @@
 import React from 'react';
 import MainLayout from '../../components/MainLayout';
-import { Users, GraduationCap, Code, Server, ShieldCheck, Heart } from 'lucide-react';
+import { GraduationCap, Code2, Briefcase, Cpu, BookOpen, ArrowLeft } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowLeft } from 'lucide-react';
+import { CAPSTONE_TEAM } from '../../utils/projectInfo';
+
+const ROLE_ICONS = {
+  lead_dev: Code2,
+  project_manager: Briefcase,
+  system_analyst: Cpu,
+  researcher: BookOpen,
+};
 
 const About = () => {
   const navigate = useNavigate();
 
-  // Since actual names were not provided, we leave a cool generic placeholder that they can easily edit
-  const developers = [
-    { name: "John Doe", role: "Project Manager / Lead Dev", icon: <Users size={20} className="text-blue-500" /> },
-    { name: "Jane Smith", role: "Frontend Developer", icon: <Code size={20} className="text-emerald-500" /> },
-    { name: "Juan Dela Cruz", role: "Backend / Database", icon: <Server size={20} className="text-amber-500" /> },
-    { name: "Maria Clara", role: "UI/UX Designer", icon: <Heart size={20} className="text-rose-500" /> },
-    { name: "Pedro Penduko", role: "QA / Security", icon: <ShieldCheck size={20} className="text-[#9E2A2B] dark:text-[#D4AF37]" /> },
-  ];
+  const developers = CAPSTONE_TEAM.map((member) => {
+    const IconComponent = ROLE_ICONS[member.iconKey] || BookOpen;
+    return {
+      ...member,
+      icon: <IconComponent size={20} className="text-[#9E2A2B] dark:text-[#D4AF37]" />,
+    };
+  });
 
   return (
     <MainLayout>

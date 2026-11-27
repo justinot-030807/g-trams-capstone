@@ -3,16 +3,21 @@ import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
   LogIn, 
-  UserPlus
+  UserPlus,
+  Smartphone,
+  Download
 } from 'lucide-react';
 import AuthNavbar from '../components/common/AuthNavbar';
 import AuthFooter from '../components/common/AuthFooter';
 import LandingGuideCarousel from '../components/common/LandingGuideCarousel';
 import LandingAnnouncements from '../components/common/LandingAnnouncements';
+import MobileAppDownloadCard from '../components/common/MobileAppDownloadCard';
+import useLatestMobileRelease from '../hooks/useLatestMobileRelease';
 import { resilientApiFetch } from '../utils/googleAuthUtils';
 
 const Home = () => {
   const navigate = useNavigate();
+  const mobileRelease = useLatestMobileRelease();
   const [stats, setStats] = useState({ operators: 0, todas: 0, franchises: 0 });
   const [isLoadingStats, setIsLoadingStats] = useState(true);
 
@@ -161,6 +166,27 @@ const Home = () => {
               </Link>
             </motion.div>
 
+            {/* MOBILE APK QUICK DOWNLOAD (Operators & TODA Presidents) */}
+            <motion.div variants={springFade} className="mt-4 flex flex-col items-center">
+              <a
+                href={mobileRelease.apkDownloadUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                download={mobileRelease.fileName}
+                className="inline-flex items-center justify-center gap-2.5 px-4 py-2.5 min-h-[44px] rounded-lg bg-black/30 hover:bg-black/45 border border-white/25 hover:border-[#F5E6B3]/60 text-white text-xs sm:text-sm font-semibold transition-colors cursor-pointer backdrop-blur-sm"
+              >
+                <Smartphone size={15} className="text-[#F5E6B3] shrink-0" />
+                <span>Download Android APK</span>
+                <span className="font-mono text-[10px] font-bold px-1.5 py-0.5 rounded bg-white/15 text-[#F5E6B3]">
+                  {mobileRelease.version}
+                </span>
+                <Download size={14} className="text-white/80 shrink-0" />
+              </a>
+              <span className="text-[11px] text-white/75 mt-1.5 font-medium">
+                For Tricycle Operators &amp; TODA Presidents ({mobileRelease.fileSizeLabel})
+              </span>
+            </motion.div>
+
             {/* PUBLIC STATS DISPLAY (Real Database Numbers - 3 Pillars) */}
             <motion.div 
               variants={springFade}
@@ -205,6 +231,9 @@ const Home = () => {
       <div className="relative w-full bg-[#F6F5F3] dark:bg-[#14110F] overflow-hidden">
         {/* 3D Citizen's Charter Carousel */}
         <LandingGuideCarousel />
+
+        {/* Official Android Companion App Section (Operators & TODA Presidents) */}
+        <MobileAppDownloadCard release={mobileRelease} />
 
         {/* Municipal Bulletin Board (Dynamic from IT System Settings) */}
         <LandingAnnouncements />
