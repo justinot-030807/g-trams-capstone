@@ -127,9 +127,7 @@ const serializeViolationPolicyForCompare = (policy) => JSON.stringify({
     defaultFine: String(t.defaultFine ?? ''),
     suspensionDays: String(t.suspensionDays ?? ''),
     isActive: t.isActive !== false
-  })),
-  secondOffenseFine: String(policy?.tiers?.secondOffense?.defaultFine ?? ''),
-  secondOffenseDays: String(policy?.tiers?.secondOffense?.defaultSuspensionDays ?? '')
+  }))
 });
 
 const serializeAnnouncementsForCompare = (list) => JSON.stringify(
@@ -916,22 +914,6 @@ const AdminSettings = () => {
     showToast(`Added "${name}" to draft policy. Click "Save Policy" to apply.`, 'info');
   };
 
-  const handleTierConfigChange = (tierName, field, value) => {
-    setSystemConfig(prev => ({
-      ...prev,
-      violationPolicy: {
-        ...(prev.violationPolicy || {}),
-        tiers: {
-          ...(prev.violationPolicy?.tiers || {}),
-          [tierName]: {
-            ...(prev.violationPolicy?.tiers?.[tierName] || {}),
-            [field]: value
-          }
-        }
-      }
-    }));
-  };
-
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
@@ -1085,18 +1067,8 @@ const AdminSettings = () => {
         });
       }
 
-      const rawTierFine = systemConfig.violationPolicy?.tiers?.secondOffense?.defaultFine;
-      const tierFine = rawTierFine === '' || rawTierFine === null || rawTierFine === undefined ? NaN : Number(rawTierFine);
-      if (!Number.isFinite(tierFine) || tierFine < 0) {
-        showToast('2nd Offense default fine must be ₱0 or higher.', 'error', 4500);
-        return;
-      }
-      const rawTierDays = systemConfig.violationPolicy?.tiers?.secondOffense?.defaultSuspensionDays;
-      const tierDays = rawTierDays === '' || rawTierDays === null || rawTierDays === undefined ? NaN : Number(rawTierDays);
-      if (!Number.isInteger(tierDays) || tierDays < 0 || tierDays > 365) {
-        showToast('2nd Offense suspension days must be a whole number (0–365).', 'error', 4500);
-        return;
-      }
+      const existingTierFine = Number(systemConfig.violationPolicy?.tiers?.secondOffense?.defaultFine);
+      const existingTierDays = Number(systemConfig.violationPolicy?.tiers?.secondOffense?.defaultSuspensionDays);
 
       const sanitizedTiers = {
         ...DEFAULT_VIOLATION_TIERS,
@@ -1104,8 +1076,12 @@ const AdminSettings = () => {
         secondOffense: {
           ...DEFAULT_VIOLATION_TIERS.secondOffense,
           ...(systemConfig.violationPolicy?.tiers?.secondOffense || {}),
-          defaultFine: tierFine,
-          defaultSuspensionDays: tierDays
+          defaultFine: Number.isFinite(existingTierFine) && existingTierFine >= 0
+            ? existingTierFine
+            : DEFAULT_VIOLATION_TIERS.secondOffense.defaultFine,
+          defaultSuspensionDays: Number.isInteger(existingTierDays) && existingTierDays >= 0 && existingTierDays <= 365
+            ? existingTierDays
+            : DEFAULT_VIOLATION_TIERS.secondOffense.defaultSuspensionDays
         }
       };
 
@@ -1971,38 +1947,12 @@ const AdminSettings = () => {
                           </span>
                         </div>
                         <p className="text-xs font-bold text-[#1F1D1B] dark:text-[#F6F5F3] mb-1">Fine & Suspension</p>
-                        <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] leading-relaxed mb-2.5">
-                          Resulting Status: <span className="font-semibold text-orange-700 dark:text-orange-400">Suspended</span>. Operations temporarily barred.
+                        <p className="text-[11px] text-[#6B6761] dark:text-[#A8A29E] leading-relaxed">
+                          Resulting Status: <span className="font-semibold text-orange-700 dark:text-orange-400">Suspended</span>. Operations are temporarily barred using the selected violation&apos;s fine and suspension days below.
                         </p>
-
-                        <div className="grid grid-cols-2 gap-2 mt-2">
-                          <div>
-                            <label className="text-[10px] font-semibold text-[#6B6761] dark:text-[#A8A29E]">Fallback Fine (₱)</label>
-                            <input
-                              type="number"
-                              min="0"
-                              disabled={savingSection.violationPolicy}
-                              value={systemConfig.violationPolicy?.tiers?.secondOffense?.defaultFine ?? 500}
-                              onChange={(e) => handleTierConfigChange('secondOffense', 'defaultFine', e.target.value)}
-                              className="w-full bg-white dark:bg-[#1C1917] border border-orange-200 dark:border-orange-900/60 rounded px-2 py-1 text-xs font-mono font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] outline-none"
-                            />
-                          </div>
-                          <div>
-                            <label className="text-[10px] font-semibold text-[#6B6761] dark:text-[#A8A29E]">Fallback Days</label>
-                            <input
-                              type="number"
-                              min="0"
-                              max="365"
-                              disabled={savingSection.violationPolicy}
-                              value={systemConfig.violationPolicy?.tiers?.secondOffense?.defaultSuspensionDays ?? 15}
-                              onChange={(e) => handleTierConfigChange('secondOffense', 'defaultSuspensionDays', e.target.value)}
-                              className="w-full bg-white dark:bg-[#1C1917] border border-orange-200 dark:border-orange-900/60 rounded px-2 py-1 text-xs font-mono font-semibold text-[#1F1D1B] dark:text-[#F6F5F3] outline-none"
-                            />
-                          </div>
-                        </div>
                       </div>
                       <div className="mt-3 pt-2 border-t border-orange-200/60 dark:border-orange-900/40 text-[10px] font-medium text-orange-800 dark:text-orange-300">
-                        Sanction: Temporary Suspension
+                        Sanction: Temporary Suspension + Policy Fine
                       </div>
                     </div>
 
